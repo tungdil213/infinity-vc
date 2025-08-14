@@ -3,11 +3,12 @@ import type { LobbyRepository } from '../../application/repositories/lobby_repos
 import Lobby from '../../domain/entities/lobby.js'
 import { LobbyStatus } from '../../domain/value_objects/lobby_status.js'
 import LobbyModel from '../../models/lobby_model.js'
+import User from '../../models/user.js'
 
 @inject()
 export class DatabaseLobbyRepository implements LobbyRepository {
   async save(lobby: Lobby): Promise<void> {
-    await LobbyModel.updateOrCreate(
+    const lobbyModel = await LobbyModel.updateOrCreate(
       { uuid: lobby.uuid },
       {
         uuid: lobby.uuid,
@@ -16,15 +17,47 @@ export class DatabaseLobbyRepository implements LobbyRepository {
         isPrivate: lobby.isPrivate,
         status: lobby.status,
         createdBy: lobby.createdBy,
-        players: lobby.players,
         availableActions: lobby.availableActions,
         isArchived: false,
       }
     )
+
+    // Gérer les relations players via la table pivot
+    const playerUuids = lobby.players.map((p) => p.uuid)
+
+    // Récupérer les IDs des utilisateurs à partir de leurs UUIDs
+    const users = await User.query().whereIn('user_uuid', playerUuids)
+    const userIds = users.map((user) => user.id)
+
+    if (users.length !== playerUuids.length) {
+      const foundUuids = users.map((u) => u.userUuid)
+      const missingUuids = playerUuids.filter((uuid) => !foundUuids.includes(uuid))
+      throw new Error(`Users not found: ${missingUuids.join(', ')}`)
+    }
+
+    // Créer les données pivot avec les IDs
+    const pivotData = userIds.reduce(
+      (acc, userId) => {
+        acc[userId] = {
+          uuid: crypto.randomUUID(),
+          joined_at: new Date(),
+          created_at: new Date(),
+          updated_at: new Date(),
+        }
+        return acc
+      },
+      {} as Record<string, any>
+    )
+
+    await lobbyModel.related('players').sync(pivotData)
   }
 
   async findByUuid(uuid: string): Promise<Lobby | null> {
-    const model = await LobbyModel.query().where('uuid', uuid).where('is_archived', false).first()
+    const model = await LobbyModel.query()
+      .where('uuid', uuid)
+      .where('is_archived', false)
+      .preload('players')
+      .first()
 
     if (!model) {
       return null
@@ -81,33 +114,18 @@ export class DatabaseLobbyRepository implements LobbyRepository {
   }
 
   async findByPlayer(playerUuid: string): Promise<Lobby | null> {
-    const knex = LobbyModel.query().knexQuery
-    const dbClient = knex.client.config.client
+    const model = await LobbyModel.query()
+      .where('is_archived', false)
+      .whereHas('players', (query) => {
+        query.where('user_uuid', playerUuid)
+      })
+      .first()
 
-    let models: any[]
-
-    if (dbClient === 'pg') {
-      // PostgreSQL: utilise jsonb_path_exists ou @>
-      models = await LobbyModel.query()
-        .where('is_archived', false)
-        .whereRaw('players @> ?', [JSON.stringify([{ uuid: playerUuid }])])
-    } else if (dbClient === 'mysql2' || dbClient === 'mysql') {
-      // MySQL/MariaDB: utilise JSON_SEARCH
-      models = await LobbyModel.query()
-        .where('is_archived', false)
-        .whereRaw('JSON_SEARCH(players, "one", ?) IS NOT NULL', [playerUuid])
-    } else {
-      // SQLite: utilise json_extract
-      models = await LobbyModel.query()
-        .where('is_archived', false)
-        .whereRaw('json_extract(players, "$[*].uuid") LIKE ?', [`%${playerUuid}%`])
-    }
-
-    if (models.length === 0) {
+    if (!model) {
       return null
     }
 
-    return this.toDomainEntity(models[0])
+    return this.toDomainEntity(model)
   }
 
   async findActiveLobbies(): Promise<Lobby[]> {
@@ -129,9 +147,9 @@ export class DatabaseLobbyRepository implements LobbyRepository {
   }
 
   private toDomainEntity(model: LobbyModel): Lobby {
-    const players = model.players.map((p: any) => ({
-      uuid: p.uuid,
-      nickName: p.nickName,
+    const players = model.players.map((user: any) => ({
+      uuid: user.userUuid,
+      nickName: user.fullName,
     }))
 
     return Lobby.reconstitute(

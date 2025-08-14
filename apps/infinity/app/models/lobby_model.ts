@@ -1,10 +1,15 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column } from '@adonisjs/lucid/orm'
+import { BaseModel, column, manyToMany } from '@adonisjs/lucid/orm'
+import type { ManyToMany } from '@adonisjs/lucid/types/relations'
+import User from './user.js'
 
 export default class LobbyModel extends BaseModel {
   public static table = 'lobbies'
 
   @column({ isPrimary: true })
+  declare id: number
+
+  @column()
   declare uuid: string
 
   @column()
@@ -22,15 +27,15 @@ export default class LobbyModel extends BaseModel {
   @column()
   declare createdBy: string
 
-  @column({
-    serialize: (value: string) => {
-      return JSON.parse(value)
-    },
-    prepare: (value: any) => {
-      return JSON.stringify(value)
-    },
+  // Relation many-to-many avec les users via lobby_players
+  @manyToMany(() => User, {
+    pivotTable: 'lobby_players',
+    localKey: 'id',
+    pivotForeignKey: 'lobby_id',
+    relatedKey: 'id',
+    pivotRelatedForeignKey: 'user_id',
   })
-  declare players: any[]
+  declare players: ManyToMany<typeof User>
 
   @column({
     serialize: (value: string) => {

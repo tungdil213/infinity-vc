@@ -5,17 +5,17 @@ export default class extends BaseSchema {
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
-      table.uuid('uuid').primary()
+      table.increments('id').primary()
+      table.uuid('uuid').notNullable().unique()
       table.string('name').notNullable()
-      table.integer('max_players').notNullable().defaultTo(4)
-      table.boolean('is_private').notNullable().defaultTo(false)
-      table.string('status').notNullable().defaultTo('WAITING')
-      table.uuid('created_by').notNullable()
-      table.json('players').notNullable().defaultTo('[]')
-      table.json('available_actions').notNullable().defaultTo('[]')
-      table.boolean('is_archived').notNullable().defaultTo(false)
-      table.timestamp('created_at').notNullable()
-      table.timestamp('updated_at').notNullable()
+      table.integer('max_players').notNullable()
+      table.boolean('is_private').defaultTo(false)
+      table.string('status').notNullable()
+      table.string('created_by').notNullable()
+      table.json('available_actions').defaultTo('[]')
+      table.boolean('is_archived').defaultTo(false)
+      table.timestamp('created_at')
+      table.timestamp('updated_at')
 
       // Indexes
       table.index(['status', 'is_archived'])
