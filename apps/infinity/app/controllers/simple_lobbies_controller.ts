@@ -56,7 +56,7 @@ export default class SimpleLobbiesController {
     return inertia.render('lobbies', {
       lobbies: mockLobbies,
       user: {
-        uuid: user.id || 'test-user',
+        uuid: user.userUuid || 'test-user',
         nickName: user.fullName || 'Test User',
       },
     })
@@ -70,7 +70,7 @@ export default class SimpleLobbiesController {
     
     return inertia.render('create-lobby', {
       user: {
-        uuid: user.id || 'test-user',
+        uuid: user.userUuid || 'test-user',
         fullName: user.fullName || 'Test User',
       },
     })
@@ -122,7 +122,7 @@ export default class SimpleLobbiesController {
       createdBy: 'user-1',
       players: [
         { uuid: 'user-1', nickName: 'Player 1' },
-        { uuid: user.id || 'test-user', nickName: user.fullName || 'Test User' }
+        { uuid: user.userUuid || 'test-user', nickName: user.fullName || 'Test User' }
       ],
       invitationCode: uuid,
       hasPassword: false,
@@ -131,7 +131,7 @@ export default class SimpleLobbiesController {
     return inertia.render('lobby', {
       lobby: mockLobby,
       user: {
-        uuid: user.id || 'test-user',
+        uuid: user.userUuid || 'test-user',
         nickName: user.fullName || 'Test User',
       },
     })
@@ -157,7 +157,7 @@ export default class SimpleLobbiesController {
     return inertia.render('join-lobby', {
       lobby: mockLobby,
       user: user ? {
-        uuid: user.id || 'test-user',
+        uuid: user.userUuid || 'test-user',
         fullName: user.fullName || 'Test User',
       } : null,
       invitationCode,

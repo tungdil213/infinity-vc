@@ -35,12 +35,12 @@ router
     router.post('/auth/logout', '#controllers/enhanced_auth_controller.logout').as('auth.logout')
 
     // Lobbies routes
-    router.get('/lobbies', '#controllers/simple_lobbies_controller.index').as('lobbies.index')
+    router.get('/lobbies', '#controllers/enhanced_lobbies_controller.index').as('lobbies.index')
     router
-      .get('/lobbies/create', '#controllers/simple_lobbies_controller.create')
+      .get('/lobbies/create', '#controllers/enhanced_lobbies_controller.create')
       .as('lobbies.create')
-    router.post('/lobbies', '#controllers/simple_lobbies_controller.store').as('lobbies.store')
-    router.get('/lobbies/:uuid', '#controllers/simple_lobbies_controller.show').as('lobbies.show')
+    router.post('/lobbies', '#controllers/enhanced_lobbies_controller.store').as('lobbies.store')
+    router.get('/lobbies/:uuid', '#controllers/enhanced_lobbies_controller.show').as('lobbies.show')
     router
       .post('/lobbies/:uuid/join', '#controllers/enhanced_lobbies_controller.join')
       .as('lobbies.join')
@@ -67,10 +67,10 @@ router
 
 // Public invitation routes (can be accessed without auth)
 router
-  .get('/lobbies/join/:invitationCode', '#controllers/simple_lobbies_controller.showJoinByInvite')
+  .get('/lobbies/join/:invitationCode', '#controllers/enhanced_lobbies_controller.showJoinByInvite')
   .as('lobbies.join.invite.show')
 router
-  .post('/lobbies/join/:invitationCode', '#controllers/simple_lobbies_controller.joinByInvite')
+  .post('/lobbies/join/:invitationCode', '#controllers/enhanced_lobbies_controller.joinByInvite')
   .as('lobbies.join.invite')
 
 // API routes
@@ -105,5 +105,5 @@ router
     router.post('/unsubscribe', '#controllers/sse_controller.unsubscribe').as('sse.unsubscribe')
     router.get('/stats', '#controllers/sse_controller.stats').as('sse.stats')
   })
-  .prefix('/sse')
+  .prefix('/api/v1/sse')
   .use(middleware.auth())

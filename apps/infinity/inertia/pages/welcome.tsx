@@ -16,15 +16,15 @@ export default function Welcome({ user }: WelcomeProps) {
     <Layout>
       <Head title="Infinity Game - Multiplayer Gaming Platform" />
       
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="min-h-screen bg-background text-foreground font-mono">
         {/* Navigation */}
-        <nav className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
+        <nav className="bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <Link href="/dev/routes">
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent hover:opacity-80 transition-opacity">
+                    <h1 className="text-2xl font-bold text-primary hover:opacity-80 transition-opacity">
                       ♾️ Infinity Game
                     </h1>
                   </Link>
@@ -34,23 +34,23 @@ export default function Welcome({ user }: WelcomeProps) {
               <div className="flex items-center space-x-4">
                 {user ? (
                   <>
-                    <span className="text-gray-700">Welcome, {user.fullName}!</span>
+                    <span className="text-muted-foreground">Welcome, {user.fullName}!</span>
                     <Link href="/lobbies">
-                      <Button className="bg-blue-600 hover:bg-blue-700">
+                      <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
                         Go to Lobbies
                       </Button>
                     </Link>
                     <Link href="/auth/logout" method="post">
-                      <Button variant="outline">Logout</Button>
+                      <Button variant="outline" className="border-border text-foreground hover:bg-accent">Logout</Button>
                     </Link>
                   </>
                 ) : (
                   <>
                     <Link href="/auth/login">
-                      <Button variant="outline">Login</Button>
+                      <Button variant="outline" className="border-border text-foreground hover:bg-accent">Login</Button>
                     </Link>
                     <Link href="/auth/register">
-                      <Button className="bg-blue-600 hover:bg-blue-700">
+                      <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
                         Sign Up
                       </Button>
                     </Link>
@@ -65,14 +65,14 @@ export default function Welcome({ user }: WelcomeProps) {
         <div className="relative overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
             <div className="text-center">
-              <h1 className="text-4xl sm:text-6xl font-bold text-gray-900 mb-8">
+              <h1 className="text-4xl sm:text-6xl font-bold text-foreground mb-8">
                 Play Multiplayer Games
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                <span className="block text-primary">
                   In Real Time
                 </span>
               </h1>
               
-              <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto">
+              <p className="text-xl text-muted-foreground mb-12 max-w-3xl mx-auto">
                 Create lobbies, invite friends, and enjoy seamless multiplayer gaming with real-time updates. 
                 No downloads required - play directly in your browser!
               </p>
@@ -81,12 +81,12 @@ export default function Welcome({ user }: WelcomeProps) {
                 {user ? (
                   <>
                     <Link href="/lobbies">
-                      <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-4">
+                      <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-4">
                         🎮 Browse Lobbies
                       </Button>
                     </Link>
                     <Link href="/lobbies/create">
-                      <Button size="lg" variant="outline" className="text-lg px-8 py-4">
+                      <Button size="lg" variant="outline" className="border-border text-foreground hover:bg-accent text-lg px-8 py-4">
                         ➕ Create Lobby
                       </Button>
                     </Link>
@@ -94,12 +94,12 @@ export default function Welcome({ user }: WelcomeProps) {
                 ) : (
                   <>
                     <Link href="/auth/register">
-                      <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-4">
+                      <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-4">
                         🚀 Get Started Free
                       </Button>
                     </Link>
                     <Link href="#features">
-                      <Button size="lg" variant="outline" className="text-lg px-8 py-4">
+                      <Button size="lg" variant="outline" className="border-border text-foreground hover:bg-accent text-lg px-8 py-4">
                         📖 Learn More
                       </Button>
                     </Link>

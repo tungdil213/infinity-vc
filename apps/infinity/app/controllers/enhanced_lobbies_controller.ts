@@ -106,6 +106,7 @@ export default class EnhancedLobbiesController {
       const invitationCode = crypto.randomUUID()
 
       const result = await this.createLobbyUseCase.execute({
+        userUuid: user.userUuid,
         name: name.trim(),
         description: description?.trim(),
         maxPlayers: parseInt(maxPlayers),
@@ -114,7 +115,6 @@ export default class EnhancedLobbiesController {
         password: hasPassword ? password : undefined,
         gameType,
         invitationCode,
-        createdBy: user.uuid,
       })
 
       if (result.isFailure) {

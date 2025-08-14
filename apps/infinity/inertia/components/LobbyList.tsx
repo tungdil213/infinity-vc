@@ -219,12 +219,17 @@ export default function LobbyList({ initialLobbies, currentUser, onCreateLobby, 
                         Private
                       </span>
                     )}
+                    {lobby.createdBy === currentUser.uuid && (
+                      <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                        Owner
+                      </span>
+                    )}
                   </div>
                 </div>
                 
                 <div className="text-right">
                   <div className="text-sm font-medium text-gray-900">
-                    {lobby.currentPlayers}/{lobby.maxPlayers}
+                    {lobby.players?.length || 0}/{lobby.maxPlayers}
                   </div>
                   <div className="text-xs text-gray-500">players</div>
                 </div>
@@ -265,7 +270,7 @@ export default function LobbyList({ initialLobbies, currentUser, onCreateLobby, 
 
               {/* Actions */}
               <div className="flex gap-2">
-                {lobby.hasAvailableSlots ? (
+                {(lobby.players?.length || 0) < lobby.maxPlayers ? (
                   <Button
                     onClick={() => handleJoinLobby(lobby.uuid)}
                     disabled={joiningLobby === lobby.uuid}
