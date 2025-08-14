@@ -1,48 +1,92 @@
 import { inject } from '@adonisjs/core'
-import { UserRepository } from '../../application/repositories/user_repository.js'
-import User from '../../domain/entities/user.js'
+import { UserRepository } from '#application/repositories/user_repository'
+import DomainUser from '#domain/entities/user'
+import UserModel from '#models/user'
 
-@inject()
 export class DatabaseUserRepository implements UserRepository {
-  async save(user: User): Promise<User> {
-    // For now, return the user as-is since we don't have a User model yet
+  async findByUuid(uuid: string): Promise<DomainUser | null> {
+    const userModel = await UserModel.query().where('user_uuid', uuid).first()
+    if (!userModel) return null
+
+    return this.toDomainUser(userModel)
+  }
+
+  async findByUuidOrFail(uuid: string): Promise<DomainUser> {
+    const user = await this.findByUuid(uuid)
+    if (!user) {
+      throw new Error(`User with UUID ${uuid} not found`)
+    }
     return user
   }
 
-  async findByUuid(uuid: string): Promise<User | null> {
-    // Mock implementation - in a real app, this would query the database
-    // For now, create a mock user for testing
-    if (uuid) {
-      return new User({
-        uuid: uuid,
-        fullName: 'Test User',
-        email: 'test@example.com',
-        password: 'hashed_password',
+  async save(user: DomainUser): Promise<void> {
+    const serialized = user.toJSON()
+
+    // Check if user exists
+    const existingUser = await UserModel.query().where('user_uuid', serialized.uuid).first()
+
+    if (existingUser) {
+      // Update existing user
+      existingUser.merge({
+        fullName: serialized.fullName,
+        email: serialized.email,
+      })
+      await existingUser.save()
+    } else {
+      // Create new user
+      await UserModel.create({
+        userUuid: serialized.uuid,
+        fullName: serialized.fullName,
+        email: serialized.email,
+        password: user.password, // Access password directly, will be hashed by model hook
       })
     }
-    return null
-  }
-
-  async findByEmail(email: string): Promise<User | null> {
-    // Mock implementation - in a real app, this would query the database
-    if (email) {
-      return new User({
-        uuid: 'test-uuid',
-        fullName: 'Test User',
-        email: email,
-        password: 'hashed_password',
-      })
-    }
-    return null
-  }
-
-  async findAll(): Promise<User[]> {
-    // Mock implementation
-    return []
   }
 
   async delete(uuid: string): Promise<void> {
-    // Mock implementation
-    console.log(`Would delete user ${uuid}`)
+    const userModel = await UserModel.query().where('user_uuid', uuid).firstOrFail()
+    await userModel.softDelete()
+  }
+
+  async findAll(): Promise<DomainUser[]> {
+    const userModels = await UserModel.query().whereNull('deleted_at')
+    return userModels.map((model) => this.toDomainUser(model))
+  }
+
+  async findByEmail(email: string): Promise<DomainUser | null> {
+    const userModel = await UserModel.query()
+      .where('email', email)
+      .whereNull('deleted_at')
+      .first()
+
+    if (!userModel) return null
+    return this.toDomainUser(userModel)
+  }
+
+  async findByUsername(username: string): Promise<DomainUser | null> {
+    // For now, we don't have username field, so we'll use email
+    // This can be updated when username field is added to the schema
+    return null
+  }
+
+  async existsByEmail(email: string): Promise<boolean> {
+    const user = await this.findByEmail(email)
+    return user !== null
+  }
+
+  async existsByUsername(username: string): Promise<boolean> {
+    const user = await this.findByUsername(username)
+    return user !== null
+  }
+
+  private toDomainUser(userModel: UserModel): DomainUser {
+    return DomainUser.create({
+      uuid: userModel.userUuid,
+      firstName: userModel.fullName?.split(' ')[0] || '',
+      lastName: userModel.fullName?.split(' ').slice(1).join(' ') || '',
+      username: userModel.email, // Use email as username for now
+      email: userModel.email,
+      password: userModel.password,
+    })
   }
 }

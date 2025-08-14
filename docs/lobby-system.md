@@ -307,7 +307,7 @@ protected validateAndAddPlayer(player: PlayerInterface) {
 - Pagination pour les listes importantes
 
 ### Temps Réel
-- WebSockets pour les mises à jour en temps réel
+- SSE pour les mises à jour en temps réel
 - Notifications des changements d'état
 - Synchronisation des listes de joueurs
 
