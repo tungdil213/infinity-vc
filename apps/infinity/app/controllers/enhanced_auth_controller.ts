@@ -1,8 +1,8 @@
 import { HttpContext } from '@adonisjs/core/http'
 import { inject } from '@adonisjs/core'
 import { RegisterUserUseCase } from '../application/use_cases/register_user_use_case.js'
-import { DatabaseUserRepository } from '../infrastructure/repositories/database_user_repository.js'
 import hash from '@adonisjs/core/services/hash'
+import { DatabaseUserRepository } from '../infrastructure/repositories/database_user_repository.js'
 
 @inject()
 export default class EnhancedAuthController {
@@ -16,7 +16,7 @@ export default class EnhancedAuthController {
    */
   async showLogin({ inertia, request }: HttpContext) {
     const redirect = request.input('redirect', '/lobbies')
-    
+
     return inertia.render('auth/login', {
       redirect,
     })
@@ -27,7 +27,7 @@ export default class EnhancedAuthController {
    */
   async showRegister({ inertia, request }: HttpContext) {
     const redirect = request.input('redirect', '/lobbies')
-    
+
     return inertia.render('auth/register', {
       redirect,
     })
@@ -39,9 +39,9 @@ export default class EnhancedAuthController {
   async register({ request, response, auth, session }: HttpContext) {
     const { fullName, email, password, password_confirmation } = request.only([
       'fullName',
-      'email', 
+      'email',
       'password',
-      'password_confirmation'
+      'password_confirmation',
     ])
     const redirect = request.input('redirect', '/lobbies')
 
@@ -197,14 +197,16 @@ export default class EnhancedAuthController {
   async check({ response, auth }: HttpContext) {
     try {
       const user = auth.user
-      
+
       return response.json({
         authenticated: !!user,
-        user: user ? {
-          uuid: user.uuid,
-          fullName: user.fullName,
-          email: user.email,
-        } : null,
+        user: user
+          ? {
+              uuid: user.uuid,
+              fullName: user.fullName,
+              email: user.email,
+            }
+          : null,
       })
     } catch (error) {
       console.error('Auth check error:', error)

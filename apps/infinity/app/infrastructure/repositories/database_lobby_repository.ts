@@ -1,7 +1,7 @@
 import { inject } from '@adonisjs/core'
-import { LobbyRepository } from '../../domain/repositories/lobby_repository.js'
-import { Lobby } from '../../domain/entities/lobby.js'
-import { Player } from '../../domain/value_objects/player.js'
+import type { LobbyRepository } from '../../domain/repositories/lobby_repository.js'
+import Lobby from '../../domain/entities/lobby.js'
+import Player from '../../domain/entities/player.js'
 import LobbyModel from '../../models/lobby_model.js'
 
 @inject()

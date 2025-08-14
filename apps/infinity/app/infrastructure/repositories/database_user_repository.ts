@@ -1,6 +1,6 @@
 import { inject } from '@adonisjs/core'
-import { User } from '../../domain/entities/user.js'
-import { UserRepository } from '../../domain/repositories/user_repository.js'
+import { UserRepository } from '../../application/repositories/user_repository.js'
+import User from '../../domain/entities/user.js'
 
 @inject()
 export class DatabaseUserRepository implements UserRepository {
