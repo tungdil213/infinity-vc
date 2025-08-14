@@ -1,0 +1,42 @@
+# Dependencies and AdonisJS build
+node_modules
+build
+tmp
+dist
+.turbo
+server/dist
+public/dist
+storybook-static/
+.cache
+.DS_Store
+
+# Secrets
+.env
+.env.local
+.env.production.local
+.env.development.local
+
+# Frontend assets compiled code & Uploads
+public/assets
+public/uploads
+
+# Build tools specific
+npm-debug.log
+yarn-error.log
+*storybook.log
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# Editors specific
+.fleet
+.vscode
+.idea/dataSources*
+
+# Stryker output files
+.stryker/
+.stryker-tmp/
+reports/stryker/
