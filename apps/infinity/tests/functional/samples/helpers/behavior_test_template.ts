@@ -41,10 +41,10 @@ export function createBehaviorTest<TContext, TResult>(
   japaTest(description, async ({ assert }) => {
     // Given / Arrange
     const context = await Promise.resolve(setupFn())
-    
+
     // When / Act
     const result = await Promise.resolve(actionFn(context))
-    
+
     // Then / Assert
     await Promise.resolve(assertionFn(assert, result, context))
   })
@@ -57,14 +57,14 @@ export function createBehaviorTest<TContext, TResult>(
  * @param fn Fonction de définition des tests du groupe
  */
 export function behaviorTestGroup(
-  groupTitle: string, 
-  setupGroupFn: () => any, 
+  groupTitle: string,
+  setupGroupFn: () => any,
   fn: () => void
 ): void {
   japaTest.group(groupTitle, (group) => {
     // Configuration pour l'ensemble du groupe
     group.each.setup(setupGroupFn)
-    
+
     // Exécuter la fonction de définition des tests
     fn()
   })
@@ -72,7 +72,7 @@ export function behaviorTestGroup(
 
 /**
  * Exemple d'utilisation:
- * 
+ *
  * behaviorTestGroup('Document approval workflow', setupDocumentServices, () => {
  *   createBehaviorTest(
  *     'Reviewer should be able to approve document and make it eligible for publication',
@@ -93,7 +93,7 @@ export function behaviorTestGroup(
  *       assert.isTrue(canBePublished)
  *       const notifications = await notificationService.getNotificationsForUser(authorId)
  *       assert.isTrue(
- *         notifications.some(n => n.type === 'document_approved'), 
+ *         notifications.some(n => n.type === 'document_approved'),
  *         "L'auteur devrait recevoir une notification d'approbation"
  *       )
  *     }

@@ -14,7 +14,12 @@ import { Assert } from '@japa/assert'
 export function assertFolderExists(
   assert: Assert,
   folder: any,
-  expectedData?: { name?: string; description?: string; circleId?: number | string; userId?: number }
+  expectedData?: {
+    name?: string
+    description?: string
+    circleId?: number | string
+    userId?: number
+  }
 ) {
   assert.isNotNull(folder, 'Le dossier devrait exister')
   assert.isDefined(folder.uuid, 'Le dossier devrait avoir un UUID')
@@ -32,7 +37,8 @@ export function assertFolderExists(
     }
     if (expectedData.circleId) {
       // Gestion des types string/number pour les IDs
-      const folderCircleId = typeof folder.circleId === 'string' ? folder.circleId : folder.circleId.toString()
+      const folderCircleId =
+        typeof folder.circleId === 'string' ? folder.circleId : folder.circleId.toString()
       const expectedCircleId =
         typeof expectedData.circleId === 'string'
           ? expectedData.circleId
@@ -55,18 +61,18 @@ export function assertDocumentHasStatus(assert: Assert, document: any, status: s
   assert.isNotNull(document, 'Le document devrait exister')
   assert.isDefined(document.metadata, 'Le document devrait avoir des métadonnées')
   assert.equal(document.metadata.status, status, `Le document devrait avoir le statut ${status}`)
-  
+
   // Vérifier que le statut existe dans l'historique
   assert.isTrue(
     document.metadata.statusHistory &&
-    document.metadata.statusHistory.some((entry: any) => entry.status === status),
+      document.metadata.statusHistory.some((entry: any) => entry.status === status),
     `L'historique devrait contenir le statut ${status}`
   )
 }
 
 /**
  * Vérifie qu'un utilisateur a le rôle attendu dans un cercle
- * @param assert Instance d'assertion Japa 
+ * @param assert Instance d'assertion Japa
  * @param userId ID de l'utilisateur
  * @param roleId ID du rôle
  * @param circleId ID du cercle
@@ -80,12 +86,9 @@ export function assertUserHasRoleInCircle(
   attributions: any[]
 ) {
   const userAttribution = attributions.find(
-    (attr) => 
-      attr.userId === userId && 
-      attr.roleId === roleId && 
-      attr.circleId === circleId
+    (attr) => attr.userId === userId && attr.roleId === roleId && attr.circleId === circleId
   )
-  
+
   assert.exists(
     userAttribution,
     `L'utilisateur ${userId} devrait avoir le rôle ${roleId} dans le cercle ${circleId}`

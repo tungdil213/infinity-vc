@@ -1,11 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/stryker-mutator/stryker/master/packages/api/schema/stryker-schema.json",
   "packageManager": "pnpm",
-  "reporters": [
-    "html",
-    "clear-text",
-    "progress"
-  ],
+  "reporters": ["html", "clear-text", "progress"],
   "testRunner": "command",
   "commandRunner": {
     "command": "pnpm run test:mutation"
@@ -21,17 +17,8 @@
     "start": { "line": 20, "column": 0 },
     "end": { "line": 25, "column": 0 }
   },
-  "mutate": [
-    "app/services/folder_service.ts",
-    "!app/services/*.d.ts"
-  ],
-  "ignorePatterns": [
-    "node_modules",
-    "build",
-    "coverage",
-    "tests",
-    "tmp"
-  ],
+  "mutate": ["app/services/folder_service.ts", "!app/services/*.d.ts"],
+  "ignorePatterns": ["node_modules", "build", "coverage", "tests", "tmp"],
   "thresholds": {
     "high": 80,
     "low": 60,

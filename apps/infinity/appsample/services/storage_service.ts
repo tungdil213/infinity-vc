@@ -42,7 +42,7 @@ export default class StorageService implements StorageContract {
 
   /**
    * Génère un hash unique pour le fichier basé sur son contenu
-   * 
+   *
    * @param buffer - Contenu du fichier à hacher
    * @returns Une chaîne hexadécimale représentant le hash SHA-256 du contenu
    */
