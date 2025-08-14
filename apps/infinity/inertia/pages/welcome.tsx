@@ -23,9 +23,11 @@ export default function Welcome({ user }: WelcomeProps) {
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    ♾️ Infinity Game
-                  </h1>
+                  <Link href="/dev/routes">
+                    <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent hover:opacity-80 transition-opacity">
+                      ♾️ Infinity Game
+                    </h1>
+                  </Link>
                 </div>
               </div>
               

@@ -277,50 +277,58 @@ apps/infinity/
 
 ## ROUTING ET API
 
-### Routes Web
-```json
-{
-  "public_routes": {
-    "GET /": "Homepage",
-    "GET /auth/login": "Login form",
-    "POST /auth/login": "Login process",
-    "GET /auth/register": "Register form",
-    "POST /auth/register": "Register process",
-    "GET /lobbies/join/:invitationCode": "Join by invitation"
-  },
-  "authenticated_routes": {
-    "POST /auth/logout": "Logout",
-    "GET /lobbies": "Lobby list",
-    "POST /lobbies": "Create lobby",
-    "GET /lobbies/:uuid": "Lobby detail",
-    "POST /lobbies/:uuid/join": "Join lobby",
-    "POST /lobbies/:uuid/leave": "Leave lobby",
-    "POST /lobbies/:uuid/start": "Start game",
-    "GET /games/:uuid": "Game view",
-    "POST /games/:uuid/action": "Game action"
-  },
-  "api_routes": {
-    "prefix": "/api/v1",
-    "authentication": "required",
-    "endpoints": [
-      "GET /auth/me",
-      "GET /lobbies",
-      "GET /lobbies/:uuid",
-      "GET /games/:uuid",
-      "POST /games/:uuid/action"
-    ]
-  },
-  "sse_routes": {
-    "prefix": "/sse",
-    "endpoints": [
-      "GET /connect",
-      "POST /subscribe",
-      "POST /unsubscribe",
-      "GET /stats"
-    ]
-  }
-}
-```
+### Routes et Navigation
+routing:
+  development_routes:
+    - GET /dev/routes - Page de développement avec toutes les routes (dev uniquement)
+  
+  public_routes:
+    - GET / (home) - Page d'accueil
+    - GET /auth/login - Formulaire de connexion
+    - POST /auth/login - Connexion utilisateur
+    - GET /auth/register - Formulaire d'inscription
+    - POST /auth/register - Inscription utilisateur
+    - GET /lobbies/join/:invitationCode - Rejoindre par invitation
+    - POST /lobbies/join/:invitationCode - Traiter invitation
+  
+  protected_routes:
+    - POST /auth/logout - Déconnexion
+    - GET /lobbies - Liste des lobbies
+    - GET /lobbies/create - Créer un lobby
+    - POST /lobbies - Sauvegarder lobby
+    - GET /lobbies/:uuid - Voir un lobby
+    - POST /lobbies/:uuid/join - Rejoindre lobby
+    - POST /lobbies/:uuid/leave - Quitter lobby
+    - POST /lobbies/:uuid/start - Démarrer jeu
+    - POST /lobbies/:uuid/kick - Expulser un joueur
+    - POST /lobbies/:uuid/transfer - Transférer la propriété
+    - GET /games/:uuid - Voir un jeu
+    - POST /games/:uuid/leave - Quitter jeu
+  
+  api_routes:
+    - GET /api/v1/auth/me - Profil utilisateur
+    - GET /api/v1/auth/check - Vérifier authentification
+    - GET /api/v1/lobbies - API liste lobbies
+    - GET /api/v1/lobbies/:uuid - API voir lobby
+    - GET /api/v1/games/:uuid - API voir jeu
+    - POST /api/v1/games/:uuid/action - API action jeu
+  
+  sse_routes:
+    - GET /sse/connect - Connexion SSE
+    - POST /sse/subscribe - S'abonner aux événements
+    - POST /sse/unsubscribe - Se désabonner
+    - GET /sse/stats - Statistiques SSE
+
+# Page de développement
+development:
+  routes_page: /dev/routes
+  description: Page accessible uniquement en développement listant toutes les routes
+  features:
+    - Liste complète des routes par groupe
+    - Liens cliquables pour les routes GET sans paramètres
+    - Codes couleur par méthode HTTP
+    - Actions rapides vers les pages principales
+    - Accessible via le titre "Infinity Game" sur la page d'accueil  
 
 ## FRONTEND ARCHITECTURE
 

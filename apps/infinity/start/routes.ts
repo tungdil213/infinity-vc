@@ -13,6 +13,9 @@ import { middleware } from './kernel.js'
 // Public routes
 router.get('/', '#controllers/simple_lobbies_controller.welcome').as('home')
 
+// Development routes (only in dev mode)
+router.get('/dev/routes', '#controllers/dev_routes_controller.index').as('dev.routes')
+
 // Authentication routes
 router
   .group(() => {
