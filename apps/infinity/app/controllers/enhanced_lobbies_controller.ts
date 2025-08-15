@@ -377,7 +377,7 @@ export default class EnhancedLobbiesController {
     try {
       const result = await this.leaveLobbyUseCase.execute({
         lobbyUuid: uuid,
-        playerUuid: user.userUuid,
+        userUuid: user.userUuid,
       })
 
       if (result.isFailure) {

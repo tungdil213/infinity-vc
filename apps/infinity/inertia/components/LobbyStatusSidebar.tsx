@@ -1,107 +1,49 @@
-import React, { useState, useEffect } from 'react'
-import { Link, router } from '@inertiajs/react'
+import React, { useState } from 'react'
+import { router } from '@inertiajs/react'
 import { Button } from '@tyfo.dev/ui/primitives/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@tyfo.dev/ui/primitives/card'
 import { Badge } from '@tyfo.dev/ui/primitives/badge'
 import { Users, LogOut, Play } from 'lucide-react'
 import { toast } from 'sonner'
-import { useSSEContext, SSEEvent } from '../contexts/SSEContext'
+import { useLobbyDetail } from '../hooks/useLobbyDetail'
+import { useLobbyService } from '../hooks/useLobbyService'
 
 interface LobbyStatusSidebarProps {
-  currentLobby: {
+  lobbyUuid: string | null
+  currentUser?: {
     uuid: string
-    name: string
-    status: string
-    currentPlayers: number
-    maxPlayers: number
-  } | null
+    fullName: string
+  }
 }
 
-export function LobbyStatusSidebar({ currentLobby: initialLobby }: LobbyStatusSidebarProps) {
-  const [currentLobby, setCurrentLobby] = useState(initialLobby)
-  const { subscribeToChannel, unsubscribeFromChannel, addEventListener, removeEventListener } = useSSEContext()
+export function LobbyStatusSidebar({ lobbyUuid, currentUser }: LobbyStatusSidebarProps) {
+  const { lobby, loading, error } = useLobbyDetail(lobbyUuid || '')
+  const { service: lobbyService, isConnected } = useLobbyService()
+  const [isLeavingLobby, setIsLeavingLobby] = useState(false)
 
-  if (!currentLobby) {
+  // Ne pas afficher le sidebar si pas de lobby ou en cours de chargement
+  if (!lobbyUuid || loading || error || !lobby) {
     return null
   }
 
-  const handleSSEEvent = (event: SSEEvent) => {
-    console.log('Received SSE event in LobbyStatusSidebar:', event)
-
-    switch (event.type) {
-      case 'lobby.player.joined':
-      case 'lobby.player.left':
-        if (event.data.lobbyUuid === currentLobby?.uuid) {
-          setCurrentLobby(prev => prev ? {
-            ...prev,
-            currentPlayers: event.data.playerCount,
-            status: event.data.lobbyStatus,
-          } : null)
-        }
-        break
-
-      case 'lobby.updated':
-        if (event.data.lobby.uuid === currentLobby?.uuid) {
-          setCurrentLobby(prev => prev ? {
-            ...prev,
-            name: event.data.lobby.name,
-            status: event.data.lobby.status,
-            currentPlayers: event.data.lobby.currentPlayers,
-            maxPlayers: event.data.lobby.maxPlayers,
-          } : null)
-        }
-        break
-
-      case 'lobby.deleted':
-        if (event.data.lobbyUuid === currentLobby?.uuid) {
-          setCurrentLobby(null)
-        }
-        break
-    }
-  }
-
-  useEffect(() => {
-    if (currentLobby) {
-      // Subscribe to lobby channel
-      subscribeToChannel(`lobby.${currentLobby.uuid}`)
-      
-      // Add event listeners
-      addEventListener('lobby.player.joined', handleSSEEvent)
-      addEventListener('lobby.player.left', handleSSEEvent)
-      addEventListener('lobby.updated', handleSSEEvent)
-      addEventListener('lobby.deleted', handleSSEEvent)
-    }
-
-    return () => {
-      if (currentLobby) {
-        unsubscribeFromChannel(`lobby.${currentLobby.uuid}`)
-        
-        // Remove event listeners
-        removeEventListener('lobby.player.joined', handleSSEEvent)
-        removeEventListener('lobby.player.left', handleSSEEvent)
-        removeEventListener('lobby.updated', handleSSEEvent)
-        removeEventListener('lobby.deleted', handleSSEEvent)
-      }
-    }
-  }, [currentLobby?.uuid])
-
   const handleLeaveLobby = async () => {
+    if (!currentUser || !isConnected || !lobbyService) return
+    
+    setIsLeavingLobby(true)
     try {
-      await router.post(`/lobbies/${currentLobby.uuid}/leave`, {}, {
-        onSuccess: () => {
-          toast.success('Vous avez quitté le lobby avec succès')
-        },
-        onError: () => {
-          toast.error('Erreur lors de la sortie du lobby')
-        }
-      })
+      await lobbyService.leaveLobby(lobbyUuid, currentUser.uuid)
+      toast.success('Vous avez quitté le lobby avec succès')
+      // Le sidebar disparaîtra automatiquement car lobby deviendra null
     } catch (error) {
+      console.error('Failed to leave lobby:', error)
       toast.error('Erreur lors de la sortie du lobby')
+    } finally {
+      setIsLeavingLobby(false)
     }
   }
 
   const handleGoToLobby = () => {
-    router.visit(`/lobbies/${currentLobby.uuid}`)
+    router.visit(`/lobbies/${lobby.uuid}`)
   }
 
   const getStatusColor = (status: string) => {
@@ -137,17 +79,20 @@ export function LobbyStatusSidebar({ currentLobby: initialLobby }: LobbyStatusSi
           <CardTitle className="text-lg flex items-center gap-2">
             <Users className="h-5 w-5" />
             Lobby Actuel
+            {!isConnected && (
+              <div className="w-2 h-2 bg-red-500 rounded-full" title="Déconnecté" />
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <h3 className="font-semibold text-base mb-2">{currentLobby.name}</h3>
+            <h3 className="font-semibold text-base mb-2">{lobby.name}</h3>
             <div className="flex items-center justify-between mb-2">
-              <Badge className={`${getStatusColor(currentLobby.status)} text-white`}>
-                {getStatusText(currentLobby.status)}
+              <Badge className={`${getStatusColor(lobby.status)} text-white`}>
+                {getStatusText(lobby.status)}
               </Badge>
               <span className="text-sm text-gray-600">
-                {currentLobby.currentPlayers}/{currentLobby.maxPlayers} joueurs
+                {lobby.currentPlayers}/{lobby.maxPlayers} joueurs
               </span>
             </div>
           </div>
@@ -157,6 +102,7 @@ export function LobbyStatusSidebar({ currentLobby: initialLobby }: LobbyStatusSi
               onClick={handleGoToLobby}
               className="w-full"
               variant="default"
+              disabled={!isConnected}
             >
               <Play className="h-4 w-4 mr-2" />
               Aller au lobby
@@ -166,9 +112,10 @@ export function LobbyStatusSidebar({ currentLobby: initialLobby }: LobbyStatusSi
               onClick={handleLeaveLobby}
               variant="outline"
               className="w-full text-red-600 border-red-200 hover:bg-red-50"
+              disabled={isLeavingLobby || !isConnected}
             >
               <LogOut className="h-4 w-4 mr-2" />
-              Quitter le lobby
+              {isLeavingLobby ? 'Sortie...' : 'Quitter le lobby'}
             </Button>
           </div>
 

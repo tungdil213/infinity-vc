@@ -1,6 +1,7 @@
 import Lobby from '../../domain/entities/lobby.js'
 import { PlayerRepository } from '../repositories/player_repository.js'
 import { LobbyRepository } from '../repositories/lobby_repository.js'
+import { LobbyEventService } from '../services/lobby_event_service.js'
 
 export interface CreateLobbyRequest {
   userUuid: string

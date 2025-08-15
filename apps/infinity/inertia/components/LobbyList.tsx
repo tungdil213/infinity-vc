@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Button } from '@tyfo.dev/ui/primitives/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@tyfo.dev/ui/primitives/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@tyfo.dev/ui/primitives/card'
 import { Badge } from '@tyfo.dev/ui/primitives/badge'
-import { Users, Plus, Lock, Globe, Play, Crown } from 'lucide-react'
-import { useSSEContext, SSEEvent } from '../contexts/SSEContext'
+import { Users, Lock, Play, Plus, RefreshCw } from 'lucide-react'
+import { router } from '@inertiajs/react'
+import { useLobbyList } from '../hooks/useLobbyList'
+import { toast } from 'sonner'
 
 interface Player {
   uuid: string
@@ -21,95 +23,48 @@ interface Lobby {
   canStart: boolean
   createdBy: string
   players: Player[]
-  availableActions: string[]
   createdAt: string
 }
 
 interface LobbyListProps {
-  initialLobbies: Lobby[]
-  currentUser: {
+  currentUser?: {
     uuid: string
-    nickName: string
+    fullName: string
   }
-  onCreateLobby: () => void
-  onJoinLobby: (lobbyUuid: string) => void
+  onCreateLobby?: () => void
+  initialLobbies?: Lobby[]
 }
 
-export default function LobbyList({ initialLobbies, currentUser, onCreateLobby, onJoinLobby }: LobbyListProps) {
-  const [lobbies, setLobbies] = useState<Lobby[]>(initialLobbies)
-  const [notifications, setNotifications] = useState<string[]>([])
+export default function LobbyList({ currentUser, onCreateLobby, initialLobbies }: LobbyListProps) {
+  const { lobbies, loading, error, refresh, joinLobby: joinLobbyService, isServiceReady } = useLobbyList()
   const [joiningLobby, setJoiningLobby] = useState<string | null>(null)
-  const { subscribeToChannel, addEventListener, removeEventListener, isConnected } = useSSEContext()
 
-  const addNotification = (message: string) => {
-    setNotifications(prev => [...prev, message])
-    setTimeout(() => {
-      setNotifications(prev => prev.slice(1))
-    }, 5000)
-  }
-
-  const handleSSEEvent = (event: SSEEvent) => {
-    console.log('Received SSE event in lobby list:', event)
-
-    switch (event.type) {
-      case 'lobby.created':
-        setLobbies(prev => [...prev, event.data.lobby])
-        addNotification(`New lobby "${event.data.lobby.name}" created`)
-        break
-
-      case 'lobby.player.joined':
-        setLobbies(prev => prev.map(lobby => 
-          lobby.uuid === event.data.lobbyUuid
-            ? {
-                ...lobby,
-                players: [...lobby.players, event.data.player],
-                currentPlayers: event.data.playerCount,
-                status: event.data.lobbyStatus,
-                hasAvailableSlots: event.data.playerCount < lobby.maxPlayers,
-                canStart: event.data.playerCount >= 2,
-              }
-            : lobby
-        ))
-        break
-
-      case 'lobby.player.left':
-        setLobbies(prev => prev.map(lobby => 
-          lobby.uuid === event.data.lobbyUuid
-            ? {
-                ...lobby,
-                players: lobby.players.filter(p => p.uuid !== event.data.player.uuid),
-                currentPlayers: event.data.playerCount,
-                status: event.data.lobbyStatus,
-                hasAvailableSlots: event.data.playerCount < lobby.maxPlayers,
-                canStart: event.data.playerCount >= 2,
-              }
-            : lobby
-        ))
-        break
-
-      case 'lobby.game.started':
-        // Remove lobby from list when game starts
-        setLobbies(prev => prev.filter(lobby => lobby.uuid !== event.data.lobbyUuid))
-        addNotification(`Game started in lobby "${event.data.lobbyName}"`)
-        break
-
-      case 'lobby.deleted':
-        setLobbies(prev => prev.filter(lobby => lobby.uuid !== event.data.lobbyUuid))
-        addNotification(`Lobby "${event.data.lobbyName}" was deleted`)
-        break
-
-      default:
-        console.log('Unhandled SSE event type in lobby list:', event.type)
-    }
-  }
+  // Si on a des données initiales et qu'on est encore en loading, utiliser les données initiales
+  const displayLobbies = loading && initialLobbies ? initialLobbies : lobbies
+  const isLoading = loading && !initialLobbies
 
   const handleJoinLobby = async (lobbyUuid: string) => {
-    setJoiningLobby(lobbyUuid)
+    if (!currentUser) {
+      toast.error('You must be logged in to join a lobby')
+      return
+    }
+
+    if (!isServiceReady) {
+      toast.error('Service not ready, please try again')
+      return
+    }
+
     try {
-      await onJoinLobby(lobbyUuid)
-    } catch (error) {
-      console.error('Failed to join lobby:', error)
-      addNotification('Failed to join lobby')
+      setJoiningLobby(lobbyUuid)
+      await joinLobbyService(lobbyUuid, currentUser.uuid)
+      
+      // Navigate to the lobby page
+      router.visit(`/lobbies/${lobbyUuid}`)
+      toast.success('Successfully joined lobby!')
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to join lobby'
+      toast.error(errorMessage)
+    } finally {
       setJoiningLobby(null)
     }
   }
@@ -127,61 +82,57 @@ export default function LobbyList({ initialLobbies, currentUser, onCreateLobby, 
     }
   }
 
-  useEffect(() => {
-    // Subscribe to lobby list channel for general lobby events
-    subscribeToChannel('lobby.list')
-    
-    // Subscribe to individual lobby channels for detailed updates
-    lobbies.forEach(lobby => {
-      subscribeToChannel(`lobby.${lobby.uuid}`)
-    })
+  if (isLoading) {
+    return (
+      <div className="max-w-6xl mx-auto p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    )
+  }
 
-    // Add event listeners
-    addEventListener('lobby.created', handleSSEEvent)
-    addEventListener('lobby.updated', handleSSEEvent)
-    addEventListener('lobby.deleted', handleSSEEvent)
-    addEventListener('lobby.player.joined', handleSSEEvent)
-    addEventListener('lobby.player.left', handleSSEEvent)
-
-    return () => {
-      // Remove event listeners
-      removeEventListener('lobby.created', handleSSEEvent)
-      removeEventListener('lobby.updated', handleSSEEvent)
-      removeEventListener('lobby.deleted', handleSSEEvent)
-      removeEventListener('lobby.player.joined', handleSSEEvent)
-      removeEventListener('lobby.player.left', handleSSEEvent)
-    }
-  }, [lobbies])
+  if (error) {
+    return (
+      <div className="max-w-6xl mx-auto p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Error loading lobbies</h3>
+              <div className="mt-2 text-sm text-red-700">{error}</div>
+              <div className="mt-4">
+                <Button onClick={refresh} variant="outline" size="sm">
+                  Try Again
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-6xl mx-auto p-6">
       {/* Connection Status */}
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+          <div className={`w-3 h-3 rounded-full ${isServiceReady ? 'bg-green-500' : 'bg-red-500'}`} />
           <span className="text-sm text-gray-600">
-            {isConnected ? 'Connected' : 'Disconnected'}
+            {isServiceReady ? 'Connected' : 'Disconnected'}
           </span>
         </div>
         
-        <Button onClick={onCreateLobby} className="bg-blue-600 hover:bg-blue-700">
-          Create New Lobby
+        <Button onClick={refresh} className="bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
+          <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+          Refresh
         </Button>
       </div>
-
-      {/* Notifications */}
-      {notifications.length > 0 && (
-        <div className="mb-4 space-y-2">
-          {notifications.map((notification, index) => (
-            <div
-              key={index}
-              className="bg-blue-100 border border-blue-300 text-blue-700 px-4 py-2 rounded"
-            >
-              {notification}
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* Header */}
       <div className="mb-6">
@@ -190,113 +141,114 @@ export default function LobbyList({ initialLobbies, currentUser, onCreateLobby, 
       </div>
 
       {/* Lobbies Grid */}
-      {lobbies.length === 0 ? (
+      {displayLobbies.length === 0 ? (
         <div className="bg-white rounded-lg shadow-md p-12 text-center">
           <div className="text-gray-400 mb-4">
-            <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
+            <Users className="w-16 h-16 mx-auto" />
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">No lobbies available</h3>
           <p className="text-gray-600 mb-4">Be the first to create a lobby and start playing!</p>
-          <Button onClick={onCreateLobby} className="bg-blue-600 hover:bg-blue-700">
-            Create First Lobby
-          </Button>
+          {onCreateLobby && (
+            <Button onClick={onCreateLobby} className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="w-4 h-4 mr-2" />
+              Create First Lobby
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {lobbies.map((lobby) => (
-            <div key={lobby.uuid} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-              {/* Lobby Header */}
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">{lobby.name}</h3>
-                  <div className="flex items-center gap-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(lobby.status)}`}>
-                      {lobby.status}
-                    </span>
-                    {lobby.isPrivate && (
-                      <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded">
-                        Private
-                      </span>
-                    )}
-                    {lobby.createdBy === currentUser.uuid && (
-                      <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
-                        Owner
-                      </span>
-                    )}
+          {displayLobbies.map((lobby) => (
+            <Card key={lobby.uuid} className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-lg">{lobby.name}</CardTitle>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge className={getStatusColor(lobby.status)}>
+                        {lobby.status}
+                      </Badge>
+                      {lobby.isPrivate && (
+                        <Badge variant="secondary">
+                          <Lock className="w-3 h-3 mr-1" />
+                          Private
+                        </Badge>
+                      )}
+                      {currentUser?.uuid && lobby.createdBy === currentUser.uuid && (
+                        <Badge variant="outline">Owner</Badge>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="text-right">
+                    <div className="text-sm font-medium text-gray-900">
+                      <Users className="w-4 h-4 inline mr-1" />
+                      {lobby.currentPlayers}/{lobby.maxPlayers}
+                    </div>
                   </div>
                 </div>
-                
-                <div className="text-right">
-                  <div className="text-sm font-medium text-gray-900">
-                    {lobby.players?.length || 0}/{lobby.maxPlayers}
-                  </div>
-                  <div className="text-xs text-gray-500">players</div>
-                </div>
-              </div>
+              </CardHeader>
 
-              {/* Players Preview */}
-              <div className="mb-4">
-                <div className="flex -space-x-2 mb-2">
-                  {lobby.players.slice(0, 4).map((player, index) => (
-                    <div
-                      key={player.uuid}
-                      className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center border-2 border-white text-xs font-medium text-gray-700"
-                      title={player.nickName}
+              <CardContent className="pt-0">
+                {/* Players Preview */}
+                {lobby.players && lobby.players.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex -space-x-2 mb-2">
+                      {lobby.players.slice(0, 4).map((player) => (
+                        <div
+                          key={player.uuid}
+                          className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center border-2 border-white text-xs font-medium text-gray-700"
+                          title={player.nickName}
+                        >
+                          {player.nickName.charAt(0).toUpperCase()}
+                        </div>
+                      ))}
+                      {lobby.players.length > 4 && (
+                        <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center border-2 border-white text-xs text-gray-600">
+                          +{lobby.players.length - 4}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="text-xs text-gray-600">
+                      {lobby.players.slice(0, 2).map(p => p.nickName).join(', ')}
+                      {lobby.players.length > 2 && ` and ${lobby.players.length - 2} more`}
+                    </div>
+                  </div>
+                )}
+
+                {/* Lobby Info */}
+                <CardDescription className="mb-4">
+                  Created {new Date(lobby.createdAt).toLocaleDateString()} at{' '}
+                  {new Date(lobby.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </CardDescription>
+
+                {/* Actions */}
+                <div className="flex gap-2">
+                  {lobby.hasAvailableSlots ? (
+                    <Button
+                      onClick={() => handleJoinLobby(lobby.uuid)}
+                      disabled={joiningLobby === lobby.uuid || !currentUser}
+                      className="flex-1 bg-green-600 hover:bg-green-700"
                     >
-                      {player.nickName.charAt(0).toUpperCase()}
-                    </div>
-                  ))}
-                  {lobby.players.length > 4 && (
-                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center border-2 border-white text-xs text-gray-600">
-                      +{lobby.players.length - 4}
-                    </div>
+                      {joiningLobby === lobby.uuid ? 'Joining...' : 'Join Lobby'}
+                    </Button>
+                  ) : (
+                    <Button disabled className="flex-1">
+                      Lobby Full
+                    </Button>
                   )}
-                </div>
-                
-                {lobby.players.length > 0 && (
-                  <div className="text-xs text-gray-600">
-                    {lobby.players.slice(0, 2).map(p => p.nickName).join(', ')}
-                    {lobby.players.length > 2 && ` and ${lobby.players.length - 2} more`}
-                  </div>
-                )}
-              </div>
-
-              {/* Lobby Info */}
-              <div className="text-xs text-gray-500 mb-4">
-                Created {new Date(lobby.createdAt).toLocaleDateString()} at{' '}
-                {new Date(lobby.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-2">
-                {(lobby.players?.length || 0) < lobby.maxPlayers ? (
+                  
                   <Button
-                    onClick={() => handleJoinLobby(lobby.uuid)}
-                    disabled={joiningLobby === lobby.uuid}
-                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    variant="outline"
+                    onClick={() => router.visit(`/lobbies/${lobby.uuid}`)}
+                    className="px-3"
+                    title="View lobby details"
                   >
-                    {joiningLobby === lobby.uuid ? 'Joining...' : 'Join Lobby'}
+                    <Play className="w-4 h-4" />
                   </Button>
-                ) : (
-                  <Button disabled className="flex-1 bg-gray-400 cursor-not-allowed">
-                    Lobby Full
-                  </Button>
-                )}
-                
-                <Button
-                  variant="outline"
-                  className="px-3"
-                  title="View lobby details"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                </Button>
-              </div>
-            </div>
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}

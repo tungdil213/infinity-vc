@@ -45,13 +45,37 @@ export class PlayerLeftLobbyEvent implements DomainEvent {
   ) {}
 }
 
+export class LobbyUpdatedEvent implements DomainEvent {
+  readonly eventType: string = 'LobbyUpdated'
+  readonly timestamp: Date = new Date()
+
+  constructor(
+    public readonly lobbyUuid: string,
+    public readonly lobbyName: string,
+    public readonly playerCount: number,
+    public readonly maxPlayers: number,
+    public readonly lobbyStatus: string,
+    public readonly players: PlayerInterface[]
+  ) {}
+}
+
+export class LobbyDeletedEvent implements DomainEvent {
+  readonly eventType: string = 'LobbyDeleted'
+  readonly timestamp: Date = new Date()
+
+  constructor(
+    public readonly lobbyUuid: string,
+    public readonly reason: string
+  ) {}
+}
+
 export class GameStartedEvent implements DomainEvent {
   readonly eventType: string = 'GameStarted'
   readonly timestamp: Date = new Date()
 
   constructor(
-    public readonly lobbyUuid: string,
     public readonly gameUuid: string,
+    public readonly lobbyUuid: string,
     public readonly players: PlayerInterface[]
   ) {}
 }

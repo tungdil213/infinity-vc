@@ -1,299 +1,243 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Button } from '@tyfo.dev/ui/primitives/button'
-import { useSSEContext, SSEEvent } from '../contexts/SSEContext'
+import { Badge } from '@tyfo.dev/ui/primitives/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@tyfo.dev/ui/primitives/card'
+import { Users, Crown, Play, LogOut } from 'lucide-react'
+import { router } from '@inertiajs/react'
+import { useLobbyDetail } from '../hooks/useLobbyDetail'
+import { toast } from 'sonner'
 
 interface Player {
   uuid: string
   nickName: string
 }
 
-interface Lobby {
-  uuid: string
-  name: string
-  status: string
-  currentPlayers: number
-  maxPlayers: number
-  isPrivate: boolean
-  hasAvailableSlots: boolean
-  canStart: boolean
-  createdBy: string
-  players: Player[]
-  availableActions: string[]
-  createdAt: string
-}
-
 interface GameLobbyProps {
-  lobby: Lobby
+  lobbyUuid: string
   currentUser: {
     uuid: string
     nickName: string
   }
-  onLeaveLobby: () => void
-  onStartGame: () => void
 }
 
-export default function GameLobby({ lobby: initialLobby, currentUser, onLeaveLobby, onStartGame }: GameLobbyProps) {
-  const [lobby, setLobby] = useState<Lobby>(initialLobby)
-  const [notifications, setNotifications] = useState<string[]>([])
+export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
+  const { lobby, loading, error, leaveLobby, startGame, isServiceReady } = useLobbyDetail(lobbyUuid)
   const [isStartingGame, setIsStartingGame] = useState(false)
-
-  const { isConnected, subscribeToChannel, unsubscribeFromChannel, addEventListener, removeEventListener } = useSSEContext()
-
-  const addNotification = (message: string) => {
-    setNotifications(prev => [...prev, message])
-    setTimeout(() => {
-      setNotifications(prev => prev.slice(1))
-    }, 5000)
-  }
-
-  const handleSSEEvent = (event: SSEEvent) => {
-    console.log('Received SSE event:', event)
-
-    switch (event.type) {
-      case 'lobby.player.joined':
-        if (event.data.lobbyUuid === lobby.uuid) {
-          setLobby(prev => ({
-            ...prev,
-            players: [...prev.players, event.data.player],
-            currentPlayers: event.data.playerCount,
-            status: event.data.lobbyStatus,
-            hasAvailableSlots: event.data.playerCount < prev.maxPlayers,
-            canStart: event.data.playerCount >= 2,
-          }))
-          
-          if (event.data.player.uuid !== currentUser.uuid) {
-            addNotification(`${event.data.player.nickName} joined the lobby`)
-          }
-        }
-        break
-
-      case 'lobby.player.left':
-        if (event.data.lobbyUuid === lobby.uuid) {
-          setLobby(prev => ({
-            ...prev,
-            players: prev.players.filter(p => p.uuid !== event.data.player.uuid),
-            currentPlayers: event.data.playerCount,
-            status: event.data.lobbyStatus,
-            hasAvailableSlots: event.data.playerCount < prev.maxPlayers,
-            canStart: event.data.playerCount >= 2,
-          }))
-          
-          if (event.data.player.uuid !== currentUser.uuid) {
-            addNotification(`${event.data.player.nickName} left the lobby`)
-          }
-        }
-        break
-
-      case 'lobby.game.started':
-        if (event.data.lobbyUuid === lobby.uuid) {
-          setIsStartingGame(true)
-          addNotification('Game is starting!')
-          
-          // Redirect to game page after a short delay
-          setTimeout(() => {
-            window.location.href = `/game/${event.data.gameUuid}`
-          }, 2000)
-        }
-        break
-
-      case 'user.notification':
-        if (event.data.type === 'lobby_joined' || event.data.type === 'lobby_left') {
-          addNotification(event.data.message)
-        }
-        break
-
-      default:
-        console.log('Unhandled SSE event type:', event.type)
-    }
-  }
+  const [isLeavingLobby, setIsLeavingLobby] = useState(false)
 
   const handleStartGame = async () => {
-    if (!lobby.canStart) return
+    if (!lobby?.canStart || !isServiceReady) return
     
     setIsStartingGame(true)
     try {
-      await onStartGame()
+      const result = await startGame(currentUser.uuid)
+      if (result.gameUuid) {
+        toast.success('Game is starting!')
+        // Redirect to game page after a short delay
+        setTimeout(() => {
+          router.visit(`/game/${result.gameUuid}`)
+        }, 2000)
+      }
     } catch (error) {
       console.error('Failed to start game:', error)
-      addNotification('Failed to start game')
+      toast.error('Failed to start game')
       setIsStartingGame(false)
     }
   }
 
   const handleLeaveLobby = async () => {
+    if (!isServiceReady) return
+    
+    setIsLeavingLobby(true)
     try {
-      await onLeaveLobby()
+      await leaveLobby(currentUser.uuid)
+      toast.success('Left lobby successfully')
+      router.visit('/lobbies')
     } catch (error) {
       console.error('Failed to leave lobby:', error)
-      addNotification('Failed to leave lobby')
+      toast.error('Failed to leave lobby')
+    } finally {
+      setIsLeavingLobby(false)
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !lobby) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Error loading lobby</h3>
+              <div className="mt-2 text-sm text-red-700">{error || 'Lobby not found'}</div>
+              <div className="mt-4">
+                <Button onClick={() => router.visit('/lobbies')} variant="outline" size="sm">
+                  Back to Lobbies
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   const isCreator = currentUser.uuid === lobby.createdBy
   const canStartGame = isCreator && lobby.canStart && !isStartingGame
 
-  useEffect(() => {
-    // Subscribe to lobby channel
-    subscribeToChannel(`lobby.${lobby.uuid}`)
-    
-    // Add event listeners
-    addEventListener('lobby.player.joined', handleSSEEvent)
-    addEventListener('lobby.player.left', handleSSEEvent)
-    addEventListener('lobby.game.started', handleSSEEvent)
-    addEventListener('user.notification', handleSSEEvent)
-
-    return () => {
-      // Cleanup subscription and event listeners
-      unsubscribeFromChannel(`lobby.${lobby.uuid}`)
-      removeEventListener('lobby.player.joined', handleSSEEvent)
-      removeEventListener('lobby.player.left', handleSSEEvent)
-      removeEventListener('lobby.game.started', handleSSEEvent)
-      removeEventListener('user.notification', handleSSEEvent)
-    }
-  }, [lobby.uuid])
-
   return (
     <div className="max-w-4xl mx-auto p-6">
       {/* Connection Status */}
       <div className="mb-4 flex items-center gap-2">
-        <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+        <div className={`w-3 h-3 rounded-full ${isServiceReady ? 'bg-green-500' : 'bg-red-500'}`} />
         <span className="text-sm text-gray-600">
-          {isConnected ? 'Connected' : 'Disconnected'}
+          {isServiceReady ? 'Connected' : 'Disconnected'}
         </span>
       </div>
 
-      {/* Notifications */}
-      {notifications.length > 0 && (
-        <div className="mb-4 space-y-2">
-          {notifications.map((notification, index) => (
-            <div
-              key={index}
-              className="bg-blue-100 border border-blue-300 text-blue-700 px-4 py-2 rounded"
-            >
-              {notification}
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* Lobby Header */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{lobby.name}</h1>
-            <div className="flex items-center gap-4 mt-2">
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                lobby.status === 'READY' ? 'bg-green-100 text-green-800' :
-                lobby.status === 'FULL' ? 'bg-yellow-100 text-yellow-800' :
-                lobby.status === 'WAITING' ? 'bg-blue-100 text-blue-800' :
-                'bg-gray-100 text-gray-800'
-              }`}>
-                {lobby.status}
-              </span>
-              <span className="text-sm text-gray-600">
-                {lobby.currentPlayers}/{lobby.maxPlayers} players
-              </span>
-              {lobby.isPrivate && (
-                <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded">
-                  Private
+      <Card className="mb-6">
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-2xl">{lobby.name}</CardTitle>
+              <div className="flex items-center gap-4 mt-2">
+                <Badge className={
+                  lobby.status === 'READY' ? 'bg-green-100 text-green-800' :
+                  lobby.status === 'FULL' ? 'bg-yellow-100 text-yellow-800' :
+                  lobby.status === 'WAITING' ? 'bg-blue-100 text-blue-800' :
+                  'bg-gray-100 text-gray-800'
+                }>
+                  {lobby.status}
+                </Badge>
+                <span className="text-sm text-gray-600 flex items-center gap-1">
+                  <Users className="w-4 h-4" />
+                  {lobby.currentPlayers}/{lobby.maxPlayers} players
                 </span>
-              )}
-            </div>
-          </div>
-          
-          <div className="flex gap-2">
-            {canStartGame && (
-              <Button
-                onClick={handleStartGame}
-                disabled={isStartingGame}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                {isStartingGame ? 'Starting...' : 'Start Game'}
-              </Button>
-            )}
-            
-            <Button
-              onClick={handleLeaveLobby}
-              variant="outline"
-              className="border-red-300 text-red-600 hover:bg-red-50"
-            >
-              Leave Lobby
-            </Button>
-          </div>
-        </div>
-
-        {/* Game Starting Overlay */}
-        {isStartingGame && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-            <div className="flex items-center justify-center">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mr-3"></div>
-              <span className="text-green-800 font-medium">Game is starting...</span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Players List */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Players</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {lobby.players.map((player) => (
-            <div
-              key={player.uuid}
-              className={`p-4 rounded-lg border ${
-                player.uuid === currentUser.uuid
-                  ? 'border-blue-300 bg-blue-50'
-                  : 'border-gray-200 bg-gray-50'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-medium text-gray-900">{player.nickName}</h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    {player.uuid === lobby.createdBy && (
-                      <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">
-                        Creator
-                      </span>
-                    )}
-                    {player.uuid === currentUser.uuid && (
-                      <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
-                        You
-                      </span>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-gray-700">
-                    {player.nickName.charAt(0).toUpperCase()}
-                  </span>
-                </div>
+                {lobby.isPrivate && (
+                  <Badge variant="secondary">Private</Badge>
+                )}
               </div>
             </div>
-          ))}
-          
-          {/* Empty Slots */}
-          {Array.from({ length: lobby.maxPlayers - lobby.currentPlayers }).map((_, index) => (
-            <div
-              key={`empty-${index}`}
-              className="p-4 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center"
-            >
-              <span className="text-gray-500 text-sm">Waiting for player...</span>
+            
+            <div className="flex gap-2">
+              {canStartGame && (
+                <Button
+                  onClick={handleStartGame}
+                  disabled={isStartingGame}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  {isStartingGame ? 'Starting...' : 'Start Game'}
+                </Button>
+              )}
+              
+              <Button
+                onClick={handleLeaveLobby}
+                disabled={isLeavingLobby}
+                variant="outline"
+                className="border-red-300 text-red-600 hover:bg-red-50"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                {isLeavingLobby ? 'Leaving...' : 'Leave Lobby'}
+              </Button>
             </div>
-          ))}
-        </div>
-
-        {/* Lobby Info */}
-        <div className="mt-6 pt-4 border-t border-gray-200">
-          <div className="flex items-center justify-between text-sm text-gray-600">
-            <span>Created: {new Date(lobby.createdAt).toLocaleString()}</span>
-            <span>
-              {lobby.hasAvailableSlots ? 'Open for new players' : 'Lobby is full'}
-            </span>
           </div>
-        </div>
-      </div>
+
+          {/* Game Starting Overlay */}
+          {isStartingGame && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mr-3"></div>
+                <span className="text-green-800 font-medium">Game is starting...</span>
+              </div>
+            </div>
+          )}
+        </CardHeader>
+      </Card>
+
+      {/* Players List */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="w-5 h-5" />
+            Players
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {lobby.players?.map((player) => (
+              <div
+                key={player.uuid}
+                className={`p-4 rounded-lg border ${
+                  player.uuid === currentUser.uuid
+                    ? 'border-blue-300 bg-blue-50'
+                    : 'border-gray-200 bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-medium text-gray-900">{player.nickName}</h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      {player.uuid === lobby.createdBy && (
+                        <Badge variant="outline" className="text-xs">
+                          <Crown className="w-3 h-3 mr-1" />
+                          Creator
+                        </Badge>
+                      )}
+                      {player.uuid === currentUser.uuid && (
+                        <Badge className="text-xs bg-blue-100 text-blue-800">
+                          You
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-medium text-gray-700">
+                      {player.nickName.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            {/* Empty Slots */}
+            {Array.from({ length: lobby.maxPlayers - lobby.currentPlayers }).map((_, index) => (
+              <div
+                key={`empty-${index}`}
+                className="p-4 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center"
+              >
+                <span className="text-gray-500 text-sm">Waiting for player...</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Lobby Info */}
+          <div className="mt-6 pt-4 border-t border-gray-200">
+            <div className="flex items-center justify-between text-sm text-gray-600">
+              <span>Created: {new Date(lobby.createdAt).toLocaleString()}</span>
+              <span>
+                {lobby.hasAvailableSlots ? 'Open for new players' : 'Lobby is full'}
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

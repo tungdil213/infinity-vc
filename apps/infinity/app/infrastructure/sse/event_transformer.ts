@@ -1,6 +1,13 @@
 import { EventTransformer, SSEEvent, ChannelPatterns, SSEEventTypes } from './types.js'
 import { DomainEvent } from '../../domain/events/domain_event.js'
-import { PlayerJoinedLobbyEvent, PlayerLeftLobbyEvent, GameStartedEvent } from '../../domain/events/lobby_events.js'
+import {
+  PlayerJoinedLobbyEvent,
+  PlayerLeftLobbyEvent,
+  GameStartedEvent,
+  LobbyCreatedEvent,
+  LobbyUpdatedEvent,
+  LobbyDeletedEvent,
+} from '../../domain/events/lobby_events.js'
 import crypto from 'node:crypto'
 
 export class LobbyEventTransformer implements EventTransformer {
@@ -11,11 +18,11 @@ export class LobbyEventTransformer implements EventTransformer {
       case 'PlayerJoinedLobby':
         events.push(...this.transformPlayerJoinedLobby(domainEvent as PlayerJoinedLobbyEvent))
         break
-      
+
       case 'PlayerLeftLobby':
         events.push(...this.transformPlayerLeftLobby(domainEvent as PlayerLeftLobbyEvent))
         break
-      
+
       case 'GameStarted':
         events.push(...this.transformGameStarted(domainEvent as GameStartedEvent))
         break
@@ -29,12 +36,15 @@ export class LobbyEventTransformer implements EventTransformer {
       case 'PlayerJoinedLobby':
       case 'PlayerLeftLobby':
       case 'GameStarted':
-        const lobbyEvent = domainEvent as PlayerJoinedLobbyEvent | PlayerLeftLobbyEvent | GameStartedEvent
+        const lobbyEvent = domainEvent as
+          | PlayerJoinedLobbyEvent
+          | PlayerLeftLobbyEvent
+          | GameStartedEvent
         return [
           ChannelPatterns.lobby(lobbyEvent.lobbyUuid),
-          ChannelPatterns.user(lobbyEvent.player?.uuid || (lobbyEvent as any).players?.[0]?.uuid)
+          ChannelPatterns.user(lobbyEvent.player?.uuid || (lobbyEvent as any).players?.[0]?.uuid),
         ].filter(Boolean)
-      
+
       default:
         return []
     }
@@ -167,7 +177,7 @@ export class CompositeEventTransformer implements EventTransformer {
   }
 
   canTransform(domainEvent: DomainEvent): boolean {
-    return this.transformers.some(transformer => transformer.canTransform(domainEvent))
+    return this.transformers.some((transformer) => transformer.canTransform(domainEvent))
   }
 }
 
