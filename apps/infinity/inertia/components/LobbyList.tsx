@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { Button } from '@tyfo.dev/ui/primitives/button'
-import { useSSE, SSEEvent } from '../hooks/useSSE'
+import { Card, CardContent, CardHeader, CardTitle } from '@tyfo.dev/ui/primitives/card'
+import { Badge } from '@tyfo.dev/ui/primitives/badge'
+import { Users, Plus, Lock, Globe, Play, Crown } from 'lucide-react'
+import { useSSEContext, SSEEvent } from '../contexts/SSEContext'
 
 interface Player {
   uuid: string
@@ -36,19 +39,7 @@ export default function LobbyList({ initialLobbies, currentUser, onCreateLobby, 
   const [lobbies, setLobbies] = useState<Lobby[]>(initialLobbies)
   const [notifications, setNotifications] = useState<string[]>([])
   const [joiningLobby, setJoiningLobby] = useState<string | null>(null)
-
-  const { isConnected, subscribeToChannel } = useSSE({
-    onMessage: (event: SSEEvent) => {
-      handleSSEEvent(event)
-    },
-    onError: (error) => {
-      console.error('SSE Error:', error)
-      addNotification('Connection error - trying to reconnect...')
-    },
-    onOpen: () => {
-      console.log('SSE Connected to lobby list')
-    },
-  })
+  const { subscribeToChannel, addEventListener, removeEventListener, isConnected } = useSSEContext()
 
   const addNotification = (message: string) => {
     setNotifications(prev => [...prev, message])
@@ -137,20 +128,30 @@ export default function LobbyList({ initialLobbies, currentUser, onCreateLobby, 
   }
 
   useEffect(() => {
-    // Subscribe to global lobby updates
-    const subscribeGlobal = async () => {
-      try {
-        await subscribeToChannel('global')
-        console.log('Subscribed to global channel for lobby updates')
-      } catch (error) {
-        console.error('Failed to subscribe to global channel:', error)
-      }
-    }
+    // Subscribe to lobby list channel for general lobby events
+    subscribeToChannel('lobby.list')
+    
+    // Subscribe to individual lobby channels for detailed updates
+    lobbies.forEach(lobby => {
+      subscribeToChannel(`lobby.${lobby.uuid}`)
+    })
 
-    if (isConnected) {
-      subscribeGlobal()
+    // Add event listeners
+    addEventListener('lobby.created', handleSSEEvent)
+    addEventListener('lobby.updated', handleSSEEvent)
+    addEventListener('lobby.deleted', handleSSEEvent)
+    addEventListener('lobby.player.joined', handleSSEEvent)
+    addEventListener('lobby.player.left', handleSSEEvent)
+
+    return () => {
+      // Remove event listeners
+      removeEventListener('lobby.created', handleSSEEvent)
+      removeEventListener('lobby.updated', handleSSEEvent)
+      removeEventListener('lobby.deleted', handleSSEEvent)
+      removeEventListener('lobby.player.joined', handleSSEEvent)
+      removeEventListener('lobby.player.left', handleSSEEvent)
     }
-  }, [isConnected])
+  }, [lobbies])
 
   return (
     <div className="max-w-6xl mx-auto p-6">

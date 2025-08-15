@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Button } from '@tyfo.dev/ui/primitives/button'
-import { useSSE, SSEEvent } from '../hooks/useSSE'
+import { useSSEContext, SSEEvent } from '../contexts/SSEContext'
 
 interface Player {
   uuid: string
@@ -47,18 +47,7 @@ export default function EnhancedGameLobby({
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [copiedInvite, setCopiedInvite] = useState(false)
 
-  const { isConnected, subscribeToChannel, unsubscribeFromChannel } = useSSE({
-    onMessage: (event: SSEEvent) => {
-      handleSSEEvent(event)
-    },
-    onError: (error) => {
-      console.error('SSE Error:', error)
-      addNotification('Connection error - trying to reconnect...')
-    },
-    onOpen: () => {
-      console.log('SSE Connected')
-    },
-  })
+  const { isConnected, subscribeToChannel, unsubscribeFromChannel, addEventListener, removeEventListener } = useSSEContext()
 
   const addNotification = (message: string) => {
     setNotifications(prev => [...prev, message])
@@ -136,7 +125,6 @@ export default function EnhancedGameLobby({
 
   const handleLeaveLobby = async () => {
     try {
-      await unsubscribeFromChannel(`lobby:${lobby.uuid}`)
       await onLeaveLobby()
     } catch (error) {
       console.error('Failed to leave lobby:', error)
@@ -161,23 +149,22 @@ export default function EnhancedGameLobby({
   const canStartGame = isOwner && lobby.canStart && !isStartingGame
 
   useEffect(() => {
-    const subscribeLobby = async () => {
-      try {
-        await subscribeToChannel(`lobby:${lobby.uuid}`)
-        console.log(`Subscribed to lobby:${lobby.uuid}`)
-      } catch (error) {
-        console.error('Failed to subscribe to lobby channel:', error)
-      }
-    }
-
-    if (isConnected) {
-      subscribeLobby()
-    }
+    // Subscribe to lobby channel
+    subscribeToChannel(`lobby.${lobby.uuid}`)
+    
+    // Add event listeners
+    addEventListener('lobby.player.joined', handleSSEEvent)
+    addEventListener('lobby.player.left', handleSSEEvent)
+    addEventListener('lobby.game.started', handleSSEEvent)
 
     return () => {
-      unsubscribeFromChannel(`lobby:${lobby.uuid}`).catch(console.error)
+      // Cleanup subscription and event listeners
+      unsubscribeFromChannel(`lobby.${lobby.uuid}`)
+      removeEventListener('lobby.player.joined', handleSSEEvent)
+      removeEventListener('lobby.player.left', handleSSEEvent)
+      removeEventListener('lobby.game.started', handleSSEEvent)
     }
-  }, [isConnected, lobby.uuid])
+  }, [lobby.uuid])
 
   return (
     <div className="max-w-6xl mx-auto p-6">

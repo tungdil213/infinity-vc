@@ -1,10 +1,10 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import CreateLobbyUseCase from '../application/use_cases/create_lobby_use_case.js'
-import JoinLobbyUseCase from '../application/use_cases/join_lobby_use_case.js'
-import LeaveLobbyUseCase from '../application/use_cases/leave_lobby_use_case.js'
-import ListLobbiesUseCase from '../application/use_cases/list_lobbies_use_case.js'
-import StartGameUseCase from '../application/use_cases/start_game_use_case.js'
-import { LobbyRepository } from '../application/repositories/lobby_repository.js'
+import { CreateLobbyUseCase } from '../application/use_cases/create_lobby_use_case.js'
+import { JoinLobbyUseCase } from '../application/use_cases/join_lobby_use_case.js'
+import { LeaveLobbyUseCase } from '../application/use_cases/leave_lobby_use_case.js'
+import { ListLobbiesUseCase } from '../application/use_cases/list_lobbies_use_case.js'
+import { StartGameUseCase } from '../application/use_cases/start_game_use_case.js'
+import { HybridLobbyService } from '../application/services/hybrid_lobby_service.js'
 
 export default class LobbyController {
   constructor(
@@ -13,7 +13,7 @@ export default class LobbyController {
     private leaveLobbyUseCase: LeaveLobbyUseCase,
     private listLobbiesUseCase: ListLobbiesUseCase,
     private startGameUseCase: StartGameUseCase,
-    private lobbyRepository: LobbyRepository
+    private hybridLobbyService: HybridLobbyService
   ) {}
 
   /**
@@ -84,7 +84,7 @@ export default class LobbyController {
    */
   async show({ params, response }: HttpContext) {
     try {
-      const lobby = await this.lobbyRepository.findByUuidOrFail(params.lobbyId)
+      const lobby = await this.hybridLobbyService.findByUuidOrFail(params.lobbyId)
 
       return response.status(200).json({
         success: true,

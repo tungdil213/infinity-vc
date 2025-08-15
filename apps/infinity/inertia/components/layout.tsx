@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { Toaster } from '@tyfo.dev/ui/primitives/sonner'
 import { LobbyStatusSidebar } from './LobbyStatusSidebar'
 import { AutoLeaveLobby } from './AutoLeaveLobby'
+import { SSEProvider } from '../contexts/SSEContext'
 
 // Flash messages component using Sonner
 function FlashMessages() {
@@ -38,12 +39,12 @@ export default function Layout({ children }: LayoutProps) {
   } | null
 
   return (
-    <>
+    <SSEProvider>
       {children}
       <FlashMessages />
       <LobbyStatusSidebar currentLobby={currentLobby} />
       <AutoLeaveLobby currentLobby={currentLobby} enabled={true} />
       <Toaster />
-    </>
+    </SSEProvider>
   )
 }

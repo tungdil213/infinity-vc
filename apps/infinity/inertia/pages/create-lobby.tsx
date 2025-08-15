@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Head, Link, router } from '@inertiajs/react'
 import { Button } from '@tyfo.dev/ui/primitives/button'
+import Layout from '../components/layout'
 
 interface CreateLobbyProps {
   user: {
@@ -71,7 +72,7 @@ export default function CreateLobby({ user, errors = {}, flash = {} }: CreateLob
   }
 
   return (
-    <>
+    <Layout>
       <Head title="Create Lobby - Infinity Game" />
       
       <div className="min-h-screen bg-gray-50">
@@ -316,6 +317,6 @@ export default function CreateLobby({ user, errors = {}, flash = {} }: CreateLob
           </div>
         </div>
       </div>
-    </>
+    </Layout>
   )
 }

@@ -42,7 +42,7 @@ export default function Login({ errors = {}, flash = {} }: LoginProps) {
   }
 
   return (
-    <>
+    <Layout>
       <Head title="Login - Infinity Game" />
       
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -175,6 +175,6 @@ export default function Login({ errors = {}, flash = {} }: LoginProps) {
           </div>
         </div>
       </div>
-    </>
+    </Layout>
   )
 }

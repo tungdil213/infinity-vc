@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Head, Link, router } from '@inertiajs/react'
 import { Button } from '@tyfo.dev/ui/primitives/button'
+import Layout from '../../components/layout'
 
 interface RegisterProps {
   errors?: {
@@ -45,7 +46,7 @@ export default function Register({ errors = {}, flash = {} }: RegisterProps) {
   }
 
   return (
-    <>
+    <Layout>
       <Head title="Sign Up - Infinity Game" />
       
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -233,6 +234,6 @@ export default function Register({ errors = {}, flash = {} }: RegisterProps) {
           </div>
         </div>
       </div>
-    </>
+    </Layout>
   )
 }

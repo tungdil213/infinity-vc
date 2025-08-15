@@ -17,11 +17,24 @@ export default class EnhancedAuthController {
   /**
    * Show login form
    */
-  async showLogin({ inertia, request }: HttpContext) {
+  async showLogin({ inertia, request, auth }: HttpContext) {
     const redirect = request.input('redirect', '/lobbies')
+    const user = auth.user
+
+    // Check if user is currently in a lobby
+    const currentLobby = user ? await this.userRepository.findCurrentLobby(user.userUuid) : null
 
     return inertia.render('auth/login', {
       redirect,
+      currentLobby: currentLobby
+        ? {
+            uuid: currentLobby.uuid,
+            name: currentLobby.name,
+            status: currentLobby.status,
+            currentPlayers: currentLobby.players?.length || 0,
+            maxPlayers: currentLobby.maxPlayers,
+          }
+        : null,
     })
   }
 

@@ -1,10 +1,11 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, router } from '@inertiajs/react'
 import { Button } from '@tyfo.dev/ui/primitives/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@tyfo.dev/ui/primitives/card'
 import { Badge } from '@tyfo.dev/ui/primitives/badge'
 import { Users, LogOut, Play } from 'lucide-react'
 import { toast } from 'sonner'
+import { useSSEContext, SSEEvent } from '../contexts/SSEContext'
 
 interface LobbyStatusSidebarProps {
   currentLobby: {
@@ -16,10 +17,73 @@ interface LobbyStatusSidebarProps {
   } | null
 }
 
-export function LobbyStatusSidebar({ currentLobby }: LobbyStatusSidebarProps) {
+export function LobbyStatusSidebar({ currentLobby: initialLobby }: LobbyStatusSidebarProps) {
+  const [currentLobby, setCurrentLobby] = useState(initialLobby)
+  const { subscribeToChannel, unsubscribeFromChannel, addEventListener, removeEventListener } = useSSEContext()
+
   if (!currentLobby) {
     return null
   }
+
+  const handleSSEEvent = (event: SSEEvent) => {
+    console.log('Received SSE event in LobbyStatusSidebar:', event)
+
+    switch (event.type) {
+      case 'lobby.player.joined':
+      case 'lobby.player.left':
+        if (event.data.lobbyUuid === currentLobby?.uuid) {
+          setCurrentLobby(prev => prev ? {
+            ...prev,
+            currentPlayers: event.data.playerCount,
+            status: event.data.lobbyStatus,
+          } : null)
+        }
+        break
+
+      case 'lobby.updated':
+        if (event.data.lobby.uuid === currentLobby?.uuid) {
+          setCurrentLobby(prev => prev ? {
+            ...prev,
+            name: event.data.lobby.name,
+            status: event.data.lobby.status,
+            currentPlayers: event.data.lobby.currentPlayers,
+            maxPlayers: event.data.lobby.maxPlayers,
+          } : null)
+        }
+        break
+
+      case 'lobby.deleted':
+        if (event.data.lobbyUuid === currentLobby?.uuid) {
+          setCurrentLobby(null)
+        }
+        break
+    }
+  }
+
+  useEffect(() => {
+    if (currentLobby) {
+      // Subscribe to lobby channel
+      subscribeToChannel(`lobby.${currentLobby.uuid}`)
+      
+      // Add event listeners
+      addEventListener('lobby.player.joined', handleSSEEvent)
+      addEventListener('lobby.player.left', handleSSEEvent)
+      addEventListener('lobby.updated', handleSSEEvent)
+      addEventListener('lobby.deleted', handleSSEEvent)
+    }
+
+    return () => {
+      if (currentLobby) {
+        unsubscribeFromChannel(`lobby.${currentLobby.uuid}`)
+        
+        // Remove event listeners
+        removeEventListener('lobby.player.joined', handleSSEEvent)
+        removeEventListener('lobby.player.left', handleSSEEvent)
+        removeEventListener('lobby.updated', handleSSEEvent)
+        removeEventListener('lobby.deleted', handleSSEEvent)
+      }
+    }
+  }, [currentLobby?.uuid])
 
   const handleLeaveLobby = async () => {
     try {

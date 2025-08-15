@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Head } from '@inertiajs/react'
 import { Button } from '@tyfo.dev/ui/primitives/button'
-import { useSSE, SSEEvent } from '../hooks/useSSE'
+import { useSSEContext, SSEEvent } from '../contexts/SSEContext'
 
 interface Player {
   uuid: string
@@ -37,18 +37,7 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
   const [isMyTurn, setIsMyTurn] = useState(false)
   const [gameActions, setGameActions] = useState<string[]>([])
 
-  const { isConnected, subscribeToChannel, unsubscribeFromChannel } = useSSE({
-    onMessage: (event: SSEEvent) => {
-      handleSSEEvent(event)
-    },
-    onError: (error) => {
-      console.error('Game SSE Error:', error)
-      addNotification('Connection error - trying to reconnect...')
-    },
-    onOpen: () => {
-      console.log('SSE Connected to game')
-    },
-  })
+  const { isConnected, subscribeToChannel, unsubscribeFromChannel, addEventListener, removeEventListener } = useSSEContext()
 
   const addNotification = (message: string) => {
     setNotifications(prev => [...prev, message])
@@ -192,7 +181,6 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
 
   const handleLeaveGame = async () => {
     try {
-      await unsubscribeFromChannel(`game:${game.uuid}`)
       window.location.href = '/lobbies'
     } catch (error) {
       console.error('Failed to leave game:', error)
@@ -216,28 +204,31 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
   }
 
   useEffect(() => {
-    // Subscribe to game channel when component mounts
-    const subscribeGame = async () => {
-      try {
-        await subscribeToChannel(`game:${game.uuid}`)
-        console.log(`Subscribed to game:${game.uuid}`)
-      } catch (error) {
-        console.error('Failed to subscribe to game channel:', error)
-      }
-    }
-
-    if (isConnected) {
-      subscribeGame()
-    }
+    // Subscribe to game channel
+    subscribeToChannel(`game.${game.uuid}`)
+    
+    // Add event listeners
+    addEventListener('game.state.updated', handleSSEEvent)
+    addEventListener('game.turn.changed', handleSSEEvent)
+    addEventListener('game.player.action', handleSSEEvent)
+    addEventListener('game.finished', handleSSEEvent)
+    addEventListener('game.player.disconnected', handleSSEEvent)
+    addEventListener('game.player.reconnected', handleSSEEvent)
 
     // Set initial turn state
     setIsMyTurn(game.currentTurn === currentUser.uuid)
 
     return () => {
-      // Cleanup subscription when component unmounts
-      unsubscribeFromChannel(`game:${game.uuid}`).catch(console.error)
+      // Cleanup subscription and event listeners
+      unsubscribeFromChannel(`game.${game.uuid}`)
+      removeEventListener('game.state.updated', handleSSEEvent)
+      removeEventListener('game.turn.changed', handleSSEEvent)
+      removeEventListener('game.player.action', handleSSEEvent)
+      removeEventListener('game.finished', handleSSEEvent)
+      removeEventListener('game.player.disconnected', handleSSEEvent)
+      removeEventListener('game.player.reconnected', handleSSEEvent)
     }
-  }, [isConnected, game.uuid])
+  }, [game.uuid])
 
   return (
     <>

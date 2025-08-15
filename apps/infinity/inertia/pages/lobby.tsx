@@ -1,6 +1,7 @@
 import React from 'react'
 import { Head, router } from '@inertiajs/react'
 import GameLobby from '../components/GameLobby'
+import Layout from '../components/layout'
 
 interface Player {
   uuid: string
@@ -40,7 +41,7 @@ export default function Lobby({ lobby, user }: LobbyProps) {
   }
 
   return (
-    <>
+    <Layout>
       <Head title={`Lobby - ${lobby.name}`} />
       
       <div className="min-h-screen bg-gray-50">
@@ -51,6 +52,6 @@ export default function Lobby({ lobby, user }: LobbyProps) {
           onStartGame={handleStartGame}
         />
       </div>
-    </>
+    </Layout>
   )
 }

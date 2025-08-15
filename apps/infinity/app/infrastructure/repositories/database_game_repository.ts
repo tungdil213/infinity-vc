@@ -1,5 +1,5 @@
 import { inject } from '@adonisjs/core'
-import { GameRepository } from '../../domain/repositories/game_repository.js'
+import { GameRepository } from '../../application/repositories/game_repository.js'
 import Game from '../../domain/entities/game.js'
 import { GameStatus } from '../../domain/value_objects/game_status.js'
 import GameModel from '../../models/game_model.js'

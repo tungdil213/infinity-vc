@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Head, router } from '@inertiajs/react'
 import LobbyList from '../components/LobbyList'
+import Layout from '../components/layout'
 
 interface Player {
   uuid: string
@@ -43,7 +44,7 @@ export default function Lobbies({ lobbies, user }: LobbiesProps) {
   }
 
   return (
-    <>
+    <Layout>
       <Head title="Game Lobbies" />
       
       <div className="min-h-screen bg-gray-50">
@@ -54,6 +55,6 @@ export default function Lobbies({ lobbies, user }: LobbiesProps) {
           onJoinLobby={handleJoinLobby}
         />
       </div>
-    </>
+    </Layout>
   )
 }

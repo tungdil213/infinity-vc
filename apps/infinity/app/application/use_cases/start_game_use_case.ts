@@ -2,6 +2,7 @@ import Game from '../../domain/entities/game.js'
 import { LobbyRepository } from '../repositories/lobby_repository.js'
 import { GameRepository } from '../repositories/game_repository.js'
 import { GameStartedEvent } from '../../domain/events/lobby_events.js'
+import { HybridLobbyService } from '../services/hybrid_lobby_service.js'
 
 export interface StartGameRequest {
   userUuid: string
@@ -41,7 +42,8 @@ export interface StartGameResponse {
 export class StartGameUseCase {
   constructor(
     private lobbyRepository: LobbyRepository,
-    private gameRepository: GameRepository
+    private gameRepository: GameRepository,
+    private hybridLobbyService: HybridLobbyService
   ) {}
 
   async execute(request: StartGameRequest): Promise<StartGameResponse> {
@@ -62,7 +64,14 @@ export class StartGameUseCase {
     }
 
     // Démarrer la partie dans le lobby (cela génère l'UUID de la partie)
-    const gameUuid = lobby.startGame()
+    const gameResult = lobby.startGame()
+    if (!gameResult.success) {
+      throw new Error(gameResult.error || 'Failed to start game')
+    }
+    const gameUuid = gameResult.data!
+
+    // ÉTAPE CRITIQUE: Persister le lobby en base avant de créer la partie
+    await this.hybridLobbyService.persistLobby(lobby)
 
     // Créer l'entité Game
     const game = Game.create({
@@ -73,11 +82,11 @@ export class StartGameUseCase {
     // Sauvegarder la partie
     await this.gameRepository.save(game)
 
-    // Supprimer le lobby (il n'est plus nécessaire une fois la partie démarrée)
+    // Supprimer le lobby de la mémoire (il est maintenant persisté en base)
     await this.lobbyRepository.delete(lobby.uuid)
 
     // Enregistrer l'événement de démarrage de partie
-    const gameStartedEvent = new GameStartedEvent(game.uuid, lobby.uuid, game.players)
+    new GameStartedEvent(game.uuid, lobby.uuid, game.players)
 
     return {
       game: {

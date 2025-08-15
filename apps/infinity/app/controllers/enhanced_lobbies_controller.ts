@@ -20,10 +20,13 @@ export default class EnhancedLobbiesController {
   ) {}
 
   /**
-   * Display homepage/welcome page
+   * Display welcome page
    */
   async welcome({ inertia, auth }: HttpContext) {
     const user = auth.user
+
+    // Check if user is currently in a lobby
+    const currentLobby = user ? await this.lobbyRepository.findByPlayer(user.userUuid) : null
 
     return inertia.render('welcome', {
       user: user
@@ -31,6 +34,15 @@ export default class EnhancedLobbiesController {
             uuid: user.userUuid,
             fullName: user.fullName,
             email: user.email,
+          }
+        : null,
+      currentLobby: currentLobby
+        ? {
+            uuid: currentLobby.uuid,
+            name: currentLobby.name,
+            status: currentLobby.status,
+            currentPlayers: currentLobby.players.length,
+            maxPlayers: currentLobby.maxPlayers,
           }
         : null,
     })
@@ -97,11 +109,23 @@ export default class EnhancedLobbiesController {
   async create({ inertia, auth }: HttpContext) {
     const user = auth.user!
 
+    // Check if user is currently in a lobby
+    const currentLobby = await this.lobbyRepository.findByPlayer(user.userUuid)
+
     return inertia.render('create-lobby', {
       user: {
         uuid: user.userUuid,
         fullName: user.fullName,
       },
+      currentLobby: currentLobby
+        ? {
+            uuid: currentLobby.uuid,
+            name: currentLobby.name,
+            status: currentLobby.status,
+            currentPlayers: currentLobby.players.length,
+            maxPlayers: currentLobby.maxPlayers,
+          }
+        : null,
     })
   }
 
@@ -346,7 +370,7 @@ export default class EnhancedLobbiesController {
   /**
    * Leave a lobby
    */
-  async leave({ params, response, auth, session }: HttpContext) {
+  async leave({ params, request, response, auth, session }: HttpContext) {
     const user = auth.user!
     const { uuid } = params
 
@@ -390,7 +414,7 @@ export default class EnhancedLobbiesController {
   /**
    * Start a game from lobby
    */
-  async start({ params, response, auth, session }: HttpContext) {
+  async start({ params, request, response, auth, session }: HttpContext) {
     const user = auth.user!
     const { uuid } = params
 
