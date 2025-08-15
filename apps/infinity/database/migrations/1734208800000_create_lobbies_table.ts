@@ -13,12 +13,12 @@ export default class extends BaseSchema {
       table.string('status').notNullable()
       table.string('created_by').notNullable()
       table.json('available_actions').defaultTo('[]')
-      table.boolean('is_archived').defaultTo(false)
+      table.timestamp('deleted_at').nullable()
       table.timestamp('created_at')
       table.timestamp('updated_at')
 
       // Indexes
-      table.index(['status', 'is_archived'])
+      table.index(['status', 'deleted_at'])
       table.index(['created_by'])
       table.index(['is_private', 'status'])
     })

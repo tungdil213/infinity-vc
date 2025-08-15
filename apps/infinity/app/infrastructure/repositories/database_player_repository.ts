@@ -2,11 +2,29 @@ import { PlayerRepository } from '#application/repositories/player_repository'
 import Player from '#domain/entities/player'
 import { PlayerInterface } from '#domain/interfaces/player_interface'
 import User from '#models/user'
+import PlayerModel from '#models/player'
 
 export class DatabasePlayerRepository implements PlayerRepository {
   async save(player: Player): Promise<void> {
-    // TODO: Implement database save
-    console.log('Saving player:', player.uuid)
+    const serialized = player.toJSON()
+
+    // Check if player exists
+    const existingPlayer = await PlayerModel.query().where('player_uuid', serialized.uuid).first()
+
+    if (existingPlayer) {
+      // Update existing player
+      existingPlayer.merge({
+        nickName: serialized.nickName,
+      })
+      await existingPlayer.save()
+    } else {
+      // Create new player
+      await PlayerModel.create({
+        playerUuid: serialized.uuid,
+        userUuid: serialized.userUuid,
+        nickName: serialized.nickName,
+      })
+    }
   }
 
   async findByUuid(uuid: string): Promise<Player | null> {

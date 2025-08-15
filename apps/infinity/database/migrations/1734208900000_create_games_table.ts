@@ -13,12 +13,12 @@ export default class extends BaseSchema {
       table.timestamp('started_at').notNullable()
       table.timestamp('finished_at').nullable()
       table.integer('duration_ms').nullable()
-      table.boolean('is_archived').notNullable().defaultTo(false)
+      table.boolean('deleted_at').notNullable().defaultTo(false)
       table.timestamp('created_at').notNullable()
       table.timestamp('updated_at').notNullable()
 
       // Indexes
-      table.index(['status', 'is_archived'])
+      table.index(['status', 'deleted_at'])
       table.index(['started_at'])
       table.index(['winner_uuid'])
     })

@@ -1,7 +1,7 @@
 import router from '@adonisjs/core/services/router'
-import AuthController from '../controllers/auth_controller.js'
-import LobbyController from '../controllers/lobby_controller.js'
-import GameController from '../controllers/game_controller.js'
+const AuthController = () => import('../controllers/enhanced_auth_controller.js')
+const LobbyController = () => import('../controllers/lobby_controller.js')
+const GameController = () => import('../controllers/game_controller.js')
 
 // TODO: Import actual implementations when IoC container is set up
 // For now, these are placeholders
@@ -11,7 +11,7 @@ import GameController from '../controllers/game_controller.js'
  */
 router
   .group(() => {
-    router.post('/register', [AuthController, 'register'])
+    // router.post('/register', [AuthController, 'register'])
     router.post('/login', [AuthController, 'login'])
     router.post('/logout', [AuthController, 'logout'])
     router.get('/me', [AuthController, 'me'])

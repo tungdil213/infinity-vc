@@ -18,7 +18,7 @@ export class DatabaseLobbyRepository implements LobbyRepository {
         status: lobby.status,
         createdBy: lobby.createdBy,
         availableActions: lobby.availableActions,
-        isArchived: false,
+        deletedAt: null,
       }
     )
 
@@ -55,7 +55,7 @@ export class DatabaseLobbyRepository implements LobbyRepository {
   async findByUuid(uuid: string): Promise<Lobby | null> {
     const model = await LobbyModel.query()
       .where('uuid', uuid)
-      .where('is_archived', false)
+      .whereNull('deleted_at')
       .preload('players')
       .first()
 
@@ -67,9 +67,7 @@ export class DatabaseLobbyRepository implements LobbyRepository {
   }
 
   async findAll(): Promise<Lobby[]> {
-    const models = await LobbyModel.query()
-      .where('is_archived', false)
-      .orderBy('created_at', 'desc')
+    const models = await LobbyModel.query().whereNull('deleted_at').orderBy('created_at', 'desc')
 
     return models.map((model) => this.toDomainEntity(model))
   }
@@ -77,7 +75,7 @@ export class DatabaseLobbyRepository implements LobbyRepository {
   async findByStatus(status: LobbyStatus): Promise<Lobby[]> {
     const models = await LobbyModel.query()
       .where('status', status)
-      .where('is_archived', false)
+      .whereNull('deleted_at')
       .orderBy('created_at', 'desc')
 
     return models.map((model) => this.toDomainEntity(model))
@@ -86,14 +84,14 @@ export class DatabaseLobbyRepository implements LobbyRepository {
   async findByCreator(creatorUuid: string): Promise<Lobby[]> {
     const models = await LobbyModel.query()
       .where('created_by', creatorUuid)
-      .where('is_archived', false)
+      .whereNull('deleted_at')
       .orderBy('created_at', 'desc')
 
     return models.map((model) => this.toDomainEntity(model))
   }
 
   async delete(uuid: string): Promise<void> {
-    await LobbyModel.query().where('uuid', uuid).update({ is_archived: true })
+    await LobbyModel.query().where('uuid', uuid).update({ deleted_at: new Date() })
   }
 
   async findByUuidOrFail(uuid: string): Promise<Lobby> {
@@ -107,7 +105,7 @@ export class DatabaseLobbyRepository implements LobbyRepository {
   async findAvailableLobbies(): Promise<Lobby[]> {
     const models = await LobbyModel.query()
       .whereIn('status', ['OPEN', 'WAITING', 'READY'])
-      .where('is_archived', false)
+      .whereNull('deleted_at')
       .orderBy('created_at', 'desc')
 
     return models.map((model) => this.toDomainEntity(model))
@@ -115,7 +113,7 @@ export class DatabaseLobbyRepository implements LobbyRepository {
 
   async findByPlayer(playerUuid: string): Promise<Lobby | null> {
     const model = await LobbyModel.query()
-      .where('is_archived', false)
+      .whereNull('deleted_at')
       .whereHas('players', (query) => {
         query.where('user_uuid', playerUuid)
       })
@@ -131,7 +129,7 @@ export class DatabaseLobbyRepository implements LobbyRepository {
   async findActiveLobbies(): Promise<Lobby[]> {
     const models = await LobbyModel.query()
       .whereIn('status', ['OPEN', 'WAITING', 'READY', 'IN_PROGRESS'])
-      .where('is_archived', false)
+      .whereNull('deleted_at')
       .orderBy('created_at', 'desc')
 
     return models.map((model) => this.toDomainEntity(model))
@@ -140,7 +138,7 @@ export class DatabaseLobbyRepository implements LobbyRepository {
   async countActiveLobbies(): Promise<number> {
     const result = await LobbyModel.query()
       .whereIn('status', ['OPEN', 'WAITING', 'READY', 'IN_PROGRESS'])
-      .where('is_archived', false)
+      .whereNull('deleted_at')
       .count('* as total')
 
     return Number(result[0].$extras.total)

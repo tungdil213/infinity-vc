@@ -47,12 +47,22 @@ export default class LobbyModel extends BaseModel {
   })
   declare availableActions: string[]
 
-  @column()
-  declare isArchived: boolean
+  @column.dateTime({ columnName: 'deleted_at' })
+  declare deletedAt: DateTime | null
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
+
+  // Soft delete methods
+  async softDelete() {
+    this.deletedAt = DateTime.now()
+    await this.save()
+  }
+
+  get isDeleted(): boolean {
+    return this.deletedAt !== null
+  }
 }

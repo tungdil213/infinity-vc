@@ -40,12 +40,13 @@ export default class EnhancedAuthController {
    * Register new user
    */
   async register({ request, response, auth, session }: HttpContext) {
-    const { fullName, email, password, password_confirmation } = request.only([
-      'fullName',
-      'email',
-      'password',
-      'password_confirmation',
-    ])
+    const {
+      fullName,
+      email,
+      password,
+      password_confirmation: passwordConfirmation,
+    } = request.only(['fullName', 'email', 'password', 'password_confirmation'])
+
     const redirect = request.input('redirect', '/lobbies')
 
     try {
@@ -65,7 +66,7 @@ export default class EnhancedAuthController {
         return response.redirect().back()
       }
 
-      if (password !== password_confirmation) {
+      if (password !== passwordConfirmation) {
         session.flash('error', 'Passwords do not match')
         return response.redirect().back()
       }
@@ -86,6 +87,8 @@ export default class EnhancedAuthController {
         password: password, // Pass plain password, will be hashed by User model
       })
 
+      console.log(result)
+
       if (!result.success) {
         session.flash('error', result.error || 'Failed to create account')
         return response.redirect().back()
@@ -95,7 +98,10 @@ export default class EnhancedAuthController {
       const newUser = await User.query().where('email', email.trim().toLowerCase()).first()
       if (newUser) {
         await auth.use('web').login(newUser)
-        session.flash('success', `Account created successfully! Welcome to Infinity Game, ${newUser.fullName}!`)
+        session.flash(
+          'success',
+          `Account created successfully! Welcome to Infinity Game, ${newUser.fullName}!`
+        )
       } else {
         session.flash('success', 'Account created successfully! Please log in.')
       }

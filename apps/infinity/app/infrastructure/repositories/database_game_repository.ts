@@ -9,7 +9,7 @@ import { DateTime } from 'luxon'
 export class DatabaseGameRepository implements GameRepository {
   async save(game: Game): Promise<void> {
     const serialized = game.toJSON()
-    
+
     await GameModel.updateOrCreate(
       { uuid: game.uuid },
       {
@@ -27,10 +27,7 @@ export class DatabaseGameRepository implements GameRepository {
   }
 
   async findByUuid(uuid: string): Promise<Game | null> {
-    const model = await GameModel.query()
-      .where('uuid', uuid)
-      .where('is_archived', false)
-      .first()
+    const model = await GameModel.query().where('uuid', uuid).where('deleted_at', false).first()
 
     if (!model) {
       return null
@@ -40,45 +37,41 @@ export class DatabaseGameRepository implements GameRepository {
   }
 
   async findAll(): Promise<Game[]> {
-    const models = await GameModel.query()
-      .where('is_archived', false)
-      .orderBy('started_at', 'desc')
+    const models = await GameModel.query().where('deleted_at', false).orderBy('started_at', 'desc')
 
-    return models.map(model => this.toDomainEntity(model))
+    return models.map((model) => this.toDomainEntity(model))
   }
 
   async findByStatus(status: GameStatus): Promise<Game[]> {
     const models = await GameModel.query()
       .where('status', status)
-      .where('is_archived', false)
+      .where('deleted_at', false)
       .orderBy('started_at', 'desc')
 
-    return models.map(model => this.toDomainEntity(model))
+    return models.map((model) => this.toDomainEntity(model))
   }
 
   async findByPlayer(playerUuid: string): Promise<Game[]> {
     const models = await GameModel.query()
       .whereJsonSuperset('players', [{ uuid: playerUuid }])
-      .where('is_archived', false)
+      .where('deleted_at', false)
       .orderBy('started_at', 'desc')
 
-    return models.map(model => this.toDomainEntity(model))
+    return models.map((model) => this.toDomainEntity(model))
   }
 
   async findActiveByPlayer(playerUuid: string): Promise<Game[]> {
     const models = await GameModel.query()
       .whereJsonSuperset('players', [{ uuid: playerUuid }])
       .whereIn('status', [GameStatus.IN_PROGRESS, GameStatus.PAUSED])
-      .where('is_archived', false)
+      .where('deleted_at', false)
       .orderBy('started_at', 'desc')
 
-    return models.map(model => this.toDomainEntity(model))
+    return models.map((model) => this.toDomainEntity(model))
   }
 
   async delete(uuid: string): Promise<void> {
-    await GameModel.query()
-      .where('uuid', uuid)
-      .update({ is_archived: true })
+    await GameModel.query().where('uuid', uuid).update({ deleted_at: true })
   }
 
   private toDomainEntity(model: GameModel): Game {
