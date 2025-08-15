@@ -166,6 +166,9 @@ importers:
       edge.js:
         specifier: ^6.2.1
         version: 6.2.1
+      lucide-react:
+        specifier: ^0.475.0
+        version: 0.475.0(react@19.0.0)
       luxon:
         specifier: ^3.5.0
         version: 3.5.0
@@ -178,6 +181,9 @@ importers:
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
+      sonner:
+        specifier: ^2.0.1
+        version: 2.0.1(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       tailwindcss:
         specifier: ^4.0.8
         version: 4.0.8

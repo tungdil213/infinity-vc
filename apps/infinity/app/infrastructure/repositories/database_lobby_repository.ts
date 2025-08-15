@@ -67,7 +67,10 @@ export class DatabaseLobbyRepository implements LobbyRepository {
   }
 
   async findAll(): Promise<Lobby[]> {
-    const models = await LobbyModel.query().whereNull('deleted_at').orderBy('created_at', 'desc')
+    const models = await LobbyModel.query()
+      .preload('players')
+      .whereNull('deleted_at')
+      .orderBy('created_at', 'desc')
 
     return models.map((model) => this.toDomainEntity(model))
   }
@@ -145,7 +148,7 @@ export class DatabaseLobbyRepository implements LobbyRepository {
   }
 
   private toDomainEntity(model: LobbyModel): Lobby {
-    const players = model.players.map((user: any) => ({
+    const players = (model.players || []).map((user: any) => ({
       uuid: user.userUuid,
       nickName: user.fullName,
     }))

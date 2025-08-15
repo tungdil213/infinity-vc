@@ -1,24 +1,15 @@
-import React, { useEffect } from 'react'
-import { Head, useForm, usePage } from '@inertiajs/react'
+import React from 'react'
+import { Head, useForm } from '@inertiajs/react'
 import { Button } from '@tyfo.dev/ui/primitives/button'
 import { Input } from '@tyfo.dev/ui/primitives/input'
 import { Label } from '@tyfo.dev/ui/primitives/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@tyfo.dev/ui/primitives/card'
-import { Toaster } from '@tyfo.dev/ui/primitives/sonner'
 
 interface RegisterProps {
   redirect?: string
 }
 
-interface FlashMessages {
-  success?: string
-  error?: string
-  info?: string
-  warning?: string
-}
-
 export default function Register({ redirect = '/lobbies' }: RegisterProps) {
-  const { props } = usePage()
   const { data, setData, post, processing, errors } = useForm({
     fullName: '',
     email: '',
@@ -26,21 +17,6 @@ export default function Register({ redirect = '/lobbies' }: RegisterProps) {
     password_confirmation: '',
     redirect,
   })
-
-  // Handle flash messages with toast
-  useEffect(() => {
-    const flash = props.flash as FlashMessages | undefined
-    
-    if (flash?.success) {
-      // Success toast will be handled by sonner automatically via Toaster
-      console.log('Success:', flash.success)
-    }
-    
-    if (flash?.error) {
-      // Error toast will be handled by sonner automatically via Toaster  
-      console.log('Error:', flash.error)
-    }
-  }, [props.flash])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -157,9 +133,6 @@ export default function Register({ redirect = '/lobbies' }: RegisterProps) {
           </CardContent>
         </Card>
       </div>
-
-      {/* Toast notifications */}
-      <Toaster />
     </>
   )
 }

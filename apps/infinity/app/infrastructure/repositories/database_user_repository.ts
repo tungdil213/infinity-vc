@@ -80,11 +80,14 @@ export class DatabaseUserRepository implements UserRepository {
   }
 
   private toDomainUser(userModel: UserModel): DomainUser {
+    // Generate a valid username from email by removing special characters
+    const emailUsername = userModel.email.split('@')[0].replace(/[^a-zA-Z0-9_-]/g, '_')
+    
     return DomainUser.create({
       uuid: userModel.userUuid,
       firstName: userModel.fullName?.split(' ')[0] || '',
       lastName: userModel.fullName?.split(' ').slice(1).join(' ') || '',
-      username: userModel.email, // Use email as username for now
+      username: emailUsername, // Use sanitized email prefix as username
       email: userModel.email,
       password: userModel.password,
     })

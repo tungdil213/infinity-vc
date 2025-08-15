@@ -87,6 +87,9 @@ router
     router
       .get('/lobbies/:uuid', '#controllers/enhanced_lobbies_controller.apiShow')
       .as('api.lobbies.show')
+    router
+      .post('/lobbies/:uuid/join', '#controllers/enhanced_lobbies_controller.join')
+      .as('api.lobbies.join')
 
     // Games API
     router.get('/games/:uuid', '#controllers/games_controller.apiShow').as('api.games.show')

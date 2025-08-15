@@ -36,7 +36,8 @@ export function useSSE(options: UseSSEOptions = {}) {
 
   const connect = () => {
     if (eventSourceRef.current) {
-      return // Already connected
+      eventSourceRef.current.close()
+      eventSourceRef.current = null
     }
 
     try {

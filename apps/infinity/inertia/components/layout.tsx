@@ -1,44 +1,22 @@
 import React, { useEffect } from 'react'
 import { usePage } from '@inertiajs/react'
+import { toast } from 'sonner'
+import { Toaster } from '@tyfo.dev/ui/primitives/sonner'
+import { LobbyStatusSidebar } from './LobbyStatusSidebar'
+import { AutoLeaveLobby } from './AutoLeaveLobby'
 
-// Flash messages component that works within Inertia context
+// Flash messages component using Sonner
 function FlashMessages() {
   const { props } = usePage()
   const flash = props.flash as { success?: string; error?: string } | undefined
 
   useEffect(() => {
     if (flash?.success) {
-      // Create a simple success notification
-      const div = document.createElement('div')
-      div.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50 transition-opacity duration-300'
-      div.textContent = flash.success
-      document.body.appendChild(div)
-      
-      setTimeout(() => {
-        div.style.opacity = '0'
-        setTimeout(() => {
-          if (document.body.contains(div)) {
-            document.body.removeChild(div)
-          }
-        }, 300)
-      }, 4700)
+      toast.success(flash.success)
     }
     
     if (flash?.error) {
-      // Create a simple error notification
-      const div = document.createElement('div')
-      div.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded shadow-lg z-50 transition-opacity duration-300'
-      div.textContent = flash.error
-      document.body.appendChild(div)
-      
-      setTimeout(() => {
-        div.style.opacity = '0'
-        setTimeout(() => {
-          if (document.body.contains(div)) {
-            document.body.removeChild(div)
-          }
-        }, 300)
-      }, 4700)
+      toast.error(flash.error)
     }
   }, [flash])
 
@@ -50,10 +28,22 @@ interface LayoutProps {
 }
 
 export default function Layout({ children }: LayoutProps) {
+  const { props } = usePage()
+  const currentLobby = props.currentLobby as {
+    uuid: string
+    name: string
+    status: string
+    currentPlayers: number
+    maxPlayers: number
+  } | null
+
   return (
     <>
       {children}
       <FlashMessages />
+      <LobbyStatusSidebar currentLobby={currentLobby} />
+      <AutoLeaveLobby currentLobby={currentLobby} enabled={true} />
+      <Toaster />
     </>
   )
 }

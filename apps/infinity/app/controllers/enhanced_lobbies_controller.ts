@@ -24,33 +24,71 @@ export default class EnhancedLobbiesController {
    */
   async welcome({ inertia, auth }: HttpContext) {
     const user = auth.user
-    
+
     return inertia.render('welcome', {
-      user: user ? {
-        uuid: user.uuid,
-        fullName: user.fullName,
-        email: user.email,
-      } : null,
+      user: user
+        ? {
+            uuid: user.userUuid,
+            fullName: user.fullName,
+            email: user.email,
+          }
+        : null,
     })
   }
 
   /**
-   * Display lobbies list page
+   * Display lobbies index page
    */
   async index({ inertia, auth }: HttpContext) {
     const user = auth.user!
-    const lobbies = await this.lobbyRepository.findAll()
 
-    return inertia.render('lobbies', {
-      lobbies: lobbies.map(lobby => ({
-        ...lobby.serialize(),
-        invitationCode: lobby.uuid, // Use UUID as invitation code for now
-      })),
-      user: {
-        uuid: user.uuid,
-        nickName: user.fullName,
-      },
-    })
+    try {
+      const lobbies = await this.lobbyRepository.findAll()
+
+      // Check if user is currently in a lobby
+      const currentLobby = await this.lobbyRepository.findByPlayer(user.userUuid)
+
+      return inertia.render('lobbies', {
+        lobbies: lobbies.map((lobby) => ({
+          uuid: lobby.uuid,
+          name: lobby.name,
+          maxPlayers: lobby.maxPlayers,
+          currentPlayers: lobby.players.length,
+          isPrivate: lobby.isPrivate,
+          status: lobby.status,
+          availableActions: lobby.availableActions,
+          createdBy: lobby.createdBy,
+          players: lobby.players.map((player) => ({
+            uuid: player.uuid,
+            nickName: player.nickName,
+          })),
+          createdAt: lobby.createdAt,
+        })),
+        user: {
+          uuid: user.userUuid,
+          nickName: user.nickName,
+        },
+        currentLobby: currentLobby
+          ? {
+              uuid: currentLobby.uuid,
+              name: currentLobby.name,
+              status: currentLobby.status,
+              currentPlayers: currentLobby.players.length,
+              maxPlayers: currentLobby.maxPlayers,
+            }
+          : null,
+      })
+    } catch (error) {
+      console.error('Failed to load lobbies:', error)
+      return inertia.render('lobbies', {
+        lobbies: [],
+        user: {
+          uuid: user.userUuid,
+          nickName: user.nickName,
+        },
+        currentLobby: null,
+      })
+    }
   }
 
   /**
@@ -58,10 +96,10 @@ export default class EnhancedLobbiesController {
    */
   async create({ inertia, auth }: HttpContext) {
     const user = auth.user!
-    
+
     return inertia.render('create-lobby', {
       user: {
-        uuid: user.uuid,
+        uuid: user.userUuid,
         fullName: user.fullName,
       },
     })
@@ -72,22 +110,22 @@ export default class EnhancedLobbiesController {
    */
   async store({ request, response, auth, session }: HttpContext) {
     const user = auth.user!
-    const { 
-      name, 
+    const {
+      name,
       description,
-      maxPlayers = 4, 
+      maxPlayers = 4,
       isPrivate = false,
       hasPassword = false,
       password,
-      gameType = 'love-letter'
+      gameType = 'love-letter',
     } = request.only([
-      'name', 
+      'name',
       'description',
-      'maxPlayers', 
+      'maxPlayers',
       'isPrivate',
       'hasPassword',
       'password',
-      'gameType'
+      'gameType',
     ])
 
     try {
@@ -109,7 +147,7 @@ export default class EnhancedLobbiesController {
         userUuid: user.userUuid,
         name: name.trim(),
         description: description?.trim(),
-        maxPlayers: parseInt(maxPlayers),
+        maxPlayers: Number.parseInt(maxPlayers),
         isPrivate: Boolean(isPrivate),
         hasPassword: Boolean(hasPassword),
         password: hasPassword ? password : undefined,
@@ -149,12 +187,12 @@ export default class EnhancedLobbiesController {
 
       return inertia.render('lobby', {
         lobby: {
-          ...lobby.serialize(),
+          ...lobby.toJSON(),
           invitationCode: lobby.uuid, // Use UUID as invitation code for now
           hasPassword: false, // TODO: Add password support to lobby entity
         },
         user: {
-          uuid: user.uuid,
+          uuid: user.userUuid,
           nickName: user.fullName,
         },
       })
@@ -182,17 +220,19 @@ export default class EnhancedLobbiesController {
         })
       }
 
-      const lobbyData = lobby.serialize()
+      const lobbyData = lobby.toJSON()
 
       return inertia.render('join-lobby', {
         lobby: {
           ...lobbyData,
           hasPassword: false, // TODO: Add password support
         },
-        user: user ? {
-          uuid: user.uuid,
-          fullName: user.fullName,
-        } : null,
+        user: user
+          ? {
+              uuid: user.userUuid,
+              fullName: user.fullName,
+            }
+          : null,
         invitationCode,
       })
     } catch (error) {
@@ -226,7 +266,7 @@ export default class EnhancedLobbiesController {
       // }
 
       // Get user from repository
-      const userEntity = await this.userRepository.findByUuid(user.uuid)
+      const userEntity = await this.userRepository.findByUuid(user.userUuid)
       if (!userEntity) {
         session.flash('error', 'User not found')
         return response.redirect('/lobbies')
@@ -234,8 +274,7 @@ export default class EnhancedLobbiesController {
 
       const result = await this.joinLobbyUseCase.execute({
         lobbyUuid: invitationCode,
-        playerUuid: user.uuid,
-        playerNickName: userEntity.fullName,
+        userUuid: user.userUuid,
       })
 
       if (result.isFailure) {
@@ -255,13 +294,13 @@ export default class EnhancedLobbiesController {
   /**
    * Join a lobby (regular join)
    */
-  async join({ params, response, auth, session }: HttpContext) {
+  async join({ params, request, response, auth, session }: HttpContext) {
     const user = auth.user!
     const { uuid } = params
 
     try {
       // Get user from repository
-      const userEntity = await this.userRepository.findByUuid(user.uuid)
+      const userEntity = await this.userRepository.findByUuid(user.userUuid)
       if (!userEntity) {
         return response.status(404).json({
           error: 'User not found',
@@ -270,8 +309,7 @@ export default class EnhancedLobbiesController {
 
       const result = await this.joinLobbyUseCase.execute({
         lobbyUuid: uuid,
-        playerUuid: user.uuid,
-        playerNickName: userEntity.fullName,
+        userUuid: user.userUuid,
       })
 
       if (result.isFailure) {
@@ -315,7 +353,7 @@ export default class EnhancedLobbiesController {
     try {
       const result = await this.leaveLobbyUseCase.execute({
         lobbyUuid: uuid,
-        playerUuid: user.uuid,
+        playerUuid: user.userUuid,
       })
 
       if (result.isFailure) {
@@ -359,7 +397,7 @@ export default class EnhancedLobbiesController {
     try {
       const result = await this.startGameUseCase.execute({
         lobbyUuid: uuid,
-        initiatedBy: user.uuid,
+        initiatedBy: user.userUuid,
       })
 
       if (result.isFailure) {
@@ -373,7 +411,7 @@ export default class EnhancedLobbiesController {
       }
 
       const gameUuid = result.value
-      
+
       if (request.accepts(['html'])) {
         return response.redirect(`/games/${gameUuid}`)
       }
@@ -471,7 +509,7 @@ export default class EnhancedLobbiesController {
       }
 
       // Check if new owner is in the lobby
-      const isPlayerInLobby = lobby.players.some(p => p.uuid === newOwnerUuid)
+      const isPlayerInLobby = lobby.players.some((p) => p.uuid === newOwnerUuid)
       if (!isPlayerInLobby) {
         return response.status(400).json({
           error: 'New owner must be a player in the lobby',
@@ -481,7 +519,7 @@ export default class EnhancedLobbiesController {
       // Update lobby ownership
       // TODO: Implement this in the lobby entity and use case
       // For now, we'll just return success
-      
+
       return response.json({
         success: true,
         message: 'Ownership transferred successfully',
@@ -510,7 +548,7 @@ export default class EnhancedLobbiesController {
 
       return response.json({
         lobby: {
-          ...lobby.serialize(),
+          ...lobby.toJSON(),
           invitationCode: lobby.uuid,
         },
       })
@@ -530,8 +568,8 @@ export default class EnhancedLobbiesController {
       const lobbies = await this.lobbyRepository.findAll()
 
       return response.json({
-        lobbies: lobbies.map(lobby => ({
-          ...lobby.serialize(),
+        lobbies: lobbies.map((lobby) => ({
+          ...lobby.toJSON(),
           invitationCode: lobby.uuid,
         })),
       })

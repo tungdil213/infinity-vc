@@ -21,12 +21,12 @@ export default class SSEController {
       await sseService.initialize()
 
       // Create SSE connection
-      const connectionId = sseConnectionManager.addConnection(user.uuid, response)
+      const connectionId = sseConnectionManager.addConnection(user.userUuid, response)
 
       // Auto-subscribe to user's personal channel
-      sseService.subscribeToUser(connectionId, user.uuid)
+      sseService.subscribeToUser(connectionId, user.userUuid)
 
-      console.log(`SSE connection established for user ${user.uuid}, connection: ${connectionId}`)
+      console.log(`SSE connection established for user ${user.userUuid}, connection: ${connectionId}`)
 
       // Keep the connection alive - the response will be handled by the connection manager
       // The connection will be closed when the client disconnects or times out
@@ -65,7 +65,7 @@ export default class SSEController {
 
       // Verify the connection belongs to the authenticated user
       const connection = sseConnectionManager.getConnection(targetConnectionId)
-      if (!connection || connection.userId !== user.uuid) {
+      if (!connection || connection.userId !== user.userUuid) {
         return response.forbidden({ error: 'Invalid connection' })
       }
 
