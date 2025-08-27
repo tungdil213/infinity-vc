@@ -2,6 +2,12 @@ import User from '../../domain/entities/user.js'
 import Player from '../../domain/entities/player.js'
 import { UserRepository } from '../repositories/user_repository.js'
 import { PlayerRepository } from '../repositories/player_repository.js'
+import {
+  EmailAlreadyExistsException,
+  UsernameAlreadyExistsException,
+  NicknameAlreadyExistsException,
+  RegistrationFailedException,
+} from '../../exceptions/auth_exceptions.js'
 
 export interface RegisterUserRequest {
   firstName: string
@@ -78,24 +84,34 @@ export class RegisterUserUseCase {
         },
       }
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
+      // Les BusinessException sont gérées automatiquement par le handler
+      if (
+        error instanceof EmailAlreadyExistsException ||
+        error instanceof UsernameAlreadyExistsException ||
+        error instanceof NicknameAlreadyExistsException
+      ) {
+        throw error
       }
+
+      // Autres erreurs : exception technique avec logs sécurisés
+      throw new RegistrationFailedException(
+        error instanceof Error ? error.message : 'Unknown error occurred',
+        { originalError: error }
+      )
     }
   }
 
   private async validateRequest(request: RegisterUserRequest): Promise<void> {
-    // Vérifier l'unicité de l'email
+    // Vérifier l'unicité de l'email (sécurité : message générique)
     const existingUserByEmail = await this.userRepository.existsByEmail(request.email)
     if (existingUserByEmail) {
-      throw new Error('Email already exists')
+      throw new EmailAlreadyExistsException(request.email)
     }
 
-    // Vérifier l'unicité du username
+    // Vérifier l'unicité du username (sécurité : message générique)
     const existingUserByUsername = await this.userRepository.existsByUsername(request.username)
     if (existingUserByUsername) {
-      throw new Error('Username already exists')
+      throw new UsernameAlreadyExistsException(request.username)
     }
 
     // Vérifier l'unicité du nickname si fourni
@@ -104,7 +120,7 @@ export class RegisterUserUseCase {
         request.nickName
       )
       if (existingPlayerByNickName) {
-        throw new Error('Nickname already exists')
+        throw new NicknameAlreadyExistsException(request.nickName)
       }
     } else {
       // Si pas de nickname fourni, utiliser le username, vérifier qu'il n'existe pas comme nickname
@@ -112,7 +128,7 @@ export class RegisterUserUseCase {
         request.username
       )
       if (existingPlayerByNickName) {
-        throw new Error('Username already exists as nickname')
+        throw new NicknameAlreadyExistsException(request.username)
       }
     }
   }
