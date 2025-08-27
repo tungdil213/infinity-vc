@@ -358,15 +358,39 @@ development:
 }
 ```
 
-### Toast System
+### Toast System (Sonner Integration)
 ```json
 {
-  "implementation": "Custom FlashMessages component",
-  "trigger": "Inertia.js flash messages",
-  "styling": "TailwindCSS (green success, red error)",
-  "duration": "5 seconds auto-dismiss",
-  "position": "top-right fixed",
-  "integration": "Integrated in main app.tsx"
+  "library": "Sonner (@sonner/react)",
+  "implementation": "Integrated in @tyfo.dev/ui package",
+  "components": {
+    "Toaster": "packages/ui/src/components/primitives/sonner.tsx",
+    "FlashMessages": "apps/infinity/inertia/components/layout.tsx"
+  },
+  "integration": {
+    "global_layout": "Toaster component in main layout",
+    "flash_conversion": "FlashMessages converts Inertia flash to toasts",
+    "manual_usage": "import { toast } from 'sonner' for client-side toasts"
+  },
+  "usage_patterns": {
+    "backend_flash": "session.flash('success'|'error', message) → auto toast",
+    "client_success": "toast.success('Message')",
+    "client_error": "toast.error('Error message')",
+    "client_loading": "toast.loading('Processing...')",
+    "client_promise": "toast.promise(promise, { loading, success, error })"
+  },
+  "styling": {
+    "theme": "Integrated with next-themes",
+    "position": "bottom-right",
+    "duration": "4000ms default",
+    "animations": "Smooth slide animations"
+  },
+  "best_practices": {
+    "backend_actions": "Use session flash for redirects",
+    "ajax_actions": "Use client-side toast calls",
+    "user_feedback": "Always provide feedback for user actions",
+    "error_handling": "Consistent error toast patterns"
+  }
 }
 ```
 
