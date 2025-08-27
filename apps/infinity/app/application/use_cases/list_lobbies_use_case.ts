@@ -1,5 +1,6 @@
 import { LobbyRepository } from '../repositories/lobby_repository.js'
 import { LobbyStatus } from '../../domain/value_objects/lobby_status.js'
+import { Result } from '../../domain/shared/result.js'
 
 export interface ListLobbiesRequest {
   status?: LobbyStatus
@@ -30,7 +31,7 @@ export interface ListLobbiesResponse {
 export class ListLobbiesUseCase {
   constructor(private lobbyRepository: LobbyRepository) {}
 
-  async execute(request: ListLobbiesRequest = {}): Promise<ListLobbiesResponse> {
+  async execute(request: ListLobbiesRequest = {}): Promise<Result<ListLobbiesResponse>> {
     let lobbies
 
     if (request.status) {
@@ -51,7 +52,7 @@ export class ListLobbiesUseCase {
       lobbies = lobbies.filter((lobby) => !lobby.isPrivate)
     }
 
-    return {
+    const response: ListLobbiesResponse = {
       lobbies: lobbies.map((lobby) => ({
         uuid: lobby.uuid,
         name: lobby.name,
@@ -67,5 +68,7 @@ export class ListLobbiesUseCase {
       })),
       total: lobbies.length,
     }
+
+    return Result.ok(response)
   }
 }

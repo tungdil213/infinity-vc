@@ -83,7 +83,9 @@ describe('User Entity', () => {
           email: 'invalid-email',
           password: 'password123',
         })
-      }).toThrow('Invalid email format')
+      }).toThrow(
+        'Domain validation failed for email with value "invalid-email": must be a valid email format'
+      )
     })
 
     it('should throw error for short username', () => {
@@ -95,7 +97,9 @@ describe('User Entity', () => {
           email: 'john@example.com',
           password: 'password123',
         })
-      }).toThrow('Username must be between 3 and 50 characters')
+      }).toThrow(
+        'Domain validation failed for username with value "jo": must be between 3 and 50 characters'
+      )
     })
 
     it('should throw error for username with invalid characters', () => {
@@ -107,7 +111,9 @@ describe('User Entity', () => {
           email: 'john@example.com',
           password: 'password123',
         })
-      }).toThrow('Username can only contain letters, numbers, underscores and hyphens')
+      }).toThrow(
+        'Domain validation failed for username with value "john@doe": can only contain letters, numbers, underscores and hyphens'
+      )
     })
 
     it('should throw error for short password', () => {
@@ -119,7 +125,9 @@ describe('User Entity', () => {
           email: 'john@example.com',
           password: '123',
         })
-      }).toThrow('Password must be at least 8 characters long')
+      }).toThrow(
+        'Domain validation failed for password with value "[REDACTED]": must be at least 8 characters long'
+      )
     })
   })
 
@@ -141,7 +149,7 @@ describe('User Entity', () => {
 
     it('should update only provided profile fields', () => {
       const originalFirstName = user.firstName
-      const originalLastName = user.lastName
+      // const originalLastName = user.lastName
 
       user.updateProfile(undefined, 'NewLastName')
 
@@ -159,7 +167,9 @@ describe('User Entity', () => {
     it('should throw error when changing to invalid password', () => {
       expect(() => {
         user.changePassword('123')
-      }).toThrow('Password must be at least 8 characters long')
+      }).toThrow(
+        'Domain validation failed for password with value "[REDACTED]": must be at least 8 characters long'
+      )
     })
 
     it('should verify email', () => {

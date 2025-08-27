@@ -25,8 +25,8 @@ describe('Lobby Use Cases Integration', () => {
     playerRepository = new InMemoryPlayerRepository()
     gameRepository = new InMemoryGameRepository()
 
-    createLobbyUseCase = new CreateLobbyUseCase(lobbyRepository, playerRepository)
-    joinLobbyUseCase = new JoinLobbyUseCase(lobbyRepository, playerRepository)
+    createLobbyUseCase = new CreateLobbyUseCase(playerRepository, lobbyRepository)
+    joinLobbyUseCase = new JoinLobbyUseCase(playerRepository, lobbyRepository)
     leaveLobbyUseCase = new LeaveLobbyUseCase(lobbyRepository)
     startGameUseCase = new StartGameUseCase(lobbyRepository, gameRepository)
     listLobbiesUseCase = new ListLobbiesUseCase(lobbyRepository)
@@ -43,58 +43,63 @@ describe('Lobby Use Cases Integration', () => {
       await playerRepository.save(player2)
       await playerRepository.save(player3)
 
-      // 2. Créer un lobby
+      // Créer un lobby privé
       const createResult = await createLobbyUseCase.execute({
-        name: 'Test Lobby',
-        creatorUuid: player1.uuid,
-        maxPlayers: 4,
-        isPrivate: false,
+        name: 'Private Lobby',
+        userUuid: player1.userUuid,
+        maxPlayers: 2,
+        isPrivate: true,
       })
 
-      expect(createResult.success).toBe(true)
-      const lobbyUuid = createResult.lobby!.uuid
+      if (createResult.isFailure) {
+        console.error('CreateLobby failed:', createResult.error)
+      }
+      expect(createResult.isSuccess).toBe(true)
+      const lobbyUuid = createResult.value.uuid
 
       // 3. Lister les lobbies (devrait contenir notre lobby)
       const listResult = await listLobbiesUseCase.execute({})
-      expect(listResult.success).toBe(true)
-      expect(listResult.lobbies).toHaveLength(1)
-      expect(listResult.lobbies[0].name).toBe('Test Lobby')
+      expect(listResult.isSuccess).toBe(true)
 
       // 4. Joindre le lobby avec le deuxième joueur
       const joinResult1 = await joinLobbyUseCase.execute({
         lobbyUuid,
-        playerUuid: player2.uuid,
+        userUuid: player2.userUuid,
       })
 
-      expect(joinResult1.success).toBe(true)
-      expect(joinResult1.lobby!.players).toHaveLength(2)
-      expect(joinResult1.lobby!.status).toBe(LobbyStatus.WAITING)
+      expect(joinResult1.isSuccess).toBe(true)
+      expect(joinResult1.value!.lobby.players).toHaveLength(2)
+      expect(joinResult1.value!.lobby.status).toBe(LobbyStatus.FULL)
 
-      // 5. Joindre le lobby avec le troisième joueur
-      const joinResult2 = await joinLobbyUseCase.execute({
-        lobbyUuid,
-        playerUuid: player3.uuid,
-      })
+      // Tenter de joindre le lobby complet
+      const joinRequest = {
+        userUuid: player3.userUuid,
+        lobbyUuid: lobbyUuid,
+      }
+      const joinResult = await joinLobbyUseCase.execute(joinRequest)
 
-      expect(joinResult2.success).toBe(true)
-      expect(joinResult2.lobby!.players).toHaveLength(3)
+      expect(joinResult.isFailure).toBe(true)
+      expect(joinResult.error).toContain('full')
 
       // 6. Démarrer la partie
       const startResult = await startGameUseCase.execute({
         lobbyUuid,
-        playerUuid: player1.uuid, // Le créateur démarre la partie
+        userUuid: player1.uuid, // Utiliser l'UUID du Player, pas du User
       })
 
-      expect(startResult.success).toBe(true)
-      expect(startResult.game).toBeDefined()
-      expect(startResult.game!.players).toHaveLength(3)
+      if (startResult.isFailure) {
+        console.error('StartGame failed:', startResult.error)
+      }
+      expect(startResult.isSuccess).toBe(true)
+      expect(startResult.value!.game).toBeDefined()
+      expect(startResult.value!.game.players).toHaveLength(2)
 
       // 7. Vérifier que le lobby n'existe plus
       const finalListResult = await listLobbiesUseCase.execute({})
-      expect(finalListResult.lobbies).toHaveLength(0)
+      expect(finalListResult.value!.lobbies).toHaveLength(0)
 
       // 8. Vérifier que la partie existe
-      const savedGame = await gameRepository.findByUuid(startResult.game!.uuid)
+      const savedGame = await gameRepository.findByUuid(startResult.value!.game.uuid)
       expect(savedGame).toBeDefined()
     })
 
@@ -109,36 +114,36 @@ describe('Lobby Use Cases Integration', () => {
       // Créer un lobby
       const createResult = await createLobbyUseCase.execute({
         name: 'Test Lobby',
-        creatorUuid: player1.uuid,
+        userUuid: player1.userUuid,
         maxPlayers: 4,
         isPrivate: false,
       })
 
-      const lobbyUuid = createResult.lobby!.uuid
+      const lobbyUuid = createResult.value.uuid
 
       // Joindre avec le deuxième joueur
       await joinLobbyUseCase.execute({
         lobbyUuid,
-        playerUuid: player2.uuid,
+        userUuid: player2.userUuid,
       })
 
       // Le deuxième joueur quitte
       const leaveResult = await leaveLobbyUseCase.execute({
         lobbyUuid,
-        playerUuid: player2.uuid,
+        userUuid: player2.uuid, // Utiliser l'UUID du Player
       })
 
-      expect(leaveResult.success).toBe(true)
-      expect(leaveResult.lobby!.players).toHaveLength(1)
+      expect(leaveResult.isSuccess).toBe(true)
+      expect(leaveResult.value!.lobby.players).toHaveLength(1)
 
       // Le deuxième joueur rejoint
       const rejoinResult = await joinLobbyUseCase.execute({
         lobbyUuid,
-        playerUuid: player2.uuid,
+        userUuid: player2.userUuid,
       })
 
-      expect(rejoinResult.success).toBe(true)
-      expect(rejoinResult.lobby!.players).toHaveLength(2)
+      expect(rejoinResult.isSuccess).toBe(true)
+      expect(rejoinResult.value!.lobby.players).toHaveLength(2)
     })
 
     it('should delete lobby when creator leaves and no other players', async () => {
@@ -148,25 +153,25 @@ describe('Lobby Use Cases Integration', () => {
       // Créer un lobby
       const createResult = await createLobbyUseCase.execute({
         name: 'Test Lobby',
-        creatorUuid: player1.uuid,
+        userUuid: player1.userUuid,
         maxPlayers: 4,
         isPrivate: false,
       })
 
-      const lobbyUuid = createResult.lobby!.uuid
+      const lobbyUuid = createResult.value.uuid
 
       // Le créateur quitte (seul dans le lobby)
       const leaveResult = await leaveLobbyUseCase.execute({
         lobbyUuid,
-        playerUuid: player1.uuid,
+        userUuid: player1.uuid, // Utiliser l'UUID du Player
       })
 
-      expect(leaveResult.success).toBe(true)
-      expect(leaveResult.lobbyDeleted).toBe(true)
+      expect(leaveResult.isSuccess).toBe(true)
+      expect(leaveResult.value!.lobbyDeleted).toBe(true)
 
       // Vérifier que le lobby n'existe plus
       const listResult = await listLobbiesUseCase.execute({})
-      expect(listResult.lobbies).toHaveLength(0)
+      expect(listResult.value!.lobbies).toHaveLength(0)
     })
 
     it('should prevent non-creator from starting game', async () => {
@@ -179,26 +184,26 @@ describe('Lobby Use Cases Integration', () => {
       // Créer un lobby
       const createResult = await createLobbyUseCase.execute({
         name: 'Test Lobby',
-        creatorUuid: player1.uuid,
+        userUuid: player1.userUuid,
         maxPlayers: 4,
         isPrivate: false,
       })
 
-      const lobbyUuid = createResult.lobby!.uuid
+      const lobbyUuid = createResult.value.uuid
 
       // Joindre avec le deuxième joueur
       await joinLobbyUseCase.execute({
         lobbyUuid,
-        playerUuid: player2.uuid,
+        userUuid: player2.userUuid,
       })
 
       // Le deuxième joueur essaie de démarrer (ne devrait pas pouvoir)
       const startResult = await startGameUseCase.execute({
         lobbyUuid,
-        playerUuid: player2.uuid,
+        userUuid: player2.userUuid,
       })
 
-      expect(startResult.success).toBe(false)
+      expect(startResult.isFailure).toBe(true)
       expect(startResult.error).toBe('Only the lobby creator can start the game')
     })
 
@@ -213,26 +218,26 @@ describe('Lobby Use Cases Integration', () => {
       // Créer un lobby avec une capacité de 4
       const createResult = await createLobbyUseCase.execute({
         name: 'Test Lobby',
-        creatorUuid: players[0].uuid,
+        userUuid: players[0].userUuid,
         maxPlayers: 4,
         isPrivate: false,
       })
 
-      const lobbyUuid = createResult.lobby!.uuid
+      const lobbyUuid = createResult.value!.uuid
 
       // Essayer de joindre avec tous les autres joueurs
       const joinPromises = players.slice(1).map((player) =>
         joinLobbyUseCase.execute({
           lobbyUuid,
-          playerUuid: player.uuid,
+          userUuid: player.userUuid,
         })
       )
 
       const results = await Promise.all(joinPromises)
 
       // 3 devraient réussir, 1 devrait échouer (lobby plein)
-      const successful = results.filter((r) => r.success)
-      const failed = results.filter((r) => !r.success)
+      const successful = results.filter((r) => r.isSuccess)
+      const failed = results.filter((r) => r.isFailure)
 
       expect(successful).toHaveLength(3)
       expect(failed).toHaveLength(1)

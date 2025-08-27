@@ -1,196 +1,161 @@
 import { test } from '@japa/runner'
 import { RegisterUserUseCase } from '../../../app/application/use_cases/register_user_use_case.js'
-import { UserFactory } from '../../factories/user_factory.js'
-import { UserSerializer } from '../../../app/application/serializers/user_serializer.js'
-
-// Mock repositories
-const mockUserRepository = {
-  findByEmail: async (email: string) => null,
-  save: async (user: any) => Promise.resolve(),
-  findByUuid: async (uuid: string) => null
-}
-
-const mockPlayerRepository = {
-  save: async (player: any) => Promise.resolve(),
-  findByUuid: async (uuid: string) => null
-}
+import { InMemoryUserRepository } from '../../../app/infrastructure/repositories/in_memory_user_repository.js'
+import { InMemoryPlayerRepository } from '../../../app/infrastructure/repositories/in_memory_player_repository.js'
+import User from '../../../app/domain/entities/user.js'
 
 test.group('RegisterUserUseCase', (group) => {
-  let registerUserUseCase: RegisterUserUseCase
+  let useCase: RegisterUserUseCase
+  let userRepository: InMemoryUserRepository
+  let playerRepository: InMemoryPlayerRepository
 
   group.setup(() => {
-    registerUserUseCase = new RegisterUserUseCase(
-      mockUserRepository as any,
-      mockPlayerRepository as any
-    )
+    userRepository = new InMemoryUserRepository()
+    playerRepository = new InMemoryPlayerRepository()
+    useCase = new RegisterUserUseCase(userRepository, playerRepository)
   })
 
-  group.teardown(() => {
-    UserFactory.resetCounter()
-  })
+  test('should register a new user successfully', async ({ assert }) => {
+    const userData = {
+      firstName: 'John',
+      lastName: 'Doe',
+      username: 'johndoe',
+      email: 'john@example.com',
+      password: 'password123',
+      nickName: 'JohnnyD',
+    }
 
-  test('should register user successfully with valid data', async ({ assert }) => {
-    // Arrange
-    const request = UserFactory.registerUserRequest({
-      fullName: 'John Doe',
-      email: 'john@test.com',
-      password: 'securePassword123'
-    })
+    const result = await useCase.execute(userData)
 
-    // Act
-    const result = await registerUserUseCase.execute(request)
-
-    // Assert
     assert.isTrue(result.isSuccess)
-    assert.isDefined(result.value)
-    assert.equal(result.value.fullName, 'John Doe')
-    assert.equal(result.value.email, 'john@test.com')
-    assert.isDefined(result.value.userUuid)
-  })
-
-  test('should fail with empty full name', async ({ assert }) => {
-    // Arrange
-    const request = UserFactory.registerUserRequest({
-      fullName: '',
-      email: 'john@test.com'
-    })
-
-    // Act
-    const result = await registerUserUseCase.execute(request)
-
-    // Assert
-    assert.isTrue(result.isFailure)
-    assert.include(result.error, 'fullName')
-  })
-
-  test('should fail with invalid email format', async ({ assert }) => {
-    // Arrange
-    const request = UserFactory.registerUserRequest({
-      email: 'invalid-email'
-    })
-
-    // Act
-    const result = await registerUserUseCase.execute(request)
-
-    // Assert
-    assert.isTrue(result.isFailure)
-    assert.include(result.error, 'email')
-  })
-
-  test('should fail with weak password', async ({ assert }) => {
-    // Arrange
-    const request = UserFactory.registerUserRequest({
-      password: '123'
-    })
-
-    // Act
-    const result = await registerUserUseCase.execute(request)
-
-    // Assert
-    assert.isTrue(result.isFailure)
-    assert.include(result.error, 'password')
+    assert.exists(result.value!.user)
+    assert.exists(result.value!.player)
+    assert.equal(result.value!.user.email, 'john@example.com')
+    assert.equal(result.value!.player.nickName, 'JohnnyD')
   })
 
   test('should fail when email already exists', async ({ assert }) => {
-    // Arrange
-    const existingUser = UserFactory.userDto({
-      email: 'existing@test.com'
+    const existingUser = User.create({ 
+      firstName: 'Existing',
+      lastName: 'User',
+      username: 'existinguser',
+      email: 'john@example.com',
+      password: 'password123'
     })
+    await userRepository.save(existingUser)
 
-    const mockUserRepositoryWithExisting = {
-      ...mockUserRepository,
-      findByEmail: async (email: string) => 
-        email === 'existing@test.com' ? existingUser : null
+    const userData = {
+      firstName: 'Jane',
+      lastName: 'Smith',
+      username: 'janesmith',
+      email: 'john@example.com', // Same email
+      password: 'password123',
+      nickName: 'JaneS',
     }
 
-    const useCase = new RegisterUserUseCase(
-      mockUserRepositoryWithExisting as any,
-      mockPlayerRepository as any
-    )
+    const result = await useCase.execute(userData)
 
-    const request = UserFactory.registerUserRequest({
-      email: 'existing@test.com'
-    })
-
-    // Act
-    const result = await useCase.execute(request)
-
-    // Assert
     assert.isTrue(result.isFailure)
-    assert.include(result.error, 'email')
+    assert.equal(result.error, 'An account with this information already exists')
   })
 
-  test('should hash password before saving', async ({ assert }) => {
-    // Arrange
-    let savedUser: any = null
-    const mockUserRepositoryWithSave = {
-      ...mockUserRepository,
-      save: async (user: any) => {
-        savedUser = user
-        return Promise.resolve()
-      }
+  test('should fail when username already exists', async ({ assert }) => {
+    const existingUser = User.create({ 
+      firstName: 'Existing',
+      lastName: 'User',
+      username: 'johndoe',
+      email: 'existing@example.com',
+      password: 'password123'
+    })
+    await userRepository.save(existingUser)
+
+    const userData = {
+      firstName: 'Jane',
+      lastName: 'Smith',
+      username: 'johndoe', // Same username
+      email: 'jane@example.com',
+      password: 'password123',
+      nickName: 'JaneS',
     }
 
-    const useCase = new RegisterUserUseCase(
-      mockUserRepositoryWithSave as any,
-      mockPlayerRepository as any
-    )
+    const result = await useCase.execute(userData)
 
-    const request = UserFactory.registerUserRequest({
-      password: 'plainTextPassword'
-    })
-
-    // Act
-    const result = await useCase.execute(request)
-
-    // Assert
-    assert.isTrue(result.isSuccess)
-    assert.isDefined(savedUser)
-    assert.notEqual(savedUser.password, 'plainTextPassword')
+    assert.isTrue(result.isFailure)
+    assert.equal(result.error, 'Username is already taken')
   })
 
-  test('should create corresponding player entity', async ({ assert }) => {
-    // Arrange
-    let savedPlayer: any = null
-    const mockPlayerRepositoryWithSave = {
-      ...mockPlayerRepository,
-      save: async (player: any) => {
-        savedPlayer = player
-        return Promise.resolve()
-      }
+  test('should fail with invalid user data', async ({ assert }) => {
+    const userData = {
+      firstName: 'John',
+      lastName: 'Doe',
+      username: 'jo', // Too short
+      email: 'john@example.com',
+      password: 'password123',
+      nickName: 'JohnnyD',
     }
 
-    const useCase = new RegisterUserUseCase(
-      mockUserRepository as any,
-      mockPlayerRepositoryWithSave as any
-    )
+    const result = await useCase.execute(userData)
 
-    const request = UserFactory.registerUserRequest({
-      fullName: 'John Doe'
-    })
-
-    // Act
-    const result = await useCase.execute(request)
-
-    // Assert
-    assert.isTrue(result.isSuccess)
-    assert.isDefined(savedPlayer)
-    assert.equal(savedPlayer.nickName, 'John Doe')
+    assert.isTrue(result.isFailure)
+    assert.include(result.error, 'must be between 3 and 50 characters')
   })
 
-  test('should trim whitespace from inputs', async ({ assert }) => {
-    // Arrange
-    const request = UserFactory.registerUserRequest({
-      fullName: '  John Doe  ',
-      email: '  john@test.com  '
-    })
+  test('should fail with invalid player data', async ({ assert }) => {
+    const userData = {
+      firstName: 'John',
+      lastName: 'Doe',
+      username: 'johndoe',
+      email: 'john@example.com',
+      password: 'password123',
+      nickName: 'Jo', // Too short
+    }
 
-    // Act
-    const result = await registerUserUseCase.execute(request)
+    const result = await useCase.execute(userData)
 
-    // Assert
-    assert.isTrue(result.isSuccess)
-    assert.equal(result.value.fullName, 'John Doe')
-    assert.equal(result.value.email, 'john@test.com')
+    assert.isTrue(result.isFailure)
+    assert.include(result.error, 'must be between 3 and 30 characters')
+  })
+
+  test('should save both user and player to repositories', async ({ assert }) => {
+    const userData = {
+      firstName: 'John',
+      lastName: 'Doe',
+      username: 'johndoe',
+      email: 'john@example.com',
+      password: 'password123',
+      nickName: 'JohnnyD',
+    }
+
+    await useCase.execute(userData)
+
+    const savedUser = await userRepository.findByEmail('john@example.com')
+    const savedPlayer = await playerRepository.findByUserUuid(savedUser!.uuid)
+
+    assert.exists(savedUser)
+    assert.exists(savedPlayer)
+    assert.equal(savedPlayer!.userUuid, savedUser!.uuid)
+  })
+
+  test('should handle repository save errors', async ({ assert }) => {
+    const userData = {
+      firstName: 'John',
+      lastName: 'Doe',
+      username: 'johndoe',
+      email: 'john@example.com',
+      password: 'password123',
+      nickName: 'JohnnyD',
+    }
+
+    // Create a mock repository that throws error
+    const errorRepository = {
+      ...userRepository,
+      save: async () => { throw new Error('Database error') }
+    }
+    
+    const errorUseCase = new RegisterUserUseCase(errorRepository as any, playerRepository)
+    const result = await errorUseCase.execute(userData)
+
+    assert.isTrue(result.isFailure)
+    assert.equal(result.error, 'Database error')
   })
 })

@@ -2,12 +2,7 @@ import User from '../../domain/entities/user.js'
 import Player from '../../domain/entities/player.js'
 import { UserRepository } from '../repositories/user_repository.js'
 import { PlayerRepository } from '../repositories/player_repository.js'
-import {
-  EmailAlreadyExistsException,
-  UsernameAlreadyExistsException,
-  NicknameAlreadyExistsException,
-  RegistrationFailedException,
-} from '../../exceptions/auth_exceptions.js'
+import { Result } from '../../domain/shared/result.js'
 
 export interface RegisterUserRequest {
   firstName: string
@@ -19,8 +14,7 @@ export interface RegisterUserRequest {
 }
 
 export interface RegisterUserResponse {
-  success: boolean
-  user?: {
+  user: {
     uuid: string
     firstName: string
     lastName: string
@@ -29,46 +23,47 @@ export interface RegisterUserResponse {
     avatarUrl?: string
     createdAt: Date
   }
-  player?: {
+  player: {
     uuid: string
     nickName: string
   }
-  error?: string
 }
 
 export class RegisterUserUseCase {
   constructor(
-    private userRepository: UserRepository,
-    private playerRepository: PlayerRepository
+    private readonly userRepository: UserRepository,
+    private readonly playerRepository: PlayerRepository
   ) {}
 
-  async execute(request: RegisterUserRequest): Promise<RegisterUserResponse> {
+  async execute(request: RegisterUserRequest): Promise<Result<RegisterUserResponse>> {
     try {
       // Validation des données d'entrée
-      await this.validateRequest(request)
+      const validationResult = await this.validateRequest(request)
+      if (validationResult.isFailure) {
+        return Result.fail(validationResult.error)
+      }
 
       // Création de l'utilisateur
       const user = User.create({
-        firstName: request.firstName,
-        lastName: request.lastName,
-        username: request.username,
-        email: request.email,
-        password: request.password, // Should be hashed before this call
+        firstName: request.firstName.trim(),
+        lastName: request.lastName.trim(),
+        username: request.username.trim(),
+        email: request.email.toLowerCase().trim(),
+        password: request.password, // Le hachage est fait dans l'entité
       })
 
-      // Création du profil joueur
-      const nickName = request.nickName || request.username
+      // Création du joueur associé
+      const nickName = request.nickName?.trim() || `${request.firstName} ${request.lastName}`
       const player = Player.create({
         userUuid: user.uuid,
-        nickName: nickName,
+        nickName,
       })
 
-      // Sauvegarde
+      // Sauvegarde en base
       await this.userRepository.save(user)
       await this.playerRepository.save(player)
 
-      return {
-        success: true,
+      return Result.ok({
         user: {
           uuid: user.uuid,
           firstName: user.firstName,
@@ -82,54 +77,46 @@ export class RegisterUserUseCase {
           uuid: player.uuid,
           nickName: player.nickName,
         },
-      }
+      })
     } catch (error) {
-      // Les BusinessException sont gérées automatiquement par le handler
-      if (
-        error instanceof EmailAlreadyExistsException ||
-        error instanceof UsernameAlreadyExistsException ||
-        error instanceof NicknameAlreadyExistsException
-      ) {
-        throw error
-      }
-
-      // Autres erreurs : exception technique avec logs sécurisés
-      throw new RegistrationFailedException(
-        error instanceof Error ? error.message : 'Unknown error occurred',
-        { originalError: error }
+      return Result.fail(
+        error instanceof Error ? error.message : 'Registration failed due to an unexpected error'
       )
     }
   }
 
-  private async validateRequest(request: RegisterUserRequest): Promise<void> {
+  private async validateRequest(request: RegisterUserRequest): Promise<Result<void>> {
     // Vérifier l'unicité de l'email (sécurité : message générique)
     const existingUserByEmail = await this.userRepository.existsByEmail(request.email)
     if (existingUserByEmail) {
-      throw new EmailAlreadyExistsException(request.email)
+      return Result.fail('An account with this information already exists')
     }
 
-    // Vérifier l'unicité du username (sécurité : message générique)
+    // Vérifier l'unicité du nom d'utilisateur
     const existingUserByUsername = await this.userRepository.existsByUsername(request.username)
     if (existingUserByUsername) {
-      throw new UsernameAlreadyExistsException(request.username)
+      return Result.fail('Username is already taken')
     }
 
-    // Vérifier l'unicité du nickname si fourni
+    // Vérifier l'unicité du pseudonyme si fourni
     if (request.nickName) {
-      const existingPlayerByNickName = await this.playerRepository.existsByNickName(
+      const existingPlayerByNickname = await this.playerRepository.existsByNickName(
         request.nickName
       )
-      if (existingPlayerByNickName) {
-        throw new NicknameAlreadyExistsException(request.nickName)
+      if (existingPlayerByNickname) {
+        return Result.fail('Nickname is already taken')
       }
     } else {
-      // Si pas de nickname fourni, utiliser le username, vérifier qu'il n'existe pas comme nickname
-      const existingPlayerByNickName = await this.playerRepository.existsByNickName(
-        request.username
+      // Vérifier l'unicité du pseudonyme généré automatiquement
+      const generatedNickName = `${request.firstName} ${request.lastName}`
+      const existingPlayerByGeneratedNickname = await this.playerRepository.existsByNickName(
+        generatedNickName
       )
-      if (existingPlayerByNickName) {
-        throw new NicknameAlreadyExistsException(request.username)
+      if (existingPlayerByGeneratedNickname) {
+        return Result.fail('This name combination is already taken as a nickname')
       }
     }
+
+    return Result.ok(undefined)
   }
 }

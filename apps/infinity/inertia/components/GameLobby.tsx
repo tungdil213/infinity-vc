@@ -233,6 +233,10 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
               <span>Created: {new Date(lobby.createdAt).toLocaleString()}</span>
               <span>
                 {lobby.hasAvailableSlots ? 'Open for new players' : 'Lobby is full'}
+                {/* Debug info - remove in production */}
+                <span className="text-xs text-gray-400 ml-2">
+                  (Debug: {lobby.currentPlayers}/{lobby.maxPlayers}, hasSlots: {lobby.hasAvailableSlots ? 'true' : 'false'})
+                </span>
               </span>
             </div>
           </div>

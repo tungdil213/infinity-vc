@@ -28,11 +28,11 @@ describe('RegisterUserUseCase', () => {
 
       const result = await useCase.execute(userData)
 
-      expect(result.success).toBe(true)
-      expect(result.user).toBeDefined()
-      expect(result.player).toBeDefined()
-      expect(result.user!.email).toBe('john@example.com')
-      expect(result.player!.nickName).toBe('JohnnyD')
+      expect(result.isSuccess).toBe(true)
+      expect(result.value!.user).toBeDefined()
+      expect(result.value!.player).toBeDefined()
+      expect(result.value!.user.email).toBe('john@example.com')
+      expect(result.value!.player.nickName).toBe('JohnnyD')
     })
 
     it('should fail when email already exists', async () => {
@@ -50,8 +50,8 @@ describe('RegisterUserUseCase', () => {
 
       const result = await useCase.execute(userData)
 
-      expect(result.success).toBe(false)
-      expect(result.error).toBe('Email already exists')
+      expect(result.isFailure).toBe(true)
+      expect(result.error).toBe('An account with this information already exists')
     })
 
     it('should fail when username already exists', async () => {
@@ -69,8 +69,8 @@ describe('RegisterUserUseCase', () => {
 
       const result = await useCase.execute(userData)
 
-      expect(result.success).toBe(false)
-      expect(result.error).toBe('Username already exists')
+      expect(result.isFailure).toBe(true)
+      expect(result.error).toBe('Username is already taken')
     })
 
     it('should fail with invalid user data', async () => {
@@ -85,8 +85,8 @@ describe('RegisterUserUseCase', () => {
 
       const result = await useCase.execute(userData)
 
-      expect(result.success).toBe(false)
-      expect(result.error).toContain('Username must be between 3 and 50 characters')
+      expect(result.isFailure).toBe(true)
+      expect(result.error).toContain('must be between 3 and 50 characters')
     })
 
     it('should fail with invalid player data', async () => {
@@ -101,8 +101,8 @@ describe('RegisterUserUseCase', () => {
 
       const result = await useCase.execute(userData)
 
-      expect(result.success).toBe(false)
-      expect(result.error).toContain('Nickname must be between 3 and 30 characters')
+      expect(result.isFailure).toBe(true)
+      expect(result.error).toContain('must be between 3 and 30 characters')
     })
 
     it('should save both user and player to repositories', async () => {
@@ -140,7 +140,7 @@ describe('RegisterUserUseCase', () => {
 
       const result = await useCase.execute(userData)
 
-      expect(result.success).toBe(false)
+      expect(result.isFailure).toBe(true)
       expect(result.error).toBe('Database error')
     })
   })

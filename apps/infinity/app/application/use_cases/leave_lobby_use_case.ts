@@ -7,9 +7,24 @@ export interface LeaveLobbyRequest {
 }
 
 export interface LeaveLobbyResponse {
-  success: boolean
-  message: string
-  lobbyDeleted?: boolean
+  lobby: {
+    uuid: string
+    name: string
+    status: string
+    currentPlayers: number
+    maxPlayers: number
+    isPrivate: boolean
+    hasAvailableSlots: boolean
+    canStart: boolean
+    createdBy: string
+    players: Array<{
+      uuid: string
+      nickName: string
+    }>
+    availableActions: string[]
+    createdAt: Date
+  }
+  lobbyDeleted: boolean
 }
 
 export class LeaveLobbyUseCase {
@@ -41,8 +56,20 @@ export class LeaveLobbyUseCase {
       if (lobby.playerCount === 0) {
         await this.lobbyRepository.delete(lobby.uuid)
         const response: LeaveLobbyResponse = {
-          success: true,
-          message: 'Successfully left lobby. Lobby was deleted as it became empty.',
+          lobby: {
+            uuid: lobby.uuid,
+            name: lobby.name,
+            status: lobby.status,
+            currentPlayers: lobby.playerCount,
+            maxPlayers: lobby.maxPlayers,
+            isPrivate: lobby.isPrivate,
+            hasAvailableSlots: lobby.hasAvailableSlots,
+            canStart: lobby.canStart,
+            createdBy: lobby.createdBy,
+            players: lobby.players,
+            availableActions: lobby.availableActions,
+            createdAt: lobby.createdAt,
+          },
           lobbyDeleted: true,
         }
         return Result.ok(response)
@@ -52,8 +79,20 @@ export class LeaveLobbyUseCase {
       await this.lobbyRepository.save(lobby)
 
       const response: LeaveLobbyResponse = {
-        success: true,
-        message: 'Successfully left lobby',
+        lobby: {
+          uuid: lobby.uuid,
+          name: lobby.name,
+          status: lobby.status,
+          currentPlayers: lobby.playerCount,
+          maxPlayers: lobby.maxPlayers,
+          isPrivate: lobby.isPrivate,
+          hasAvailableSlots: lobby.hasAvailableSlots,
+          canStart: lobby.canStart,
+          createdBy: lobby.createdBy,
+          players: lobby.players,
+          availableActions: lobby.availableActions,
+          createdAt: lobby.createdAt,
+        },
         lobbyDeleted: false,
       }
 

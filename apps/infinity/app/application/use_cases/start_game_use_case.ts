@@ -2,7 +2,6 @@ import Game from '../../domain/entities/game.js'
 import { LobbyRepository } from '../repositories/lobby_repository.js'
 import { GameRepository } from '../repositories/game_repository.js'
 import { GameStartedEvent } from '../../domain/events/lobby_events.js'
-import { HybridLobbyService } from '../services/hybrid_lobby_service.js'
 import { Result } from '../../domain/shared/result.js'
 
 export interface StartGameRequest {
@@ -43,8 +42,7 @@ export interface StartGameResponse {
 export class StartGameUseCase {
   constructor(
     private lobbyRepository: LobbyRepository,
-    private gameRepository: GameRepository,
-    private hybridLobbyService: HybridLobbyService
+    private gameRepository: GameRepository
   ) {}
 
   async execute(request: StartGameRequest): Promise<Result<StartGameResponse>> {
@@ -59,8 +57,10 @@ export class StartGameUseCase {
       const lobby = await this.lobbyRepository.findByUuidOrFail(request.lobbyUuid)
 
       // Vérifier que l'utilisateur est le créateur du lobby
-      if (!lobby.isCreatedBy(request.userUuid)) {
-        return Result.fail('Only lobby creator can start the game')
+      // Le createdBy contient l'UUID du Player créateur
+      const requestingPlayer = lobby.players.find((p) => p.uuid === request.userUuid)
+      if (!requestingPlayer || requestingPlayer.uuid !== lobby.createdBy) {
+        return Result.fail('Only the lobby creator can start the game')
       }
 
       // Vérifier que le lobby peut démarrer une partie
@@ -75,8 +75,8 @@ export class StartGameUseCase {
       }
       const gameUuid = gameResult.data!
 
-      // ÉTAPE CRITIQUE: Persister le lobby en base avant de créer la partie
-      await this.hybridLobbyService.persistLobby(lobby)
+      // Sauvegarder le lobby mis à jour
+      await this.lobbyRepository.save(lobby)
 
       // Créer l'entité Game
       const game = Game.create({
