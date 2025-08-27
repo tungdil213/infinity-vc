@@ -460,3 +460,67 @@ windsurf:
         Remplacer les messages d'erreur spécifiques par des messages génériques pour les opérations sensibles.
         Ajouter la classification SECURITY aux exceptions sensibles.
         Encapsuler les erreurs techniques dans des BusinessException appropriées.
+    - name: "Service Testing Strategy"
+      description: |
+        Les tests doivent se concentrer sur la logique métier des services et use cases.
+        Les repositories ne sont pas testés directement car ils ne contiennent que de la persistance.
+        Utiliser des DTOs pour découpler les tests des entités domain.
+        Privilégier les tests unitaires avec mocks pour les dépendances externes.
+      checks:
+        - Vérifier que chaque use case a au moins un test unitaire dans `tests/unit/use_cases/`.
+        - S'assurer que les tests utilisent des DTOs plutôt que des entités domain directement.
+        - Confirmer que les repositories sont mockés dans les tests de use cases.
+        - Vérifier que les tests couvrent les cas de succès ET d'échec (Result.ok et Result.fail).
+        - S'assurer que les tests vérifient les side effects (événements domain, logs, etc.).
+      autofix: |
+        Créer automatiquement un fichier de test pour chaque nouveau use case.
+        Générer des mocks basiques pour les repositories utilisés.
+        Ajouter des tests pour les cas d'erreur manquants.
+    - name: "DTO and Serialization Pattern"
+      description: |
+        Utiliser des DTOs (Data Transfer Objects) pour découpler les couches.
+        Les DTOs servent d'interface entre les use cases et les entités domain.
+        Implémenter des serializers pour convertir entités → DTOs et DTOs → entités.
+        Les DTOs doivent être immutables et contenir uniquement des données.
+      checks:
+        - Vérifier que chaque use case utilise des DTOs en input/output plutôt que des entités.
+        - S'assurer que les DTOs sont dans `application/dtos/` avec suffixe `Dto`.
+        - Confirmer que les serializers sont dans `application/serializers/` avec suffixe `Serializer`.
+        - Vérifier que les DTOs n'ont pas de logique métier (seulement des propriétés).
+        - S'assurer que les serializers gèrent les conversions bidirectionnelles.
+      autofix: |
+        Générer automatiquement des DTOs pour les nouvelles entités.
+        Créer des serializers basiques pour les conversions entity ↔ DTO.
+        Refactorer les use cases pour utiliser DTOs au lieu d'entités.
+    - name: "Factory and Test Data Strategy"
+      description: |
+        Utiliser des factories pour créer des données de test cohérentes et réutilisables.
+        Les factories doivent générer des DTOs plutôt que des entités directement.
+        Séparer les factories de test des seeders de base de données.
+        Permettre la customisation des propriétés via des paramètres optionnels.
+      checks:
+        - Vérifier que chaque entité a une factory correspondante dans `tests/factories/`.
+        - S'assurer que les factories génèrent des DTOs avec suffixe `Factory`.
+        - Confirmer que les factories utilisent des données réalistes mais anonymisées.
+        - Vérifier que les factories permettent l'override de propriétés spécifiques.
+        - S'assurer que les factories sont utilisées dans tous les tests unitaires.
+      autofix: |
+        Générer automatiquement une factory pour chaque nouvelle entité.
+        Créer des factories basiques avec des valeurs par défaut cohérentes.
+        Refactorer les tests existants pour utiliser les factories.
+    - name: "Comprehensive Test Architecture"
+      description: |
+        Architecture de test en couches avec séparation claire des responsabilités.
+        Tests unitaires pour use cases, tests d'intégration pour services, pas de tests pour repositories.
+        Utiliser des mocks pour les dépendances externes, des factories pour les données.
+        Couvrir les cas de succès, d'échec, et les edge cases.
+      checks:
+        - Vérifier la structure : tests/unit/, tests/integration/, tests/factories/.
+        - S'assurer que les use cases ont des tests unitaires avec mocks.
+        - Confirmer que les services ont des tests d'intégration.
+        - Vérifier que les tests utilisent factories + DTOs + serializers.
+        - S'assurer de la couverture des cas Result.ok et Result.fail.
+      autofix: |
+        Créer la structure de dossiers de test manquante.
+        Générer des tests basiques pour les nouveaux use cases.
+        Ajouter des assertions pour les cas d'erreur manquants.
