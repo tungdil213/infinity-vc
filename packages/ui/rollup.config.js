@@ -31,6 +31,7 @@ const config = {
   plugins: [
     typescript({
       tsconfig: './tsconfig.json',
+      resolveJsonModule: true,
     }),
     preserveDirectives(),
   ],
