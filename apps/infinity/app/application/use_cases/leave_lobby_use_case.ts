@@ -1,4 +1,5 @@
 import { LobbyRepository } from '../repositories/lobby_repository.js'
+import { Result } from '../../domain/shared/result.js'
 
 export interface LeaveLobbyRequest {
   userUuid: string
@@ -14,47 +15,63 @@ export interface LeaveLobbyResponse {
 export class LeaveLobbyUseCase {
   constructor(private lobbyRepository: LobbyRepository) {}
 
-  async execute(request: LeaveLobbyRequest): Promise<LeaveLobbyResponse> {
-    // Validation des données d'entrée
-    this.validateRequest(request)
-
-    // Récupérer le lobby
-    const lobby = await this.lobbyRepository.findByUuidOrFail(request.lobbyUuid)
-
-    // Vérifier que le joueur est dans le lobby
-    if (!lobby.hasPlayer(request.userUuid)) {
-      throw new Error('Player is not in this lobby')
-    }
-
-    // Retirer le joueur du lobby
-    lobby.removePlayer(request.userUuid)
-
-    // Si le lobby est vide, le supprimer
-    if (lobby.playerCount === 0) {
-      await this.lobbyRepository.delete(lobby.uuid)
-      return {
-        success: true,
-        message: 'Successfully left lobby. Lobby was deleted as it became empty.',
-        lobbyDeleted: true,
+  async execute(request: LeaveLobbyRequest): Promise<Result<LeaveLobbyResponse>> {
+    try {
+      // Validation des données d'entrée
+      const validationResult = this.validateRequest(request)
+      if (validationResult.isFailure) {
+        return Result.fail<LeaveLobbyResponse>(validationResult.error)
       }
-    }
 
-    // Sinon, sauvegarder le lobby mis à jour
-    await this.lobbyRepository.save(lobby)
+      // Récupérer le lobby
+      const lobby = await this.lobbyRepository.findByUuidOrFail(request.lobbyUuid)
 
-    return {
-      success: true,
-      message: 'Successfully left lobby',
-      lobbyDeleted: false,
+      // Vérifier que le joueur est dans le lobby
+      if (!lobby.hasPlayer(request.userUuid)) {
+        return Result.fail('Player is not in this lobby')
+      }
+
+      // Retirer le joueur du lobby
+      const removeResult = lobby.removePlayer(request.userUuid)
+      if (!removeResult.success) {
+        return Result.fail(removeResult.error || 'Failed to remove player from lobby')
+      }
+
+      // Si le lobby est vide, le supprimer
+      if (lobby.playerCount === 0) {
+        await this.lobbyRepository.delete(lobby.uuid)
+        const response: LeaveLobbyResponse = {
+          success: true,
+          message: 'Successfully left lobby. Lobby was deleted as it became empty.',
+          lobbyDeleted: true,
+        }
+        return Result.ok(response)
+      }
+
+      // Sinon, sauvegarder le lobby mis à jour
+      await this.lobbyRepository.save(lobby)
+
+      const response: LeaveLobbyResponse = {
+        success: true,
+        message: 'Successfully left lobby',
+        lobbyDeleted: false,
+      }
+
+      return Result.ok(response)
+    } catch (error) {
+      return Result.fail(
+        `System error: ${error instanceof Error ? error.message : 'Unknown error'}`
+      )
     }
   }
 
-  private validateRequest(request: LeaveLobbyRequest): void {
+  private validateRequest(request: LeaveLobbyRequest): Result<void> {
     if (!request.userUuid || !request.userUuid.trim()) {
-      throw new Error('User UUID is required')
+      return Result.fail('User UUID is required')
     }
     if (!request.lobbyUuid || !request.lobbyUuid.trim()) {
-      throw new Error('Lobby UUID is required')
+      return Result.fail('Lobby UUID is required')
     }
+    return Result.ok(undefined)
   }
 }

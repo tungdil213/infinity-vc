@@ -7,6 +7,17 @@ import { LeaveLobbyUseCase } from '../application/use_cases/leave_lobby_use_case
 import { StartGameUseCase } from '../application/use_cases/start_game_use_case.js'
 import { DatabaseLobbyRepository } from '../infrastructure/repositories/database_lobby_repository.js'
 import { DatabaseUserRepository } from '../infrastructure/repositories/database_user_repository.js'
+import BusinessException from '../exceptions/business_exception.js'
+import {
+  LobbyCreationException,
+  InvalidLobbyNameException,
+  InvalidLobbyConfigurationException,
+  UserAlreadyInLobbyException,
+  LobbyCreationInternalException,
+  LobbyNotFoundException,
+  LobbyFullException,
+  InvalidLobbyPasswordException,
+} from '../exceptions/lobby_exceptions.js'
 
 @inject()
 export default class EnhancedLobbiesController {
@@ -157,13 +168,38 @@ export default class EnhancedLobbiesController {
     try {
       // Validate required fields
       if (!name || name.trim().length === 0) {
-        session.flash('error', 'Lobby name is required')
-        return response.redirect().back()
+        throw new InvalidLobbyNameException('', 'Lobby name is required')
+      }
+
+      if (name.trim().length < 3) {
+        throw new InvalidLobbyNameException(name, 'Lobby name must be at least 3 characters long')
+      }
+
+      if (name.trim().length > 50) {
+        throw new InvalidLobbyNameException(name, 'Lobby name must be less than 50 characters')
       }
 
       if (hasPassword && (!password || password.trim().length === 0)) {
-        session.flash('error', 'Password is required when password protection is enabled')
-        return response.redirect().back()
+        throw new InvalidLobbyConfigurationException(
+          'password',
+          password,
+          'Password is required when password protection is enabled'
+        )
+      }
+
+      const maxPlayersNum = Number.parseInt(maxPlayers)
+      if (Number.isNaN(maxPlayersNum) || maxPlayersNum < 2 || maxPlayersNum > 8) {
+        throw new InvalidLobbyConfigurationException(
+          'maxPlayers',
+          maxPlayers,
+          'Maximum players must be between 2 and 8'
+        )
+      }
+
+      // Check if user is already in a lobby
+      const currentLobby = await this.lobbyRepository.findByPlayer(user.userUuid)
+      if (currentLobby) {
+        throw new UserAlreadyInLobbyException(user.userUuid, currentLobby.uuid)
       }
 
       // Generate invitation code
@@ -172,27 +208,31 @@ export default class EnhancedLobbiesController {
       const result = await this.createLobbyUseCase.execute({
         userUuid: user.userUuid,
         name: name.trim(),
-        description: description?.trim(),
-        maxPlayers: Number.parseInt(maxPlayers),
+        maxPlayers: maxPlayersNum,
         isPrivate: Boolean(isPrivate),
-        hasPassword: Boolean(hasPassword),
-        password: hasPassword ? password : undefined,
-        gameType,
-        invitationCode,
       })
 
       if (result.isFailure) {
-        session.flash('error', result.error)
-        return response.redirect().back()
+        throw new LobbyCreationException(result.error, `Use case execution failed: ${result.error}`)
       }
 
-      const lobby = result.value
       session.flash('success', 'Lobby created successfully!')
-      return response.redirect(`/lobbies/${lobby.uuid}`)
+      return response.redirect(`/lobbies/${result.value.uuid}`)
     } catch (error) {
-      console.error('Failed to create lobby:', error)
-      session.flash('error', 'Failed to create lobby. Please try again.')
-      return response.redirect().back()
+      // If it's already a BusinessException, let it handle itself
+      if (error instanceof BusinessException) {
+        throw error
+      }
+
+      // Wrap unexpected errors
+      throw new LobbyCreationInternalException(error as Error, user.userUuid, {
+        name,
+        description,
+        maxPlayers,
+        isPrivate,
+        hasPassword,
+        gameType,
+      })
     }
   }
 

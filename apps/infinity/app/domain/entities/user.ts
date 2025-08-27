@@ -1,4 +1,6 @@
 import { BaseEntity } from './base_entity.js'
+import { PlayerInterface } from '../interfaces/player_interface.js'
+import { DomainValidationException } from '../../exceptions/domain_exceptions.js'
 
 export interface UserData {
   uuid?: string
@@ -151,22 +153,22 @@ export default class User extends BaseEntity {
   private static validateEmail(email: string): void {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      throw new Error('Invalid email format')
+      throw new DomainValidationException('email', email, 'must be a valid email format')
     }
   }
 
   private static validateUsername(username: string): void {
     if (username.length < 3 || username.length > 50) {
-      throw new Error('Username must be between 3 and 50 characters')
+      throw new DomainValidationException('username', username, 'must be between 3 and 50 characters')
     }
     if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
-      throw new Error('Username can only contain letters, numbers, underscores and hyphens')
+      throw new DomainValidationException('username', username, 'can only contain letters, numbers, underscores and hyphens')
     }
   }
 
   private static validatePassword(password: string): void {
     if (password.length < 8) {
-      throw new Error('Password must be at least 8 characters long')
+      throw new DomainValidationException('password', '[REDACTED]', 'must be at least 8 characters long')
     }
   }
 

@@ -53,6 +53,8 @@ export class InMemoryLobbyRepository implements LobbyRepository {
   }
 
   async findByPlayer(playerUuid: string): Promise<Lobby | null> {
+    console.log('findByPlayer', playerUuid)
+    console.log(this.lobbies)
     for (const lobby of this.lobbies.values()) {
       if (lobby.hasPlayer(playerUuid)) {
         return lobby

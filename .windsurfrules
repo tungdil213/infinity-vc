@@ -365,3 +365,98 @@ windsurf:
     - dist
   maxContextFiles: 50
   maxSearchDepth: 5
+  enforceResultPattern: true
+  rules:
+    - name: "Use Result<T> pattern everywhere"
+      description: |
+        Toute fonction métier, repository, service ou use case doit retourner un objet Result<T> 
+        (succès ou échec explicite) et non pas une valeur brute ni un throw.
+        Les exceptions doivent être encapsulées dans Result<T>. 
+        Les appels de méthodes doivent être gérés via pattern matching explicite sur Result.
+      checks:
+        - Vérifier que chaque méthode publique dans `application/use_cases/`, `application/services/` et `infrastructure/repositories/` retourne Result<T>.
+        - Refuser les `throw` en dehors des BusinessException dans les couches métier.
+        - S'assurer que chaque appelant gère Result avec `if (result.isFailure)` avant d'accéder à [result.value](cci:1://file:///Users/ericmonnier/dev/proto/infinity-test/apps/infinity/app/domain/shared/result.ts:39:2-48:3).
+        - Vérifier que les contrôleurs utilisent le pattern : `if (result.isFailure) { throw new BusinessException(...) }`.
+        - Interdire l'accès direct à [result.value](cci:1://file:///Users/ericmonnier/dev/proto/infinity-test/apps/infinity/app/domain/shared/result.ts:39:2-48:3) sans vérification préalable de [result.isSuccess](cci:1://file:///Users/ericmonnier/dev/proto/infinity-test/apps/infinity/app/domain/shared/result.ts:25:2-30:3).
+      autofix: |
+        Si une méthode retourne une valeur brute, la transformer en Result.ok().
+        Si une méthode lève une exception métier, l'encapsuler dans Result.fail().
+        Corriger "Result.err()" vers "Result.fail()".
+        Ajouter les types Result<T> aux signatures manquantes.
+        Ajouter les vérifications isFailure/isSuccess manquantes.
+
+    - name: "BusinessException pattern enforcement"
+      description: |
+        Toutes les exceptions métier doivent hériter de la classe BusinessException.
+        Elles doivent fournir automatiquement :
+          - un message technique (context) pour les logs
+          - un message utilisateur (userMessage) sécurisé
+          - une classification (ErrorClassification: USER_SAFE, INTERNAL, SECURITY)
+          - un niveau de gravité (ErrorSeverity: low, medium, high, critical)
+          - un type de toast (ToastType: error, warning, info)
+          - une intégration automatique avec Sentry
+        Aucun `throw` direct de `Error` ne doit se faire dans le code métier.
+      checks:
+        - Vérifier que toutes les classes d'exception héritent de BusinessException.
+        - Vérifier que toutes les exceptions définissent : classification, severity, userMessage, toastType, context.
+        - Interdire les `throw new Error()` dans les couches `application/`, `domain/` et `infrastructure/`.
+        - S'assurer que les exceptions SECURITY n'exposent jamais d'informations sensibles dans userMessage.
+        - Vérifier que chaque exception a un nom explicite (ex: EmailAlreadyExistsException, LobbyCreationException).
+        - Contrôler que les exceptions sont catchées dans HttpExceptionHandler pour génération automatique de toasts.
+      autofix: |
+        Si une exception lève `throw new Error()`, la transformer en `throw new <DomainSpecific>Exception()`.
+        Ajouter userMessage, classification, severity et toastType si absent.
+        Générer automatiquement les messages sécurisés pour les erreurs SECURITY.
+
+    - name: "Toast integration with Sonner"
+      description: |
+        Toutes les interactions utilisateur doivent fournir un feedback via le système de toast Sonner.
+        Les BusinessException génèrent automatiquement des toasts via flash messages.
+        Les succès d'opérations importantes doivent déclencher des toasts de confirmation.
+      checks:
+        - Vérifier que HttpExceptionHandler convertit automatiquement les BusinessException en flash messages.
+        - S'assurer que les contrôleurs utilisent `session.flash('success', message)` pour les opérations réussies.
+        - Contrôler que le composant ToastHandler est présent dans le layout principal.
+        - Vérifier que les toasts utilisent les types appropriés : success, error, warning, info.
+        - S'assurer que les messages de toast sont cohérents avec les userMessage des exceptions.
+      autofix: |
+        Ajouter `session.flash('success', 'Operation completed successfully')` après les opérations critiques.
+        Intégrer ToastHandler dans le layout si absent.
+        Convertir les console.log d'erreur en toasts appropriés.
+
+    - name: "Domain Driven Design architecture"
+      description: |
+        Respect strict de l'architecture DDD avec séparation claire des couches :
+        - Domain : Entités, Value Objects, Events (aucune dépendance externe)
+        - Application : Use Cases, Services applicatifs (orchestration)
+        - Infrastructure : Repositories, Adaptateurs techniques
+        - Presentation : Contrôleurs, DTOs (transformation des données)
+      checks:
+        - Vérifier que les entités du `domain/` n'importent aucune dépendance externe.
+        - S'assurer que les use cases dans `application/use_cases/` n'accèdent jamais directement aux modèles Lucid.
+        - Contrôler que l'injection de dépendances se fait via constructeur dans les use cases.
+        - Vérifier que les repositories implémentent des interfaces définies dans `application/repositories/`.
+        - S'assurer que les contrôleurs ne contiennent que de la logique de transformation et d'orchestration.
+        - Interdire les appels directs aux repositories depuis les contrôleurs (utiliser les use cases).
+      autofix: |
+        Déplacer la logique métier des contrôleurs vers les use cases.
+        Créer des interfaces de repository manquantes dans application/repositories/.
+        Ajouter l'injection de dépendances via constructeur si manquante.
+
+    - name: "Security-first error handling"
+      description: |
+        Gestion sécurisée des erreurs pour éviter l'exposition d'informations sensibles :
+        - Prévention des attaques d'énumération d'utilisateurs
+        - Messages génériques pour les erreurs sensibles
+        - Logs détaillés pour le debugging sans exposition publique
+      checks:
+        - Vérifier que les erreurs d'authentification utilisent des messages génériques.
+        - S'assurer que les erreurs de validation n'exposent pas la structure interne.
+        - Contrôler que les erreurs SECURITY ont des userMessage génériques mais des logs détaillés.
+        - Vérifier que les stack traces ne sont jamais exposées en production.
+        - S'assurer que les erreurs de base de données sont encapsulées dans des BusinessException.
+      autofix: |
+        Remplacer les messages d'erreur spécifiques par des messages génériques pour les opérations sensibles.
+        Ajouter la classification SECURITY aux exceptions sensibles.
+        Encapsuler les erreurs techniques dans des BusinessException appropriées.
