@@ -1,5 +1,7 @@
 import { Head } from '@inertiajs/react'
 import { Button } from '@tyfo.dev/ui/primitives/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@tyfo.dev/ui/primitives/card'
+import { Badge } from '@tyfo.dev/ui/primitives/badge'
 import React from 'react'
 
 export default function Home() {

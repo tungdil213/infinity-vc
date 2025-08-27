@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Progress } from "@tyfo.dev/ui/primitives/progress";
 import { Button } from "@tyfo.dev/ui/primitives/button";
 import { useState, useEffect } from "react";

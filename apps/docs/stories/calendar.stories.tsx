@@ -1,5 +1,5 @@
 import React from "react"
-import type { Meta, StoryObj } from "@storybook/react"
+import type { Meta, StoryObj } from "@storybook/react-vite"
 import { Calendar } from "@tyfo.dev/ui/primitives/calendar"
 import { Card } from "@tyfo.dev/ui/primitives/card"
 import { addDays, format } from "date-fns"

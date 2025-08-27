@@ -1,5 +1,5 @@
 import React from "react"
-import type { Meta, StoryObj } from "@storybook/react"
+import type { Meta, StoryObj } from "@storybook/react-vite"
 import { Toaster } from "@tyfo.dev/ui/primitives/sonner"
 import { Button } from "@tyfo.dev/ui/primitives/button"
 import { toast, type ToasterProps } from "sonner"

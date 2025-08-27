@@ -1,5 +1,5 @@
 import * as React from "react";
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { ScrollArea } from "@tyfo.dev/ui/primitives/scroll-area";
 import { Separator } from "@tyfo.dev/ui/primitives/separator";
 import { Badge } from "@tyfo.dev/ui/primitives/badge";

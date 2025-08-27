@@ -47,7 +47,8 @@ export * from './components/primitives/toggle-group'
 export * from './components/primitives/tooltip'
 
 // Specific components (project-specific composed components)
-export * from './components/specific'
+export { Header } from './components/header'
+export { Footer } from './components/footer'
 
 // Utilities
 export * from './utils'

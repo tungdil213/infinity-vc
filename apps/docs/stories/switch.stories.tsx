@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Switch } from "@tyfo.dev/ui/primitives/switch";
 import { Label } from "@tyfo.dev/ui/primitives/label";
 

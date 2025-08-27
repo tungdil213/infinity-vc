@@ -1,7 +1,9 @@
 import React from 'react'
 import { Head, Link } from '@inertiajs/react'
 import { Button } from '@tyfo.dev/ui/primitives/button'
+import { Footer } from '../../../../packages/ui/src/components/footer'
 import Layout from '../components/layout'
+import { HeaderWrapper } from '../components/HeaderWrapper'
 
 interface WelcomeProps {
   user?: {
@@ -9,57 +11,23 @@ interface WelcomeProps {
     fullName: string
     email: string
   }
+  currentLobby?: {
+    uuid: string
+    name: string
+    status: string
+    currentPlayers: number
+    maxPlayers: number
+  }
 }
 
-export default function Welcome({ user }: WelcomeProps) {
+export default function Welcome({ user, currentLobby }: WelcomeProps) {
   return (
     <Layout>
       <Head title="Infinity Game - Multiplayer Gaming Platform" />
       
       <div className="min-h-screen bg-background text-foreground font-mono">
-        {/* Navigation */}
-        <nav className="bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <Link href="/dev/routes">
-                    <h1 className="text-2xl font-bold text-primary hover:opacity-80 transition-opacity">
-                      ♾️ Infinity Game
-                    </h1>
-                  </Link>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-4">
-                {user ? (
-                  <>
-                    <span className="text-muted-foreground">Welcome, {user.fullName}!</span>
-                    <Link href="/lobbies">
-                      <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-                        Go to Lobbies
-                      </Button>
-                    </Link>
-                    <Link href="/auth/logout" method="post">
-                      <Button variant="outline" className="border-border text-foreground hover:bg-accent">Logout</Button>
-                    </Link>
-                  </>
-                ) : (
-                  <>
-                    <Link href="/auth/login">
-                      <Button variant="outline" className="border-border text-foreground hover:bg-accent">Login</Button>
-                    </Link>
-                    <Link href="/auth/register">
-                      <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-                        Sign Up
-                      </Button>
-                    </Link>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </nav>
+        {/* Enhanced Navigation */}
+        <HeaderWrapper user={user} currentLobby={currentLobby} />
 
         {/* Hero Section */}
         <div className="relative overflow-hidden">
@@ -244,41 +212,7 @@ export default function Welcome({ user }: WelcomeProps) {
         </div>
 
         {/* Footer */}
-        <footer className="bg-gray-900 text-white py-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-              <div className="col-span-1 md:col-span-2">
-                <h3 className="text-2xl font-bold mb-4">♾️ Infinity Game</h3>
-                <p className="text-gray-400 mb-4">
-                  The ultimate multiplayer gaming platform. Play with friends, 
-                  create memories, and enjoy seamless gaming experiences.
-                </p>
-              </div>
-              
-              <div>
-                <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
-                <ul className="space-y-2 text-gray-400">
-                  <li><Link href="/lobbies" className="hover:text-white">Browse Lobbies</Link></li>
-                  <li><Link href="/auth/register" className="hover:text-white">Sign Up</Link></li>
-                  <li><Link href="/auth/login" className="hover:text-white">Login</Link></li>
-                </ul>
-              </div>
-              
-              <div>
-                <h4 className="text-lg font-semibold mb-4">Support</h4>
-                <ul className="space-y-2 text-gray-400">
-                  <li><a href="#" className="hover:text-white">Help Center</a></li>
-                  <li><a href="#" className="hover:text-white">Contact Us</a></li>
-                  <li><a href="#" className="hover:text-white">Privacy Policy</a></li>
-                </ul>
-              </div>
-            </div>
-            
-            <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-              <p>&copy; 2024 Infinity Game. All rights reserved.</p>
-            </div>
-          </div>
-        </footer>
+        <Footer />
       </div>
     </Layout>
   )

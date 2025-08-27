@@ -78,7 +78,8 @@ export default class EnhancedLobbiesController {
         })),
         user: {
           uuid: user.userUuid,
-          nickName: user.nickName,
+          nickName: user.email, // Using email as nickName fallback
+          fullName: user.fullName,
         },
         currentLobby: currentLobby
           ? {
@@ -96,7 +97,8 @@ export default class EnhancedLobbiesController {
         lobbies: [],
         user: {
           uuid: user.userUuid,
-          nickName: user.nickName,
+          nickName: user.email, // Using email as nickName fallback
+          fullName: user.fullName,
         },
         currentLobby: null,
       })

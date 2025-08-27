@@ -1,5 +1,5 @@
 import * as React from "react";
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Label } from "@tyfo.dev/ui/primitives/label";
 import { Input } from "@tyfo.dev/ui/primitives/input";
 import { Checkbox } from "@tyfo.dev/ui/primitives/checkbox";

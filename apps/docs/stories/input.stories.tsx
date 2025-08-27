@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Input } from "@tyfo.dev/ui/primitives/input";
 import { Mail, Search, User } from "lucide-react";
 
