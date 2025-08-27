@@ -18,9 +18,15 @@ interface Lobby {
   hasAvailableSlots: boolean
   canStart: boolean
   createdBy: string
+  creator: {
+    uuid: string
+    nickName: string
+  }
   players: Player[]
   availableActions: string[]
   createdAt: string
+  invitationCode: string
+  hasPassword: boolean
 }
 
 interface LobbyProps {
@@ -32,24 +38,14 @@ interface LobbyProps {
 }
 
 export default function Lobby({ lobby, user }: LobbyProps) {
-  const handleLeaveLobby = () => {
-    router.post(`/api/v1/lobbies/${lobby.uuid}/leave`)
-  }
-
-  const handleStartGame = () => {
-    router.post(`/api/v1/lobbies/${lobby.uuid}/start`)
-  }
-
   return (
     <Layout>
       <Head title={`Lobby - ${lobby.name}`} />
       
       <div className="min-h-screen bg-gray-50">
         <GameLobby
-          lobby={lobby}
+          lobbyUuid={lobby.uuid}
           currentUser={user}
-          onLeaveLobby={handleLeaveLobby}
-          onStartGame={handleStartGame}
         />
       </div>
     </Layout>

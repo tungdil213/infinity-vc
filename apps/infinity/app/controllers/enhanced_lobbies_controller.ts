@@ -5,15 +5,15 @@ import { CreateLobbyUseCase } from '../application/use_cases/create_lobby_use_ca
 import { JoinLobbyUseCase } from '../application/use_cases/join_lobby_use_case.js'
 import { LeaveLobbyUseCase } from '../application/use_cases/leave_lobby_use_case.js'
 import { StartGameUseCase } from '../application/use_cases/start_game_use_case.js'
-import { DatabaseLobbyRepository } from '../infrastructure/repositories/database_lobby_repository.js'
 import { DatabaseUserRepository } from '../infrastructure/repositories/database_user_repository.js'
+import { HybridLobbyService } from '../application/services/hybrid_lobby_service.js'
 import BusinessException from '../exceptions/business_exception.js'
 import {
   LobbyCreationException,
-  InvalidLobbyNameException,
   InvalidLobbyConfigurationException,
-  UserAlreadyInLobbyException,
   LobbyCreationInternalException,
+} from '../exceptions/lobby_exceptions.js'
+import {
   LobbyNotFoundException,
   LobbyFullException,
   InvalidLobbyPasswordException,
@@ -26,7 +26,7 @@ export default class EnhancedLobbiesController {
     private joinLobbyUseCase: JoinLobbyUseCase,
     private leaveLobbyUseCase: LeaveLobbyUseCase,
     private startGameUseCase: StartGameUseCase,
-    private lobbyRepository: DatabaseLobbyRepository,
+    private lobbyRepository: HybridLobbyService,
     private userRepository: DatabaseUserRepository
   ) {}
 
@@ -196,11 +196,8 @@ export default class EnhancedLobbiesController {
         )
       }
 
-      // Check if user is already in a lobby
-      const currentLobby = await this.lobbyRepository.findByPlayer(user.userUuid)
-      if (currentLobby) {
-        throw new UserAlreadyInLobbyException(user.userUuid, currentLobby.uuid)
-      }
+      // La vérification de lobby existant est maintenant gérée dans le use case
+      // qui fait automatiquement quitter l'utilisateur de son lobby actuel
 
       // Generate invitation code
       const invitationCode = crypto.randomUUID()

@@ -204,7 +204,7 @@ export class LobbyService {
       }
 
       const data = await response.json()
-      return data.data.lobby
+      return data.lobby
     } catch (error) {
       console.error('Error fetching lobby details:', error)
       return null

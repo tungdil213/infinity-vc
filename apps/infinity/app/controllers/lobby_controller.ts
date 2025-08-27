@@ -89,9 +89,7 @@ export default class LobbyController {
       return response.status(200).json({
         success: true,
         message: 'Lobby retrieved successfully',
-        data: {
-          lobby: lobby.toJSON(),
-        },
+        lobby: lobby.toJSON(),
       })
     } catch (error) {
       return response.status(404).json({
