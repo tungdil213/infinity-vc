@@ -50,6 +50,9 @@ export default class Lobby extends BaseEntity {
 
     // Ajouter le créateur comme premier joueur
     lobby._players = [data.creator]
+    
+    // Mettre à jour le statut initial basé sur le nombre de joueurs
+    lobby.updateStatusBasedOnPlayerCount()
 
     // Enregistrer l'événement de création
     lobby.recordEvent(
@@ -117,7 +120,7 @@ export default class Lobby extends BaseEntity {
   }
 
   get canStart(): boolean {
-    return this._players.length >= 2 && this._status === LobbyStatus.OPEN
+    return this._players.length >= 2 && [LobbyStatus.READY, LobbyStatus.FULL].includes(this._status)
   }
 
   get availableActions(): string[] {
@@ -140,6 +143,9 @@ export default class Lobby extends BaseEntity {
       // Ajout du joueur
       this._players.push(player)
 
+      // Mise à jour automatique du statut
+      this.updateStatusBasedOnPlayerCount()
+
       // Événement domaine
       this.recordEvent(
         new PlayerJoinedLobbyEvent(this._uuid, player, this._players.length, this.status)
@@ -148,7 +154,7 @@ export default class Lobby extends BaseEntity {
       return Result.ok(undefined)
     } catch (error) {
       if (error instanceof LobbyValidationException) {
-        return Result.fail(error.message)
+        return Result.fail(error.metadata.userMessage)
       }
       return Result.fail('Failed to add player to lobby')
     }
@@ -192,7 +198,7 @@ export default class Lobby extends BaseEntity {
   startGame(): Result<string> {
     try {
       if (!this.canStart) {
-        return Result.fail('Lobby must have at least 2 players to start game')
+        return Result.fail('Lobby must be READY or FULL to start game')
       }
 
       // Mise à jour du statut
@@ -257,6 +263,23 @@ export default class Lobby extends BaseEntity {
 
     if (!this.isOpen) {
       throw new LobbyValidationException('Lobby is not accepting new players')
+    }
+  }
+
+  private updateStatusBasedOnPlayerCount(): void {
+    const playerCount = this._players.length
+    
+    if (playerCount === 0) {
+      this._status = LobbyStatus.OPEN
+    } else if (playerCount === 1) {
+      this._status = LobbyStatus.WAITING
+    } else if (playerCount === 2) {
+      this._status = LobbyStatus.READY
+    } else if (playerCount >= this._maxPlayers) {
+      this._status = LobbyStatus.FULL
+    } else {
+      // Entre 3 et maxPlayers-1 : reste READY
+      this._status = LobbyStatus.READY
     }
   }
 

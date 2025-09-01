@@ -5,8 +5,16 @@ import { UserFactory } from '../../factories/user_factory.js'
 
 // Mock repositories
 const mockPlayerRepository = {
-  findByUuid: async (uuid: string) => {
-    const userDto = UserFactory.userDto({ userUuid: uuid })
+  findPlayerInterfaceByUuid: async (userUuid: string) => {
+    const userDto = UserFactory.userDto({ userUuid })
+    return {
+      uuid: userDto.userUuid,
+      nickName: userDto.fullName,
+      email: userDto.email
+    }
+  },
+  findPlayerInterfaceByUuidOrFail: async (userUuid: string) => {
+    const userDto = UserFactory.userDto({ userUuid })
     return {
       uuid: userDto.userUuid,
       nickName: userDto.fullName,
@@ -56,7 +64,7 @@ test.group('CreateLobbyUseCase', (group) => {
     assert.equal(result.value.maxPlayers, 4)
     assert.equal(result.value.isPrivate, false)
     assert.equal(result.value.currentPlayers, 1)
-    assert.equal(result.value.status, 'OPEN')
+    assert.equal(result.value.status, 'WAITING')
     assert.isTrue(result.value.hasAvailableSlots)
     assert.isFalse(result.value.canStart)
   })
@@ -142,7 +150,7 @@ test.group('CreateLobbyUseCase', (group) => {
   test('should handle player not found error', async ({ assert }) => {
     // Arrange
     const mockPlayerRepositoryNotFound = {
-      findByUuid: async (_uuid: string) => null
+      findPlayerInterfaceByUuid: async (_uuid: string) => null
     }
 
     const useCase = new CreateLobbyUseCase(

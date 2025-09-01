@@ -43,7 +43,7 @@ export class CreateLobbyUseCase {
       }
 
       // Vérifier que le joueur existe
-      const player = await this.playerRepository.findPlayerInterfaceByUuidOrFail(request.userUuid)
+      const player = await this.playerRepository.findPlayerInterfaceByUuid(request.userUuid)
       if (!player) {
         return Result.fail('Player not found')
       }
@@ -52,7 +52,7 @@ export class CreateLobbyUseCase {
       const existingLobby = await this.lobbyRepository.findByPlayer(request.userUuid)
       if (existingLobby) {
         const leaveResult = existingLobby.removePlayer(request.userUuid)
-        if (!leaveResult.success) {
+        if (leaveResult.isFailure) {
           return Result.fail(`Failed to leave existing lobby: ${leaveResult.error}`)
         }
 
@@ -107,8 +107,8 @@ export class CreateLobbyUseCase {
     if (!request.name || !request.name.trim()) {
       return Result.fail('Lobby name is required')
     }
-    if (request.maxPlayers && (request.maxPlayers < 2 || request.maxPlayers > 8)) {
-      return Result.fail('Max players must be between 2 and 8')
+    if (request.maxPlayers !== undefined && (request.maxPlayers < 2 || request.maxPlayers > 8)) {
+      return Result.fail('maxPlayers must be between 2 and 8')
     }
     return Result.ok(undefined)
   }

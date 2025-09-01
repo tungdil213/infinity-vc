@@ -37,7 +37,7 @@ test.group('Lobby Entity', () => {
     assert.deepEqual(lobby.creator, creator)
     assert.equal(lobby.maxPlayers, 4)
     assert.equal(lobby.isPrivate, false)
-    assert.equal(lobby.status, LobbyStatus.OPEN)
+    assert.equal(lobby.status, LobbyStatus.WAITING)
     assert.lengthOf(lobby.players, 1)
     assert.deepEqual(lobby.players[0], creator)
     assert.exists(lobby.uuid)
@@ -187,13 +187,14 @@ test.group('Lobby Entity', () => {
 
   test('should update status based on player count', ({ assert }) => {
     const lobby = createLobby({ maxPlayers: 4 })
-    assert.equal(lobby.status, LobbyStatus.OPEN)
-
-    // Ajouter des joueurs jusqu'à être prêt
-    lobby.addPlayer(createPlayerInterface())
+    // Le lobby a déjà 1 joueur (le créateur), donc statut WAITING
     assert.equal(lobby.status, LobbyStatus.WAITING)
 
-    // Remplir le lobby
+    // Ajouter un joueur pour avoir 2 joueurs total -> READY
+    lobby.addPlayer(createPlayerInterface())
+    assert.equal(lobby.status, LobbyStatus.READY)
+
+    // Remplir le lobby jusqu'à 4 joueurs -> FULL
     lobby.addPlayer(createPlayerInterface())
     lobby.addPlayer(createPlayerInterface())
     assert.equal(lobby.status, LobbyStatus.FULL)

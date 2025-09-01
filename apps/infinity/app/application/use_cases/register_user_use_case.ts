@@ -86,6 +86,15 @@ export class RegisterUserUseCase {
   }
 
   private async validateRequest(request: RegisterUserRequest): Promise<Result<void>> {
+    // Validation des longueurs des champs
+    if (!request.username || request.username.trim().length < 3 || request.username.trim().length > 50) {
+      return Result.fail('Username must be between 3 and 50 characters')
+    }
+
+    if (request.nickName && (request.nickName.trim().length < 3 || request.nickName.trim().length > 30)) {
+      return Result.fail('Nickname must be between 3 and 30 characters')
+    }
+
     // Vérifier l'unicité de l'email (sécurité : message générique)
     const existingUserByEmail = await this.userRepository.existsByEmail(request.email)
     if (existingUserByEmail) {

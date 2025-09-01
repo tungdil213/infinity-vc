@@ -148,11 +148,17 @@ test.group('RegisterUserUseCase', (group) => {
 
     // Create a mock repository that throws error
     const errorRepository = {
-      ...userRepository,
+      existsByEmail: async () => false,
+      existsByUsername: async () => false,
       save: async () => { throw new Error('Database error') }
     }
+
+    const errorPlayerRepository = {
+      existsByNickName: async () => false,
+      save: async () => Promise.resolve()
+    }
     
-    const errorUseCase = new RegisterUserUseCase(errorRepository as any, playerRepository)
+    const errorUseCase = new RegisterUserUseCase(errorRepository as any, errorPlayerRepository as any)
     const result = await errorUseCase.execute(userData)
 
     assert.isTrue(result.isFailure)
