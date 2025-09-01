@@ -87,23 +87,7 @@ export class JoinLobbyUseCase {
       })
 
       return Result.ok({
-        lobby: {
-          uuid: lobby.uuid,
-          name: lobby.name,
-          status: lobby.status,
-          currentPlayers: lobby.players.length,
-          maxPlayers: lobby.maxPlayers,
-          isPrivate: lobby.isPrivate,
-          hasAvailableSlots: lobby.hasAvailableSlots,
-          canStart: lobby.canStart,
-          createdBy: lobby.createdBy,
-          players: lobby.players.map((p) => ({
-            uuid: p.uuid,
-            nickName: p.nickName,
-          })),
-          availableActions: lobby.availableActions,
-          createdAt: lobby.createdAt,
-        },
+        lobby: lobby.serialize(),
       })
     } catch (error) {
       return Result.fail(error instanceof Error ? error.message : 'Failed to join lobby')

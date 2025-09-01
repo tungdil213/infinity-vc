@@ -2,6 +2,7 @@ import Lobby from '../../domain/entities/lobby.js'
 import { PlayerRepository } from '../repositories/player_repository.js'
 import { LobbyRepository } from '../repositories/lobby_repository.js'
 import { Result } from '../../domain/shared/result.js'
+import { LobbyNotificationService } from '../services/lobby_notification_service.js'
 
 export interface CreateLobbyRequest {
   userUuid: string
@@ -31,7 +32,8 @@ export interface CreateLobbyResponse {
 export class CreateLobbyUseCase {
   constructor(
     private playerRepository: PlayerRepository,
-    private lobbyRepository: LobbyRepository
+    private lobbyRepository: LobbyRepository,
+    private notificationService: LobbyNotificationService
   ) {}
 
   async execute(request: CreateLobbyRequest): Promise<Result<CreateLobbyResponse>> {
@@ -76,20 +78,24 @@ export class CreateLobbyUseCase {
       // Sauvegarder le lobby
       await this.lobbyRepository.save(lobby)
 
-      const response: CreateLobbyResponse = {
+      // Notifier la création du lobby pour la synchronisation temps réel
+      this.notificationService.notifyLobbyCreated(lobby.uuid, {
         uuid: lobby.uuid,
         name: lobby.name,
         status: lobby.status,
         currentPlayers: lobby.playerCount,
         maxPlayers: lobby.maxPlayers,
+        players: lobby.players,
+        creator: lobby.creator,
         isPrivate: lobby.isPrivate,
         hasAvailableSlots: lobby.hasAvailableSlots,
         canStart: lobby.canStart,
         createdBy: lobby.createdBy,
-        players: lobby.players,
-        availableActions: lobby.availableActions,
         createdAt: lobby.createdAt,
-      }
+      })
+
+      // Utiliser la sérialisation de l'entité pour garantir la cohérence
+      const response = lobby.serialize() as CreateLobbyResponse
 
       return Result.ok(response)
     } catch (error) {

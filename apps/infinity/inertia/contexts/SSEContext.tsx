@@ -98,6 +98,7 @@ export function SSEProvider({ children }: SSEProviderProps) {
       const eventTypes = [
         'lobby.player.joined',
         'lobby.player.left', 
+        'lobby.status.changed',
         'lobby.game.started',
         'lobby.created',
         'lobby.updated',

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from '@jest/globals'
+import { test } from '@japa/runner'
 import { CreateLobbyUseCase } from '../../application/use_cases/create_lobby_use_case.js'
 import { JoinLobbyUseCase } from '../../application/use_cases/join_lobby_use_case.js'
 import { LeaveLobbyUseCase } from '../../application/use_cases/leave_lobby_use_case.js'
@@ -9,8 +9,9 @@ import { InMemoryPlayerRepository } from '../../infrastructure/repositories/in_m
 import { InMemoryGameRepository } from '../../infrastructure/repositories/in_memory_game_repository.js'
 import { PlayerFactory } from '../factories/player_factory.js'
 import { LobbyStatus } from '../../domain/value_objects/lobby_status.js'
+import { LobbyNotificationService } from '../../application/services/lobby_notification_service.js'
 
-describe('Lobby Use Cases Integration', () => {
+test.group('Lobby Use Cases Integration', () => {
   let lobbyRepository: InMemoryLobbyRepository
   let playerRepository: InMemoryPlayerRepository
   let gameRepository: InMemoryGameRepository
@@ -20,20 +21,24 @@ describe('Lobby Use Cases Integration', () => {
   let startGameUseCase: StartGameUseCase
   let listLobbiesUseCase: ListLobbiesUseCase
 
-  beforeEach(() => {
+  const setupRepositories = () => {
     lobbyRepository = new InMemoryLobbyRepository()
     playerRepository = new InMemoryPlayerRepository()
     gameRepository = new InMemoryGameRepository()
 
-    createLobbyUseCase = new CreateLobbyUseCase(playerRepository, lobbyRepository)
-    joinLobbyUseCase = new JoinLobbyUseCase(playerRepository, lobbyRepository)
+    // Create a real notification service instance for testing
+    const notificationService = new LobbyNotificationService()
+
+    createLobbyUseCase = new CreateLobbyUseCase(playerRepository, lobbyRepository, notificationService)
+    joinLobbyUseCase = new JoinLobbyUseCase(playerRepository, lobbyRepository, notificationService)
     leaveLobbyUseCase = new LeaveLobbyUseCase(lobbyRepository)
     startGameUseCase = new StartGameUseCase(lobbyRepository, gameRepository)
     listLobbiesUseCase = new ListLobbiesUseCase(lobbyRepository)
-  })
+  }
 
-  describe('complete lobby lifecycle', () => {
-    it('should handle full lobby lifecycle from creation to game start', async () => {
+  test.group('complete lobby lifecycle', () => {
+    test('should handle full lobby lifecycle from creation to game start', async ({ assert }) => {
+      setupRepositories()
       // 1. Créer des joueurs
       const player1 = PlayerFactory.create({ nickName: 'Player1' })
       const player2 = PlayerFactory.create({ nickName: 'Player2' })
@@ -54,12 +59,12 @@ describe('Lobby Use Cases Integration', () => {
       if (createResult.isFailure) {
         console.error('CreateLobby failed:', createResult.error)
       }
-      expect(createResult.isSuccess).toBe(true)
+      assert.equal(createResult.isSuccess, true)
       const lobbyUuid = createResult.value.uuid
 
       // 3. Lister les lobbies (devrait contenir notre lobby)
       const listResult = await listLobbiesUseCase.execute({})
-      expect(listResult.isSuccess).toBe(true)
+      assert.equal(listResult.isSuccess, true)
 
       // 4. Joindre le lobby avec le deuxième joueur
       const joinResult1 = await joinLobbyUseCase.execute({
@@ -67,9 +72,9 @@ describe('Lobby Use Cases Integration', () => {
         userUuid: player2.userUuid,
       })
 
-      expect(joinResult1.isSuccess).toBe(true)
-      expect(joinResult1.value!.lobby.players).toHaveLength(2)
-      expect(joinResult1.value!.lobby.status).toBe(LobbyStatus.FULL)
+      assert.equal(joinResult1.isSuccess, true)
+      assert.lengthOf(joinResult1.value!.lobby.players, 2)
+      assert.equal(joinResult1.value!.lobby.status, LobbyStatus.FULL)
 
       // Tenter de joindre le lobby complet
       const joinRequest = {
@@ -78,8 +83,8 @@ describe('Lobby Use Cases Integration', () => {
       }
       const joinResult = await joinLobbyUseCase.execute(joinRequest)
 
-      expect(joinResult.isFailure).toBe(true)
-      expect(joinResult.error).toContain('full')
+      assert.equal(joinResult.isFailure, true)
+      assert.include(joinResult.error, 'full')
 
       // 6. Démarrer la partie
       const startResult = await startGameUseCase.execute({
@@ -90,20 +95,21 @@ describe('Lobby Use Cases Integration', () => {
       if (startResult.isFailure) {
         console.error('StartGame failed:', startResult.error)
       }
-      expect(startResult.isSuccess).toBe(true)
-      expect(startResult.value!.game).toBeDefined()
-      expect(startResult.value!.game.players).toHaveLength(2)
+      assert.equal(startResult.isSuccess, true)
+      assert.exists(startResult.value!.game)
+      assert.lengthOf(startResult.value!.game.players, 2)
 
       // 7. Vérifier que le lobby n'existe plus
       const finalListResult = await listLobbiesUseCase.execute({})
-      expect(finalListResult.value!.lobbies).toHaveLength(0)
+      assert.lengthOf(finalListResult.value!.lobbies, 0)
 
       // 8. Vérifier que la partie existe
       const savedGame = await gameRepository.findByUuid(startResult.value!.game.uuid)
-      expect(savedGame).toBeDefined()
+      assert.exists(savedGame)
     })
 
-    it('should handle player leaving and rejoining', async () => {
+    test('should handle player leaving and rejoining', async ({ assert }) => {
+      setupRepositories()
       // Créer des joueurs
       const player1 = PlayerFactory.create()
       const player2 = PlayerFactory.create()
@@ -133,8 +139,8 @@ describe('Lobby Use Cases Integration', () => {
         userUuid: player2.uuid, // Utiliser l'UUID du Player
       })
 
-      expect(leaveResult.isSuccess).toBe(true)
-      expect(leaveResult.value!.lobby.players).toHaveLength(1)
+      assert.equal(leaveResult.isSuccess, true)
+      assert.lengthOf(leaveResult.value!.lobby.players, 1)
 
       // Le deuxième joueur rejoint
       const rejoinResult = await joinLobbyUseCase.execute({
@@ -142,11 +148,12 @@ describe('Lobby Use Cases Integration', () => {
         userUuid: player2.userUuid,
       })
 
-      expect(rejoinResult.isSuccess).toBe(true)
-      expect(rejoinResult.value!.lobby.players).toHaveLength(2)
+      assert.equal(rejoinResult.isSuccess, true)
+      assert.lengthOf(rejoinResult.value!.lobby.players, 2)
     })
 
-    it('should delete lobby when creator leaves and no other players', async () => {
+    test('should delete lobby when creator leaves and no other players', async ({ assert }) => {
+      setupRepositories()
       const player1 = PlayerFactory.create()
       await playerRepository.save(player1)
 
@@ -166,15 +173,16 @@ describe('Lobby Use Cases Integration', () => {
         userUuid: player1.uuid, // Utiliser l'UUID du Player
       })
 
-      expect(leaveResult.isSuccess).toBe(true)
-      expect(leaveResult.value!.lobbyDeleted).toBe(true)
+      assert.equal(leaveResult.isSuccess, true)
+      assert.equal(leaveResult.value!.lobbyDeleted, true)
 
       // Vérifier que le lobby n'existe plus
       const listResult = await listLobbiesUseCase.execute({})
-      expect(listResult.value!.lobbies).toHaveLength(0)
+      assert.lengthOf(listResult.value!.lobbies, 0)
     })
 
-    it('should prevent non-creator from starting game', async () => {
+    test('should prevent non-creator from starting game', async ({ assert }) => {
+      setupRepositories()
       const player1 = PlayerFactory.create()
       const player2 = PlayerFactory.create()
 
@@ -203,11 +211,12 @@ describe('Lobby Use Cases Integration', () => {
         userUuid: player2.userUuid,
       })
 
-      expect(startResult.isFailure).toBe(true)
-      expect(startResult.error).toBe('Only the lobby creator can start the game')
+      assert.equal(startResult.isFailure, true)
+      assert.equal(startResult.error, 'Only the lobby creator can start the game')
     })
 
-    it('should handle concurrent joins correctly', async () => {
+    test('should handle concurrent joins correctly', async ({ assert }) => {
+      setupRepositories()
       const players = PlayerFactory.createMany(5)
 
       // Sauvegarder tous les joueurs
@@ -239,14 +248,14 @@ describe('Lobby Use Cases Integration', () => {
       const successful = results.filter((r) => r.isSuccess)
       const failed = results.filter((r) => r.isFailure)
 
-      expect(successful).toHaveLength(3)
-      expect(failed).toHaveLength(1)
-      expect(failed[0].error).toBe('Lobby is full')
+      assert.lengthOf(successful, 3)
+      assert.lengthOf(failed, 1)
+      assert.equal(failed[0].error, 'Lobby is full')
 
       // Vérifier l'état final du lobby
       const finalLobby = await lobbyRepository.findByUuid(lobbyUuid)
-      expect(finalLobby!.players).toHaveLength(4)
-      expect(finalLobby!.status).toBe(LobbyStatus.FULL)
+      assert.lengthOf(finalLobby!.players, 4)
+      assert.equal(finalLobby!.status, LobbyStatus.FULL)
     })
   })
 })

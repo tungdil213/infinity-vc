@@ -1,22 +1,24 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals'
+import { test } from '@japa/runner'
 import { RegisterUserUseCase } from '../../../application/use_cases/register_user_use_case.js'
 import { InMemoryUserRepository } from '../../../infrastructure/repositories/in_memory_user_repository.js'
 import { InMemoryPlayerRepository } from '../../../infrastructure/repositories/in_memory_player_repository.js'
 import { UserFactory } from '../../factories/user_factory.js'
 
-describe('RegisterUserUseCase', () => {
+test.group('RegisterUserUseCase', () => {
   let useCase: RegisterUserUseCase
   let userRepository: InMemoryUserRepository
   let playerRepository: InMemoryPlayerRepository
 
-  beforeEach(() => {
+  const setupRepositories = () => {
     userRepository = new InMemoryUserRepository()
     playerRepository = new InMemoryPlayerRepository()
     useCase = new RegisterUserUseCase(userRepository, playerRepository)
-  })
+  }
 
-  describe('execute', () => {
-    it('should register a new user successfully', async () => {
+  test.group('execute', () => {
+    test('should register a new user successfully', async ({ assert }) => {
+      setupRepositories()
+      
       const userData = {
         firstName: 'John',
         lastName: 'Doe',
@@ -28,14 +30,16 @@ describe('RegisterUserUseCase', () => {
 
       const result = await useCase.execute(userData)
 
-      expect(result.isSuccess).toBe(true)
-      expect(result.value!.user).toBeDefined()
-      expect(result.value!.player).toBeDefined()
-      expect(result.value!.user.email).toBe('john@example.com')
-      expect(result.value!.player.nickName).toBe('JohnnyD')
+      assert.equal(result.isSuccess, true)
+      assert.exists(result.value!.user)
+      assert.exists(result.value!.player)
+      assert.equal(result.value!.user.email, 'john@example.com')
+      assert.equal(result.value!.player.nickName, 'JohnnyD')
     })
 
-    it('should fail when email already exists', async () => {
+    test('should fail when email already exists', async ({ assert }) => {
+      setupRepositories()
+      
       const existingUser = UserFactory.create({ email: 'john@example.com' })
       await userRepository.save(existingUser)
 
@@ -50,11 +54,13 @@ describe('RegisterUserUseCase', () => {
 
       const result = await useCase.execute(userData)
 
-      expect(result.isFailure).toBe(true)
-      expect(result.error).toBe('An account with this information already exists')
+      assert.equal(result.isFailure, true)
+      assert.equal(result.error, 'An account with this information already exists')
     })
 
-    it('should fail when username already exists', async () => {
+    test('should fail when username already exists', async ({ assert }) => {
+      setupRepositories()
+      
       const existingUser = UserFactory.create({ username: 'johndoe' })
       await userRepository.save(existingUser)
 
@@ -69,11 +75,13 @@ describe('RegisterUserUseCase', () => {
 
       const result = await useCase.execute(userData)
 
-      expect(result.isFailure).toBe(true)
-      expect(result.error).toBe('Username is already taken')
+      assert.equal(result.isFailure, true)
+      assert.equal(result.error, 'Username is already taken')
     })
 
-    it('should fail with invalid user data', async () => {
+    test('should fail with invalid user data', async ({ assert }) => {
+      setupRepositories()
+      
       const userData = {
         firstName: 'John',
         lastName: 'Doe',
@@ -85,11 +93,13 @@ describe('RegisterUserUseCase', () => {
 
       const result = await useCase.execute(userData)
 
-      expect(result.isFailure).toBe(true)
-      expect(result.error).toContain('must be between 3 and 50 characters')
+      assert.equal(result.isFailure, true)
+      assert.include(result.error, 'must be between 3 and 50 characters')
     })
 
-    it('should fail with invalid player data', async () => {
+    test('should fail with invalid player data', async ({ assert }) => {
+      setupRepositories()
+      
       const userData = {
         firstName: 'John',
         lastName: 'Doe',
@@ -101,11 +111,13 @@ describe('RegisterUserUseCase', () => {
 
       const result = await useCase.execute(userData)
 
-      expect(result.isFailure).toBe(true)
-      expect(result.error).toContain('must be between 3 and 30 characters')
+      assert.equal(result.isFailure, true)
+      assert.include(result.error, 'must be between 3 and 30 characters')
     })
 
-    it('should save both user and player to repositories', async () => {
+    test('should save both user and player to repositories', async ({ assert }) => {
+      setupRepositories()
+      
       const userData = {
         firstName: 'John',
         lastName: 'Doe',
@@ -120,12 +132,14 @@ describe('RegisterUserUseCase', () => {
       const savedUser = await userRepository.findByEmail('john@example.com')
       const savedPlayer = await playerRepository.findByUserUuid(savedUser!.uuid)
 
-      expect(savedUser).toBeDefined()
-      expect(savedPlayer).toBeDefined()
-      expect(savedPlayer!.userUuid).toBe(savedUser!.uuid)
+      assert.exists(savedUser)
+      assert.exists(savedPlayer)
+      assert.equal(savedPlayer!.userUuid, savedUser!.uuid)
     })
 
-    it('should handle repository save errors', async () => {
+    test('should handle repository save errors', async ({ assert }) => {
+      setupRepositories()
+      
       const userData = {
         firstName: 'John',
         lastName: 'Doe',
@@ -135,13 +149,19 @@ describe('RegisterUserUseCase', () => {
         nickName: 'JohnnyD',
       }
 
-      // Mock repository to throw error
-      jest.spyOn(userRepository, 'save').mockRejectedValue(new Error('Database error'))
+      // Mock repository to throw error by replacing the save method
+      const originalSave = userRepository.save
+      userRepository.save = async () => {
+        throw new Error('Database error')
+      }
 
       const result = await useCase.execute(userData)
 
-      expect(result.isFailure).toBe(true)
-      expect(result.error).toBe('Database error')
+      assert.equal(result.isFailure, true)
+      assert.equal(result.error, 'Database error')
+
+      // Restore original method
+      userRepository.save = originalSave
     })
   })
 })

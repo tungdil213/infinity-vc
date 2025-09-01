@@ -24,10 +24,21 @@ const mockPlayerRepository = {
 }
 
 const mockLobbyRepository = {
-  save: async (_lobby: any) => Promise.resolve(),
-  delete: async (_uuid: string) => Promise.resolve(),
-  findByPlayer: async (_playerUuid: string) => null,
-  findByUuid: async (uuid: string) => null
+  save: async (lobby: any) => lobby,
+  findByCreatorUuid: async (userUuid: string) => null,
+  delete: async (uuid: string) => true
+}
+
+// Mock notification service
+const mockNotificationService = {
+  notifyLobbyCreated: () => {},
+  notifyPlayerJoined: () => {},
+  notifyPlayerLeft: () => {},
+  notifyStatusChanged: () => {},
+  notifyGameStarted: () => {},
+  notifyLobbyDeleted: () => {},
+  addListener: () => () => {},
+  addLobbyListener: () => () => {}
 }
 
 test.group('CreateLobbyUseCase', (group) => {
@@ -36,7 +47,8 @@ test.group('CreateLobbyUseCase', (group) => {
   group.setup(() => {
     createLobbyUseCase = new CreateLobbyUseCase(
       mockPlayerRepository as any,
-      mockLobbyRepository as any
+      mockLobbyRepository as any,
+      mockNotificationService as any
     )
   })
 
@@ -155,7 +167,8 @@ test.group('CreateLobbyUseCase', (group) => {
 
     const useCase = new CreateLobbyUseCase(
       mockPlayerRepositoryNotFound as any,
-      mockLobbyRepository as any
+      mockLobbyRepository as any,
+      mockNotificationService as any
     )
 
     const request = LobbyFactory.createLobbyRequest({

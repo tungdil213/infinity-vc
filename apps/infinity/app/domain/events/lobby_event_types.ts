@@ -2,6 +2,7 @@
  * Types d'événements pour les lobbies
  */
 export enum LobbyEventType {
+  LOBBY_CREATED = 'lobby.created',
   PLAYER_JOINED = 'lobby.player.joined',
   PLAYER_LEFT = 'lobby.player.left',
   STATUS_CHANGED = 'lobby.status.changed',
@@ -59,6 +60,13 @@ export interface GameStartedEvent extends BaseLobbyEvent {
 }
 
 /**
+ * Événement quand un lobby est créé
+ */
+export interface LobbyCreatedEvent extends BaseLobbyEvent {
+  type: LobbyEventType.LOBBY_CREATED
+}
+
+/**
  * Événement quand un lobby est supprimé
  */
 export interface LobbyDeletedEvent extends BaseLobbyEvent {
@@ -69,6 +77,7 @@ export interface LobbyDeletedEvent extends BaseLobbyEvent {
  * Union type pour tous les événements de lobby
  */
 export type LobbyEvent = 
+  | LobbyCreatedEvent
   | PlayerJoinedEvent 
   | PlayerLeftEvent 
   | StatusChangedEvent 

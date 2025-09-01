@@ -300,7 +300,7 @@ export default class Lobby extends BaseEntity {
   }
 
   // Serialization
-  toJSON() {
+  serialize() {
     return {
       uuid: this._uuid,
       name: this._name,
@@ -310,7 +310,15 @@ export default class Lobby extends BaseEntity {
       currentPlayers: this._players.length,
       isPrivate: this._isPrivate,
       status: this.status,
+      hasAvailableSlots: this.hasAvailableSlots,
+      canStart: this.canStart,
+      availableActions: this.availableActions,
+      createdBy: this._createdBy,
       createdAt: this._createdAt,
     }
+  }
+
+  toJSON() {
+    return this.serialize()
   }
 }
