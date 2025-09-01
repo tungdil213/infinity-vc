@@ -16,6 +16,7 @@ export interface SSEConnection {
   channels: Set<string>
   lastPing: Date
   isActive: boolean
+  metadata?: Record<string, any>
 }
 
 export interface ChannelSubscription {
@@ -44,6 +45,7 @@ export interface SSEConnectionManager {
   removeConnection(connectionId: string): void
   getConnection(connectionId: string): SSEConnection | undefined
   getConnectionsByUser(userId: string): SSEConnection[]
+  getAllConnections(): SSEConnection[]
   sendToConnection(connectionId: string, event: SSEEvent): Promise<boolean>
   sendToUser(userId: string, event: SSEEvent): Promise<number>
   cleanup(): void

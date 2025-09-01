@@ -1,5 +1,6 @@
 import { test } from '@japa/runner'
 import { JoinLobbyUseCase } from '../../../app/application/use_cases/join_lobby_use_case.js'
+import { LobbyNotificationService } from '../../../app/application/services/lobby_notification_service.js'
 import { LobbyFactory } from '../../factories/lobby_factory.js'
 import { UserFactory } from '../../factories/user_factory.js'
 
@@ -13,6 +14,19 @@ const mockPlayerRepository = {
       email: userDto.email
     }
   }
+}
+
+// Mock notification service
+const mockNotificationService = {
+  notifyPlayerJoined: () => {},
+  notifyPlayerLeft: () => {},
+  notifyStatusChanged: () => {},
+  notifyGameStarted: () => {},
+  notifyLobbyDeleted: () => {},
+  addListener: () => () => {},
+  addLobbyListener: () => () => {},
+  removeListener: () => {},
+  removeLobbyListener: () => {}
 }
 
 const mockLobbyRepository = {
@@ -35,9 +49,10 @@ const mockLobbyRepository = {
       availableActions: ['start', 'leave'],
       createdAt: new Date(),
       addPlayer: (player: any) => {
-        // Mock implementation
-        return { success: true }
-      }
+        // Mock implementation returning Result pattern
+        return { isFailure: false, isSuccess: true }
+      },
+      creator: { uuid: 'creator-123', nickName: 'Creator' }
     }
   }
 }
@@ -48,7 +63,8 @@ test.group('JoinLobbyUseCase', (group) => {
   group.setup(() => {
     joinLobbyUseCase = new JoinLobbyUseCase(
       mockPlayerRepository as any,
-      mockLobbyRepository as any
+      mockLobbyRepository as any,
+      mockNotificationService as any
     )
   })
 
@@ -114,7 +130,8 @@ test.group('JoinLobbyUseCase', (group) => {
 
     const useCase = new JoinLobbyUseCase(
       mockPlayerRepository as any,
-      mockLobbyRepositoryWithExisting as any
+      mockLobbyRepositoryWithExisting as any,
+      mockNotificationService as any
     )
 
     const request = {
@@ -159,7 +176,8 @@ test.group('JoinLobbyUseCase', (group) => {
 
     const useCase = new JoinLobbyUseCase(
       mockPlayerRepository as any,
-      mockLobbyRepositoryWithFull as any
+      mockLobbyRepositoryWithFull as any,
+      mockNotificationService as any
     )
 
     const request = {
@@ -183,7 +201,8 @@ test.group('JoinLobbyUseCase', (group) => {
 
     const useCase = new JoinLobbyUseCase(
       mockPlayerRepositoryNotFound as any,
-      mockLobbyRepository as any
+      mockLobbyRepository as any,
+      mockNotificationService as any
     )
 
     const request = {
@@ -208,7 +227,8 @@ test.group('JoinLobbyUseCase', (group) => {
 
     const useCase = new JoinLobbyUseCase(
       mockPlayerRepository as any,
-      mockLobbyRepositoryNotFound as any
+      mockLobbyRepositoryNotFound as any,
+      mockNotificationService as any
     )
 
     const request = {

@@ -92,7 +92,7 @@ describe('Lobby Entity', () => {
       const newPlayer = PlayerFactory.createPlayerInterface()
       const result = lobby.addPlayer(newPlayer)
 
-      expect(result.success).toBe(true)
+      expect(result.isSuccess).toBe(true)
       expect(lobby.players).toHaveLength(2)
       expect(lobby.players[1]).toEqual(newPlayer)
     })
@@ -101,7 +101,7 @@ describe('Lobby Entity', () => {
       const existingPlayer = lobby.players[0]
       const result = lobby.addPlayer(existingPlayer)
 
-      expect(result.success).toBe(false)
+      expect(result.isFailure).toBe(true)
       expect(result.error).toBe('Player is already in the lobby')
       expect(lobby.players).toHaveLength(1)
     })
@@ -115,7 +115,7 @@ describe('Lobby Entity', () => {
       const newPlayer = PlayerFactory.createPlayerInterface()
       const result = lobby.addPlayer(newPlayer)
 
-      expect(result.success).toBe(false)
+      expect(result.isFailure).toBe(true)
       expect(result.error).toBe('Lobby is full')
       expect(lobby.players).toHaveLength(lobby.maxPlayers)
     })
@@ -126,7 +126,7 @@ describe('Lobby Entity', () => {
 
       const result = lobby.removePlayer(newPlayer.uuid)
 
-      expect(result.success).toBe(true)
+      expect(result.isSuccess).toBe(true)
       expect(lobby.players).toHaveLength(1)
       expect(lobby.players.find((p) => p.uuid === newPlayer.uuid)).toBeUndefined()
     })
@@ -135,7 +135,7 @@ describe('Lobby Entity', () => {
       const nonExistentPlayer = PlayerFactory.createPlayerInterface()
       const result = lobby.removePlayer(nonExistentPlayer.uuid)
 
-      expect(result.success).toBe(false)
+      expect(result.isFailure).toBe(true)
       expect(result.error).toBe('Player not found in lobby')
     })
 
@@ -145,14 +145,14 @@ describe('Lobby Entity', () => {
 
       const result = lobby.removePlayer(lobby.creator.uuid)
 
-      expect(result.success).toBe(false)
+      expect(result.isFailure).toBe(true)
       expect(result.error).toBe('Creator cannot leave lobby while other players are present')
     })
 
     it('should allow creator to leave when alone', () => {
       const result = lobby.removePlayer(lobby.creator.uuid)
 
-      expect(result.success).toBe(true)
+      expect(result.isSuccess).toBe(true)
       expect(lobby.players).toHaveLength(0)
     })
 
@@ -191,13 +191,13 @@ describe('Lobby Entity', () => {
       lobby.addPlayer(PlayerFactory.createPlayerInterface())
 
       const result = lobby.setReady()
-      expect(result.success).toBe(true)
+      expect(result.isSuccess).toBe(true)
       expect(lobby.status).toBe(LobbyStatus.READY)
     })
 
     it('should not allow READY status with only one player', () => {
       const result = lobby.setReady()
-      expect(result.success).toBe(false)
+      expect(result.isFailure).toBe(true)
       expect(result.error).toBe('Need at least 2 players to be ready')
     })
 
@@ -206,13 +206,13 @@ describe('Lobby Entity', () => {
       lobby.setReady()
 
       const result = lobby.startGame()
-      expect(result.success).toBe(true)
+      expect(result.isSuccess).toBe(true)
       expect(lobby.status).toBe(LobbyStatus.STARTING)
     })
 
     it('should not start game when not ready', () => {
       const result = lobby.startGame()
-      expect(result.success).toBe(false)
+      expect(result.isFailure).toBe(true)
       expect(result.error).toBe('Lobby must be READY or FULL to start game')
     })
   })

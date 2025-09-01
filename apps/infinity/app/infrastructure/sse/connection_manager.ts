@@ -96,7 +96,11 @@ export class InMemorySSEConnectionManager implements SSEConnectionManager {
 
     return Array.from(connectionIds)
       .map(id => this.connections.get(id))
-      .filter((conn): conn is SSEConnection => conn !== undefined && conn.isActive)
+      .filter((conn): conn is SSEConnection => conn !== undefined)
+  }
+
+  getAllConnections(): SSEConnection[] {
+    return Array.from(this.connections.values())
   }
 
   async sendToConnection(connectionId: string, event: SSEEvent): Promise<boolean> {

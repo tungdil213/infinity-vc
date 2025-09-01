@@ -102,7 +102,7 @@ export default class EnhancedAuthController {
 
       console.log(result)
 
-      if (!result.success) {
+      if (result.isFailure) {
         session.flash('error', result.error || 'Failed to create account')
         return response.redirect().back()
       }

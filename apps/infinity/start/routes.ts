@@ -110,3 +110,15 @@ router
   })
   .prefix('/api/v1/sse')
   .use(middleware.auth())
+
+// Lobby synchronization routes
+router
+  .group(() => {
+    router.post('/lobbies/:lobbyUuid/subscribe', '#controllers/lobby_sync_controller.subscribeLobby').as('api.lobbies.sync.subscribe')
+    router.post('/lobbies/:lobbyUuid/unsubscribe', '#controllers/lobby_sync_controller.unsubscribeLobby').as('api.lobbies.sync.unsubscribe')
+    router.get('/lobbies/:lobbyUuid/state', '#controllers/lobby_sync_controller.getLobbyState').as('api.lobbies.sync.state')
+    router.get('/lobbies/sync/stats', '#controllers/lobby_sync_controller.getSyncStats').as('api.lobbies.sync.stats')
+    router.post('/lobbies/:lobbyUuid/test-event', '#controllers/lobby_sync_controller.sendTestEvent').as('api.lobbies.sync.test')
+  })
+  .prefix('/api/v1')
+  .use(middleware.auth())
