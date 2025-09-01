@@ -1,9 +1,11 @@
 import { inject } from '@adonisjs/core'
-import type { LobbyRepository } from '../../application/repositories/lobby_repository.js'
 import Lobby from '../../domain/entities/lobby.js'
+import { LobbyRepository } from '../../application/repositories/lobby_repository.js'
 import { LobbyStatus } from '../../domain/value_objects/lobby_status.js'
 import LobbyModel from '../../models/lobby_model.js'
 import User from '../../models/user.js'
+import { EntityNotFoundException } from '../../exceptions/domain_exceptions.js'
+import crypto from 'node:crypto'
 
 @inject()
 export class DatabaseLobbyRepository implements LobbyRepository {
@@ -32,7 +34,7 @@ export class DatabaseLobbyRepository implements LobbyRepository {
     if (users.length !== playerUuids.length) {
       const foundUuids = users.map((u) => u.userUuid)
       const missingUuids = playerUuids.filter((uuid) => !foundUuids.includes(uuid))
-      throw new Error(`Users not found: ${missingUuids.join(', ')}`)
+      throw new EntityNotFoundException('User', missingUuids.join(', '))
     }
 
     // Créer les données pivot avec les IDs
@@ -100,7 +102,7 @@ export class DatabaseLobbyRepository implements LobbyRepository {
   async findByUuidOrFail(uuid: string): Promise<Lobby> {
     const lobby = await this.findByUuid(uuid)
     if (!lobby) {
-      throw new Error(`Lobby not found: ${uuid}`)
+      throw new EntityNotFoundException('Lobby', uuid)
     }
     return lobby
   }

@@ -1,8 +1,8 @@
 import { inject } from '@adonisjs/core'
-import { GameRepository } from '../../domain/repositories/game_repository.js'
-import { UserRepository } from '../../domain/repositories/user_repository.js'
-import { DomainEventPublisher } from '../services/domain_event_publisher.js'
-import { OperationResult, OperationResultFactory } from '../../domain/value_objects/operation_result.js'
+import type { GameRepository } from '../repositories/game_repository.js'
+import type { UserRepository } from '../repositories/user_repository.js'
+import type { DomainEventPublisher } from '../services/domain_event_publisher.js'
+import { Result } from '../../domain/shared/result.js'
 import { 
   PlayerActionEvent, 
   TurnChangedEvent, 
@@ -10,7 +10,7 @@ import {
   PlayerEliminatedEvent,
   GameFinishedEvent 
 } from '../../domain/events/game_events.js'
-import { Player } from '../../domain/value_objects/player.js'
+import Player from '../../domain/entities/player.js'
 
 export interface GameActionRequest {
   gameUuid: string
@@ -34,26 +34,29 @@ export class GameActionUseCase {
     private domainEventPublisher: DomainEventPublisher
   ) {}
 
-  async execute(request: GameActionRequest): Promise<OperationResult<GameActionResponse>> {
+  async execute(request: GameActionRequest): Promise<Result<GameActionResponse>> {
     try {
       // Récupérer la partie
       const game = await this.gameRepository.findByUuid(request.gameUuid)
       if (!game) {
-        return OperationResultFactory.failure('Game not found')
+        return Result.fail('Game not found')
       }
 
       // Vérifier que le joueur peut jouer
       if (!game.canPlayerPlay(request.playerUuid)) {
-        return OperationResultFactory.failure('Player cannot play at this time')
+        return Result.fail('Player cannot play at this time')
       }
 
       // Récupérer les informations du joueur
       const user = await this.userRepository.findByUuid(request.playerUuid)
       if (!user) {
-        return OperationResultFactory.failure('User not found')
+        return Result.fail('User not found')
       }
 
-      const player = new Player(user.uuid, user.fullName)
+      const player = Player.create({
+        userUuid: user.uuid,
+        nickName: user.fullName
+      })
 
       // Traiter l'action selon son type
       let actionResult
@@ -71,7 +74,7 @@ export class GameActionUseCase {
           actionResult = await this.handleForfeit(game, player)
           break
         default:
-          return OperationResultFactory.failure(`Unknown action: ${request.action}`)
+          return Result.fail(`Unknown action: ${request.action}`)
       }
 
       if (actionResult.isFailure) {
@@ -82,7 +85,7 @@ export class GameActionUseCase {
       await this.gameRepository.save(game)
 
       // Publier l'événement d'action du joueur
-      await this.domainEventPublisher.publish(
+      await this.domainEventPublisher.publishEvents([
         new PlayerActionEvent(
           game.uuid,
           player,
@@ -90,30 +93,30 @@ export class GameActionUseCase {
           request.actionData,
           game.toJSON()
         )
-      )
+      ])
 
       // Publier l'événement de mise à jour de l'état
-      await this.domainEventPublisher.publish(
+      await this.domainEventPublisher.publishEvents([
         new GameStateUpdatedEvent(
           game.uuid,
           game.toJSON(),
           player.uuid
         )
-      )
+      ])
 
       return actionResult
     } catch (error) {
-      return OperationResultFactory.failure(`Game action failed: ${error.message}`)
+      return Result.fail(`Game action failed: ${error.message}`)
     }
   }
 
-  private async handlePlayCard(game: any, player: Player, actionData: any): Promise<OperationResult<GameActionResponse>> {
+  private async handlePlayCard(game: any, player: Player, actionData: any): Promise<Result<GameActionResponse>> {
     try {
       // Logique spécifique pour jouer une carte
       const { cardId, targetPlayerUuid } = actionData
 
       if (!cardId) {
-        return OperationResultFactory.failure('Card ID is required')
+        return Result.fail('Card ID is required')
       }
 
       // Vérifier que le joueur a cette carte
@@ -121,7 +124,7 @@ export class GameActionUseCase {
       const cardIndex = playerHand.findIndex((card: any) => card.id === cardId)
       
       if (cardIndex === -1) {
-        return OperationResultFactory.failure('Player does not have this card')
+        return Result.fail('Player does not have this card')
       }
 
       // Retirer la carte de la main du joueur
@@ -142,33 +145,45 @@ export class GameActionUseCase {
         // Éliminer le joueur ciblé
         game.eliminatePlayer(cardEffect.eliminatedPlayer)
         
-        await this.domainEventPublisher.publish(
+        await this.domainEventPublisher.publishEvents([
           new PlayerEliminatedEvent(
             game.uuid,
-            new Player(cardEffect.eliminatedPlayer, 'Player'), // TODO: Get real player name
+            Player.create({
+              userUuid: cardEffect.eliminatedPlayer,
+              nickName: 'Player' // TODO: Get real player name
+            }),
             player,
             `Eliminated by ${playedCard.name}`,
-            game.activePlayers.map((p: any) => new Player(p.uuid, p.nickName))
+            game.activePlayers.map((p: any) => Player.create({
+              userUuid: p.uuid,
+              nickName: p.nickName
+            }))
           )
-        )
+        ])
       }
 
       // Vérifier si la partie est terminée
       if (game.isFinished) {
         const winner = game.activePlayers[0]
-        await this.domainEventPublisher.publish(
+        await this.domainEventPublisher.publishEvents([
           new GameFinishedEvent(
             game.uuid,
-            winner ? new Player(winner.uuid, winner.nickName) : null,
+            winner ? Player.create({
+              userUuid: winner.uuid,
+              nickName: winner.nickName
+            }) : null,
             {}, // TODO: Calculate final scores
             game.duration
           )
-        )
+        ])
 
-        return OperationResultFactory.success({
+        return Result.ok({
           gameState: game.toJSON(),
           gameFinished: true,
-          winner: winner ? new Player(winner.uuid, winner.nickName) : undefined,
+          winner: winner ? Player.create({
+              userUuid: winner.uuid,
+              nickName: winner.nickName
+            }) : undefined,
         })
       }
 
@@ -177,32 +192,38 @@ export class GameActionUseCase {
       const nextPlayer = game.currentPlayer
 
       if (nextPlayer) {
-        await this.domainEventPublisher.publish(
+        await this.domainEventPublisher.publishEvents([
           new TurnChangedEvent(
             game.uuid,
             player,
-            new Player(nextPlayer.uuid, nextPlayer.nickName),
+            Player.create({
+              userUuid: nextPlayer.uuid,
+              nickName: nextPlayer.nickName
+            }),
             game.gameData.currentRound
           )
-        )
+        ])
       }
 
-      return OperationResultFactory.success({
+      return Result.ok({
         gameState: game.toJSON(),
-        nextPlayer: nextPlayer ? new Player(nextPlayer.uuid, nextPlayer.nickName) : undefined,
+        nextPlayer: nextPlayer ? Player.create({
+              userUuid: nextPlayer.uuid,
+              nickName: nextPlayer.nickName
+            }) : undefined,
         gameFinished: false,
       })
     } catch (error) {
-      return OperationResultFactory.failure(`Failed to play card: ${error.message}`)
+      return Result.fail(`Failed to play card: ${error.message}`)
     }
   }
 
-  private async handleGuessCard(game: any, player: Player, actionData: any): Promise<OperationResult<GameActionResponse>> {
+  private async handleGuessCard(game: any, player: Player, actionData: any): Promise<Result<GameActionResponse>> {
     try {
       const { targetPlayerUuid, guessedCard } = actionData
 
       if (!targetPlayerUuid || !guessedCard) {
-        return OperationResultFactory.failure('Target player and guessed card are required')
+        return Result.fail('Target player and guessed card are required')
       }
 
       // Vérifier la main du joueur ciblé
@@ -213,15 +234,21 @@ export class GameActionUseCase {
         // Bonne supposition - éliminer le joueur ciblé
         game.eliminatePlayer(targetPlayerUuid)
         
-        await this.domainEventPublisher.publish(
+        await this.domainEventPublisher.publishEvents([
           new PlayerEliminatedEvent(
             game.uuid,
-            new Player(targetPlayerUuid, 'Target Player'), // TODO: Get real player name
+            Player.create({
+              userUuid: targetPlayerUuid,
+              nickName: 'Target Player'
+            }), // TODO: Get real player name
             player,
             `Correctly guessed ${guessedCard}`,
-            game.activePlayers.map((p: any) => new Player(p.uuid, p.nickName))
+            game.activePlayers.map((p: any) => Player.create({
+              userUuid: p.uuid,
+              nickName: p.nickName
+            }))
           )
-        )
+        ])
       }
 
       // Continuer avec le tour suivant
@@ -229,27 +256,33 @@ export class GameActionUseCase {
       const nextPlayer = game.currentPlayer
 
       if (nextPlayer) {
-        await this.domainEventPublisher.publish(
+        await this.domainEventPublisher.publishEvents([
           new TurnChangedEvent(
             game.uuid,
             player,
-            new Player(nextPlayer.uuid, nextPlayer.nickName),
+            Player.create({
+              userUuid: nextPlayer.uuid,
+              nickName: nextPlayer.nickName
+            }),
             game.gameData.currentRound
           )
-        )
+        ])
       }
 
-      return OperationResultFactory.success({
+      return Result.ok({
         gameState: game.toJSON(),
-        nextPlayer: nextPlayer ? new Player(nextPlayer.uuid, nextPlayer.nickName) : undefined,
+        nextPlayer: nextPlayer ? Player.create({
+              userUuid: nextPlayer.uuid,
+              nickName: nextPlayer.nickName
+            }) : undefined,
         gameFinished: game.isFinished,
       })
     } catch (error) {
-      return OperationResultFactory.failure(`Failed to guess card: ${error.message}`)
+      return Result.fail(`Failed to guess card: ${error.message}`)
     }
   }
 
-  private async handleEndTurn(game: any, player: Player): Promise<OperationResult<GameActionResponse>> {
+  private async handleEndTurn(game: any, player: Player): Promise<Result<GameActionResponse>> {
     try {
       // Passer au joueur suivant
       const previousPlayer = game.currentPlayer
@@ -257,66 +290,84 @@ export class GameActionUseCase {
       const nextPlayer = game.currentPlayer
 
       if (nextPlayer) {
-        await this.domainEventPublisher.publish(
+        await this.domainEventPublisher.publishEvents([
           new TurnChangedEvent(
             game.uuid,
-            previousPlayer ? new Player(previousPlayer.uuid, previousPlayer.nickName) : null,
-            new Player(nextPlayer.uuid, nextPlayer.nickName),
+            previousPlayer ? Player.create({
+              userUuid: previousPlayer.uuid,
+              nickName: previousPlayer.nickName
+            }) : null,
+            Player.create({
+              userUuid: nextPlayer.uuid,
+              nickName: nextPlayer.nickName
+            }),
             game.gameData.currentRound
           )
-        )
+        ])
       }
 
-      return OperationResultFactory.success({
+      return Result.ok({
         gameState: game.toJSON(),
-        nextPlayer: nextPlayer ? new Player(nextPlayer.uuid, nextPlayer.nickName) : undefined,
+        nextPlayer: nextPlayer ? Player.create({
+              userUuid: nextPlayer.uuid,
+              nickName: nextPlayer.nickName
+            }) : undefined,
         gameFinished: false,
       })
     } catch (error) {
-      return OperationResultFactory.failure(`Failed to end turn: ${error.message}`)
+      return Result.fail(`Failed to end turn: ${error.message}`)
     }
   }
 
-  private async handleForfeit(game: any, player: Player): Promise<OperationResult<GameActionResponse>> {
+  private async handleForfeit(game: any, player: Player): Promise<Result<GameActionResponse>> {
     try {
       // Éliminer le joueur qui abandonne
       game.eliminatePlayer(player.uuid)
 
-      await this.domainEventPublisher.publish(
+      await this.domainEventPublisher.publishEvents([
         new PlayerEliminatedEvent(
           game.uuid,
           player,
           null,
           'Player forfeited',
-          game.activePlayers.map((p: any) => new Player(p.uuid, p.nickName))
+          game.activePlayers.map((p: any) => Player.create({
+            userUuid: p.uuid,
+            nickName: p.nickName
+          }))
         )
-      )
+      ])
 
       // Vérifier si la partie est terminée
       if (game.isFinished) {
         const winner = game.activePlayers[0]
-        await this.domainEventPublisher.publish(
+        await this.domainEventPublisher.publishEvents([
           new GameFinishedEvent(
             game.uuid,
-            winner ? new Player(winner.uuid, winner.nickName) : null,
+            winner ? Player.create({
+              userUuid: winner.uuid,
+              nickName: winner.nickName
+            }) : null,
             {}, // TODO: Calculate final scores
             game.duration
           )
-        )
+        ])
 
-        return OperationResultFactory.success({
+        return Result.ok({
           gameState: game.toJSON(),
           gameFinished: true,
-          winner: winner ? new Player(winner.uuid, winner.nickName) : undefined,
+          winner: winner ? Player.create({
+              userUuid: winner.uuid,
+              nickName: winner.nickName
+            }) : undefined,
         })
       }
 
-      return OperationResultFactory.success({
+      return Result.ok({
         gameState: game.toJSON(),
         gameFinished: false,
       })
     } catch (error) {
-      return OperationResultFactory.failure(`Failed to forfeit: ${error.message}`)
+      return Result.fail(`Failed to forfeit: ${error.message}`)
     }
   }
 

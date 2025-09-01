@@ -1,6 +1,7 @@
 import { BaseEntity } from './base_entity.js'
-import { PlayerInterface } from '../interfaces/player_interface.js'
 import { GameStatus } from '../value_objects/game_status.js'
+import { PlayerInterface } from '../interfaces/player_interface.js'
+import { GameStateException } from '../../exceptions/domain_exceptions.js'
 
 export interface GameData {
   uuid?: string
@@ -11,12 +12,13 @@ export interface GameData {
 export interface GameStateData {
   currentRound: number
   currentTurn: number
+  eliminatedPlayers: string[]
+  playerHands: Record<string, any[]>
+  discardPile: any[]
+  winner?: string
   deck: {
     remaining: number
   }
-  discardPile: any[]
-  playerHands: Record<string, any[]>
-  eliminatedPlayers: string[]
 }
 
 export default class Game extends BaseEntity {
@@ -122,21 +124,21 @@ export default class Game extends BaseEntity {
   // Methods
   pauseGame(): void {
     if (this._status !== GameStatus.IN_PROGRESS) {
-      throw new Error('Can only pause a game in progress')
+      throw new GameStateException('Can only pause a game in progress', this._status)
     }
     this._status = GameStatus.PAUSED
   }
 
   resumeGame(): void {
     if (this._status !== GameStatus.PAUSED) {
-      throw new Error('Can only resume a paused game')
+      throw new GameStateException('Can only resume a paused game', this._status)
     }
     this._status = GameStatus.IN_PROGRESS
   }
 
   finishGame(winnerUuid?: string): void {
     if (this._status === GameStatus.FINISHED) {
-      throw new Error('Game is already finished')
+      throw new GameStateException('Game is already finished', this._status)
     }
 
     this._status = GameStatus.FINISHED
@@ -152,7 +154,7 @@ export default class Game extends BaseEntity {
 
   eliminatePlayer(playerUuid: string): void {
     if (!this.hasPlayer(playerUuid)) {
-      throw new Error('Player not in game')
+      throw new GameStateException('Player not in game')
     }
 
     if (!this._gameData.eliminatedPlayers.includes(playerUuid)) {
@@ -168,7 +170,7 @@ export default class Game extends BaseEntity {
 
   nextTurn(): void {
     if (this._status !== GameStatus.IN_PROGRESS) {
-      throw new Error('Cannot advance turn when game is not in progress')
+      throw new GameStateException('Cannot advance turn when game is not in progress', this._status)
     }
 
     this._gameData.currentTurn = (this._gameData.currentTurn + 1) % this.activePlayers.length
@@ -176,7 +178,7 @@ export default class Game extends BaseEntity {
 
   nextRound(): void {
     if (this._status !== GameStatus.IN_PROGRESS) {
-      throw new Error('Cannot advance round when game is not in progress')
+      throw new GameStateException('Cannot advance round when game is not in progress', this._status)
     }
 
     this._gameData.currentRound += 1
@@ -221,16 +223,16 @@ export default class Game extends BaseEntity {
   // Validation
   private static validatePlayers(players: PlayerInterface[]): void {
     if (!players || players.length < 2) {
-      throw new Error('Game must have at least 2 players')
+      throw new GameStateException('Game must have at least 2 players')
     }
     if (players.length > 4) {
-      throw new Error('Game cannot have more than 4 players')
+      throw new GameStateException('Game cannot have more than 4 players')
     }
 
     // Vérifier les doublons
     const uniqueUuids = new Set(players.map((p) => p.uuid))
     if (uniqueUuids.size !== players.length) {
-      throw new Error('Duplicate players not allowed')
+      throw new GameStateException('Duplicate players not allowed')
     }
   }
 

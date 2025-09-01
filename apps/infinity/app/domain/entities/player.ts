@@ -1,5 +1,6 @@
 import { BaseEntity } from './base_entity.js'
 import { PlayerInterface, PlayerWithStatsInterface } from '../interfaces/player_interface.js'
+import { PlayerValidationException } from '../../exceptions/domain_exceptions.js'
 
 export interface PlayerData {
   uuid?: string
@@ -106,31 +107,31 @@ export default class Player extends BaseEntity implements PlayerInterface {
   private static validateUserUuid(userUuid: string): void {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     if (!uuidRegex.test(userUuid)) {
-      throw new Error('Invalid user UUID format')
+      throw new PlayerValidationException('Invalid user UUID format', 'userUuid')
     }
   }
 
   private static validateNickName(nickName: string): void {
     if (!nickName || nickName.trim().length === 0) {
-      throw new Error('Nickname cannot be empty')
+      throw new PlayerValidationException('Nickname cannot be empty', 'nickName')
     }
     if (nickName.trim().length < 3 || nickName.trim().length > 30) {
-      throw new Error('Nickname must be between 3 and 30 characters')
+      throw new PlayerValidationException('Nickname must be between 3 and 30 characters', 'nickName')
     }
     if (!/^[a-zA-Z0-9\s_-]+$/.test(nickName.trim())) {
-      throw new Error('Nickname can only contain letters, numbers, spaces, underscores and hyphens')
+      throw new PlayerValidationException('Nickname can only contain letters, numbers, spaces, underscores and hyphens', 'nickName')
     }
   }
 
   private static validateStats(gamesPlayed: number, gamesWon: number): void {
     if (gamesPlayed < 0) {
-      throw new Error('Games played cannot be negative')
+      throw new PlayerValidationException('Games played cannot be negative', 'gamesPlayed')
     }
     if (gamesWon < 0) {
-      throw new Error('Games won cannot be negative')
+      throw new PlayerValidationException('Games won cannot be negative', 'gamesWon')
     }
     if (gamesWon > gamesPlayed) {
-      throw new Error('Games won cannot exceed games played')
+      throw new PlayerValidationException('Games won cannot exceed games played', 'gamesWon')
     }
   }
 

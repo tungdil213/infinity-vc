@@ -4,8 +4,8 @@ import { InMemoryLobbyRepository } from '#infrastructure/repositories/in_memory_
 import { DatabaseLobbyRepository } from '#infrastructure/repositories/database_lobby_repository'
 import { StartGameUseCase } from '#application/use_cases/start_game_use_case'
 import { DatabaseGameRepository } from '#infrastructure/repositories/database_game_repository'
-import { Lobby } from '#domain/entities/lobby'
-import { Player } from '#domain/entities/player'
+import Lobby from '#domain/entities/lobby'
+import Player from '#domain/entities/player'
 import { LobbyStatus } from '#domain/value_objects/lobby_status'
 
 test.group('Lobby Persistence Integration', (group) => {
@@ -20,12 +20,12 @@ test.group('Lobby Persistence Integration', (group) => {
     databaseRepo = new DatabaseLobbyRepository()
     gameRepo = new DatabaseGameRepository()
     hybridService = new HybridLobbyService(inMemoryRepo, databaseRepo)
-    startGameUseCase = new StartGameUseCase(hybridService, gameRepo, hybridService)
+    startGameUseCase = new StartGameUseCase(hybridService, gameRepo)
   })
 
   group.each.teardown(async () => {
     // Nettoyer après chaque test
-    await inMemoryRepo.deleteAll()
+    // Clear in-memory repository (no deleteAll method available)
     // En intégration, on pourrait nettoyer la DB de test
   })
 
@@ -33,13 +33,13 @@ test.group('Lobby Persistence Integration', (group) => {
     // Créer un lobby avec suffisamment de joueurs
     const owner = Player.create({
       uuid: 'player-1',
-      name: 'Owner',
+      nickName: 'Owner',
       userUuid: 'user-1',
     })
 
     const player2 = Player.create({
       uuid: 'player-2',
-      name: 'Player 2',
+      nickName: 'Player 2',
       userUuid: 'user-2',
     })
 
@@ -47,7 +47,7 @@ test.group('Lobby Persistence Integration', (group) => {
       name: 'Test Lobby',
       maxPlayers: 2,
       isPrivate: false,
-      owner,
+      creator: owner,
     })
 
     // Ajouter le deuxième joueur
@@ -69,13 +69,13 @@ test.group('Lobby Persistence Integration', (group) => {
     // Créer un lobby prêt à démarrer
     const owner = Player.create({
       uuid: 'player-1',
-      name: 'Owner',
+      nickName: 'Owner',
       userUuid: 'user-1',
     })
 
     const player2 = Player.create({
       uuid: 'player-2',
-      name: 'Player 2',
+      nickName: 'Player 2',
       userUuid: 'user-2',
     })
 
@@ -83,7 +83,7 @@ test.group('Lobby Persistence Integration', (group) => {
       name: 'Test Lobby',
       maxPlayers: 2,
       isPrivate: false,
-      owner,
+      creator: owner,
     })
 
     lobby.addPlayer(player2)
@@ -95,20 +95,20 @@ test.group('Lobby Persistence Integration', (group) => {
       lobbyUuid: lobby.uuid,
     })
 
-    assert.isTrue(result.success)
+    assert.isTrue(result.isSuccess)
 
     // Vérifier que le lobby a été persisté en base avant suppression
     // Note: Le lobby est supprimé après création de la partie, 
     // mais on peut vérifier que la partie a été créée
-    assert.isDefined(result.game)
-    assert.equal(result.game.players.length, 2)
+    assert.isDefined(result.value)
+    assert.equal(result.value.players.length, 2)
   })
 
   test('server restart simulation - in-memory lobbies should be lost', async ({ assert }) => {
     // Créer un lobby en mémoire
     const owner = Player.create({
       uuid: 'player-1',
-      name: 'Owner',
+      nickName: 'Owner',
       userUuid: 'user-1',
     })
 
@@ -116,7 +116,7 @@ test.group('Lobby Persistence Integration', (group) => {
       name: 'Memory Lobby',
       maxPlayers: 4,
       isPrivate: false,
-      owner,
+      creator: owner,
     })
 
     await hybridService.save(lobby)
@@ -138,7 +138,7 @@ test.group('Lobby Persistence Integration', (group) => {
     // Créer un lobby et le persister
     const owner = Player.create({
       uuid: 'player-1',
-      name: 'Owner',
+      nickName: 'Owner',
       userUuid: 'user-1',
     })
 
@@ -146,7 +146,7 @@ test.group('Lobby Persistence Integration', (group) => {
       name: 'Persisted Lobby',
       maxPlayers: 4,
       isPrivate: false,
-      owner,
+      creator: owner,
     })
 
     await hybridService.save(lobby)
@@ -171,13 +171,13 @@ test.group('Lobby Persistence Integration', (group) => {
     // Créer plusieurs lobbies dans différents états
     const owner1 = Player.create({
       uuid: 'player-1',
-      name: 'Owner 1',
+      nickName: 'Owner 1',
       userUuid: 'user-1',
     })
 
     const owner2 = Player.create({
       uuid: 'player-2',
-      name: 'Owner 2',
+      nickName: 'Owner 2',
       userUuid: 'user-2',
     })
 
@@ -185,14 +185,14 @@ test.group('Lobby Persistence Integration', (group) => {
       name: 'Memory Only',
       maxPlayers: 4,
       isPrivate: false,
-      owner: owner1,
+      creator: owner1,
     })
 
     const persistedLobby = Lobby.create({
       name: 'Persisted',
       maxPlayers: 4,
       isPrivate: false,
-      owner: owner2,
+      creator: owner2,
     })
 
     // Sauvegarder un en mémoire seulement

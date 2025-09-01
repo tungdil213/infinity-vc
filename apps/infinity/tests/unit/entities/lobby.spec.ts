@@ -1,7 +1,6 @@
 import { test } from '@japa/runner'
 import Lobby from '../../../app/domain/entities/lobby.js'
 import { LobbyStatus } from '../../../app/domain/value_objects/lobby_status.js'
-import Player from '../../../app/domain/entities/player.js'
 
 // Helper function to create a player interface
 function createPlayerInterface() {
@@ -101,7 +100,7 @@ test.group('Lobby Entity', () => {
     
     const result = lobby.addPlayer(newPlayer)
 
-    assert.isTrue(result.success)
+    assert.isTrue(result.isSuccess)
     assert.lengthOf(lobby.players, 2)
     assert.deepEqual(lobby.players[1], newPlayer)
   })
@@ -112,7 +111,7 @@ test.group('Lobby Entity', () => {
     
     const result = lobby.addPlayer(existingPlayer)
 
-    assert.isFalse(result.success)
+    assert.isFalse(result.isSuccess)
     assert.equal(result.error, 'Player is already in the lobby')
     assert.lengthOf(lobby.players, 1)
   })
@@ -128,7 +127,7 @@ test.group('Lobby Entity', () => {
     const newPlayer = createPlayerInterface()
     const result = lobby.addPlayer(newPlayer)
 
-    assert.isFalse(result.success)
+    assert.isFalse(result.isSuccess)
     assert.equal(result.error, 'Lobby is full')
     assert.lengthOf(lobby.players, lobby.maxPlayers)
   })
@@ -140,7 +139,7 @@ test.group('Lobby Entity', () => {
 
     const result = lobby.removePlayer(newPlayer.uuid)
 
-    assert.isTrue(result.success)
+    assert.isTrue(result.isSuccess)
     assert.lengthOf(lobby.players, 1)
     assert.isUndefined(lobby.players.find((p) => p.uuid === newPlayer.uuid))
   })
@@ -151,7 +150,7 @@ test.group('Lobby Entity', () => {
     
     const result = lobby.removePlayer(nonExistentPlayer.uuid)
 
-    assert.isFalse(result.success)
+    assert.isFalse(result.isSuccess)
     assert.equal(result.error, 'Player not found in lobby')
   })
 
@@ -162,7 +161,7 @@ test.group('Lobby Entity', () => {
 
     const result = lobby.removePlayer(lobby.creator.uuid)
 
-    assert.isFalse(result.success)
+    assert.isFalse(result.isSuccess)
     assert.equal(result.error, 'Creator cannot leave lobby while other players are present')
   })
 
@@ -171,7 +170,7 @@ test.group('Lobby Entity', () => {
     
     const result = lobby.removePlayer(lobby.creator.uuid)
 
-    assert.isTrue(result.success)
+    assert.isTrue(result.isSuccess)
     assert.lengthOf(lobby.players, 0)
   })
 
@@ -205,7 +204,7 @@ test.group('Lobby Entity', () => {
     lobby.addPlayer(createPlayerInterface())
 
     const result = lobby.setReady()
-    assert.isTrue(result.success)
+    assert.isTrue(result.isSuccess)
     assert.equal(lobby.status, LobbyStatus.READY)
   })
 
@@ -213,7 +212,7 @@ test.group('Lobby Entity', () => {
     const lobby = createLobby()
     
     const result = lobby.setReady()
-    assert.isFalse(result.success)
+    assert.isFalse(result.isSuccess)
     assert.equal(result.error, 'Need at least 2 players to be ready')
   })
 
@@ -223,7 +222,7 @@ test.group('Lobby Entity', () => {
     lobby.setReady()
 
     const result = lobby.startGame()
-    assert.isTrue(result.success)
+    assert.isTrue(result.isSuccess)
     assert.equal(lobby.status, LobbyStatus.STARTING)
   })
 
@@ -231,7 +230,7 @@ test.group('Lobby Entity', () => {
     const lobby = createLobby()
     
     const result = lobby.startGame()
-    assert.isFalse(result.success)
+    assert.isFalse(result.isSuccess)
     assert.equal(result.error, 'Lobby must be READY or FULL to start game')
   })
 

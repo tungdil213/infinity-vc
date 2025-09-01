@@ -460,6 +460,7 @@ windsurf:
         Remplacer les messages d'erreur spécifiques par des messages génériques pour les opérations sensibles.
         Ajouter la classification SECURITY aux exceptions sensibles.
         Encapsuler les erreurs techniques dans des BusinessException appropriées.
+    
     - name: "Service Testing Strategy"
       description: |
         Les tests doivent se concentrer sur la logique métier des services et use cases.
@@ -476,6 +477,7 @@ windsurf:
         Créer automatiquement un fichier de test pour chaque nouveau use case.
         Générer des mocks basiques pour les repositories utilisés.
         Ajouter des tests pour les cas d'erreur manquants.
+    
     - name: "DTO and Serialization Pattern"
       description: |
         Utiliser des DTOs (Data Transfer Objects) pour découpler les couches.
@@ -492,6 +494,7 @@ windsurf:
         Générer automatiquement des DTOs pour les nouvelles entités.
         Créer des serializers basiques pour les conversions entity ↔ DTO.
         Refactorer les use cases pour utiliser DTOs au lieu d'entités.
+    
     - name: "Factory and Test Data Strategy"
       description: |
         Utiliser des factories pour créer des données de test cohérentes et réutilisables.
@@ -508,6 +511,7 @@ windsurf:
         Générer automatiquement une factory pour chaque nouvelle entité.
         Créer des factories basiques avec des valeurs par défaut cohérentes.
         Refactorer les tests existants pour utiliser les factories.
+    
     - name: "Comprehensive Test Architecture"
       description: |
         Architecture de test en couches avec séparation claire des responsabilités.
@@ -524,3 +528,152 @@ windsurf:
         Créer la structure de dossiers de test manquante.
         Générer des tests basiques pour les nouveaux use cases.
         Ajouter des assertions pour les cas d'erreur manquants.
+    
+    - name: "Factory and Faker Strategy"
+      description: |
+        Les factories doivent être complétées par des fakers qui héritent des classes de base.
+        Les fakers remplacent l’usage de sinon pour la génération de données réalistes.
+        Chaque faker doit générer des données cohérentes, réalistes et anonymisées.
+        Les fakers doivent être fortement typés et découplés de la logique métier.
+      checks:
+        - Vérifier qu'aucun test n'utilise sinon (préférer jest.fn() ou des mocks internes).
+        - S'assurer que chaque entité/DTO a un faker correspondant dans `tests/fakers/`.
+        - Confirmer que les fakers héritent d'une classe de base (BaseFaker).
+        - Vérifier que les fakers permettent l'override de propriétés spécifiques.
+        - S'assurer que les fakers sont utilisés dans toutes les factories.
+      autofix: |
+        Supprimer les imports de sinon et remplacer par jest.fn().
+        Générer automatiquement un BaseFaker pour chaque entité.
+        Créer les fakers hérités pour les entités manquantes.
+        Refactorer les factories pour consommer les fakers.
+    
+    - name: "Hexagonal Architecture Enforcement"
+      description: |
+        Respect strict du pattern Ports & Adapters :
+        - Les use cases ne dépendent que d’interfaces (ports).
+        - Les implémentations concrètes (adapters : S3, Mailer, etc.) résident dans infrastructure/.
+        - L’injection de dépendances se fait uniquement via constructeur.
+      checks:
+        - Vérifier que les use cases n’importent pas directement d’implémentations techniques.
+        - S'assurer que toutes les dépendances externes passent par des interfaces dans `application/ports/`.
+        - Contrôler que l'infrastructure implémente les ports définis.
+      autofix: |
+        Générer automatiquement des interfaces ports pour les dépendances externes.
+        Déplacer les appels techniques dans infrastructure/.
+        Injecter les adapters via constructeur dans les use cases.
+   
+    - name: "Contract Testing Strategy"
+      description: |
+        Les contrats entre couches doivent être validés par des tests de contrat.
+        Les tests de contrat garantissent la compatibilité entre DTOs, serializers et API endpoints.
+      checks:
+        - Vérifier que chaque endpoint API a un test de contrat dans `tests/contract/`.
+        - S'assurer que les serializers respectent les schémas DTO.
+        - Confirmer que les changements de schéma cassants déclenchent une erreur de test.
+      autofix: |
+        Générer un test de contrat pour chaque nouvel endpoint.
+        Ajouter un validateur de schéma JSON (Zod ou Joi) dans les tests.
+   
+    - name: "Mutation Testing Strategy"
+      description: |
+        Utiliser des tests de mutation (ex: StrykerJS) pour valider la robustesse des tests.
+        Les tests doivent échouer si une mutation est introduite dans le code.
+      checks:
+        - Vérifier que le pipeline CI exécute les mutation tests au moins sur la couche application.
+        - S'assurer que le seuil de mutation coverage est > 80%.
+      autofix: |
+        Ajouter StrykerJS dans la configuration du projet.
+        Générer une configuration de mutation par défaut.
+    
+    - name: "Test Coverage Enforcement"
+      description: |
+        Les tests doivent couvrir au moins 80% du code de la couche application et domain.
+        Les contrôleurs et infrastructure peuvent avoir une couverture plus faible.
+      checks:
+        - Vérifier que le coverage global est >= 80%.
+        - Vérifier que la couche application/ est >= 90%.
+        - Vérifier que la couche domain/ est >= 90%.
+      autofix: |
+        Ajouter la vérification du coverage dans la CI.
+        Générer un rapport coverage HTML à chaque run.
+    
+    - name: "Dependency Injection Enforcement"
+      description: |
+        Toutes les dépendances doivent être injectées explicitement (via constructeur ou factory).
+        Aucun service ou repository ne doit être instancié directement dans un use case ou contrôleur.
+        Les dépendances doivent être définies sous forme d’interfaces dans `application/ports/`
+        et fournies via injection par l’infrastructure.
+      checks:
+        - Vérifier que les use cases n’appellent pas `new` pour instancier une dépendance.
+        - S’assurer que les contrôleurs n’instancient pas de services/repositories directement.
+        - Contrôler que l’injection se fait toujours via constructeur (pas via propriété statique).
+        - Vérifier que les adapters dans `infrastructure/` implémentent les interfaces définies dans `application/ports/`.
+        - Interdire l’utilisation d’un container global ou singleton pour résoudre les dépendances.
+      autofix: |
+        Déplacer les instanciations de dépendances vers des factories ou des modules d’injection.
+        Ajouter les interfaces manquantes dans `application/ports/`.
+        Injecter les dépendances via constructeur dans les use cases et services.
+    
+    - name: "UI Library Consistency"
+      description: |
+        Les composants dans `packages/ui` constituent une librairie réutilisable.
+        Ils doivent être découplés de la logique métier et testés isolément.
+        Les composants doivent être documentés et exposés dans `apps/docs` (Storybook).
+      checks:
+        - Vérifier que `packages/ui` ne contient aucune dépendance vers `apps/`.
+        - S'assurer que chaque nouveau composant est accompagné d'une story dans `apps/docs`.
+        - Vérifier que les composants UI sont testés avec React Testing Library.
+        - Confirmer que chaque composant a des props typées avec TypeScript.
+      autofix: |
+        Créer automatiquement un fichier de story pour chaque composant.
+        Ajouter des tests unitaires de rendu basiques si absents.
+        Bloquer l’import de code applicatif dans `packages/ui`.
+
+    - name: "Storybook Documentation Enforcement"
+      description: |
+        Storybook (`apps/docs`) sert de documentation vivante pour les composants UI.
+        Il doit être mis à jour à chaque ajout ou modification d’un composant.
+      checks:
+        - Vérifier que chaque composant de `packages/ui` a une story correspondante.
+        - S'assurer que les stories couvrent tous les états/variantes des composants.
+        - Contrôler que Storybook build sans erreur dans la CI.
+      autofix: |
+        Générer une story minimale lors de la création d’un nouveau composant.
+        Ajouter automatiquement les variantes manquantes détectées.
+        Lancer `pnpm storybook:build` en CI pour détecter les incohérences.
+
+    - name: "Visual Regression Testing"
+      description: |
+        Les composants UI doivent être validés par des tests de régression visuelle.
+        Les différences de rendu doivent être détectées automatiquement lors des PR.
+      checks:
+        - Vérifier que la CI exécute les tests visuels sur `apps/docs`.
+        - S'assurer que les PR échouent en cas de différence non approuvée.
+      autofix: |
+        Ajouter Chromatic ou Playwright dans la CI.
+        Générer automatiquement des snapshots visuels pour les nouveaux composants.
+
+    - name: "Domain Factory Rule"
+      description: |
+        Les entités complexes doivent être créées via des factories métier dans `domain/factories/`.
+        Les factories métier encapsulent la logique de création et garantissent la validité métier.
+        Les repositories utilisent les factories métier pour hydrater les entités depuis la base.
+      checks:
+        - Vérifier que les entités ne sont pas instanciées directement dans les use cases.
+        - S'assurer que les repositories appellent une factory métier pour reconstruire une entité.
+        - Contrôler que les factories métier vivent uniquement dans `domain/factories/`.
+      autofix: |
+        Déplacer la logique de création d'entité vers une factory métier.
+        Ajouter une factory manquante dans `domain/factories/`.
+
+    - name: "Test/Seed Factory Rule"
+      description: |
+        Les factories de test/seed (DTO builders) sont réservées aux tests et à l’initialisation de données.
+        Elles ne doivent jamais être utilisées dans le code applicatif (domain, application, infrastructure).
+      checks:
+        - Vérifier que les factories de test/seed résident uniquement dans `tests/factories/` ou `database/factories/`.
+        - Interdire leur import dans `app/`.
+        - Confirmer que les seeders utilisent ces factories au lieu d’objets bruts.
+      autofix: |
+        Déplacer les factories de test/seed en dehors du dossier `app/`.
+        Supprimer les imports interdits dans le code applicatif.

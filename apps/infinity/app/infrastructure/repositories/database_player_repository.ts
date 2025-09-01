@@ -1,8 +1,9 @@
-import { PlayerRepository } from '#application/repositories/player_repository'
-import Player from '#domain/entities/player'
-import { PlayerInterface } from '#domain/interfaces/player_interface'
-import User from '#models/user'
-import PlayerModel from '#models/player'
+import Player from '../../domain/entities/player.js'
+import { PlayerInterface } from '../../domain/interfaces/player_interface.js'
+import { PlayerRepository } from '../../application/repositories/player_repository.js'
+import { EntityNotFoundException } from '../../exceptions/domain_exceptions.js'
+import User from '../../models/user.js'
+import PlayerModel from '../../models/player.js'
 
 export class DatabasePlayerRepository implements PlayerRepository {
   async save(player: Player): Promise<void> {
@@ -42,7 +43,7 @@ export class DatabasePlayerRepository implements PlayerRepository {
   async findByUserUuidOrFail(userUuid: string): Promise<Player> {
     const player = await this.findByUserUuid(userUuid)
     if (!player) {
-      throw new Error(`Player not found for user: ${userUuid}`)
+      throw new EntityNotFoundException('Player', userUuid)
     }
     return player
   }
@@ -66,7 +67,7 @@ export class DatabasePlayerRepository implements PlayerRepository {
   async findByUuidOrFail(uuid: string): Promise<Player> {
     const player = await this.findByUuid(uuid)
     if (!player) {
-      throw new Error(`Player not found: ${uuid}`)
+      throw new EntityNotFoundException('Player', uuid)
     }
     return player
   }
@@ -92,7 +93,7 @@ export class DatabasePlayerRepository implements PlayerRepository {
   async findPlayerInterfaceByUuidOrFail(userUuid: string): Promise<PlayerInterface> {
     const playerInterface = await this.findPlayerInterfaceByUuid(userUuid)
     if (!playerInterface) {
-      throw new Error(`Player interface not found for user: ${userUuid}`)
+      throw new EntityNotFoundException('PlayerInterface', userUuid)
     }
     return playerInterface
   }

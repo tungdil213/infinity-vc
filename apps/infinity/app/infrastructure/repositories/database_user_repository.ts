@@ -1,25 +1,25 @@
-import { inject } from '@adonisjs/core'
-import { UserRepository } from '#application/repositories/user_repository'
-import DomainUser from '#domain/entities/user'
+import User from '../../domain/entities/user.js'
+import { UserRepository } from '../../application/repositories/user_repository.js'
+import { EntityNotFoundException } from '../../exceptions/domain_exceptions.js'
 import UserModel from '#models/user'
 
 export class DatabaseUserRepository implements UserRepository {
-  async findByUuid(uuid: string): Promise<DomainUser | null> {
+  async findByUuid(uuid: string): Promise<User | null> {
     const userModel = await UserModel.query().where('user_uuid', uuid).first()
     if (!userModel) return null
 
     return this.toDomainUser(userModel)
   }
 
-  async findByUuidOrFail(uuid: string): Promise<DomainUser> {
+  async findByUuidOrFail(uuid: string): Promise<User> {
     const user = await this.findByUuid(uuid)
     if (!user) {
-      throw new Error(`User with UUID ${uuid} not found`)
+      throw new EntityNotFoundException('User', uuid)
     }
     return user
   }
 
-  async save(user: DomainUser): Promise<void> {
+  async save(user: User): Promise<void> {
     const serialized = user.toJSON()
 
     // Check if user exists
@@ -48,12 +48,12 @@ export class DatabaseUserRepository implements UserRepository {
     await userModel.softDelete()
   }
 
-  async findAll(): Promise<DomainUser[]> {
+  async findAll(): Promise<User[]> {
     const userModels = await UserModel.query().whereNull('deleted_at')
     return userModels.map((model) => this.toDomainUser(model))
   }
 
-  async findByEmail(email: string): Promise<DomainUser | null> {
+  async findByEmail(email: string): Promise<User | null> {
     const userModel = await UserModel.query()
       .where('email', email)
       .whereNull('deleted_at')
@@ -63,7 +63,7 @@ export class DatabaseUserRepository implements UserRepository {
     return this.toDomainUser(userModel)
   }
 
-  async findByUsername(username: string): Promise<DomainUser | null> {
+  async findByUsername(_username: string): Promise<User | null> {
     // For now, we don't have username field, so we'll use email
     // This can be updated when username field is added to the schema
     return null
@@ -79,11 +79,11 @@ export class DatabaseUserRepository implements UserRepository {
     return user !== null
   }
 
-  private toDomainUser(userModel: UserModel): DomainUser {
+  private toDomainUser(userModel: UserModel): User {
     // Generate a valid username from email by removing special characters
     const emailUsername = userModel.email.split('@')[0].replace(/[^a-zA-Z0-9_-]/g, '_')
     
-    return DomainUser.create({
+    return User.create({
       uuid: userModel.userUuid,
       firstName: userModel.fullName?.split(' ')[0] || '',
       lastName: userModel.fullName?.split(' ').slice(1).join(' ') || '',

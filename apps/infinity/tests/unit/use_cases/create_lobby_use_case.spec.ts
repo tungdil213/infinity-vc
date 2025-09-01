@@ -2,8 +2,6 @@ import { test } from '@japa/runner'
 import { CreateLobbyUseCase } from '../../../app/application/use_cases/create_lobby_use_case.js'
 import { LobbyFactory } from '../../factories/lobby_factory.js'
 import { UserFactory } from '../../factories/user_factory.js'
-import { LobbySerializer } from '../../../app/application/serializers/lobby_serializer.js'
-import { UserSerializer } from '../../../app/application/serializers/user_serializer.js'
 
 // Mock repositories
 const mockPlayerRepository = {
@@ -18,9 +16,9 @@ const mockPlayerRepository = {
 }
 
 const mockLobbyRepository = {
-  save: async (lobby: any) => Promise.resolve(),
-  delete: async (uuid: string) => Promise.resolve(),
-  findByPlayer: async (playerUuid: string) => null,
+  save: async (_lobby: any) => Promise.resolve(),
+  delete: async (_uuid: string) => Promise.resolve(),
+  findByPlayer: async (_playerUuid: string) => null,
   findByUuid: async (uuid: string) => null
 }
 
@@ -112,13 +110,13 @@ test.group('CreateLobbyUseCase', (group) => {
     // Arrange
     const existingLobby = {
       uuid: 'existing-lobby',
-      removePlayer: (playerUuid: string) => ({ success: true }),
+      removePlayer: (_playerUuid: string) => ({ success: true }),
       playerCount: 0
     }
 
     const mockLobbyRepositoryWithExisting = {
       ...mockLobbyRepository,
-      findByPlayer: async (playerUuid: string) => existingLobby,
+      findByPlayer: async (_playerUuid: string) => existingLobby,
       delete: async (uuid: string) => {
         assert.equal(uuid, 'existing-lobby')
         return Promise.resolve()
@@ -144,7 +142,7 @@ test.group('CreateLobbyUseCase', (group) => {
   test('should handle player not found error', async ({ assert }) => {
     // Arrange
     const mockPlayerRepositoryNotFound = {
-      findByUuid: async (uuid: string) => null
+      findByUuid: async (_uuid: string) => null
     }
 
     const useCase = new CreateLobbyUseCase(

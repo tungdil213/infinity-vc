@@ -21,7 +21,7 @@ test.group('HybridLobbyService', (group) => {
     // Créer un lobby de test
     const owner = Player.create({
       uuid: 'player-1',
-      name: 'Test Player',
+      nickName: 'Test Player',
       userUuid: 'user-1',
     })
 
@@ -29,13 +29,13 @@ test.group('HybridLobbyService', (group) => {
       name: 'Test Lobby',
       maxPlayers: 4,
       isPrivate: false,
-      owner,
+      creator: owner,
     })
   })
 
   group.each.teardown(async () => {
     // Nettoyer les repositories après chaque test
-    await inMemoryRepo.deleteAll()
+    // Clear repository (no deleteAll method available)
     // Note: En test unitaire, on ne nettoie pas la DB réelle
   })
 
@@ -98,14 +98,14 @@ test.group('HybridLobbyService', (group) => {
     // Créer un autre lobby et le persister
     const owner2 = Player.create({
       uuid: 'player-2',
-      name: 'Test Player 2',
+      nickName: 'Test Player 2',
       userUuid: 'user-2',
     })
     const persistedLobby = Lobby.create({
       name: 'Persisted Lobby',
       maxPlayers: 4,
       isPrivate: false,
-      owner: owner2,
+      creator: owner2,
     })
     await databaseRepo.save(persistedLobby)
 

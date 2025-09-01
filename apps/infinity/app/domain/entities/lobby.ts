@@ -1,13 +1,13 @@
 import { BaseEntity } from './base_entity.js'
-import { PlayerInterface } from '../interfaces/player_interface.js'
 import { LobbyStatus } from '../value_objects/lobby_status.js'
+import { PlayerInterface } from '../interfaces/player_interface.js'
+import { LobbyValidationException } from '../../exceptions/domain_exceptions.js'
+import { Result } from '../shared/result.js'
 import {
   LobbyCreatedEvent,
   PlayerJoinedLobbyEvent,
   PlayerLeftLobbyEvent,
 } from '../events/lobby_events.js'
-import LobbyStateMachine, { LobbyEvent } from '../state_machine/lobby_state_machine.js'
-import { OperationResult, OperationResultFactory } from '../value_objects/operation_result.js'
 
 export interface LobbyData {
   uuid?: string
@@ -18,7 +18,7 @@ export interface LobbyData {
 }
 
 export default class Lobby extends BaseEntity {
-  private _stateMachine: LobbyStateMachine
+  private _status: LobbyStatus = LobbyStatus.OPEN
   private _players: PlayerInterface[] = []
 
   private constructor(
@@ -30,7 +30,7 @@ export default class Lobby extends BaseEntity {
     private _createdAt: Date = new Date()
   ) {
     super()
-    this._stateMachine = new LobbyStateMachine(LobbyStatus.OPEN, _maxPlayers)
+    this._status = LobbyStatus.OPEN
   }
 
   static create(data: LobbyData): Lobby {
@@ -50,7 +50,6 @@ export default class Lobby extends BaseEntity {
 
     // Ajouter le créateur comme premier joueur
     lobby._players = [data.creator]
-    lobby._stateMachine.updatePlayerCount(1)
 
     // Enregistrer l'événement de création
     lobby.recordEvent(
@@ -72,7 +71,6 @@ export default class Lobby extends BaseEntity {
     const lobby = new Lobby(uuid, name, createdBy, maxPlayers, isPrivate, createdAt || new Date())
 
     lobby._players = [...players]
-    lobby._stateMachine.updatePlayerCount(players.length)
 
     return lobby
   }
@@ -111,7 +109,7 @@ export default class Lobby extends BaseEntity {
   }
 
   get status(): LobbyStatus {
-    return this._stateMachine.getCurrentState()
+    return this._status
   }
 
   get createdAt(): Date {
@@ -119,11 +117,14 @@ export default class Lobby extends BaseEntity {
   }
 
   get canStart(): boolean {
-    return this._stateMachine.canStartGame()
+    return this._players.length >= 2 && this._status === LobbyStatus.OPEN
   }
 
-  get availableActions(): LobbyEvent[] {
-    return this._stateMachine.getValidTransitions()
+  get availableActions(): string[] {
+    const actions: string[] = []
+    if (this.canStart) actions.push('START_GAME')
+    if (this.hasAvailableSlots) actions.push('ADD_PLAYER')
+    return actions
   }
 
   get hasAvailableSlots(): boolean {
@@ -131,67 +132,46 @@ export default class Lobby extends BaseEntity {
   }
 
   // Methods
-  addPlayer(player: PlayerInterface): OperationResult {
+  addPlayer(player: PlayerInterface): Result<void> {
     try {
       // Validation métier
       this.validateCanAddPlayer(player)
 
-      // Faire la transition AVANT d'ajouter le joueur (pour que les guards fonctionnent)
-      this._stateMachine.transition(LobbyEvent.PLAYER_JOINED)
-
       // Ajout du joueur
       this._players.push(player)
-
-      // Mise à jour de la machine à états
-      this._stateMachine.updatePlayerCount(this._players.length)
 
       // Événement domaine
       this.recordEvent(
         new PlayerJoinedLobbyEvent(this._uuid, player, this._players.length, this.status)
       )
 
-      return OperationResultFactory.success()
+      return Result.ok(undefined)
     } catch (error) {
-      return OperationResultFactory.failure(error.message)
+      if (error instanceof LobbyValidationException) {
+        return Result.fail(error.message)
+      }
+      return Result.fail('Failed to add player to lobby')
     }
   }
 
-  removePlayer(playerUuid: string): OperationResult {
+  removePlayer(playerUuid: string): Result<void> {
     try {
       const playerIndex = this._players.findIndex((p) => p.uuid === playerUuid)
 
       if (playerIndex === -1) {
-        return OperationResultFactory.failure('Player not found in lobby')
+        return Result.fail('Player not found in lobby')
       }
 
       // Vérifier si c'est le créateur et s'il y a d'autres joueurs
       if (playerUuid === this._createdBy && this._players.length > 1) {
-        return OperationResultFactory.failure(
+        return Result.fail(
           'Creator cannot leave lobby while other players are present'
         )
       }
 
-      // Capturer le joueur avant suppression pour l'événement
       const removedPlayer = this._players[playerIndex]
-
-      // Faire la transition AVANT de supprimer le joueur (pour que les guards fonctionnent)
-      this._stateMachine.transition(LobbyEvent.PLAYER_LEFT)
-
-      // Suppression du joueur
       this._players.splice(playerIndex, 1)
 
-      // Mise à jour de la machine à états
-      this._stateMachine.updatePlayerCount(this._players.length)
-
-      // Si c'était le dernier joueur, le lobby doit être supprimé
-      if (this._players.length === 0) {
-        // Événement domaine pour le dernier joueur qui quitte
-        this.recordEvent(
-          new PlayerLeftLobbyEvent(this._uuid, removedPlayer, this._players.length, this.status)
-        )
-        // Le lobby sera supprimé par le service
-        return OperationResultFactory.success()
-      }
 
       // Si le créateur quitte, transférer la propriété
       if (playerUuid === this._createdBy && this._players.length > 0) {
@@ -203,20 +183,20 @@ export default class Lobby extends BaseEntity {
         new PlayerLeftLobbyEvent(this._uuid, removedPlayer, this._players.length, this.status)
       )
 
-      return OperationResultFactory.success()
+      return Result.ok(undefined)
     } catch (error) {
-      return OperationResultFactory.failure(error.message)
+      return Result.fail('Failed to remove player from lobby')
     }
   }
 
-  startGame(): OperationResult<string> {
+  startGame(): Result<string> {
     try {
       if (!this.canStart) {
-        return OperationResultFactory.failure('Lobby must be READY or FULL to start game')
+        return Result.fail('Lobby must have at least 2 players to start game')
       }
 
-      // Transition vers STARTING
-      this._stateMachine.transition(LobbyEvent.GAME_STARTED)
+      // Mise à jour du statut
+      this._status = LobbyStatus.STARTING
 
       // Génération de l'UUID de la partie
       const gameUuid = crypto.randomUUID()
@@ -230,22 +210,22 @@ export default class Lobby extends BaseEntity {
         timestamp: new Date(),
       })
 
-      return OperationResultFactory.success(gameUuid)
+      return Result.ok(gameUuid)
     } catch (error) {
-      return OperationResultFactory.failure(error.message)
+      return Result.fail('Failed to start game')
     }
   }
 
-  setReady(): OperationResult {
+  setReady(): Result<void> {
     try {
       if (this._players.length < 2) {
-        return OperationResultFactory.failure('Need at least 2 players to be ready')
+        return Result.fail('Need at least 2 players to be ready')
       }
 
-      this._stateMachine.transition(LobbyEvent.READY_SET)
-      return OperationResultFactory.success()
+      this._status = LobbyStatus.READY
+      return Result.ok(undefined)
     } catch (error) {
-      return OperationResultFactory.failure(error.message)
+      return Result.fail('Failed to set lobby ready')
     }
   }
 
@@ -268,31 +248,31 @@ export default class Lobby extends BaseEntity {
 
   private validateCanAddPlayer(player: PlayerInterface): void {
     if (this.hasPlayer(player.uuid)) {
-      throw new Error('Player is already in the lobby')
+      throw new LobbyValidationException('Player is already in the lobby')
     }
 
     if (this.isFull()) {
-      throw new Error('Lobby is full')
+      throw new LobbyValidationException('Lobby is full')
     }
 
-    if (!this._stateMachine.canTransition(LobbyEvent.PLAYER_JOINED)) {
-      throw new Error('Lobby is full')
+    if (!this.isOpen) {
+      throw new LobbyValidationException('Lobby is not accepting new players')
     }
   }
 
   // Validation methods
   private static validateName(name: string): void {
     if (!name || name.trim().length === 0) {
-      throw new Error('Lobby name cannot be empty')
+      throw new LobbyValidationException('Lobby name cannot be empty', 'name')
     }
     if (name.trim().length < 3 || name.trim().length > 50) {
-      throw new Error('Lobby name must be between 3 and 50 characters')
+      throw new LobbyValidationException('Lobby name must be between 3 and 50 characters', 'name')
     }
   }
 
   private static validateMaxPlayers(maxPlayers: number): void {
     if (maxPlayers < 2 || maxPlayers > 8) {
-      throw new Error('Max players must be between 2 and 8')
+      throw new LobbyValidationException('Max players must be between 2 and 8', 'maxPlayers')
     }
   }
 
