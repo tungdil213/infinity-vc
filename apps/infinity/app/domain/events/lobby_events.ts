@@ -80,6 +80,32 @@ export class LobbyDeletedEvent implements DomainEvent {
   ) {}
 }
 
+export class PlayerKickedEvent implements DomainEvent {
+  readonly eventType: string = 'PlayerKicked'
+  readonly timestamp: Date = new Date()
+
+  constructor(
+    public readonly lobbyUuid: string,
+    public readonly kickedPlayer: PlayerInterface,
+    public readonly kickedBy: PlayerInterface,
+    public readonly reason: string,
+    public readonly remainingPlayers: PlayerInterface[]
+  ) {}
+}
+
+export class PlayerReadyChangedEvent implements DomainEvent {
+  readonly eventType: string = 'PlayerReadyChanged'
+  readonly timestamp: Date = new Date()
+
+  constructor(
+    public readonly lobbyUuid: string,
+    public readonly player: PlayerInterface,
+    public readonly isReady: boolean,
+    public readonly allPlayersReady: boolean,
+    public readonly canStartGame: boolean
+  ) {}
+}
+
 export class GameStartedEvent implements DomainEvent {
   readonly eventType: string = 'GameStarted'
   readonly timestamp: Date = new Date()
