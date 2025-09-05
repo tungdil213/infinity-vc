@@ -1,5 +1,7 @@
 import { LobbyRepository } from '../repositories/lobby_repository.js'
 import { Result } from '../../domain/shared/result.js'
+import { TransmitLobbyService } from '../services/transmit_lobby_service.js'
+import { LobbyEventService } from '../services/lobby_event_service.js'
 
 export interface LeaveLobbyRequest {
   userUuid: string
@@ -28,7 +30,11 @@ export interface LeaveLobbyResponse {
 }
 
 export class LeaveLobbyUseCase {
-  constructor(private lobbyRepository: LobbyRepository) {}
+  constructor(
+    private lobbyRepository: LobbyRepository,
+    private notificationService: TransmitLobbyService,
+    private eventService: LobbyEventService
+  ) {}
 
   async execute(request: LeaveLobbyRequest): Promise<Result<LeaveLobbyResponse>> {
     try {
@@ -46,15 +52,25 @@ export class LeaveLobbyUseCase {
         return Result.fail('Player is not in this lobby')
       }
 
+      // Récupérer les infos du joueur avant de le retirer
+      const playerToRemove = lobby.players.find((p) => p.uuid === request.userUuid)
+      if (!playerToRemove) {
+        return Result.fail('Player not found in lobby')
+      }
+
       // Retirer le joueur du lobby
       const removeResult = lobby.removePlayer(request.userUuid)
-      if (!removeResult.success) {
+      if (removeResult.isFailure) {
         return Result.fail(removeResult.error || 'Failed to remove player from lobby')
       }
 
-      // Si le lobby est vide, le supprimer
-      if (lobby.playerCount === 0) {
+      // Si le lobby est vide après le départ, le supprimer
+      if (lobby.players.length === 0) {
         await this.lobbyRepository.delete(lobby.uuid)
+        
+        // Émettre l'événement de suppression de lobby
+        await this.eventService.emitLobbyDeleted(lobby.uuid)
+        
         const response: LeaveLobbyResponse = {
           lobby: {
             uuid: lobby.uuid,
@@ -77,6 +93,17 @@ export class LeaveLobbyUseCase {
 
       // Sinon, sauvegarder le lobby mis à jour
       await this.lobbyRepository.save(lobby)
+
+      // Notifier que le joueur a quitté le lobby
+      this.notificationService.notifyPlayerLeft(lobby.uuid, playerToRemove, {
+        uuid: lobby.uuid,
+        name: lobby.name,
+        status: lobby.status,
+        currentPlayers: lobby.players.length,
+        maxPlayers: lobby.maxPlayers,
+        players: lobby.players,
+        creator: lobby.creator,
+      })
 
       const response: LeaveLobbyResponse = {
         lobby: {

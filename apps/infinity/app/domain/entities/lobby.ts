@@ -168,18 +168,19 @@ export default class Lobby extends BaseEntity {
         return Result.fail('Player not found in lobby')
       }
 
-      // Vérifier si c'est le créateur et s'il y a d'autres joueurs
-      if (playerUuid === this._createdBy && this._players.length > 1) {
-        return Result.fail('Creator cannot leave lobby while other players are present')
-      }
-
       const removedPlayer = this._players[playerIndex]
+      const wasCreator = playerUuid === this._createdBy
+
+      // Retirer le joueur du lobby
       this._players.splice(playerIndex, 1)
 
-      // Si le créateur quitte, transférer la propriété
-      if (playerUuid === this._createdBy && this._players.length > 0) {
+      // Si le créateur quitte et qu'il reste des joueurs, transférer la propriété
+      if (wasCreator && this._players.length > 0) {
         this._createdBy = this._players[0].uuid
       }
+
+      // Mettre à jour le statut basé sur le nouveau nombre de joueurs
+      this.updateStatusBasedOnPlayerCount()
 
       // Événement domaine
       this.recordEvent(

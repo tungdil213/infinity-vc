@@ -77,18 +77,24 @@ export function LobbyList({
   }
 
   const filteredLobbies = lobbies.filter(lobby => {
+    console.log('LobbyList - filtrage lobby:', lobby.name, 'filters:', filters)
     if (filters.search && !lobby.name.toLowerCase().includes(filters.search.toLowerCase())) {
+      console.log('LobbyList - rejeté par search:', lobby.name)
       return false
     }
     if (filters.status !== 'all' && lobby.status !== filters.status) {
+      console.log('LobbyList - rejeté par status:', lobby.status, 'vs', filters.status)
       return false
     }
     if (filters.hasSlots && !lobby.hasAvailableSlots) {
+      console.log('LobbyList - rejeté par hasSlots:', lobby.hasAvailableSlots)
       return false
     }
     if (filters.isPrivate !== undefined && lobby.isPrivate !== filters.isPrivate) {
+      console.log('LobbyList - rejeté par isPrivate:', lobby.isPrivate, 'vs', filters.isPrivate)
       return false
     }
+    console.log('LobbyList - lobby accepté:', lobby.name)
     return true
   })
 

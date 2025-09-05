@@ -643,4 +643,43 @@ export default class EnhancedLobbiesController {
       })
     }
   }
+
+  /**
+   * Handle leave lobby on page close/navigation (beacon requests)
+   */
+  async leaveOnClose({ request, response, auth }: HttpContext) {
+    try {
+      const user = auth.user
+      if (!user) {
+        return response.status(401).json({ error: 'Unauthorized' })
+      }
+
+      const { lobbyUuid, userUuid } = request.body()
+      
+      // Validate that the user can only leave their own sessions
+      if (userUuid !== user.userUuid) {
+        return response.status(403).json({ error: 'Forbidden' })
+      }
+
+      const result = await this.leaveLobbyUseCase.execute({
+        lobbyUuid,
+        userUuid: user.userUuid,
+      })
+
+      if (result.isFailure) {
+        console.log(`Leave on close failed for user ${user.userUuid} in lobby ${lobbyUuid}: ${result.error}`)
+        return response.status(400).json({ error: result.error })
+      }
+
+      return response.status(200).json({
+        success: true,
+        message: 'Successfully left lobby on close',
+      })
+    } catch (error) {
+      console.error('Failed to leave lobby on close:', error)
+      return response.status(500).json({
+        error: 'Failed to leave lobby on close',
+      })
+    }
+  }
 }

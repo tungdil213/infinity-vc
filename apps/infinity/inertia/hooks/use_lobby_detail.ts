@@ -14,20 +14,30 @@ export function useLobbyDetail(lobbyUuid: string) {
   })
 
   useEffect(() => {
-    if (!lobbyService || !lobbyUuid) return
+    if (!lobbyService || !lobbyUuid) {
+      console.log('useLobbyDetail: Service ou UUID manquant', { lobbyService: !!lobbyService, lobbyUuid })
+      return
+    }
 
+    console.log('useLobbyDetail: Initialisation pour lobby', lobbyUuid)
     setState((prev) => ({ ...prev, loading: true, error: null }))
 
     // S'abonner aux mises à jour du lobby
-    const unsubscribe = lobbyService.subscribeLobbyDetail(lobbyUuid, setState)
+    const unsubscribe = lobbyService.subscribeLobbyDetail(lobbyUuid, (newState) => {
+      console.log('useLobbyDetail: Nouvel état reçu:', newState)
+      setState(newState)
+    })
 
     // Charger les données initiales
+    console.log('useLobbyDetail: Chargement des données initiales')
     lobbyService
       .fetchLobbyDetails(lobbyUuid)
       .then((lobby) => {
+        console.log('useLobbyDetail: Données reçues:', lobby)
         setState({ lobby, loading: false, error: null })
       })
       .catch((error) => {
+        console.error('useLobbyDetail: Erreur lors du chargement:', error)
         setState({ lobby: null, loading: false, error: error.message })
       })
 

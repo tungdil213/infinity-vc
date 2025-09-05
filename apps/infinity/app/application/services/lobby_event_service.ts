@@ -45,6 +45,19 @@ export class LobbyEventService {
   }
 
   /**
+   * Émet un événement de suppression de lobby
+   */
+  async emitLobbyDeleted(lobbyUuid: string): Promise<void> {
+    // Diffuser globalement pour les listes de lobbies
+    await sseService.broadcastGlobal({
+      type: 'lobby.deleted',
+      data: {
+        lobbyUuid,
+      },
+    })
+  }
+
+  /**
    * Émet un événement de mise à jour de lobby
    */
   async emitLobbyUpdated(lobby: Lobby): Promise<void> {

@@ -3,6 +3,7 @@ import { LobbyRepository } from '../repositories/lobby_repository.js'
 import { GameRepository } from '../repositories/game_repository.js'
 import { GameStartedEvent } from '../../domain/events/lobby_events.js'
 import { Result } from '../../domain/shared/result.js'
+import { TransmitLobbyService } from '../services/transmit_lobby_service.js'
 
 export interface StartGameRequest {
   userUuid: string
@@ -42,7 +43,8 @@ export interface StartGameResponse {
 export class StartGameUseCase {
   constructor(
     private lobbyRepository: LobbyRepository,
-    private gameRepository: GameRepository
+    private gameRepository: GameRepository,
+    private notificationService: TransmitLobbyService
   ) {}
 
   async execute(request: StartGameRequest): Promise<Result<StartGameResponse>> {
@@ -70,10 +72,10 @@ export class StartGameUseCase {
 
       // Démarrer la partie dans le lobby (cela génère l'UUID de la partie)
       const gameResult = lobby.startGame()
-      if (!gameResult.success) {
+      if (gameResult.isFailure) {
         return Result.fail(gameResult.error || 'Failed to start game')
       }
-      const gameUuid = gameResult.data!
+      const gameUuid = gameResult.value
 
       // Sauvegarder le lobby mis à jour
       await this.lobbyRepository.save(lobby)
@@ -86,6 +88,17 @@ export class StartGameUseCase {
 
       // Sauvegarder la partie
       await this.gameRepository.save(game)
+
+      // Notifier que le jeu a commencé avant de supprimer le lobby
+      this.notificationService.notifyGameStarted(lobby.uuid, gameUuid, {
+        uuid: lobby.uuid,
+        name: lobby.name,
+        status: lobby.status,
+        currentPlayers: lobby.players.length,
+        maxPlayers: lobby.maxPlayers,
+        players: lobby.players,
+        creator: lobby.creator,
+      })
 
       // Supprimer le lobby de la mémoire (il est maintenant persisté en base)
       await this.lobbyRepository.delete(lobby.uuid)

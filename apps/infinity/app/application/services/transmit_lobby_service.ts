@@ -125,15 +125,44 @@ export class TransmitLobbyService {
         ...this.getEventSpecificData(event),
       }
 
+      console.log(
+        `[TransmitLobbyService] Broadcasting event ${eventData.type} for lobby ${event.lobbyUuid}`
+      )
+
       // Diffuser globalement pour les mises à jour de liste
       if (this.isListUpdateEvent(event.type)) {
-        transmit.broadcast('lobbies', eventData)
+        this.safeBroadcast('lobbies', eventData, 'global')
       }
 
       // Diffuser au lobby spécifique
-      transmit.broadcast(`lobbies/${event.lobbyUuid}`, eventData)
+      this.safeBroadcast(`lobbies/${event.lobbyUuid}`, eventData, 'lobby-specific')
     } catch (error) {
-      console.error('Erreur lors de la diffusion Transmit:', error)
+      console.error('[TransmitLobbyService] Erreur lors de la diffusion Transmit:', error)
+    }
+  }
+
+  /**
+   * Diffuse de manière sécurisée en gérant les canaux inexistants
+   */
+  private safeBroadcast(channel: string, data: any, context: string): void {
+    try {
+      transmit.broadcast(channel, data)
+      console.log(`[TransmitLobbyService] Successfully broadcasted to ${channel} (${context})`)
+    } catch (error) {
+      // Ne pas traiter comme une erreur critique si le canal n'existe pas
+      if (
+        error.message?.includes('non-existent channel') ||
+        error.message?.includes('no subscribers')
+      ) {
+        console.log(
+          `[TransmitLobbyService] No subscribers for channel ${channel} (${context}) - skipping broadcast`
+        )
+      } else {
+        console.error(
+          `[TransmitLobbyService] Failed to broadcast to ${channel} (${context}):`,
+          error
+        )
+      }
     }
   }
 

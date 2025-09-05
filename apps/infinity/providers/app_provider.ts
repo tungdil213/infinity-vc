@@ -5,7 +5,6 @@ import { DatabaseLobbyRepository } from '#infrastructure/repositories/database_l
 import { InMemoryLobbyRepository } from '#infrastructure/repositories/in_memory_lobby_repository'
 import { DatabaseGameRepository } from '#infrastructure/repositories/database_game_repository'
 import { HybridLobbyService } from '#application/services/hybrid_lobby_service'
-import { LobbyNotificationService } from '#application/services/lobby_notification_service'
 import { TransmitLobbyService } from '#application/services/transmit_lobby_service'
 import { RegisterUserUseCase } from '#application/use_cases/register_user_use_case'
 import AuthenticateUserUseCase from '#application/use_cases/authenticate_user_use_case'
@@ -52,9 +51,6 @@ export default class AppProvider {
     })
 
     // Register services as singletons
-    this.app.container.singleton(LobbyNotificationService, () => {
-      return new LobbyNotificationService()
-    })
 
     // Register Transmit-based lobby service
     this.app.container.singleton(TransmitLobbyService, () => {
@@ -85,19 +81,21 @@ export default class AppProvider {
     this.app.container.singleton(JoinLobbyUseCase, async (resolver) => {
       const playerRepository = await resolver.make(DatabasePlayerRepository)
       const hybridLobbyService = await resolver.make(HybridLobbyService)
-      const notificationService = await resolver.make(LobbyNotificationService)
+      const notificationService = await resolver.make(TransmitLobbyService)
       return new JoinLobbyUseCase(playerRepository, hybridLobbyService, notificationService)
     })
 
     this.app.container.singleton(LeaveLobbyUseCase, async (resolver) => {
       const hybridLobbyService = await resolver.make(HybridLobbyService)
-      return new LeaveLobbyUseCase(hybridLobbyService)
+      const notificationService = await resolver.make(TransmitLobbyService)
+      return new LeaveLobbyUseCase(hybridLobbyService, notificationService)
     })
 
     this.app.container.singleton(StartGameUseCase, async (resolver) => {
       const hybridLobbyService = await resolver.make(HybridLobbyService)
       const gameRepository = await resolver.make(DatabaseGameRepository)
-      return new StartGameUseCase(hybridLobbyService, gameRepository as any)
+      const notificationService = await resolver.make(TransmitLobbyService)
+      return new StartGameUseCase(hybridLobbyService, gameRepository as any, notificationService)
     })
 
     this.app.container.singleton(ListLobbiesUseCase, async (resolver) => {
