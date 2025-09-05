@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Button } from '@tyfo.dev/ui/primitives/button'
 import { Badge } from '@tyfo.dev/ui/primitives/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@tyfo.dev/ui/primitives/card'
-import { Users, Crown, Play, LogOut } from 'lucide-react'
+import { Users, Crown, Play, LogOut, UserPlus } from 'lucide-react'
 import { router } from '@inertiajs/react'
 import { useLobbyDetail } from '../hooks/use_lobby_detail'
 import { toast } from 'sonner'
@@ -24,6 +24,7 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
   const { lobby, loading, error, leaveLobby, startGame, isServiceReady } = useLobbyDetail(lobbyUuid)
   const [isStartingGame, setIsStartingGame] = useState(false)
   const [isLeavingLobby, setIsLeavingLobby] = useState(false)
+  const [isJoiningLobby, setIsJoiningLobby] = useState(false)
 
   const handleStartGame = async () => {
     if (!lobby?.canStart || !isServiceReady) return
@@ -58,6 +59,29 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
       toast.error('Failed to leave lobby')
     } finally {
       setIsLeavingLobby(false)
+    }
+  }
+
+  const handleJoinLobby = async () => {
+    setIsJoiningLobby(true)
+    try {
+      router.post(`/lobbies/${lobbyUuid}/join`, {}, {
+        onSuccess: () => {
+          toast.success('Vous avez rejoint le lobby avec succès!')
+          // Reload the page to update the lobby state
+          router.reload()
+        },
+        onError: (errors) => {
+          const errorMessage = typeof errors === 'object' && errors !== null && 'error' in errors 
+            ? (errors as any).error 
+            : 'Impossible de rejoindre le lobby'
+          toast.error(errorMessage)
+        }
+      })
+    } catch (error) {
+      toast.error('Une erreur est survenue')
+    } finally {
+      setIsJoiningLobby(false)
     }
   }
 
@@ -97,6 +121,8 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
   }
 
   const isCreator = currentUser.uuid === lobby.createdBy
+  const isUserInLobby = lobby.players?.some(player => player.uuid === currentUser.uuid) || false
+  const canJoinLobby = !isUserInLobby && lobby.hasAvailableSlots && !isJoiningLobby
   const canStartGame = isCreator && lobby.canStart && !isStartingGame
 
   return (
@@ -135,6 +161,17 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
             </div>
             
             <div className="flex gap-2">
+              {canJoinLobby && (
+                <Button
+                  onClick={handleJoinLobby}
+                  disabled={isJoiningLobby}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  {isJoiningLobby ? 'Joining...' : 'Join Lobby'}
+                </Button>
+              )}
+              
               {canStartGame && (
                 <Button
                   onClick={handleStartGame}
@@ -146,15 +183,17 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
                 </Button>
               )}
               
-              <Button
-                onClick={handleLeaveLobby}
-                disabled={isLeavingLobby}
-                variant="outline"
-                className="border-red-300 text-red-600 hover:bg-red-50"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                {isLeavingLobby ? 'Leaving...' : 'Leave Lobby'}
-              </Button>
+              {isUserInLobby && (
+                <Button
+                  onClick={handleLeaveLobby}
+                  disabled={isLeavingLobby}
+                  variant="outline"
+                  className="border-red-300 text-red-600 hover:bg-red-50"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  {isLeavingLobby ? 'Leaving...' : 'Leave Lobby'}
+                </Button>
+              )}
             </div>
           </div>
 

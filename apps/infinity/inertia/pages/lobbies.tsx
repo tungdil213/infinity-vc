@@ -77,13 +77,16 @@ export default function Lobbies({ lobbies, user, currentLobby }: LobbiesProps) {
   const handleJoinLobby = async (lobbyUuid: string) => {
     try {
       setLoading(true)
-      router.post(`/api/v1/lobbies/${lobbyUuid}/join`, {}, {
+      router.post(`/lobbies/${lobbyUuid}/join`, {}, {
         onSuccess: () => {
           toast.success('Vous avez rejoint le lobby avec succès!')
           router.visit(`/lobbies/${lobbyUuid}`)
         },
         onError: (errors) => {
-          toast.error('Impossible de rejoindre le lobby')
+          const errorMessage = typeof errors === 'object' && errors !== null && 'error' in errors 
+            ? (errors as any).error 
+            : 'Impossible de rejoindre le lobby'
+          toast.error(errorMessage)
         }
       })
     } catch (error) {
@@ -95,12 +98,16 @@ export default function Lobbies({ lobbies, user, currentLobby }: LobbiesProps) {
 
   const handleLeaveLobby = async (lobbyUuid: string) => {
     try {
-      router.post(`/api/v1/lobbies/${lobbyUuid}/leave`, {}, {
+      router.post(`/lobbies/${lobbyUuid}/leave`, {}, {
         onSuccess: () => {
           toast.success('Vous avez quitté le lobby')
+          router.reload()
         },
-        onError: () => {
-          toast.error('Impossible de quitter le lobby')
+        onError: (errors) => {
+          const errorMessage = typeof errors === 'object' && errors !== null && 'error' in errors 
+            ? (errors as any).error 
+            : 'Impossible de quitter le lobby'
+          toast.error(errorMessage)
         }
       })
     } catch (error) {
@@ -123,13 +130,16 @@ export default function Lobbies({ lobbies, user, currentLobby }: LobbiesProps) {
 
   const handleStartGame = async (lobbyUuid: string) => {
     try {
-      router.post(`/api/v1/lobbies/${lobbyUuid}/start`, {}, {
-        onSuccess: () => {
+      router.post(`/lobbies/${lobbyUuid}/start`, {}, {
+        onSuccess: (page) => {
           toast.success('Partie démarrée!')
-          router.visit(`/lobbies/${lobbyUuid}`)
+          // Le contrôleur redirige automatiquement vers /games/{gameUuid}
         },
-        onError: () => {
-          toast.error('Impossible de démarrer la partie')
+        onError: (errors) => {
+          const errorMessage = typeof errors === 'object' && errors !== null && 'error' in errors 
+            ? (errors as any).error 
+            : 'Impossible de démarrer la partie'
+          toast.error(errorMessage)
         }
       })
     } catch (error) {
@@ -139,12 +149,16 @@ export default function Lobbies({ lobbies, user, currentLobby }: LobbiesProps) {
 
   const handleKickPlayer = async (lobbyUuid: string, playerUuid: string) => {
     try {
-      router.post(`/api/v1/lobbies/${lobbyUuid}/kick`, { playerUuid }, {
+      router.post(`/lobbies/${lobbyUuid}/kick`, { playerUuid }, {
         onSuccess: () => {
           toast.success('Joueur expulsé')
+          router.reload()
         },
-        onError: () => {
-          toast.error('Impossible d\'expulser le joueur')
+        onError: (errors) => {
+          const errorMessage = typeof errors === 'object' && errors !== null && 'error' in errors 
+            ? (errors as any).error 
+            : 'Impossible d\'expulser le joueur'
+          toast.error(errorMessage)
         }
       })
     } catch (error) {
