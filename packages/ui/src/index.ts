@@ -50,5 +50,11 @@ export * from './components/primitives/tooltip'
 export { Header } from './components/header'
 export { Footer } from './components/footer'
 
+// Lobby components
+export * from './components/lobby-card'
+export * from './components/lobby-list'
+export * from './components/player-avatar'
+export * from './components/lobby-status-badge'
+
 // Utilities
 export * from './utils'
