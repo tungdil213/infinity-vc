@@ -1,4 +1,5 @@
 import { HttpContext } from '@adonisjs/core/http'
+import BusinessException from '#exceptions/business_exception'
 import { inject } from '@adonisjs/core'
 import { CreateLobbyUseCase } from '../application/use_cases/create_lobby_use_case.js'
 import { JoinLobbyUseCase } from '../application/use_cases/join_lobby_use_case.js'
@@ -143,24 +144,45 @@ export default class LobbiesController {
   }
 
   /**
-   * Leave a lobby
+   * Quitter un lobby
    */
-  async leave({ params, response, auth }: HttpContext) {
-    const user = auth.user!
-    const { uuid } = params
+  async leave({ params, auth, response }: HttpContext) {
+    const userUuid = auth.user!.userUuid
+    const { lobbyUuid } = params
 
     const result = await this.leaveLobbyUseCase.execute({
-      lobbyUuid: uuid,
-      userUuid: user.id,
+      lobbyUuid,
+      userUuid,
     })
 
     if (result.isFailure) {
-      return response.status(400).json({
-        error: result.error,
+      throw new BusinessException({
+        classification: 'user_safe',
+        severity: 'medium',
+        userMessage: result.error,
       })
     }
 
-    return response.redirect('/lobbies')
+    return response.redirect().toRoute('lobbies.index')
+  }
+
+  /**
+   * Quitter un lobby lors de la fermeture de page (via sendBeacon)
+   */
+  async leaveOnClose({ request, auth, response }: HttpContext) {
+    const userUuid = auth.user!.userUuid
+    const { lobbyUuid } = request.body()
+
+    const result = await this.leaveLobbyUseCase.execute({
+      lobbyUuid,
+      userUuid,
+    })
+
+    if (result.isFailure) {
+      return response.status(500).json({ error: result.error })
+    }
+
+    return response.json({ success: true })
   }
 
   /**

@@ -50,6 +50,11 @@ export default class AppProvider {
       return new DatabaseGameRepository()
     })
 
+    // Register services as singletons
+    this.app.container.singleton(LobbyNotificationService, () => {
+      return new LobbyNotificationService()
+    })
+
     // Register use cases as singletons with dependency injection
     this.app.container.singleton(RegisterUserUseCase, async (resolver) => {
       const userRepository = await resolver.make(DatabaseUserRepository)

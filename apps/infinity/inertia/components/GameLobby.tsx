@@ -1,11 +1,13 @@
 import React, { useState } from 'react'
+import { router } from '@inertiajs/react'
+import { toast } from 'sonner'
+import { useLobbyDetail } from '../hooks/use_lobby_detail'
+import { useLobbyLeaveGuard } from '../hooks/use_lobby_leave_guard'
+import { Card, CardContent, CardHeader, CardTitle } from '@tyfo.dev/ui/primitives/card'
 import { Button } from '@tyfo.dev/ui/primitives/button'
 import { Badge } from '@tyfo.dev/ui/primitives/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@tyfo.dev/ui/primitives/card'
-import { Users, Crown, Play, LogOut, UserPlus } from 'lucide-react'
-import { router } from '@inertiajs/react'
-import { useLobbyDetail } from '../hooks/use_lobby_detail'
-import { toast } from 'sonner'
+import { Avatar, AvatarFallback } from '@tyfo.dev/ui/primitives/avatar'
+import { Users, Crown, Play, UserMinus, Settings, Share2, LogOut, UserPlus } from 'lucide-react'
 
 interface Player {
   uuid: string
@@ -25,6 +27,17 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
   const [isStartingGame, setIsStartingGame] = useState(false)
   const [isLeavingLobby, setIsLeavingLobby] = useState(false)
   const [isJoiningLobby, setIsJoiningLobby] = useState(false)
+
+  // Détecter si l'utilisateur est dans le lobby
+  const isUserInLobby = lobby?.players?.some(player => player.uuid === currentUser.uuid) || false
+
+  // Hook pour gérer la confirmation de sortie
+  const { markAsLeaving } = useLobbyLeaveGuard({
+    isInLobby: isUserInLobby,
+    lobbyUuid,
+    userUuid: currentUser.uuid,
+    onLeaveLobby: leaveLobby,
+  })
 
   const handleStartGame = async () => {
     if (!lobby?.canStart || !isServiceReady) return
@@ -50,6 +63,9 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
     if (!isServiceReady) return
     
     setIsLeavingLobby(true)
+    // Marquer qu'on quitte volontairement pour éviter la confirmation
+    markAsLeaving()
+    
     try {
       await leaveLobby(currentUser.uuid)
       toast.success('Left lobby successfully')
@@ -121,7 +137,6 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
   }
 
   const isCreator = currentUser.uuid === lobby.createdBy
-  const isUserInLobby = lobby.players?.some(player => player.uuid === currentUser.uuid) || false
   const canJoinLobby = !isUserInLobby && lobby.hasAvailableSlots && !isJoiningLobby
   const canStartGame = isCreator && lobby.canStart && !isStartingGame
 

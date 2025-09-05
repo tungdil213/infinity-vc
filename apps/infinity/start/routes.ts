@@ -48,6 +48,9 @@ router
       .post('/lobbies/:uuid/leave', '#controllers/enhanced_lobbies_controller.leave')
       .as('lobbies.leave')
     router
+      .post('/lobbies/leave-on-close', '#controllers/lobbies_controller.leaveOnClose')
+      .as('lobbies.leave.close')
+    router
       .post('/lobbies/:uuid/start', '#controllers/enhanced_lobbies_controller.start')
       .as('lobbies.start')
 
