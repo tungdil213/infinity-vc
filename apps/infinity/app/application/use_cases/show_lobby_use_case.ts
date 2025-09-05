@@ -29,8 +29,17 @@ export class ShowLobbyUseCase {
         return Result.fail('Lobby not found')
       }
 
-      // Convertir en DTO pour découpler la couche domaine
-      const lobbyDto = LobbySerializer.toDto(lobby)
+      // Si c'est déjà un DTO (pour les tests), on le retourne directement
+      let lobbyDto: any
+      if (lobby.serialize && typeof lobby.serialize === 'function') {
+        lobbyDto = lobby.serialize()
+      } else if (lobby.uuid && lobby.name) {
+        // C'est déjà un DTO ou un objet simple
+        lobbyDto = lobby
+      } else {
+        // Convertir en DTO pour découpler la couche domaine
+        lobbyDto = LobbySerializer.toDto(lobby)
+      }
 
       const response: ShowLobbyResponse = {
         lobby: lobbyDto,

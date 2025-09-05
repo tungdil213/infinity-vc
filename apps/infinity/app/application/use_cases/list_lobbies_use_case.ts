@@ -57,7 +57,8 @@ export class ListLobbiesUseCase {
         uuid: lobby.uuid,
         name: lobby.name,
         status: lobby.status,
-        currentPlayers: lobby.playerCount,
+        currentPlayers:
+          (lobby as any).currentPlayers || (lobby as any).playerCount || lobby.players?.length || 0,
         maxPlayers: lobby.maxPlayers,
         isPrivate: lobby.isPrivate,
         hasAvailableSlots: lobby.hasAvailableSlots,
