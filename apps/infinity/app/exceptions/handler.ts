@@ -77,8 +77,8 @@ export default class HttpExceptionHandler extends ExceptionHandler {
   protected context(ctx: HttpContext) {
     return {
       requestId: ctx.request.id(),
-      userId: ctx.auth.user?.id,
-      email: ctx.auth.user?.email,
+      userId: ctx.auth?.user?.id,
+      email: ctx.auth?.user?.email,
       ip: ctx.request.ip(),
       userAgent: ctx.request.header('user-agent'),
       method: ctx.request.method(),

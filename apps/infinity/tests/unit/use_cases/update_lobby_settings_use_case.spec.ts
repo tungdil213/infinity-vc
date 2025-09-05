@@ -6,14 +6,14 @@ import { LobbyFactory } from '../../factories/lobby_factory.js'
 const mockLobbyRepository = {
   findByUuidOrFail: async (uuid: string) => {
     if (uuid === 'lobby-123') {
-      const lobbyDto = LobbyFactory.lobbyDto({ 
+      const lobbyDto = LobbyFactory.lobbyDto({
         uuid: 'lobby-123',
         createdBy: 'user-123',
         name: 'Original Lobby',
         maxPlayers: 4,
         isPrivate: false,
         status: 'OPEN',
-        playerCount: 2
+        playerCount: 2,
       })
       return {
         ...lobbyDto,
@@ -22,12 +22,12 @@ const mockLobbyRepository = {
     }
     if (uuid === 'lobby-in-progress') {
       return {
-        ...LobbyFactory.lobbyDto({ 
+        ...LobbyFactory.lobbyDto({
           uuid: 'lobby-in-progress',
           createdBy: 'user-123',
-          status: 'IN_PROGRESS'
+          status: 'IN_PROGRESS',
         }),
-        serialize: () => LobbyFactory.lobbyDto()
+        serialize: () => LobbyFactory.lobbyDto(),
       }
     }
     throw new Error('Lobby not found')

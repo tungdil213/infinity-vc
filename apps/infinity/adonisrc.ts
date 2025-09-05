@@ -40,6 +40,7 @@ export default defineConfig({
     () => import('@adonisjs/inertia/inertia_provider'),
     () => import('@adonisjs/drive/drive_provider'),
     () => import('#providers/app_provider'),
+    () => import('@adonisjs/transmit/transmit_provider'),
   ],
 
   /*

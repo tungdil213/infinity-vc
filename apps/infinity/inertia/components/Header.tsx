@@ -21,7 +21,7 @@ import {
   WifiOff,
   Hash
 } from 'lucide-react'
-import { useSSEContext } from '../contexts/SSEContext'
+import { useTransmit } from '../contexts/TransmitContext'
 import { useLobbyService } from '../hooks/use_lobby_service'
 
 interface User {
@@ -45,7 +45,7 @@ interface HeaderProps {
 }
 
 export function Header({ user, currentLobby, className = '' }: HeaderProps) {
-  const { isConnected } = useSSEContext()
+  const { isConnected } = useTransmit()
   const { service: lobbyService } = useLobbyService()
   const [showJoinModal, setShowJoinModal] = useState(false)
   const [lobbyCode, setLobbyCode] = useState('')

@@ -1,7 +1,7 @@
 import { PlayerRepository } from '../repositories/player_repository.js'
 import { LobbyRepository } from '../repositories/lobby_repository.js'
 import { Result } from '../../domain/shared/result.js'
-import { LobbyNotificationService } from '../services/lobby_notification_service.js'
+import { TransmitLobbyService } from '../services/transmit_lobby_service.js'
 
 export interface JoinLobbyRequest {
   userUuid: string
@@ -32,7 +32,7 @@ export class JoinLobbyUseCase {
   constructor(
     private playerRepository: PlayerRepository,
     private lobbyRepository: LobbyRepository,
-    private notificationService: LobbyNotificationService
+    private notificationService: TransmitLobbyService
   ) {}
 
   async execute(request: JoinLobbyRequest): Promise<Result<JoinLobbyResponse>> {

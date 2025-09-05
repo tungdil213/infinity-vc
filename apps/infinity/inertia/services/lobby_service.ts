@@ -1,4 +1,4 @@
-import { useSSEContext } from '../contexts/SSEContext'
+import { TransmitContextType } from '../contexts/TransmitContext'
 
 export interface LobbyData {
   uuid: string
@@ -32,41 +32,75 @@ export interface LobbyDetailState {
 
 /**
  * Service pour gérer l'état des lobbies côté front-end
- * Utilise SSE pour les mises à jour temps réel
+ * Utilise Transmit pour les mises à jour temps réel
  */
 export class LobbyService {
-  private sseContext: ReturnType<typeof useSSEContext>
-  private lobbyListCallbacks: Set<(state: LobbyListState) => void> = new Set()
-  private lobbyDetailCallbacks: Map<string, Set<(state: LobbyDetailState) => void>> = new Map()
+  private transmitContext: TransmitContextType
+  private lobbyListSubscribers = new Set<(state: LobbyListState) => void>()
+  private lobbyDetailSubscribers = new Map<string, Set<(state: any) => void>>()
+  private globalUnsubscribe: (() => void) | null = null
+  private lobbyListCallbacks = new Set<(state: LobbyListState) => void>()
+  private lobbyDetailCallbacks = new Map<string, Set<(state: any) => void>>()
 
+  // État interne pour la liste des lobbies
   private lobbyListState: LobbyListState = {
     lobbies: [],
-    loading: false,
+    loading: true,
     error: null,
     total: 0,
   }
 
-  constructor(sseContext: ReturnType<typeof useSSEContext>) {
-    this.sseContext = sseContext
-    this.setupSSEListeners()
+  constructor(transmitContext: TransmitContextType) {
+    this.transmitContext = transmitContext
+    this.setupTransmitListeners()
   }
 
-  private setupSSEListeners() {
-    // Écouter les événements de liste de lobbies
-    this.sseContext.addEventListener('lobby.created', this.handleLobbyCreated.bind(this))
-    this.sseContext.addEventListener('lobby.list.updated', this.handleLobbyUpdated.bind(this))
-    this.sseContext.addEventListener('lobby.list.removed', this.handleLobbyRemoved.bind(this))
-    this.sseContext.addEventListener('lobby.list.full', this.handleLobbyListFull.bind(this))
+  private async setupTransmitListeners() {
+    try {
+      // Éviter les souscriptions multiples
+      if (this.globalUnsubscribe) {
+        return
+      }
 
-    // Écouter les événements spécifiques aux lobbies
-    this.sseContext.addEventListener('lobby.player.joined', this.handleLobbyPlayerJoined.bind(this))
-    this.sseContext.addEventListener('lobby.player.left', this.handleLobbyPlayerLeft.bind(this))
-    this.sseContext.addEventListener(
-      'lobby.status.changed',
-      this.handleLobbyStatusChanged.bind(this)
-    )
-    this.sseContext.addEventListener('lobby.updated', this.handleLobbyDetailUpdated.bind(this))
-    this.sseContext.addEventListener('lobby.deleted', this.handleLobbyDeleted.bind(this))
+      // S'abonner au canal global des lobbies pour recevoir les événements de création/suppression
+      this.globalUnsubscribe = await this.transmitContext.subscribeToLobbies((event) => {
+        console.log('Événement reçu sur canal lobbies:', event.type, event)
+        switch (event.type) {
+          case 'lobby.created':
+            this.handleLobbyCreated({
+              type: event.type,
+              data: event,
+              timestamp: event.timestamp,
+              channel: 'lobbies',
+            })
+            break
+          case 'lobby.deleted':
+            this.handleLobbyDeleted({
+              type: event.type,
+              data: event,
+              timestamp: event.timestamp,
+              channel: 'lobbies',
+            })
+            break
+          case 'lobby.player.joined':
+          case 'lobby.player.left':
+          case 'lobby.status.changed':
+            // Ces événements mettent aussi à jour la liste globale
+            console.log('Mise à jour liste lobby pour événement:', event.type)
+            this.handleLobbyUpdated({
+              type: 'lobby.list.updated',
+              data: event,
+              timestamp: event.timestamp,
+              channel: 'lobbies',
+            })
+            // Également traiter l'événement pour les détails du lobby
+            this.handleLobbyPlayerJoined(event)
+            break
+        }
+      })
+    } catch (error) {
+      console.error('Erreur lors de la configuration des listeners Transmit:', error)
+    }
   }
 
   // Gestion des événements SSE pour la liste des lobbies
@@ -100,18 +134,27 @@ export class LobbyService {
     this.notifyLobbyListSubscribers()
   }
 
-  // Gestion des événements SSE pour les détails de lobby
+  // Gestion des événements Transmit pour les détails de lobby
   private handleLobbyPlayerJoined(event: any) {
-    const { lobbyUuid, player, playerCount } = event.data
-    this.updateLobbyInList(lobbyUuid, { currentPlayers: playerCount })
-    this.updateLobbyDetail(lobbyUuid, (lobby) => {
-      if (lobby) {
-        lobby.currentPlayers = playerCount
-        lobby.players.push(player)
-        lobby.hasAvailableSlots = lobby.currentPlayers < lobby.maxPlayers
-      }
-      return lobby
-    })
+    const eventData = event.data
+    const lobbyUuid = eventData.lobbyUuid || eventData.lobby?.uuid
+    const player = eventData.player
+    const playerCount = eventData.playerCount || eventData.lobby?.currentPlayers
+
+    if (lobbyUuid && player) {
+      this.updateLobbyInList(lobbyUuid, { currentPlayers: playerCount })
+      this.updateLobbyDetail(lobbyUuid, (lobby) => {
+        if (lobby) {
+          lobby.currentPlayers = playerCount
+          // Éviter les doublons
+          if (!lobby.players.find((p) => p.uuid === player.uuid)) {
+            lobby.players.push(player)
+          }
+          lobby.hasAvailableSlots = lobby.currentPlayers < lobby.maxPlayers
+        }
+        return lobby
+      })
+    }
   }
 
   private handleLobbyPlayerLeft(event: any) {
@@ -293,10 +336,19 @@ export class LobbyService {
       })
 
       if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Leave lobby error response:', errorText)
         throw new Error(`Failed to leave lobby: ${response.statusText}`)
       }
 
-      return await response.json()
+      // Vérifier si la réponse contient du JSON
+      const contentType = response.headers.get('content-type')
+      if (contentType && contentType.includes('application/json')) {
+        return await response.json()
+      } else {
+        // Si pas de JSON, retourner un objet de succès simple
+        return { success: true, message: 'Successfully left lobby' }
+      }
     } catch (error) {
       console.error('Error leaving lobby:', error)
       throw error
@@ -339,8 +391,35 @@ export class LobbyService {
   subscribeLobbyDetail(lobbyUuid: string, callback: (state: LobbyDetailState) => void) {
     if (!this.lobbyDetailCallbacks.has(lobbyUuid)) {
       this.lobbyDetailCallbacks.set(lobbyUuid, new Set())
-      // S'abonner au canal SSE pour ce lobby
-      this.sseContext.subscribeToChannel(`lobby:${lobbyUuid}`)
+      // S'abonner au canal Transmit pour ce lobby
+      this.transmitContext.subscribeToLobby(lobbyUuid, (event) => {
+        // Convertir l'événement Transmit en format compatible
+        const transmitEvent = {
+          type: event.type,
+          data: event.lobby || event,
+          timestamp: event.timestamp || new Date().toISOString(),
+          channel: `lobby:${lobbyUuid}`,
+        }
+
+        // Dispatcher vers les handlers appropriés
+        switch (event.type) {
+          case 'lobby.player.joined':
+            this.handleLobbyPlayerJoined(transmitEvent)
+            break
+          case 'lobby.player.left':
+            this.handleLobbyPlayerLeft(transmitEvent)
+            break
+          case 'lobby.status.changed':
+            this.handleLobbyStatusChanged(transmitEvent)
+            break
+          case 'lobby.updated':
+            this.handleLobbyDetailUpdated(transmitEvent)
+            break
+          case 'lobby.deleted':
+            this.handleLobbyDeleted(transmitEvent)
+            break
+        }
+      })
     }
 
     const callbacks = this.lobbyDetailCallbacks.get(lobbyUuid)!
@@ -350,8 +429,8 @@ export class LobbyService {
       callbacks.delete(callback)
       if (callbacks.size === 0) {
         this.lobbyDetailCallbacks.delete(lobbyUuid)
-        // Se désabonner du canal SSE
-        this.sseContext.unsubscribeFromChannel(`lobby:${lobbyUuid}`)
+        // Se désabonner du canal Transmit
+        this.transmitContext.unsubscribeFrom(`lobby:${lobbyUuid}`)
       }
     }
   }

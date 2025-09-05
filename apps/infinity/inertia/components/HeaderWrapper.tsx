@@ -1,7 +1,7 @@
 import React from 'react'
 import { router } from '@inertiajs/react'
 import { Header } from '../../../../packages/ui/src/components/header'
-import { useSSEContext } from '../contexts/SSEContext'
+import { useTransmit } from '../contexts/TransmitContext'
 import { useLobbyService } from '../hooks/use_lobby_service'
 
 interface User {
@@ -25,7 +25,7 @@ interface HeaderWrapperProps {
 }
 
 export function HeaderWrapper({ user, currentLobby, className }: HeaderWrapperProps) {
-  const { isConnected } = useSSEContext()
+  const { isConnected } = useTransmit()
   const { service: lobbyService } = useLobbyService()
 
   const handleCreateLobby = () => {

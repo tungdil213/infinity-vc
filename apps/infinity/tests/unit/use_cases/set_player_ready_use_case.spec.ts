@@ -105,8 +105,8 @@ test.group('SetPlayerReadyUseCase', () => {
 
     assert.isTrue(result.isSuccess)
     assert.isTrue(result.value.success)
-    assert.isTrue(result.value.allPlayersReady)  // Avec 2 joueurs et isReady=true
-    assert.isTrue(result.value.canStartGame)     // Le jeu peut démarrer
+    assert.isTrue(result.value.allPlayersReady) // Avec 2 joueurs et isReady=true
+    assert.isTrue(result.value.canStartGame) // Le jeu peut démarrer
     assert.exists(result.value.lobbyState)
   })
 

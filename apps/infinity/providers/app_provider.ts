@@ -6,6 +6,7 @@ import { InMemoryLobbyRepository } from '#infrastructure/repositories/in_memory_
 import { DatabaseGameRepository } from '#infrastructure/repositories/database_game_repository'
 import { HybridLobbyService } from '#application/services/hybrid_lobby_service'
 import { LobbyNotificationService } from '#application/services/lobby_notification_service'
+import { TransmitLobbyService } from '#application/services/transmit_lobby_service'
 import { RegisterUserUseCase } from '#application/use_cases/register_user_use_case'
 import AuthenticateUserUseCase from '#application/use_cases/authenticate_user_use_case'
 import { CreateLobbyUseCase } from '#application/use_cases/create_lobby_use_case'
@@ -55,6 +56,11 @@ export default class AppProvider {
       return new LobbyNotificationService()
     })
 
+    // Register Transmit-based lobby service
+    this.app.container.singleton(TransmitLobbyService, () => {
+      return new TransmitLobbyService()
+    })
+
     // Register use cases as singletons with dependency injection
     this.app.container.singleton(RegisterUserUseCase, async (resolver) => {
       const userRepository = await resolver.make(DatabaseUserRepository)
@@ -72,7 +78,7 @@ export default class AppProvider {
     this.app.container.singleton(CreateLobbyUseCase, async (resolver) => {
       const playerRepository = await resolver.make(DatabasePlayerRepository)
       const hybridLobbyService = await resolver.make(HybridLobbyService)
-      const notificationService = await resolver.make(LobbyNotificationService)
+      const notificationService = await resolver.make(TransmitLobbyService)
       return new CreateLobbyUseCase(playerRepository, hybridLobbyService, notificationService)
     })
 

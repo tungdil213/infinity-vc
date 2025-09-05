@@ -9,20 +9,25 @@ import { useLobbyDetail } from '../hooks/use_lobby_detail'
 import { useLobbyService } from '../hooks/use_lobby_service'
 
 interface LobbyStatusSidebarProps {
-  lobbyUuid: string | null
+  currentLobby: {
+    uuid: string
+    name: string
+    status: string
+    currentPlayers: number
+    maxPlayers: number
+  } | null
   currentUser?: {
     uuid: string
     fullName: string
   }
 }
 
-export function LobbyStatusSidebar({ lobbyUuid, currentUser }: LobbyStatusSidebarProps) {
-  const { lobby, loading, error } = useLobbyDetail(lobbyUuid || '')
+export function LobbyStatusSidebar({ currentLobby, currentUser }: LobbyStatusSidebarProps) {
   const { service: lobbyService, isConnected } = useLobbyService()
   const [isLeavingLobby, setIsLeavingLobby] = useState(false)
 
-  // Ne pas afficher le sidebar si pas de lobby ou en cours de chargement
-  if (!lobbyUuid || loading || error || !lobby) {
+  // Ne pas afficher le sidebar si pas de lobby
+  if (!currentLobby) {
     return null
   }
 
@@ -31,7 +36,7 @@ export function LobbyStatusSidebar({ lobbyUuid, currentUser }: LobbyStatusSideba
     
     setIsLeavingLobby(true)
     try {
-      await lobbyService.leaveLobby(lobbyUuid, currentUser.uuid)
+      await lobbyService.leaveLobby(currentLobby.uuid, currentUser.uuid)
       toast.success('Vous avez quitté le lobby avec succès')
       // Le sidebar disparaîtra automatiquement car lobby deviendra null
     } catch (error) {
@@ -43,7 +48,7 @@ export function LobbyStatusSidebar({ lobbyUuid, currentUser }: LobbyStatusSideba
   }
 
   const handleGoToLobby = () => {
-    router.visit(`/lobbies/${lobby.uuid}`)
+    router.visit(`/lobbies/${currentLobby.uuid}`)
   }
 
   const getStatusColor = (status: string) => {
@@ -86,13 +91,13 @@ export function LobbyStatusSidebar({ lobbyUuid, currentUser }: LobbyStatusSideba
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <h3 className="font-semibold text-base mb-2">{lobby.name}</h3>
+            <h3 className="font-semibold text-base mb-2">{currentLobby.name}</h3>
             <div className="flex items-center justify-between mb-2">
-              <Badge className={`${getStatusColor(lobby.status)} text-white`}>
-                {getStatusText(lobby.status)}
+              <Badge className={`${getStatusColor(currentLobby.status)} text-white`}>
+                {getStatusText(currentLobby.status)}
               </Badge>
               <span className="text-sm text-gray-600">
-                {lobby.currentPlayers}/{lobby.maxPlayers} joueurs
+                {currentLobby.currentPlayers}/{currentLobby.maxPlayers} joueurs
               </span>
             </div>
           </div>

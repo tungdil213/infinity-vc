@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Button } from '@tyfo.dev/ui/primitives/button'
-import { useSSEContext, SSEEvent } from '../contexts/SSEContext'
+import { useTransmit, TransmitEvent } from '../contexts/TransmitContext'
 
 interface Player {
   uuid: string
@@ -47,7 +47,7 @@ export default function EnhancedGameLobby({
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [copiedInvite, setCopiedInvite] = useState(false)
 
-  const { isConnected, subscribeToChannel, unsubscribeFromChannel, addEventListener, removeEventListener } = useSSEContext()
+  const { isConnected, addEventListener, removeEventListener } = useTransmit()
 
   const addNotification = (message: string) => {
     setNotifications(prev => [...prev, message])
@@ -56,7 +56,7 @@ export default function EnhancedGameLobby({
     }, 5000)
   }
 
-  const handleSSEEvent = (event: SSEEvent) => {
+  const handleTransmitEvent = (event: TransmitEvent) => {
     console.log('Received SSE event:', event)
 
     switch (event.type) {
@@ -149,20 +149,16 @@ export default function EnhancedGameLobby({
   const canStartGame = isOwner && lobby.canStart && !isStartingGame
 
   useEffect(() => {
-    // Subscribe to lobby channel
-    subscribeToChannel(`lobby.${lobby.uuid}`)
-    
     // Add event listeners
-    addEventListener('lobby.player.joined', handleSSEEvent)
-    addEventListener('lobby.player.left', handleSSEEvent)
-    addEventListener('lobby.game.started', handleSSEEvent)
+    addEventListener('lobby.player.joined', handleTransmitEvent)
+    addEventListener('lobby.player.left', handleTransmitEvent)
+    addEventListener('lobby.status.changed', handleTransmitEvent)
 
     return () => {
-      // Cleanup subscription and event listeners
-      unsubscribeFromChannel(`lobby.${lobby.uuid}`)
-      removeEventListener('lobby.player.joined', handleSSEEvent)
-      removeEventListener('lobby.player.left', handleSSEEvent)
-      removeEventListener('lobby.game.started', handleSSEEvent)
+      // Cleanup event listeners
+      removeEventListener('lobby.player.joined', handleTransmitEvent)
+      removeEventListener('lobby.player.left', handleTransmitEvent)
+      removeEventListener('lobby.status.changed', handleTransmitEvent)
     }
   }, [lobby.uuid])
 

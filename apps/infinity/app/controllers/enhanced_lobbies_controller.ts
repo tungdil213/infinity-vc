@@ -434,7 +434,7 @@ export default class EnhancedLobbiesController {
         return response.redirect('/lobbies')
       }
 
-      return response.json({
+      return response.status(200).json({
         success: true,
         message: 'Successfully left lobby',
       })

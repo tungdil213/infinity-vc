@@ -9,6 +9,8 @@
 
 import router from '@adonisjs/core/services/router'
 import { middleware } from './kernel.js'
+import transmit from '@adonisjs/transmit/services/main'
+import './transmit.js'
 
 // Public routes
 router.get('/', '#controllers/simple_lobbies_controller.welcome').as('home')
@@ -93,6 +95,12 @@ router
     router
       .post('/lobbies/:uuid/join', '#controllers/enhanced_lobbies_controller.join')
       .as('api.lobbies.join')
+    router
+      .post('/lobbies/:uuid/leave', '#controllers/enhanced_lobbies_controller.leave')
+      .as('api.lobbies.leave')
+    router
+      .post('/lobbies/leave-on-close', '#controllers/enhanced_lobbies_controller.leaveOnClose')
+      .as('api.lobbies.leave.close')
 
     // Games API
     router.get('/games/:uuid', '#controllers/games_controller.apiShow').as('api.games.show')
@@ -103,16 +111,11 @@ router
   .prefix('/api/v1')
   .use(middleware.auth())
 
-// SSE routes
-router
-  .group(() => {
-    router.get('/connect', '#controllers/sse_controller.connect').as('sse.connect')
-    router.post('/subscribe', '#controllers/sse_controller.subscribe').as('sse.subscribe')
-    router.post('/unsubscribe', '#controllers/sse_controller.unsubscribe').as('sse.unsubscribe')
-    router.get('/stats', '#controllers/sse_controller.stats').as('sse.stats')
-  })
-  .prefix('/api/v1/sse')
-  .use(middleware.auth())
+// Transmit routes
+transmit.registerRoutes((route) => {
+  // Ensure you are authenticated to register your client
+  route.middleware(middleware.auth())
+})
 
 // Lobby synchronization routes
 router

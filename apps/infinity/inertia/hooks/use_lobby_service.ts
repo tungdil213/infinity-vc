@@ -1,18 +1,18 @@
 import { useEffect, useRef } from 'react'
-import { useSSEContext } from '../contexts/SSEContext'
+import { useTransmit } from '../contexts/TransmitContext'
 import { LobbyService } from '../services/lobby_service'
 
 /**
- * Hook pour utiliser le service de lobbies avec SSE
+ * Hook pour utiliser le service de lobbies avec Transmit
  */
 export function useLobbyService() {
-  const sseContext = useSSEContext()
+  const transmitContext = useTransmit()
   const lobbyServiceRef = useRef<LobbyService | null>(null)
 
   useEffect(() => {
     // Créer le service immédiatement, même si pas encore connecté
     if (!lobbyServiceRef.current) {
-      lobbyServiceRef.current = new LobbyService(sseContext)
+      lobbyServiceRef.current = new LobbyService(transmitContext)
     }
 
     return () => {
@@ -21,12 +21,11 @@ export function useLobbyService() {
         lobbyServiceRef.current = null
       }
     }
-  }, [sseContext])
+  }, [transmitContext])
 
   return {
     service: lobbyServiceRef.current,
-    isConnected: sseContext.isConnected,
-    connectionId: sseContext.connectionId,
-    error: sseContext.error,
+    isConnected: transmitContext.isConnected,
+    error: transmitContext.error,
   }
 }

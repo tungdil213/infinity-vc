@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Head } from '@inertiajs/react'
 import { Button } from '@tyfo.dev/ui/primitives/button'
-import { useSSEContext, SSEEvent } from '../contexts/SSEContext'
+import { useTransmit, TransmitEvent } from '../contexts/TransmitContext'
 
 interface Player {
   uuid: string
@@ -37,7 +37,7 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
   const [isMyTurn, setIsMyTurn] = useState(false)
   const [gameActions, setGameActions] = useState<string[]>([])
 
-  const { isConnected, subscribeToChannel, unsubscribeFromChannel, addEventListener, removeEventListener } = useSSEContext()
+  const { isConnected, addEventListener, removeEventListener } = useTransmit()
 
   const addNotification = (message: string) => {
     setNotifications(prev => [...prev, message])
@@ -46,7 +46,7 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
     }, 5000)
   }
 
-  const handleSSEEvent = (event: SSEEvent) => {
+  const handleTransmitEvent = (event: TransmitEvent) => {
     console.log('Received game SSE event:', event)
 
     switch (event.type) {
@@ -204,29 +204,25 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
   }
 
   useEffect(() => {
-    // Subscribe to game channel
-    subscribeToChannel(`game.${game.uuid}`)
-    
     // Add event listeners
-    addEventListener('game.state.updated', handleSSEEvent)
-    addEventListener('game.turn.changed', handleSSEEvent)
-    addEventListener('game.player.action', handleSSEEvent)
-    addEventListener('game.finished', handleSSEEvent)
-    addEventListener('game.player.disconnected', handleSSEEvent)
-    addEventListener('game.player.reconnected', handleSSEEvent)
+    addEventListener('game.state.updated', handleTransmitEvent)
+    addEventListener('game.turn.changed', handleTransmitEvent)
+    addEventListener('game.player.joined', handleTransmitEvent)
+    addEventListener('game.player.left', handleTransmitEvent)
+    addEventListener('game.action.performed', handleTransmitEvent)
+    addEventListener('game.round.completed', handleTransmitEvent)
 
     // Set initial turn state
     setIsMyTurn(game.currentTurn === currentUser.uuid)
 
     return () => {
-      // Cleanup subscription and event listeners
-      unsubscribeFromChannel(`game.${game.uuid}`)
-      removeEventListener('game.state.updated', handleSSEEvent)
-      removeEventListener('game.turn.changed', handleSSEEvent)
-      removeEventListener('game.player.action', handleSSEEvent)
-      removeEventListener('game.finished', handleSSEEvent)
-      removeEventListener('game.player.disconnected', handleSSEEvent)
-      removeEventListener('game.player.reconnected', handleSSEEvent)
+      // Cleanup event listeners
+      removeEventListener('game.state.updated', handleTransmitEvent)
+      removeEventListener('game.turn.changed', handleTransmitEvent)
+      removeEventListener('game.player.joined', handleTransmitEvent)
+      removeEventListener('game.player.left', handleTransmitEvent)
+      removeEventListener('game.action.performed', handleTransmitEvent)
+      removeEventListener('game.round.completed', handleTransmitEvent)
     }
   }, [game.uuid])
 
