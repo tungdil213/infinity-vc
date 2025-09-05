@@ -1,14 +1,14 @@
-import { 
-  LobbyEvent, 
-  LobbyEventListener, 
-  LobbyEventType, 
+import {
+  LobbyEvent,
+  LobbyEventListener,
+  LobbyEventType,
   UnsubscribeFunction,
   LobbyCreatedEvent,
   PlayerJoinedEvent,
   PlayerLeftEvent,
   StatusChangedEvent,
   GameStartedEvent,
-  LobbyDeletedEvent
+  LobbyDeletedEvent,
 } from '../../domain/events/lobby_event_types.js'
 import { sseService } from '../../infrastructure/sse/sse_service.js'
 
@@ -25,7 +25,7 @@ export class LobbyNotificationService {
    */
   addListener(listener: LobbyEventListener): UnsubscribeFunction {
     this.listeners.add(listener)
-    
+
     return () => {
       this.listeners.delete(listener)
     }
@@ -38,9 +38,9 @@ export class LobbyNotificationService {
     if (!this.lobbyListeners.has(lobbyUuid)) {
       this.lobbyListeners.set(lobbyUuid, new Set())
     }
-    
+
     this.lobbyListeners.get(lobbyUuid)!.add(listener)
-    
+
     return () => {
       const lobbyListeners = this.lobbyListeners.get(lobbyUuid)
       if (lobbyListeners) {
@@ -63,30 +63,38 @@ export class LobbyNotificationService {
   /**
    * Notifie qu'un joueur a rejoint un lobby
    */
-  notifyPlayerJoined(lobbyUuid: string, player: { uuid: string; nickName: string }, lobby: any): void {
+  notifyPlayerJoined(
+    lobbyUuid: string,
+    player: { uuid: string; nickName: string },
+    lobby: any
+  ): void {
     const event: PlayerJoinedEvent = {
       type: LobbyEventType.PLAYER_JOINED,
       lobbyUuid,
       player,
       lobby,
-      timestamp: new Date()
+      timestamp: new Date(),
     }
-    
+
     this.broadcastEvent(event)
   }
 
   /**
    * Notifie qu'un joueur a quitté un lobby
    */
-  notifyPlayerLeft(lobbyUuid: string, player: { uuid: string; nickName: string }, lobby: any): void {
+  notifyPlayerLeft(
+    lobbyUuid: string,
+    player: { uuid: string; nickName: string },
+    lobby: any
+  ): void {
     const event: PlayerLeftEvent = {
       type: LobbyEventType.PLAYER_LEFT,
       lobbyUuid,
       player,
       lobby,
-      timestamp: new Date()
+      timestamp: new Date(),
     }
-    
+
     this.broadcastEvent(event)
   }
 
@@ -100,9 +108,9 @@ export class LobbyNotificationService {
       oldStatus,
       newStatus,
       lobby,
-      timestamp: new Date()
+      timestamp: new Date(),
     }
-    
+
     this.broadcastEvent(event)
   }
 
@@ -115,9 +123,9 @@ export class LobbyNotificationService {
       lobbyUuid,
       gameUuid,
       lobby,
-      timestamp: new Date()
+      timestamp: new Date(),
     }
-    
+
     this.broadcastEvent(event)
   }
 
@@ -129,9 +137,9 @@ export class LobbyNotificationService {
       type: LobbyEventType.LOBBY_CREATED,
       lobbyUuid,
       lobby,
-      timestamp: new Date()
+      timestamp: new Date(),
     }
-    
+
     this.broadcastEvent(event)
   }
 
@@ -143,11 +151,11 @@ export class LobbyNotificationService {
       type: LobbyEventType.LOBBY_DELETED,
       lobbyUuid,
       lobby,
-      timestamp: new Date()
+      timestamp: new Date(),
     }
-    
+
     this.broadcastEvent(event)
-    
+
     // Nettoyer les listeners spécifiques à ce lobby
     this.lobbyListeners.delete(lobbyUuid)
   }
@@ -157,22 +165,22 @@ export class LobbyNotificationService {
    */
   private broadcastEvent(event: LobbyEvent): void {
     // Diffuser aux listeners globaux
-    this.listeners.forEach(listener => {
+    this.listeners.forEach((listener) => {
       try {
         listener(event)
       } catch (error) {
-        console.error('Erreur lors de la notification d\'un listener:', error)
+        console.error("Erreur lors de la notification d'un listener:", error)
       }
     })
 
     // Diffuser aux listeners spécifiques au lobby
     const lobbyListeners = this.lobbyListeners.get(event.lobbyUuid)
     if (lobbyListeners) {
-      lobbyListeners.forEach(listener => {
+      lobbyListeners.forEach((listener) => {
         try {
           listener(event)
         } catch (error) {
-          console.error('Erreur lors de la notification d\'un listener de lobby:', error)
+          console.error("Erreur lors de la notification d'un listener de lobby:", error)
         }
       })
     }
@@ -192,8 +200,8 @@ export class LobbyNotificationService {
           lobbyUuid: event.lobbyUuid,
           lobby: event.lobby,
           timestamp: event.timestamp,
-          ...this.getEventSpecificData(event)
-        }
+          ...this.getEventSpecificData(event),
+        },
       }
 
       // Diffuser globalement pour les mises à jour de liste
@@ -239,25 +247,25 @@ export class LobbyNotificationService {
         const joinedEvent = event as PlayerJoinedEvent
         return {
           player: joinedEvent.player,
-          playerCount: joinedEvent.lobby?.currentPlayers || 0
+          playerCount: joinedEvent.lobby?.currentPlayers || 0,
         }
       case LobbyEventType.PLAYER_LEFT:
         const leftEvent = event as PlayerLeftEvent
         return {
           player: leftEvent.player,
-          playerCount: leftEvent.lobby?.currentPlayers || 0
+          playerCount: leftEvent.lobby?.currentPlayers || 0,
         }
       case LobbyEventType.STATUS_CHANGED:
         const statusEvent = event as StatusChangedEvent
         return {
           oldStatus: statusEvent.oldStatus,
           newStatus: statusEvent.newStatus,
-          status: statusEvent.newStatus
+          status: statusEvent.newStatus,
         }
       case LobbyEventType.GAME_STARTED:
         const gameEvent = event as GameStartedEvent
         return {
-          gameUuid: gameEvent.gameUuid
+          gameUuid: gameEvent.gameUuid,
         }
       default:
         return {}
@@ -273,7 +281,7 @@ export class LobbyNotificationService {
       LobbyEventType.LOBBY_DELETED,
       LobbyEventType.STATUS_CHANGED,
       LobbyEventType.PLAYER_JOINED,
-      LobbyEventType.PLAYER_LEFT
+      LobbyEventType.PLAYER_LEFT,
     ].includes(eventType)
   }
 }

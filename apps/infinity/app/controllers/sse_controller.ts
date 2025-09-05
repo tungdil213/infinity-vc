@@ -26,7 +26,9 @@ export default class SSEController {
       // Auto-subscribe to user's personal channel
       sseService.subscribeToUser(connectionId, user.userUuid)
 
-      console.log(`SSE connection established for user ${user.userUuid}, connection: ${connectionId}`)
+      console.log(
+        `SSE connection established for user ${user.userUuid}, connection: ${connectionId}`
+      )
 
       // Keep the connection alive - the response will be handled by the connection manager
       // The connection will be closed when the client disconnects or times out
@@ -77,12 +79,12 @@ export default class SSEController {
 
       // Subscribe to channel
       const success = this.subscribeToChannelByType(targetConnectionId, channel)
-      
+
       if (success) {
-        return response.ok({ 
+        return response.ok({
           message: 'Successfully subscribed to channel',
           channel,
-          connectionId: targetConnectionId
+          connectionId: targetConnectionId,
         })
       } else {
         return response.badRequest({ error: 'Failed to subscribe to channel' })
@@ -116,7 +118,7 @@ export default class SSEController {
         targetConnectionIds = [connectionId]
       } else {
         const userConnections = sseConnectionManager.getConnectionsByUser(user.uuid)
-        targetConnectionIds = userConnections.map(conn => conn.id)
+        targetConnectionIds = userConnections.map((conn) => conn.id)
       }
 
       let successCount = 0
@@ -129,10 +131,10 @@ export default class SSEController {
         }
       }
 
-      return response.ok({ 
+      return response.ok({
         message: `Successfully unsubscribed from channel`,
         channel,
-        connectionsUpdated: successCount
+        connectionsUpdated: successCount,
       })
     } catch (error) {
       console.error('Error unsubscribing from channel:', error)

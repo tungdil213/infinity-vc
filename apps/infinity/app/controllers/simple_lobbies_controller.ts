@@ -6,13 +6,15 @@ export default class SimpleLobbiesController {
    */
   async welcome({ inertia, auth }: HttpContext) {
     const user = auth.user
-    
+
     return inertia.render('welcome', {
-      user: user ? {
-        id: user.id,
-        fullName: user.fullName || 'User',
-        email: user.email,
-      } : null,
+      user: user
+        ? {
+            id: user.id,
+            fullName: user.fullName || 'User',
+            email: user.email,
+          }
+        : null,
     })
   }
 
@@ -21,7 +23,7 @@ export default class SimpleLobbiesController {
    */
   async index({ inertia, auth }: HttpContext) {
     const user = auth.user!
-    
+
     // Mock lobbies data for testing
     const mockLobbies = [
       {
@@ -34,7 +36,7 @@ export default class SimpleLobbiesController {
         createdBy: 'user-1',
         players: [
           { uuid: 'user-1', nickName: 'Player 1' },
-          { uuid: 'user-2', nickName: 'Player 2' }
+          { uuid: 'user-2', nickName: 'Player 2' },
         ],
         invitationCode: 'lobby-1',
       },
@@ -46,11 +48,9 @@ export default class SimpleLobbiesController {
         currentPlayers: 1,
         status: 'WAITING',
         createdBy: 'user-3',
-        players: [
-          { uuid: 'user-3', nickName: 'Player 3' }
-        ],
+        players: [{ uuid: 'user-3', nickName: 'Player 3' }],
         invitationCode: 'lobby-2',
-      }
+      },
     ]
 
     return inertia.render('lobbies', {
@@ -67,7 +67,7 @@ export default class SimpleLobbiesController {
    */
   async create({ inertia, auth }: HttpContext) {
     const user = auth.user!
-    
+
     return inertia.render('create-lobby', {
       user: {
         uuid: user.userUuid || 'test-user',
@@ -80,11 +80,11 @@ export default class SimpleLobbiesController {
    * Create a new lobby (mock implementation)
    */
   async store({ request, response, session }: HttpContext) {
-    const { name, description, maxPlayers = 4 } = request.only([
-      'name', 
-      'description',
-      'maxPlayers'
-    ])
+    const {
+      name,
+      description,
+      maxPlayers = 4,
+    } = request.only(['name', 'description', 'maxPlayers'])
 
     try {
       // Validate required fields
@@ -95,7 +95,7 @@ export default class SimpleLobbiesController {
 
       // Mock lobby creation
       const lobbyUuid = `lobby-${Date.now()}`
-      
+
       session.flash('success', 'Lobby created successfully!')
       return response.redirect(`/lobbies/${lobbyUuid}`)
     } catch (error) {
@@ -122,7 +122,7 @@ export default class SimpleLobbiesController {
       createdBy: 'user-1',
       players: [
         { uuid: 'user-1', nickName: 'Player 1' },
-        { uuid: user.userUuid || 'test-user', nickName: user.fullName || 'Test User' }
+        { uuid: user.userUuid || 'test-user', nickName: user.fullName || 'Test User' },
       ],
       invitationCode: uuid,
       hasPassword: false,
@@ -156,10 +156,12 @@ export default class SimpleLobbiesController {
 
     return inertia.render('join-lobby', {
       lobby: mockLobby,
-      user: user ? {
-        uuid: user.userUuid || 'test-user',
-        fullName: user.fullName || 'Test User',
-      } : null,
+      user: user
+        ? {
+            uuid: user.userUuid || 'test-user',
+            fullName: user.fullName || 'Test User',
+          }
+        : null,
       invitationCode,
     })
   }
@@ -192,9 +194,7 @@ export default class SimpleLobbiesController {
       description: 'A test lobby',
       maxPlayers: 4,
       status: 'OPEN',
-      players: [
-        { uuid: 'user-1', nickName: 'Player 1' }
-      ],
+      players: [{ uuid: 'user-1', nickName: 'Player 1' }],
       invitationCode: uuid,
     }
 
@@ -214,7 +214,7 @@ export default class SimpleLobbiesController {
         maxPlayers: 4,
         status: 'OPEN',
         invitationCode: 'lobby-1',
-      }
+      },
     ]
 
     return response.json({

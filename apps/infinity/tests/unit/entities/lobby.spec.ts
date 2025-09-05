@@ -97,7 +97,7 @@ test.group('Lobby Entity', () => {
   test('should add player successfully', ({ assert }) => {
     const lobby = createLobby({ maxPlayers: 4 })
     const newPlayer = createPlayerInterface()
-    
+
     const result = lobby.addPlayer(newPlayer)
 
     assert.isTrue(result.isSuccess)
@@ -108,7 +108,7 @@ test.group('Lobby Entity', () => {
   test('should not add duplicate player', ({ assert }) => {
     const lobby = createLobby()
     const existingPlayer = lobby.players[0]
-    
+
     const result = lobby.addPlayer(existingPlayer)
 
     assert.isFalse(result.isSuccess)
@@ -118,7 +118,7 @@ test.group('Lobby Entity', () => {
 
   test('should not add player when lobby is full', ({ assert }) => {
     const lobby = createLobby({ maxPlayers: 4 })
-    
+
     // Remplir le lobby
     for (let i = 1; i < lobby.maxPlayers; i++) {
       lobby.addPlayer(createPlayerInterface())
@@ -147,7 +147,7 @@ test.group('Lobby Entity', () => {
   test('should not remove player that is not in lobby', ({ assert }) => {
     const lobby = createLobby()
     const nonExistentPlayer = createPlayerInterface()
-    
+
     const result = lobby.removePlayer(nonExistentPlayer.uuid)
 
     assert.isFalse(result.isSuccess)
@@ -167,7 +167,7 @@ test.group('Lobby Entity', () => {
 
   test('should allow creator to leave when alone', ({ assert }) => {
     const lobby = createLobby()
-    
+
     const result = lobby.removePlayer(lobby.creator.uuid)
 
     assert.isTrue(result.isSuccess)
@@ -211,7 +211,7 @@ test.group('Lobby Entity', () => {
 
   test('should not allow READY status with only one player', ({ assert }) => {
     const lobby = createLobby()
-    
+
     const result = lobby.setReady()
     assert.isFalse(result.isSuccess)
     assert.equal(result.error, 'Need at least 2 players to be ready')
@@ -229,7 +229,7 @@ test.group('Lobby Entity', () => {
 
   test('should not start game when not ready', ({ assert }) => {
     const lobby = createLobby()
-    
+
     const result = lobby.startGame()
     assert.isFalse(result.isSuccess)
     assert.equal(result.error, 'Lobby must be READY or FULL to start game')
@@ -241,7 +241,7 @@ test.group('Lobby Entity', () => {
       maxPlayers: 4,
       isPrivate: true,
     })
-    
+
     // Add players to test currentPlayers count
     lobby.addPlayer(createPlayerInterface())
     lobby.addPlayer(createPlayerInterface())

@@ -1,19 +1,27 @@
 import { test } from '@japa/runner'
 import { JoinLobbyUseCase } from '../../../app/application/use_cases/join_lobby_use_case.js'
-import { LobbyNotificationService } from '../../../app/application/services/lobby_notification_service.js'
 import { LobbyFactory } from '../../factories/lobby_factory.js'
 import { UserFactory } from '../../factories/user_factory.js'
+import { LobbyStatus } from '../../../app/domain/value_objects/lobby_status.js'
 
 // Mock repositories
 const mockPlayerRepository = {
+  findPlayerInterfaceByUuid: async (uuid: string) => {
+    const userDto = UserFactory.userDto({ userUuid: uuid })
+    return {
+      uuid: userDto.userUuid,
+      nickName: userDto.fullName,
+      email: userDto.email,
+    }
+  },
   findPlayerInterfaceByUuidOrFail: async (uuid: string) => {
     const userDto = UserFactory.userDto({ userUuid: uuid })
     return {
       uuid: userDto.userUuid,
       nickName: userDto.fullName,
-      email: userDto.email
+      email: userDto.email,
     }
-  }
+  },
 }
 
 // Mock notification service
@@ -26,7 +34,7 @@ const mockNotificationService = {
   addListener: () => () => {},
   addLobbyListener: () => () => {},
   removeListener: () => {},
-  removeLobbyListener: () => {}
+  removeLobbyListener: () => {},
 }
 
 const mockLobbyRepository = {
@@ -35,26 +43,40 @@ const mockLobbyRepository = {
   findByPlayer: async (_playerUuid: string) => null,
   findByUuid: async (_uuid: string) => null,
   findByUuidOrFail: async (uuid: string) => {
-    const lobbyDto = LobbyFactory.lobbyDto({ lobbyUuid: uuid })
+    const lobbyDto = LobbyFactory.lobbyDto({ uuid: uuid })
     return {
-      uuid: lobbyDto.lobbyUuid,
+      uuid: lobbyDto.uuid,
       name: lobbyDto.name,
-      status: 'waiting',
+      status: LobbyStatus.WAITING,
       maxPlayers: lobbyDto.maxPlayers,
       isPrivate: lobbyDto.isPrivate,
-      createdBy: lobbyDto.creator,
+      createdBy: lobbyDto.createdBy,
       players: [],
       hasAvailableSlots: true,
       canStart: false,
       availableActions: ['start', 'leave'],
       createdAt: new Date(),
-      addPlayer: (player: any) => {
+      addPlayer: (_player: any) => {
         // Mock implementation returning Result pattern
         return { isFailure: false, isSuccess: true }
       },
-      creator: { uuid: 'creator-123', nickName: 'Creator' }
+      creator: { uuid: 'creator-123', nickName: 'Creator' },
+      serialize: () => ({
+        uuid: lobbyDto.uuid,
+        name: lobbyDto.name,
+        status: LobbyStatus.WAITING,
+        maxPlayers: lobbyDto.maxPlayers,
+        isPrivate: lobbyDto.isPrivate,
+        createdBy: lobbyDto.createdBy,
+        currentPlayers: 1,
+        players: [],
+        hasAvailableSlots: true,
+        canStart: false,
+        availableActions: ['start', 'leave'],
+        createdAt: new Date(),
+      }),
     }
-  }
+  },
 }
 
 test.group('JoinLobbyUseCase', (group) => {
@@ -72,7 +94,7 @@ test.group('JoinLobbyUseCase', (group) => {
     // Arrange
     const request = {
       userUuid: 'user-123',
-      lobbyUuid: 'lobby-456'
+      lobbyUuid: 'lobby-456',
     }
 
     // Act
@@ -81,7 +103,7 @@ test.group('JoinLobbyUseCase', (group) => {
     // Assert
     assert.isTrue(result.isSuccess)
     assert.equal(result.value.lobby.uuid, 'lobby-456')
-    assert.equal(result.value.lobby.status, 'waiting')
+    assert.equal(result.value.lobby.status, LobbyStatus.WAITING)
     assert.isTrue(result.value.lobby.hasAvailableSlots)
   })
 
@@ -89,7 +111,7 @@ test.group('JoinLobbyUseCase', (group) => {
     // Arrange
     const request = {
       userUuid: '',
-      lobbyUuid: 'lobby-456'
+      lobbyUuid: 'lobby-456',
     }
 
     // Act
@@ -104,7 +126,7 @@ test.group('JoinLobbyUseCase', (group) => {
     // Arrange
     const request = {
       userUuid: 'user-123',
-      lobbyUuid: ''
+      lobbyUuid: '',
     }
 
     // Act
@@ -120,12 +142,12 @@ test.group('JoinLobbyUseCase', (group) => {
     const existingLobby = {
       uuid: 'existing-lobby',
       name: 'Existing Lobby',
-      players: [{ uuid: 'user-123', nickName: 'Player' }]
+      players: [{ uuid: 'user-123', nickName: 'Player' }],
     }
 
     const mockLobbyRepositoryWithExisting = {
       ...mockLobbyRepository,
-      findByPlayer: async (_playerUuid: string) => existingLobby
+      findByPlayer: async (_playerUuid: string) => existingLobby,
     }
 
     const useCase = new JoinLobbyUseCase(
@@ -136,7 +158,7 @@ test.group('JoinLobbyUseCase', (group) => {
 
     const request = {
       userUuid: 'user-123',
-      lobbyUuid: 'lobby-456'
+      lobbyUuid: 'lobby-456',
     }
 
     // Act
@@ -152,13 +174,13 @@ test.group('JoinLobbyUseCase', (group) => {
     const fullLobby = {
       uuid: 'lobby-456',
       name: 'Full Lobby',
-      status: 'waiting',
+      status: LobbyStatus.WAITING,
       maxPlayers: 2,
       isPrivate: false,
       createdBy: 'creator-123',
       players: [
         { uuid: 'player-1', nickName: 'Player 1' },
-        { uuid: 'player-2', nickName: 'Player 2' }
+        { uuid: 'player-2', nickName: 'Player 2' },
       ],
       hasAvailableSlots: false,
       canStart: true,
@@ -166,12 +188,12 @@ test.group('JoinLobbyUseCase', (group) => {
       createdAt: new Date(),
       addPlayer: (_player: any) => {
         throw new Error('Lobby is full')
-      }
+      },
     }
 
     const mockLobbyRepositoryWithFull = {
       ...mockLobbyRepository,
-      findByUuidOrFail: async (_uuid: string) => fullLobby
+      findByUuidOrFail: async (_uuid: string) => fullLobby,
     }
 
     const useCase = new JoinLobbyUseCase(
@@ -182,7 +204,7 @@ test.group('JoinLobbyUseCase', (group) => {
 
     const request = {
       userUuid: 'user-123',
-      lobbyUuid: 'lobby-456'
+      lobbyUuid: 'lobby-456',
     }
 
     // Act
@@ -196,7 +218,7 @@ test.group('JoinLobbyUseCase', (group) => {
   test('should handle player not found error', async ({ assert }) => {
     // Arrange
     const mockPlayerRepositoryNotFound = {
-      findPlayerInterfaceByUuidOrFail: async (_uuid: string) => null
+      findPlayerInterfaceByUuidOrFail: async (_uuid: string) => null,
     }
 
     const useCase = new JoinLobbyUseCase(
@@ -207,7 +229,7 @@ test.group('JoinLobbyUseCase', (group) => {
 
     const request = {
       userUuid: 'non-existent-user',
-      lobbyUuid: 'lobby-456'
+      lobbyUuid: 'lobby-456',
     }
 
     // Act
@@ -222,7 +244,7 @@ test.group('JoinLobbyUseCase', (group) => {
     // Arrange
     const mockLobbyRepositoryNotFound = {
       ...mockLobbyRepository,
-      findByUuidOrFail: async (_uuid: string) => null
+      findByUuidOrFail: async (_uuid: string) => null,
     }
 
     const useCase = new JoinLobbyUseCase(
@@ -233,7 +255,7 @@ test.group('JoinLobbyUseCase', (group) => {
 
     const request = {
       userUuid: 'user-123',
-      lobbyUuid: 'non-existent-lobby'
+      lobbyUuid: 'non-existent-lobby',
     }
 
     // Act

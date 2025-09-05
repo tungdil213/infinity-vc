@@ -1,5 +1,10 @@
 import User from '../../domain/entities/user.js'
-import { UserDto, PlayerDto, RegisterUserResponseDto, AuthenticateUserResponseDto } from '../dtos/user_dto.js'
+import {
+  UserDto,
+  PlayerDto,
+  RegisterUserResponseDto,
+  AuthenticateUserResponseDto,
+} from '../dtos/user_dto.js'
 
 /**
  * User Serializer
@@ -16,7 +21,7 @@ export class UserSerializer {
       email: user.email,
       isArchived: user.isArchived,
       createdAt: user.createdAt,
-      updatedAt: user.updatedAt
+      updatedAt: user.updatedAt,
     }
   }
 
@@ -29,19 +34,22 @@ export class UserSerializer {
       nickName: user.fullName,
       email: user.email,
       isOnline: true, // TODO: Implement online status
-      lastSeen: new Date()
+      lastSeen: new Date(),
     }
   }
 
   /**
    * Convertit une entité User en RegisterUserResponseDto
    */
-  static toRegisterResponseDto(user: User, message: string = 'User registered successfully'): RegisterUserResponseDto {
+  static toRegisterResponseDto(
+    user: User,
+    message: string = 'User registered successfully'
+  ): RegisterUserResponseDto {
     return {
       userUuid: user.userUuid,
       fullName: user.fullName,
       email: user.email,
-      message
+      message,
     }
   }
 
@@ -49,8 +57,8 @@ export class UserSerializer {
    * Convertit une entité User en AuthenticateUserResponseDto
    */
   static toAuthenticateResponseDto(
-    user: User, 
-    token?: string, 
+    user: User,
+    token?: string,
     message: string = 'Authentication successful'
   ): AuthenticateUserResponseDto {
     return {
@@ -58,7 +66,7 @@ export class UserSerializer {
       fullName: user.fullName,
       email: user.email,
       token,
-      message
+      message,
     }
   }
 
@@ -66,13 +74,13 @@ export class UserSerializer {
    * Convertit un tableau d'entités User en tableau de UserDto
    */
   static toDtoArray(users: User[]): UserDto[] {
-    return users.map(user => this.toDto(user))
+    return users.map((user) => this.toDto(user))
   }
 
   /**
    * Convertit un tableau d'entités User en tableau de PlayerDto
    */
   static toPlayerDtoArray(users: User[]): PlayerDto[] {
-    return users.map(user => this.toPlayerDto(user))
+    return users.map((user) => this.toPlayerDto(user))
   }
 }

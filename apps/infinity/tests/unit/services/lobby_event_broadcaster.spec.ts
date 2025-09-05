@@ -26,7 +26,7 @@ const createMockWebSocketServer = () => ({
     mockConnections.delete(connectionId)
   },
   broadcast: (message: any, filter?: (conn: MockConnection) => boolean) => {
-    for (const [id, conn] of mockConnections) {
+    for (const [, conn] of mockConnections) {
       if (!filter || filter(conn)) {
         if (conn.isOpen) {
           conn.send(JSON.stringify(message))
@@ -34,7 +34,7 @@ const createMockWebSocketServer = () => ({
       }
     }
   },
-  getConnections: () => Array.from(mockConnections.values())
+  getConnections: () => Array.from(mockConnections.values()),
 })
 
 // Helper to create mock connections
@@ -51,7 +51,7 @@ const createMockConnection = (id: string, userId?: string, lobbyId?: string): Mo
     if (conn) {
       conn.isOpen = false
     }
-  }
+  },
 })
 
 test.group('LobbyEventBroadcaster', (group) => {
@@ -68,16 +68,16 @@ test.group('LobbyEventBroadcaster', (group) => {
     // Reset state before each test
     mockConnections.clear()
     sentMessages.length = 0
-    
+
     // Clean up previous broadcaster if exists
     if (broadcaster) {
       broadcaster.destroy()
     }
-    
+
     // Create fresh instances
     notificationService = new LobbyNotificationService()
     notificationService.removeAllListeners() // Ensure clean state
-    
+
     const mockWebSocketServer = createMockWebSocketServer()
     broadcaster = new LobbyEventBroadcaster(mockWebSocketServer as any, notificationService)
   })
@@ -103,8 +103,8 @@ test.group('LobbyEventBroadcaster', (group) => {
     // Assert
     const connections = broadcaster.getConnections()
     assert.equal(connections.length, 2)
-    assert.isTrue(connections.some(c => c.id === 'conn-1'))
-    assert.isTrue(connections.some(c => c.id === 'conn-2'))
+    assert.isTrue(connections.some((c) => c.id === 'conn-1'))
+    assert.isTrue(connections.some((c) => c.id === 'conn-2'))
   })
 
   test('should remove client connections', ({ assert }) => {
@@ -125,7 +125,7 @@ test.group('LobbyEventBroadcaster', (group) => {
     const connection1 = createMockConnection('conn-1', 'user-1', 'lobby-1')
     const connection2 = createMockConnection('conn-2', 'user-2', 'lobby-1')
     const connection3 = createMockConnection('conn-3', 'user-3', 'lobby-2') // Different lobby
-    
+
     broadcaster.addConnection(connection1)
     broadcaster.addConnection(connection2)
     broadcaster.addConnection(connection3)
@@ -138,7 +138,7 @@ test.group('LobbyEventBroadcaster', (group) => {
       currentPlayers: 2,
       maxPlayers: 4,
       players: [],
-      creator: { uuid: 'creator-1', nickName: 'Creator' }
+      creator: { uuid: 'creator-1', nickName: 'Creator' },
     }
 
     // Act
@@ -146,12 +146,8 @@ test.group('LobbyEventBroadcaster', (group) => {
 
     // Assert
     // Should send to connections in lobby-1 only
-    const lobby1Messages = sentMessages.filter(m => 
-      ['conn-1', 'conn-2'].includes(m.connectionId)
-    )
-    const lobby2Messages = sentMessages.filter(m => 
-      m.connectionId === 'conn-3'
-    )
+    const lobby1Messages = sentMessages.filter((m) => ['conn-1', 'conn-2'].includes(m.connectionId))
+    const lobby2Messages = sentMessages.filter((m) => m.connectionId === 'conn-3')
 
     assert.equal(lobby1Messages.length, 2)
     assert.equal(lobby2Messages.length, 0)
@@ -167,7 +163,7 @@ test.group('LobbyEventBroadcaster', (group) => {
     // Arrange
     const connection1 = createMockConnection('conn-1', 'user-1', 'lobby-1')
     const connection2 = createMockConnection('conn-2', 'user-2', 'lobby-1')
-    
+
     broadcaster.addConnection(connection1)
     broadcaster.addConnection(connection2)
 
@@ -179,7 +175,7 @@ test.group('LobbyEventBroadcaster', (group) => {
       currentPlayers: 1,
       maxPlayers: 4,
       players: [],
-      creator: { uuid: 'creator-1', nickName: 'Creator' }
+      creator: { uuid: 'creator-1', nickName: 'Creator' },
     }
 
     // Act
@@ -205,7 +201,7 @@ test.group('LobbyEventBroadcaster', (group) => {
       currentPlayers: 2,
       maxPlayers: 4,
       players: [],
-      creator: { uuid: 'creator-1', nickName: 'Creator' }
+      creator: { uuid: 'creator-1', nickName: 'Creator' },
     }
 
     // Act
@@ -232,7 +228,7 @@ test.group('LobbyEventBroadcaster', (group) => {
       currentPlayers: 2,
       maxPlayers: 4,
       players: [],
-      creator: { uuid: 'creator-1', nickName: 'Creator' }
+      creator: { uuid: 'creator-1', nickName: 'Creator' },
     }
 
     // Act
@@ -276,7 +272,7 @@ test.group('LobbyEventBroadcaster', (group) => {
       currentPlayers: 2,
       maxPlayers: 4,
       players: [],
-      creator: { uuid: 'creator-1', nickName: 'Creator' }
+      creator: { uuid: 'creator-1', nickName: 'Creator' },
     }
 
     // Act & Assert - Should not throw error
@@ -293,7 +289,7 @@ test.group('LobbyEventBroadcaster', (group) => {
     const connection1 = createMockConnection('conn-1', 'user-1', 'lobby-1')
     const connection2 = createMockConnection('conn-2', 'user-2', 'lobby-2')
     const connection3 = createMockConnection('conn-3', 'user-3') // No lobby
-    
+
     broadcaster.addConnection(connection1)
     broadcaster.addConnection(connection2)
     broadcaster.addConnection(connection3)
@@ -306,7 +302,7 @@ test.group('LobbyEventBroadcaster', (group) => {
       currentPlayers: 2,
       maxPlayers: 4,
       players: [],
-      creator: { uuid: 'creator-1', nickName: 'Creator' }
+      creator: { uuid: 'creator-1', nickName: 'Creator' },
     }
 
     // Act
@@ -314,7 +310,7 @@ test.group('LobbyEventBroadcaster', (group) => {
 
     // Assert
     // Only connection in lobby-1 should receive the message
-    const receivedConnections = sentMessages.map(m => m.connectionId)
+    const receivedConnections = sentMessages.map((m) => m.connectionId)
     assert.includeMembers(receivedConnections, ['conn-1'])
     assert.notIncludeMembers(receivedConnections, ['conn-2', 'conn-3'])
   })
@@ -323,7 +319,7 @@ test.group('LobbyEventBroadcaster', (group) => {
     // Arrange
     const connection1 = createMockConnection('conn-1', 'user-1', 'lobby-1')
     const connection2 = createMockConnection('conn-2', 'user-2', 'lobby-1')
-    
+
     broadcaster.addConnection(connection1)
     broadcaster.addConnection(connection2)
 

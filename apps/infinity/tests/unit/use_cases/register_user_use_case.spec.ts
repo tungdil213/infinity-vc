@@ -35,12 +35,12 @@ test.group('RegisterUserUseCase', (group) => {
   })
 
   test('should fail when email already exists', async ({ assert }) => {
-    const existingUser = User.create({ 
+    const existingUser = User.create({
       firstName: 'Existing',
       lastName: 'User',
       username: 'existinguser',
       email: 'john@example.com',
-      password: 'password123'
+      password: 'password123',
     })
     await userRepository.save(existingUser)
 
@@ -60,12 +60,12 @@ test.group('RegisterUserUseCase', (group) => {
   })
 
   test('should fail when username already exists', async ({ assert }) => {
-    const existingUser = User.create({ 
+    const existingUser = User.create({
       firstName: 'Existing',
       lastName: 'User',
       username: 'johndoe',
       email: 'existing@example.com',
-      password: 'password123'
+      password: 'password123',
     })
     await userRepository.save(existingUser)
 
@@ -150,15 +150,20 @@ test.group('RegisterUserUseCase', (group) => {
     const errorRepository = {
       existsByEmail: async () => false,
       existsByUsername: async () => false,
-      save: async () => { throw new Error('Database error') }
+      save: async () => {
+        throw new Error('Database error')
+      },
     }
 
     const errorPlayerRepository = {
       existsByNickName: async () => false,
-      save: async () => Promise.resolve()
+      save: async () => Promise.resolve(),
     }
-    
-    const errorUseCase = new RegisterUserUseCase(errorRepository as any, errorPlayerRepository as any)
+
+    const errorUseCase = new RegisterUserUseCase(
+      errorRepository as any,
+      errorPlayerRepository as any
+    )
     const result = await errorUseCase.execute(userData)
 
     assert.isTrue(result.isFailure)

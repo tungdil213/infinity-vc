@@ -25,7 +25,7 @@ export default class GamesController {
     }
 
     // Check if user is part of this game
-    const isPlayerInGame = game.players.some(p => p.uuid === user.uuid)
+    const isPlayerInGame = game.players.some((p) => p.uuid === user.uuid)
     if (!isPlayerInGame) {
       return inertia.render('errors/not_found', {
         error: { message: 'You are not part of this game' },
@@ -57,7 +57,7 @@ export default class GamesController {
     }
 
     // Check if user is part of this game
-    const isPlayerInGame = game.players.some(p => p.uuid === user.uuid)
+    const isPlayerInGame = game.players.some((p) => p.uuid === user.uuid)
     if (!isPlayerInGame) {
       return response.status(403).json({
         error: 'You are not part of this game',
@@ -67,17 +67,17 @@ export default class GamesController {
     // Handle different game actions
     try {
       let result
-      
+
       switch (action) {
         case 'sample_action':
           // Placeholder for game-specific actions
           result = await this.handleSampleAction(game, user.uuid, data)
           break
-          
+
         case 'end_turn':
           result = await this.handleEndTurn(game, user.uuid)
           break
-          
+
         default:
           return response.status(400).json({
             error: `Unknown action: ${action}`,
@@ -116,7 +116,7 @@ export default class GamesController {
     }
 
     // Check if user is part of this game
-    const isPlayerInGame = game.players.some(p => p.uuid === user.uuid)
+    const isPlayerInGame = game.players.some((p) => p.uuid === user.uuid)
     if (!isPlayerInGame) {
       return response.status(403).json({
         error: 'You are not part of this game',
@@ -155,7 +155,7 @@ export default class GamesController {
     // Placeholder implementation
     // In a real game, this would update game state based on the action
     console.log(`Player ${playerUuid} performed sample action in game ${game.uuid}:`, data)
-    
+
     return {
       isFailure: false,
       value: {
@@ -172,7 +172,7 @@ export default class GamesController {
     // Placeholder implementation
     // In a real game, this would advance to the next player's turn
     console.log(`Player ${playerUuid} ended their turn in game ${game.uuid}`)
-    
+
     return {
       isFailure: false,
       value: {

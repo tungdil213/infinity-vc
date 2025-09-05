@@ -87,11 +87,18 @@ export class RegisterUserUseCase {
 
   private async validateRequest(request: RegisterUserRequest): Promise<Result<void>> {
     // Validation des longueurs des champs
-    if (!request.username || request.username.trim().length < 3 || request.username.trim().length > 50) {
+    if (
+      !request.username ||
+      request.username.trim().length < 3 ||
+      request.username.trim().length > 50
+    ) {
       return Result.fail('Username must be between 3 and 50 characters')
     }
 
-    if (request.nickName && (request.nickName.trim().length < 3 || request.nickName.trim().length > 30)) {
+    if (
+      request.nickName &&
+      (request.nickName.trim().length < 3 || request.nickName.trim().length > 30)
+    ) {
       return Result.fail('Nickname must be between 3 and 30 characters')
     }
 
@@ -118,9 +125,8 @@ export class RegisterUserUseCase {
     } else {
       // Vérifier l'unicité du pseudonyme généré automatiquement
       const generatedNickName = `${request.firstName} ${request.lastName}`
-      const existingPlayerByGeneratedNickname = await this.playerRepository.existsByNickName(
-        generatedNickName
-      )
+      const existingPlayerByGeneratedNickname =
+        await this.playerRepository.existsByNickName(generatedNickName)
       if (existingPlayerByGeneratedNickname) {
         return Result.fail('This name combination is already taken as a nickname')
       }

@@ -28,7 +28,12 @@ export class DomainValidationException extends BusinessException {
  * Exception pour les erreurs d'état des entités du domaine
  */
 export class DomainStateException extends BusinessException {
-  constructor(entity: string, currentState: string, attemptedAction: string, context?: Record<string, any>) {
+  constructor(
+    entity: string,
+    currentState: string,
+    attemptedAction: string,
+    context?: Record<string, any>
+  ) {
     const userMessage = `Cannot ${attemptedAction} in current state`
     const technicalMessage = `${entity} in state "${currentState}" cannot perform action: ${attemptedAction}`
 
@@ -104,7 +109,7 @@ export class GameStateException extends BusinessException {
       severity: ErrorSeverity.MEDIUM,
       userMessage: message,
       toastType: ToastType.ERROR,
-      context: { currentState }
+      context: { currentState },
     })
   }
 }
@@ -118,7 +123,7 @@ export class PlayerValidationException extends BusinessException {
       severity: ErrorSeverity.MEDIUM,
       userMessage: message,
       toastType: ToastType.ERROR,
-      context: { field }
+      context: { field },
     })
   }
 }
@@ -132,7 +137,7 @@ export class LobbyValidationException extends BusinessException {
       severity: ErrorSeverity.MEDIUM,
       userMessage: message,
       toastType: ToastType.ERROR,
-      context: { field }
+      context: { field },
     })
   }
 }
@@ -149,7 +154,7 @@ export class RepositoryException extends BusinessException {
       severity: ErrorSeverity.HIGH,
       userMessage: 'A technical error occurred. Please try again later.',
       toastType: ToastType.ERROR,
-      context: { operation, details }
+      context: { operation, details },
     })
   }
 }

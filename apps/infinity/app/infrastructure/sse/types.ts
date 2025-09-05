@@ -85,15 +85,15 @@ export const SSEEventTypes = {
   LOBBY_PLAYER_LEFT: 'lobby.player.left',
   LOBBY_STATUS_CHANGED: 'lobby.status.changed',
   LOBBY_GAME_STARTED: 'lobby.game.started',
-  
+
   // User events
   USER_NOTIFICATION: 'user.notification',
   USER_INVITATION: 'user.invitation',
-  
+
   // Game events
   GAME_STATE_CHANGED: 'game.state.changed',
   GAME_PLAYER_ACTION: 'game.player.action',
-  
+
   // System events
   SYSTEM_HEARTBEAT: 'system.heartbeat',
   SYSTEM_MAINTENANCE: 'system.maintenance',

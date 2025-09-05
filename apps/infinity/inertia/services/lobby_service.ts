@@ -61,7 +61,10 @@ export class LobbyService {
     // Écouter les événements spécifiques aux lobbies
     this.sseContext.addEventListener('lobby.player.joined', this.handleLobbyPlayerJoined.bind(this))
     this.sseContext.addEventListener('lobby.player.left', this.handleLobbyPlayerLeft.bind(this))
-    this.sseContext.addEventListener('lobby.status.changed', this.handleLobbyStatusChanged.bind(this))
+    this.sseContext.addEventListener(
+      'lobby.status.changed',
+      this.handleLobbyStatusChanged.bind(this)
+    )
     this.sseContext.addEventListener('lobby.updated', this.handleLobbyDetailUpdated.bind(this))
     this.sseContext.addEventListener('lobby.deleted', this.handleLobbyDeleted.bind(this))
   }
@@ -131,7 +134,8 @@ export class LobbyService {
       if (lobby) {
         lobby.status = status
         // Recalculer les propriétés dérivées
-        lobby.hasAvailableSlots = lobby.currentPlayers < lobby.maxPlayers && lobby.status === 'waiting'
+        lobby.hasAvailableSlots =
+          lobby.currentPlayers < lobby.maxPlayers && lobby.status === 'waiting'
         lobby.canStart = lobby.currentPlayers >= 2 && lobby.status === 'waiting'
       }
       return lobby

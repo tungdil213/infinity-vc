@@ -21,7 +21,7 @@ export default class GameController {
       } else if (status) {
         games = await this.gameRepository.findByStatus(status)
       } else {
-        games = await this.gameRepository.findRecentGames(limit ? parseInt(limit) : 10)
+        games = await this.gameRepository.findRecentGames(limit ? Number.parseInt(limit) : 10)
       }
 
       return response.status(200).json({

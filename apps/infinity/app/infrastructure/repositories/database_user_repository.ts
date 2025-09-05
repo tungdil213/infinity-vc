@@ -54,10 +54,7 @@ export class DatabaseUserRepository implements UserRepository {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    const userModel = await UserModel.query()
-      .where('email', email)
-      .whereNull('deleted_at')
-      .first()
+    const userModel = await UserModel.query().where('email', email).whereNull('deleted_at').first()
 
     if (!userModel) return null
     return this.toDomainUser(userModel)
@@ -82,7 +79,7 @@ export class DatabaseUserRepository implements UserRepository {
   private toDomainUser(userModel: UserModel): User {
     // Generate a valid username from email by removing special characters
     const emailUsername = userModel.email.split('@')[0].replace(/[^a-zA-Z0-9_-]/g, '_')
-    
+
     return User.create({
       uuid: userModel.userUuid,
       firstName: userModel.fullName?.split(' ')[0] || '',

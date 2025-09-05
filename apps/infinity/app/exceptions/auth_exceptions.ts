@@ -12,7 +12,8 @@ export class EmailAlreadyExistsException extends BusinessException {
       code: 'E_EMAIL_ALREADY_EXISTS',
       classification: ErrorClassification.SECURITY,
       severity: ErrorSeverity.MEDIUM,
-      userMessage: 'An account with this information already exists. Please try logging in instead.',
+      userMessage:
+        'An account with this information already exists. Please try logging in instead.',
       toastType: ToastType.ERROR,
       context: { email },
       tags: ['auth', 'registration', 'duplicate'],
@@ -76,7 +77,8 @@ export class AccountNotVerifiedException extends BusinessException {
       code: 'E_ACCOUNT_NOT_VERIFIED',
       classification: ErrorClassification.USER_SAFE,
       severity: ErrorSeverity.LOW,
-      userMessage: 'Please verify your email address before logging in. Check your inbox for the verification link.',
+      userMessage:
+        'Please verify your email address before logging in. Check your inbox for the verification link.',
       toastType: ToastType.WARNING,
       context: { email },
       tags: ['auth', 'verification', 'pending'],

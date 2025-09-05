@@ -8,7 +8,7 @@ export interface DomainEventPublisher {
 
 export class EventBusDomainEventPublisher implements DomainEventPublisher {
   async publishEvents(events: DomainEvent[]): Promise<void> {
-    const promises = events.map(event => this.publishEvent(event))
+    const promises = events.map((event) => this.publishEvent(event))
     await Promise.all(promises)
   }
 

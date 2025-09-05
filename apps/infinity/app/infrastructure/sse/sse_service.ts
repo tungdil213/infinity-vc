@@ -14,7 +14,7 @@ export class SSEService {
 
     // Subscribe to all domain events
     this.subscribeToAllDomainEvents()
-    
+
     this.isInitialized = true
     console.log('SSE Service initialized')
   }
@@ -24,7 +24,7 @@ export class SSEService {
     eventBus.subscribe('PlayerJoinedLobby', this.handleDomainEvent.bind(this))
     eventBus.subscribe('PlayerLeftLobby', this.handleDomainEvent.bind(this))
     eventBus.subscribe('GameStarted', this.handleDomainEvent.bind(this))
-    
+
     // Add more event subscriptions as needed
     // eventBus.subscribe('UserRegistered', this.handleDomainEvent.bind(this))
     // eventBus.subscribe('GameStateChanged', this.handleDomainEvent.bind(this))
@@ -45,7 +45,7 @@ export class SSEService {
 
       // Get target channels
       const targetChannels = eventTransformer.getTargetChannels(domainEvent)
-      
+
       // Broadcast to each target channel
       for (const channelName of targetChannels) {
         for (const sseEvent of sseEvents) {
@@ -53,14 +53,19 @@ export class SSEService {
         }
       }
 
-      console.log(`Broadcasted ${sseEvents.length} SSE events to ${targetChannels.length} channels for domain event: ${domainEvent.eventType}`)
+      console.log(
+        `Broadcasted ${sseEvents.length} SSE events to ${targetChannels.length} channels for domain event: ${domainEvent.eventType}`
+      )
     } catch (error) {
       console.error('Error handling domain event for SSE:', error)
     }
   }
 
   // Public methods for manual event broadcasting
-  async broadcastToLobby(lobbyUuid: string, event: Omit<SSEEvent, 'id' | 'timestamp'>): Promise<void> {
+  async broadcastToLobby(
+    lobbyUuid: string,
+    event: Omit<SSEEvent, 'id' | 'timestamp'>
+  ): Promise<void> {
     const sseEvent: SSEEvent = {
       id: crypto.randomUUID(),
       timestamp: new Date(),
@@ -70,7 +75,10 @@ export class SSEService {
     await channelManager.broadcastToChannel(ChannelPatterns.lobby(lobbyUuid), sseEvent)
   }
 
-  async broadcastToUser(userUuid: string, event: Omit<SSEEvent, 'id' | 'timestamp'>): Promise<void> {
+  async broadcastToUser(
+    userUuid: string,
+    event: Omit<SSEEvent, 'id' | 'timestamp'>
+  ): Promise<void> {
     const sseEvent: SSEEvent = {
       id: crypto.randomUUID(),
       timestamp: new Date(),
@@ -80,7 +88,10 @@ export class SSEService {
     await channelManager.broadcastToChannel(ChannelPatterns.user(userUuid), sseEvent)
   }
 
-  async broadcastToGame(gameUuid: string, event: Omit<SSEEvent, 'id' | 'timestamp'>): Promise<void> {
+  async broadcastToGame(
+    gameUuid: string,
+    event: Omit<SSEEvent, 'id' | 'timestamp'>
+  ): Promise<void> {
     const sseEvent: SSEEvent = {
       id: crypto.randomUUID(),
       timestamp: new Date(),

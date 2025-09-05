@@ -29,7 +29,11 @@ test.group('Lobby Use Cases Integration', () => {
     // Create a real notification service instance for testing
     const notificationService = new LobbyNotificationService()
 
-    createLobbyUseCase = new CreateLobbyUseCase(playerRepository, lobbyRepository, notificationService)
+    createLobbyUseCase = new CreateLobbyUseCase(
+      playerRepository,
+      lobbyRepository,
+      notificationService
+    )
     joinLobbyUseCase = new JoinLobbyUseCase(playerRepository, lobbyRepository, notificationService)
     leaveLobbyUseCase = new LeaveLobbyUseCase(lobbyRepository)
     startGameUseCase = new StartGameUseCase(lobbyRepository, gameRepository)

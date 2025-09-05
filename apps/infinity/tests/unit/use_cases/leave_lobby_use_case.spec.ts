@@ -9,17 +9,17 @@ const mockLobbyRepository = {
   findByPlayer: async (_playerUuid: string) => null,
   findByUuid: async (_uuid: string) => null,
   findByUuidOrFail: async (uuid: string) => {
-    const lobbyDto = LobbyFactory.lobbyDto({ lobbyUuid: uuid })
+    const lobbyDto = LobbyFactory.lobbyDto({ uuid: uuid })
     return {
-      uuid: lobbyDto.lobbyUuid,
+      uuid: lobbyDto.uuid,
       name: lobbyDto.name,
       status: 'waiting',
       maxPlayers: lobbyDto.maxPlayers,
       isPrivate: lobbyDto.isPrivate,
-      createdBy: lobbyDto.creator,
+      createdBy: lobbyDto.createdBy,
       players: [
         { uuid: 'user-123', nickName: 'Player 1' },
-        { uuid: 'user-456', nickName: 'Player 2' }
+        { uuid: 'user-456', nickName: 'Player 2' },
       ],
       playerCount: 2,
       hasAvailableSlots: true,
@@ -32,9 +32,9 @@ const mockLobbyRepository = {
           return { success: true }
         }
         return { success: false, error: 'Player not found in lobby' }
-      }
+      },
     }
-  }
+  },
 }
 
 test.group('LeaveLobbyUseCase', (group) => {
@@ -48,7 +48,7 @@ test.group('LeaveLobbyUseCase', (group) => {
     // Arrange
     const request = {
       userUuid: 'user-123',
-      lobbyUuid: 'lobby-456'
+      lobbyUuid: 'lobby-456',
     }
 
     // Act
@@ -64,7 +64,7 @@ test.group('LeaveLobbyUseCase', (group) => {
     // Arrange
     const request = {
       userUuid: '',
-      lobbyUuid: 'lobby-456'
+      lobbyUuid: 'lobby-456',
     }
 
     // Act
@@ -79,7 +79,7 @@ test.group('LeaveLobbyUseCase', (group) => {
     // Arrange
     const request = {
       userUuid: 'user-123',
-      lobbyUuid: ''
+      lobbyUuid: '',
     }
 
     // Act
@@ -108,15 +108,15 @@ test.group('LeaveLobbyUseCase', (group) => {
         availableActions: ['leave'],
         createdAt: new Date(),
         hasPlayer: (_playerUuid: string) => false,
-        removePlayer: (_playerUuid: string) => ({ success: false, error: 'Player not found' })
-      })
+        removePlayer: (_playerUuid: string) => ({ success: false, error: 'Player not found' }),
+      }),
     }
 
     const useCase = new LeaveLobbyUseCase(mockLobbyWithoutPlayer as any)
 
     const request = {
       userUuid: 'user-123',
-      lobbyUuid: 'lobby-456'
+      lobbyUuid: 'lobby-456',
     }
 
     // Act
@@ -145,15 +145,15 @@ test.group('LeaveLobbyUseCase', (group) => {
         availableActions: [],
         createdAt: new Date(),
         hasPlayer: (playerUuid: string) => playerUuid === 'user-123',
-        removePlayer: (_playerUuid: string) => ({ success: true })
-      })
+        removePlayer: (_playerUuid: string) => ({ success: true }),
+      }),
     }
 
     const useCase = new LeaveLobbyUseCase(mockLobbyWithOnePlayer as any)
 
     const request = {
       userUuid: 'user-123',
-      lobbyUuid: 'lobby-456'
+      lobbyUuid: 'lobby-456',
     }
 
     // Act
@@ -183,15 +183,15 @@ test.group('LeaveLobbyUseCase', (group) => {
         availableActions: ['leave'],
         createdAt: new Date(),
         hasPlayer: (_playerUuid: string) => true,
-        removePlayer: (_playerUuid: string) => ({ success: false, error: 'Cannot remove player' })
-      })
+        removePlayer: (_playerUuid: string) => ({ success: false, error: 'Cannot remove player' }),
+      }),
     }
 
     const useCase = new LeaveLobbyUseCase(mockLobbyWithRemoveFailure as any)
 
     const request = {
       userUuid: 'user-123',
-      lobbyUuid: 'lobby-456'
+      lobbyUuid: 'lobby-456',
     }
 
     // Act
@@ -208,14 +208,14 @@ test.group('LeaveLobbyUseCase', (group) => {
       ...mockLobbyRepository,
       findByUuidOrFail: async (_uuid: string) => {
         throw new Error('Lobby not found')
-      }
+      },
     }
 
     const useCase = new LeaveLobbyUseCase(mockLobbyRepositoryNotFound as any)
 
     const request = {
       userUuid: 'user-123',
-      lobbyUuid: 'non-existent-lobby'
+      lobbyUuid: 'non-existent-lobby',
     }
 
     // Act

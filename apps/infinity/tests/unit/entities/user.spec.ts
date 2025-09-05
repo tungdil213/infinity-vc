@@ -132,7 +132,7 @@ test.group('User Entity', () => {
       email: 'john@example.com',
       password: 'password123',
     })
-    
+
     user.updateProfile('Jane', 'Smith', 'https://example.com/new-avatar.jpg')
 
     assert.equal(user.firstName, 'Jane')
@@ -166,7 +166,7 @@ test.group('User Entity', () => {
       password: 'password123',
     })
     const newPassword = 'newpassword123'
-    
+
     user.changePassword(newPassword)
 
     assert.equal(user.password, newPassword)

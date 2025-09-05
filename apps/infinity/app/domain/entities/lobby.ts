@@ -50,7 +50,7 @@ export default class Lobby extends BaseEntity {
 
     // Ajouter le créateur comme premier joueur
     lobby._players = [data.creator]
-    
+
     // Mettre à jour le statut initial basé sur le nombre de joueurs
     lobby.updateStatusBasedOnPlayerCount()
 
@@ -170,14 +170,11 @@ export default class Lobby extends BaseEntity {
 
       // Vérifier si c'est le créateur et s'il y a d'autres joueurs
       if (playerUuid === this._createdBy && this._players.length > 1) {
-        return Result.fail(
-          'Creator cannot leave lobby while other players are present'
-        )
+        return Result.fail('Creator cannot leave lobby while other players are present')
       }
 
       const removedPlayer = this._players[playerIndex]
       this._players.splice(playerIndex, 1)
-
 
       // Si le créateur quitte, transférer la propriété
       if (playerUuid === this._createdBy && this._players.length > 0) {
@@ -268,7 +265,7 @@ export default class Lobby extends BaseEntity {
 
   private updateStatusBasedOnPlayerCount(): void {
     const playerCount = this._players.length
-    
+
     if (playerCount === 0) {
       this._status = LobbyStatus.OPEN
     } else if (playerCount === 1) {

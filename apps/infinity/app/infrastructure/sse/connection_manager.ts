@@ -15,7 +15,7 @@ export class InMemorySSEConnectionManager implements SSEConnectionManager {
 
   addConnection(userId: string, response: Response): string {
     const connectionId = crypto.randomUUID()
-    
+
     const connection: SSEConnection = {
       id: connectionId,
       userId,
@@ -95,7 +95,7 @@ export class InMemorySSEConnectionManager implements SSEConnectionManager {
     if (!connectionIds) return []
 
     return Array.from(connectionIds)
-      .map(id => this.connections.get(id))
+      .map((id) => this.connections.get(id))
       .filter((conn): conn is SSEConnection => conn !== undefined)
   }
 
@@ -139,37 +139,37 @@ export class InMemorySSEConnectionManager implements SSEConnectionManager {
 
     for (const [connectionId, connection] of this.connections) {
       const timeSinceLastPing = now.getTime() - connection.lastPing.getTime()
-      
+
       if (timeSinceLastPing > this.CONNECTION_TIMEOUT || !connection.isActive) {
         connectionsToRemove.push(connectionId)
       }
     }
 
-    connectionsToRemove.forEach(id => this.removeConnection(id))
+    connectionsToRemove.forEach((id) => this.removeConnection(id))
   }
 
   getActiveConnectionCount(): number {
-    return Array.from(this.connections.values()).filter(conn => conn.isActive).length
+    return Array.from(this.connections.values()).filter((conn) => conn.isActive).length
   }
 
   private formatSSEEvent(event: SSEEvent): string {
     let sseData = ''
-    
+
     if (event.id) {
       sseData += `id: ${event.id}\n`
     }
-    
+
     if (event.type) {
       sseData += `event: ${event.type}\n`
     }
-    
+
     if (event.retry) {
       sseData += `retry: ${event.retry}\n`
     }
-    
+
     const data = typeof event.data === 'string' ? event.data : JSON.stringify(event.data)
     sseData += `data: ${data}\n\n`
-    
+
     return sseData
   }
 

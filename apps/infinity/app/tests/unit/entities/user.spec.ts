@@ -128,7 +128,7 @@ test.group('User Entity', () => {
 
     test('should update profile information', ({ assert }) => {
       user = UserFactory.create()
-      
+
       user.updateProfile('Jane', 'Smith', 'https://example.com/new-avatar.jpg')
 
       assert.equal(user.firstName, 'Jane')
@@ -139,7 +139,7 @@ test.group('User Entity', () => {
 
     test('should update only provided profile fields', ({ assert }) => {
       user = UserFactory.create()
-      
+
       const originalFirstName = user.firstName
 
       user.updateProfile(undefined, 'NewLastName')
@@ -150,7 +150,7 @@ test.group('User Entity', () => {
 
     test('should change password with valid new password', ({ assert }) => {
       user = UserFactory.create()
-      
+
       const newPassword = 'newpassword123'
       user.changePassword(newPassword)
 
@@ -159,7 +159,7 @@ test.group('User Entity', () => {
 
     test('should throw error when changing to invalid password', ({ assert }) => {
       user = UserFactory.create()
-      
+
       assert.throws(() => {
         user.changePassword('123')
       }, 'Domain validation failed for password with value "[REDACTED]": must be at least 8 characters long')
@@ -167,7 +167,7 @@ test.group('User Entity', () => {
 
     test('should verify email', ({ assert }) => {
       user = UserFactory.create()
-      
+
       assert.equal(user.isEmailVerified, false)
 
       user.verifyEmail()

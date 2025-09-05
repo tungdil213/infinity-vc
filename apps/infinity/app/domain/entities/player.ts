@@ -116,10 +116,16 @@ export default class Player extends BaseEntity implements PlayerInterface {
       throw new PlayerValidationException('Nickname cannot be empty', 'nickName')
     }
     if (nickName.trim().length < 3 || nickName.trim().length > 30) {
-      throw new PlayerValidationException('Nickname must be between 3 and 30 characters', 'nickName')
+      throw new PlayerValidationException(
+        'Nickname must be between 3 and 30 characters',
+        'nickName'
+      )
     }
     if (!/^[a-zA-Z0-9\s_-]+$/.test(nickName.trim())) {
-      throw new PlayerValidationException('Nickname can only contain letters, numbers, spaces, underscores and hyphens', 'nickName')
+      throw new PlayerValidationException(
+        'Nickname can only contain letters, numbers, spaces, underscores and hyphens',
+        'nickName'
+      )
     }
   }
 

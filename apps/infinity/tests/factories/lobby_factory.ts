@@ -16,7 +16,7 @@ export class LobbyFactory {
       name: `Test Lobby ${this.counter}`,
       maxPlayers: 4,
       isPrivate: false,
-      ...overrides
+      ...overrides,
     }
   }
 
@@ -26,7 +26,7 @@ export class LobbyFactory {
   static lobbyDto(overrides: Partial<LobbyDto> = {}): LobbyDto {
     const lobbyId = this.counter++
     const creatorUuid = `user-${lobbyId}`
-    
+
     return {
       uuid: `lobby-${lobbyId}`,
       name: `Test Lobby ${lobbyId}`,
@@ -40,7 +40,7 @@ export class LobbyFactory {
       createdAt: new Date(),
       players: [this.playerDto({ uuid: creatorUuid })],
       availableActions: ['join', 'leave'],
-      ...overrides
+      ...overrides,
     }
   }
 
@@ -52,7 +52,7 @@ export class LobbyFactory {
     return {
       uuid: `player-${playerId}`,
       nickName: `Player ${playerId}`,
-      ...overrides
+      ...overrides,
     }
   }
 
@@ -69,9 +69,9 @@ export class LobbyFactory {
         this.playerDto({ uuid: 'player-1', nickName: 'Player 1' }),
         this.playerDto({ uuid: 'player-2', nickName: 'Player 2' }),
         this.playerDto({ uuid: 'player-3', nickName: 'Player 3' }),
-        this.playerDto({ uuid: 'player-4', nickName: 'Player 4' })
+        this.playerDto({ uuid: 'player-4', nickName: 'Player 4' }),
       ],
-      ...overrides
+      ...overrides,
     })
   }
 
@@ -82,7 +82,7 @@ export class LobbyFactory {
     return this.lobbyDto({
       isPrivate: true,
       name: 'Private Lobby',
-      ...overrides
+      ...overrides,
     })
   }
 

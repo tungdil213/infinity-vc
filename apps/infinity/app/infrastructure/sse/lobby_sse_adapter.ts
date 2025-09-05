@@ -1,4 +1,8 @@
-import { LobbyEventBroadcaster, ClientConnection, WebSocketServer } from '../../application/services/lobby_event_broadcaster.js'
+import {
+  LobbyEventBroadcaster,
+  ClientConnection,
+  WebSocketServer,
+} from '../../application/services/lobby_event_broadcaster.js'
 import { LobbyNotificationService } from '../../application/services/lobby_notification_service.js'
 import { sseConnectionManager } from './connection_manager.js'
 import { channelManager } from './channel_manager.js'
@@ -66,28 +70,31 @@ export class LobbySSEAdapter implements WebSocketServer {
       },
       close: () => {
         sseConnectionManager.removeConnection(conn.id)
-      }
+      },
     }))
   }
 
   /**
    * Diffuse un événement lobby via SSE
    */
-  private async broadcastLobbyEvent(message: any, filter?: (conn: ClientConnection) => boolean): Promise<void> {
+  private async broadcastLobbyEvent(
+    message: any,
+    filter?: (conn: ClientConnection) => boolean
+  ): Promise<void> {
     try {
       // Convertir le message en événement SSE
       const sseEvent: SSEEvent = {
         id: crypto.randomUUID(),
         timestamp: new Date(),
         type: this.mapLobbyEventTypeToSSE(message.type),
-        data: message
+        data: message,
       }
 
       // Si un filtre est fourni, l'appliquer aux connexions
       if (filter) {
         const connections = this.getConnections()
         const filteredConnections = connections.filter(filter)
-        
+
         for (const conn of filteredConnections) {
           await this.sendSSEEvent(conn.id, sseEvent)
         }
@@ -177,7 +184,10 @@ export class LobbySSEAdapter implements WebSocketServer {
       // Se désabonner du canal lobby
       return channelManager.unsubscribeFromChannel(connectionId, `lobby:${lobbyUuid}`)
     } catch (error) {
-      console.error(`Error unsubscribing connection ${connectionId} from lobby ${lobbyUuid}:`, error)
+      console.error(
+        `Error unsubscribing connection ${connectionId} from lobby ${lobbyUuid}:`,
+        error
+      )
       return false
     }
   }

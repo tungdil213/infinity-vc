@@ -6,7 +6,7 @@ export interface DomainEvent<T = any> {
 
 export abstract class BaseDomainEvent<T = any> implements DomainEvent<T> {
   readonly timestamp: Date = new Date()
-  
+
   constructor(
     public readonly eventType: string,
     public readonly data?: T

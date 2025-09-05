@@ -116,7 +116,7 @@ export class HybridLobbyService implements LobbyRepository {
   async delete(uuid: string): Promise<void> {
     // Supprimer de la mémoire
     await this.inMemoryRepository.delete(uuid)
-    
+
     // Supprimer de la base si il y était persisté
     try {
       await this.databaseRepository.delete(uuid)
@@ -132,7 +132,7 @@ export class HybridLobbyService implements LobbyRepository {
     if (!this.shouldPersist(lobby)) {
       throw new Error('Lobby cannot be persisted in current state')
     }
-    
+
     await this.databaseRepository.save(lobby)
   }
 

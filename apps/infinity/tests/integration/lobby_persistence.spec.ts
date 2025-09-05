@@ -98,7 +98,7 @@ test.group('Lobby Persistence Integration', (group) => {
     assert.isTrue(result.isSuccess)
 
     // Vérifier que le lobby a été persisté en base avant suppression
-    // Note: Le lobby est supprimé après création de la partie, 
+    // Note: Le lobby est supprimé après création de la partie,
     // mais on peut vérifier que la partie a été créée
     assert.isDefined(result.value)
     assert.equal(result.value.players.length, 2)

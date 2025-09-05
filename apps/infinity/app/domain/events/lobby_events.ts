@@ -59,6 +59,17 @@ export class LobbyUpdatedEvent implements DomainEvent {
   ) {}
 }
 
+export class LobbyStatusChangedEvent implements DomainEvent {
+  readonly eventType: string = 'LobbyStatusChanged'
+  readonly timestamp: Date = new Date()
+
+  constructor(
+    public readonly lobbyUuid: string,
+    public readonly oldStatus: string,
+    public readonly newStatus: string
+  ) {}
+}
+
 export class LobbyDeletedEvent implements DomainEvent {
   readonly eventType: string = 'LobbyDeleted'
   readonly timestamp: Date = new Date()

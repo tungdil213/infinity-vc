@@ -10,7 +10,7 @@ const mockPlayerRepository = {
     return {
       uuid: userDto.userUuid,
       nickName: userDto.fullName,
-      email: userDto.email
+      email: userDto.email,
     }
   },
   findPlayerInterfaceByUuidOrFail: async (userUuid: string) => {
@@ -18,15 +18,16 @@ const mockPlayerRepository = {
     return {
       uuid: userDto.userUuid,
       nickName: userDto.fullName,
-      email: userDto.email
+      email: userDto.email,
     }
-  }
+  },
 }
 
 const mockLobbyRepository = {
   save: async (lobby: any) => lobby,
-  findByCreatorUuid: async (userUuid: string) => null,
-  delete: async (uuid: string) => true
+  findByCreatorUuid: async (_userUuid: string) => null,
+  findByPlayer: async (_userUuid: string) => null,
+  delete: async (_uuid: string) => true,
 }
 
 // Mock notification service
@@ -38,7 +39,7 @@ const mockNotificationService = {
   notifyGameStarted: () => {},
   notifyLobbyDeleted: () => {},
   addListener: () => () => {},
-  addLobbyListener: () => () => {}
+  addLobbyListener: () => () => {},
 }
 
 test.group('CreateLobbyUseCase', (group) => {
@@ -63,7 +64,7 @@ test.group('CreateLobbyUseCase', (group) => {
       userUuid: 'user-123',
       name: 'Test Lobby',
       maxPlayers: 4,
-      isPrivate: false
+      isPrivate: false,
     })
 
     // Act
@@ -85,7 +86,7 @@ test.group('CreateLobbyUseCase', (group) => {
     // Arrange
     const request = LobbyFactory.createLobbyRequest({
       name: '',
-      userUuid: 'user-123'
+      userUuid: 'user-123',
     })
 
     // Act
@@ -100,7 +101,7 @@ test.group('CreateLobbyUseCase', (group) => {
     // Arrange
     const request = LobbyFactory.createLobbyRequest({
       userUuid: 'user-123',
-      maxPlayers: 1
+      maxPlayers: 1,
     })
 
     // Act
@@ -115,7 +116,7 @@ test.group('CreateLobbyUseCase', (group) => {
     // Arrange
     const request = LobbyFactory.createLobbyRequest({
       userUuid: 'user-123',
-      maxPlayers: 10
+      maxPlayers: 10,
     })
 
     // Act
@@ -131,7 +132,7 @@ test.group('CreateLobbyUseCase', (group) => {
     const existingLobby = {
       uuid: 'existing-lobby',
       removePlayer: (_playerUuid: string) => ({ success: true }),
-      playerCount: 0
+      playerCount: 0,
     }
 
     const mockLobbyRepositoryWithExisting = {
@@ -140,16 +141,17 @@ test.group('CreateLobbyUseCase', (group) => {
       delete: async (uuid: string) => {
         assert.equal(uuid, 'existing-lobby')
         return Promise.resolve()
-      }
+      },
     }
 
     const useCase = new CreateLobbyUseCase(
       mockPlayerRepository as any,
-      mockLobbyRepositoryWithExisting as any
+      mockLobbyRepositoryWithExisting as any,
+      mockNotificationService as any
     )
 
     const request = LobbyFactory.createLobbyRequest({
-      userUuid: 'user-123'
+      userUuid: 'user-123',
     })
 
     // Act
@@ -162,7 +164,7 @@ test.group('CreateLobbyUseCase', (group) => {
   test('should handle player not found error', async ({ assert }) => {
     // Arrange
     const mockPlayerRepositoryNotFound = {
-      findPlayerInterfaceByUuid: async (_uuid: string) => null
+      findPlayerInterfaceByUuid: async (_uuid: string) => null,
     }
 
     const useCase = new CreateLobbyUseCase(
@@ -172,7 +174,7 @@ test.group('CreateLobbyUseCase', (group) => {
     )
 
     const request = LobbyFactory.createLobbyRequest({
-      userUuid: 'non-existent-user'
+      userUuid: 'non-existent-user',
     })
 
     // Act
@@ -187,7 +189,7 @@ test.group('CreateLobbyUseCase', (group) => {
     // Arrange
     const request = LobbyFactory.createLobbyRequest({
       userUuid: 'user-123',
-      isPrivate: true
+      isPrivate: true,
     })
 
     // Act
@@ -198,11 +200,13 @@ test.group('CreateLobbyUseCase', (group) => {
     assert.isTrue(result.value.isPrivate)
   })
 
-  test('should use default values when optional parameters are not provided', async ({ assert }) => {
+  test('should use default values when optional parameters are not provided', async ({
+    assert,
+  }) => {
     // Arrange
     const request = {
       userUuid: 'user-123',
-      name: 'Test Lobby'
+      name: 'Test Lobby',
     }
 
     // Act

@@ -21,11 +21,11 @@ export class LobbySerializer {
       hasAvailableSlots: lobby.hasAvailableSlots,
       canStart: lobby.canStart,
       createdAt: lobby.createdAt,
-      players: lobby.players.map(player => ({
+      players: lobby.players.map((player) => ({
         uuid: player.uuid,
-        nickName: player.nickName
+        nickName: player.nickName,
       })),
-      availableActions: lobby.availableActions
+      availableActions: lobby.availableActions,
     }
   }
 
@@ -43,12 +43,12 @@ export class LobbySerializer {
       hasAvailableSlots: lobby.hasAvailableSlots,
       canStart: lobby.canStart,
       createdBy: lobby.createdBy,
-      players: lobby.players.map(player => ({
+      players: lobby.players.map((player) => ({
         uuid: player.uuid,
-        nickName: player.nickName
+        nickName: player.nickName,
       })),
       availableActions: lobby.availableActions,
-      createdAt: lobby.createdAt
+      createdAt: lobby.createdAt,
     }
   }
 
@@ -56,7 +56,7 @@ export class LobbySerializer {
    * Convertit un tableau d'entités Lobby en tableau de LobbyDto
    */
   static toDtoArray(lobbies: Lobby[]): LobbyDto[] {
-    return lobbies.map(lobby => this.toDto(lobby))
+    return lobbies.map((lobby) => this.toDto(lobby))
   }
 
   /**
@@ -65,7 +65,7 @@ export class LobbySerializer {
   static playerToDto(player: any): PlayerDto {
     return {
       uuid: player.uuid,
-      nickName: player.nickName
+      nickName: player.nickName,
     }
   }
 }

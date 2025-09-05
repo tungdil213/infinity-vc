@@ -18,7 +18,7 @@ test.group('RegisterUserUseCase', () => {
   test.group('execute', () => {
     test('should register a new user successfully', async ({ assert }) => {
       setupRepositories()
-      
+
       const userData = {
         firstName: 'John',
         lastName: 'Doe',
@@ -39,7 +39,7 @@ test.group('RegisterUserUseCase', () => {
 
     test('should fail when email already exists', async ({ assert }) => {
       setupRepositories()
-      
+
       const existingUser = UserFactory.create({ email: 'john@example.com' })
       await userRepository.save(existingUser)
 
@@ -60,7 +60,7 @@ test.group('RegisterUserUseCase', () => {
 
     test('should fail when username already exists', async ({ assert }) => {
       setupRepositories()
-      
+
       const existingUser = UserFactory.create({ username: 'johndoe' })
       await userRepository.save(existingUser)
 
@@ -81,7 +81,7 @@ test.group('RegisterUserUseCase', () => {
 
     test('should fail with invalid user data', async ({ assert }) => {
       setupRepositories()
-      
+
       const userData = {
         firstName: 'John',
         lastName: 'Doe',
@@ -99,7 +99,7 @@ test.group('RegisterUserUseCase', () => {
 
     test('should fail with invalid player data', async ({ assert }) => {
       setupRepositories()
-      
+
       const userData = {
         firstName: 'John',
         lastName: 'Doe',
@@ -117,7 +117,7 @@ test.group('RegisterUserUseCase', () => {
 
     test('should save both user and player to repositories', async ({ assert }) => {
       setupRepositories()
-      
+
       const userData = {
         firstName: 'John',
         lastName: 'Doe',
@@ -139,7 +139,7 @@ test.group('RegisterUserUseCase', () => {
 
     test('should handle repository save errors', async ({ assert }) => {
       setupRepositories()
-      
+
       const userData = {
         firstName: 'John',
         lastName: 'Doe',

@@ -78,10 +78,10 @@ export class LobbyEventBroadcaster {
    */
   private broadcastEvent(event: LobbyEvent): void {
     const message = this.formatEventMessage(event)
-    
+
     // Extraire l'ID du lobby selon le type d'événement
     const lobbyId = this.extractLobbyId(event)
-    
+
     // Filtrer les connexions selon le type d'événement et le lobby
     const filter = (connection: ClientConnection): boolean => {
       // Si la connexion n'est pas ouverte, ne pas envoyer
@@ -119,7 +119,7 @@ export class LobbyEventBroadcaster {
     const baseMessage = {
       type: event.type,
       timestamp: new Date().toISOString(),
-      lobbyId: event.lobbyUuid
+      lobbyId: event.lobbyUuid,
     }
 
     switch (event.type) {
@@ -127,14 +127,14 @@ export class LobbyEventBroadcaster {
         return {
           ...baseMessage,
           player: event.player,
-          lobby: event.lobby
+          lobby: event.lobby,
         }
 
       case LobbyEventType.PLAYER_LEFT:
         return {
           ...baseMessage,
           player: event.player,
-          lobby: event.lobby
+          lobby: event.lobby,
         }
 
       case LobbyEventType.STATUS_CHANGED:
@@ -142,20 +142,20 @@ export class LobbyEventBroadcaster {
           ...baseMessage,
           oldStatus: event.oldStatus,
           newStatus: event.newStatus,
-          lobby: event.lobby
+          lobby: event.lobby,
         }
 
       case LobbyEventType.GAME_STARTED:
         return {
           ...baseMessage,
           gameId: event.gameUuid,
-          lobby: event.lobby
+          lobby: event.lobby,
         }
 
       case LobbyEventType.LOBBY_DELETED:
         return {
           ...baseMessage,
-          lobby: event.lobby
+          lobby: event.lobby,
         }
 
       default:
@@ -175,7 +175,7 @@ export class LobbyEventBroadcaster {
       }
     }
 
-    closedConnections.forEach(id => {
+    closedConnections.forEach((id) => {
       this.removeConnection(id)
     })
   }
@@ -185,7 +185,7 @@ export class LobbyEventBroadcaster {
    */
   destroy(): void {
     // Désabonner de tous les événements
-    this.unsubscribeFunctions.forEach(unsubscribe => unsubscribe())
+    this.unsubscribeFunctions.forEach((unsubscribe) => unsubscribe())
     this.unsubscribeFunctions = []
 
     // Fermer toutes les connexions

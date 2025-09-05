@@ -55,12 +55,12 @@ export function useSSE(options: UseSSEOptions = {}) {
       eventSource.onmessage = (event) => {
         try {
           const sseEvent: SSEEvent = JSON.parse(event.data)
-          
+
           // Handle connection established event
           if (sseEvent.type === 'connection.established') {
             setConnectionId(sseEvent.data.connectionId)
           }
-          
+
           onMessage?.(sseEvent)
         } catch (err) {
           console.error('Failed to parse SSE message:', err)

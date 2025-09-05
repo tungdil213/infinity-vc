@@ -33,8 +33,8 @@ export default class LobbySyncController {
       if (!targetConnectionId) {
         const userConnections = sseConnectionManager.getConnectionsByUser(user.userUuid)
         if (userConnections.length === 0) {
-          return response.badRequest({ 
-            error: 'No active SSE connection found. Please establish an SSE connection first.' 
+          return response.badRequest({
+            error: 'No active SSE connection found. Please establish an SSE connection first.',
           })
         }
         targetConnectionId = userConnections[0].id
@@ -54,12 +54,12 @@ export default class LobbySyncController {
 
       // S'abonner aux événements du lobby
       const success = await lobbySSEAdapter.subscribeLobbyConnection(targetConnectionId, lobbyUuid)
-      
+
       if (success) {
         return response.ok({
           message: 'Successfully subscribed to lobby events',
           lobbyUuid,
-          connectionId: targetConnectionId
+          connectionId: targetConnectionId,
         })
       } else {
         return response.internalServerError({ error: 'Failed to subscribe to lobby events' })
@@ -94,7 +94,7 @@ export default class LobbySyncController {
         targetConnectionIds = [connectionId]
       } else {
         const userConnections = sseConnectionManager.getConnectionsByUser(user.userUuid)
-        targetConnectionIds = userConnections.map(conn => conn.id)
+        targetConnectionIds = userConnections.map((conn) => conn.id)
       }
 
       let successCount = 0
@@ -110,7 +110,7 @@ export default class LobbySyncController {
       return response.ok({
         message: 'Successfully unsubscribed from lobby events',
         lobbyUuid,
-        connectionsUpdated: successCount
+        connectionsUpdated: successCount,
       })
     } catch (error) {
       console.error('Error unsubscribing from lobby events:', error)
@@ -138,7 +138,7 @@ export default class LobbySyncController {
       // TODO: Implémenter la récupération de l'état du lobby
       // const lobbyRepository = container.resolve('LobbyRepository')
       // const lobby = await lobbyRepository.findByUuid(lobbyUuid)
-      // 
+      //
       // if (!lobby) {
       //   return response.notFound({ error: 'Lobby not found' })
       // }
@@ -154,17 +154,15 @@ export default class LobbySyncController {
         uuid: lobbyUuid,
         name: 'Sample Lobby',
         status: 'waiting',
-        players: [
-          { uuid: user.userUuid, nickName: user.nickName || 'Player 1' }
-        ],
+        players: [{ uuid: user.userUuid, nickName: user.nickName || 'Player 1' }],
         maxPlayers: 4,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       }
 
       return response.ok({
         lobby: lobbyState,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       })
     } catch (error) {
       console.error('Error getting lobby state:', error)
@@ -190,8 +188,10 @@ export default class LobbySyncController {
 
       // Obtenir les statistiques des connexions SSE
       const allConnections = sseConnectionManager.getAllConnections()
-      const lobbyConnections = allConnections.filter((conn: SSEConnection) => conn.metadata?.lobbyId)
-      
+      const lobbyConnections = allConnections.filter(
+        (conn: SSEConnection) => conn.metadata?.lobbyId
+      )
+
       // Grouper par lobby
       const lobbyStats = new Map<string, number>()
       for (const conn of lobbyConnections) {
@@ -206,7 +206,7 @@ export default class LobbySyncController {
         lobbyConnections: lobbyConnections.length,
         activeLobbies: lobbyStats.size,
         lobbyConnectionCounts: Object.fromEntries(lobbyStats),
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       }
 
       return response.ok(stats)
@@ -244,7 +244,7 @@ export default class LobbySyncController {
         type: eventType,
         lobbyUuid,
         data: data || { message: 'Test event', timestamp: new Date().toISOString() },
-        timestamp: new Date()
+        timestamp: new Date(),
       }
 
       // Diffuser l'événement via l'adaptateur
@@ -252,7 +252,7 @@ export default class LobbySyncController {
 
       return response.ok({
         message: 'Test event sent successfully',
-        event: testEvent
+        event: testEvent,
       })
     } catch (error) {
       console.error('Error sending test event:', error)

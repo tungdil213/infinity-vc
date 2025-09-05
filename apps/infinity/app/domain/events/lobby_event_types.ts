@@ -76,12 +76,12 @@ export interface LobbyDeletedEvent extends BaseLobbyEvent {
 /**
  * Union type pour tous les événements de lobby
  */
-export type LobbyEvent = 
+export type LobbyEvent =
   | LobbyCreatedEvent
-  | PlayerJoinedEvent 
-  | PlayerLeftEvent 
-  | StatusChangedEvent 
-  | GameStartedEvent 
+  | PlayerJoinedEvent
+  | PlayerLeftEvent
+  | StatusChangedEvent
+  | GameStartedEvent
   | LobbyDeletedEvent
 
 /**

@@ -178,7 +178,10 @@ export default class Game extends BaseEntity {
 
   nextRound(): void {
     if (this._status !== GameStatus.IN_PROGRESS) {
-      throw new GameStateException('Cannot advance round when game is not in progress', this._status)
+      throw new GameStateException(
+        'Cannot advance round when game is not in progress',
+        this._status
+      )
     }
 
     this._gameData.currentRound += 1

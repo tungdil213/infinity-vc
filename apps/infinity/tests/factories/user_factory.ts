@@ -1,4 +1,9 @@
-import { RegisterUserRequestDto, UserDto, PlayerDto, AuthenticateUserRequestDto } from '../../app/application/dtos/user_dto.js'
+import {
+  RegisterUserRequestDto,
+  UserDto,
+  PlayerDto,
+  AuthenticateUserRequestDto,
+} from '../../app/application/dtos/user_dto.js'
 
 /**
  * User Factory
@@ -10,25 +15,29 @@ export class UserFactory {
   /**
    * Crée un RegisterUserRequestDto avec des valeurs par défaut
    */
-  static registerUserRequest(overrides: Partial<RegisterUserRequestDto> = {}): RegisterUserRequestDto {
+  static registerUserRequest(
+    overrides: Partial<RegisterUserRequestDto> = {}
+  ): RegisterUserRequestDto {
     const userId = this.counter++
     return {
       fullName: `Test User ${userId}`,
       email: `user${userId}@test.com`,
       password: 'password123',
-      ...overrides
+      ...overrides,
     }
   }
 
   /**
    * Crée un AuthenticateUserRequestDto avec des valeurs par défaut
    */
-  static authenticateUserRequest(overrides: Partial<AuthenticateUserRequestDto> = {}): AuthenticateUserRequestDto {
+  static authenticateUserRequest(
+    overrides: Partial<AuthenticateUserRequestDto> = {}
+  ): AuthenticateUserRequestDto {
     const userId = this.counter++
     return {
       email: `user${userId}@test.com`,
       password: 'password123',
-      ...overrides
+      ...overrides,
     }
   }
 
@@ -38,7 +47,7 @@ export class UserFactory {
   static userDto(overrides: Partial<UserDto> = {}): UserDto {
     const userId = this.counter++
     const now = new Date()
-    
+
     return {
       userUuid: `user-${userId}`,
       fullName: `Test User ${userId}`,
@@ -46,7 +55,7 @@ export class UserFactory {
       isArchived: false,
       createdAt: now,
       updatedAt: now,
-      ...overrides
+      ...overrides,
     }
   }
 
@@ -61,7 +70,7 @@ export class UserFactory {
       email: `player${playerId}@test.com`,
       isOnline: true,
       lastSeen: new Date(),
-      ...overrides
+      ...overrides,
     }
   }
 
@@ -72,7 +81,7 @@ export class UserFactory {
     return this.userDto({
       isArchived: true,
       fullName: 'Archived User',
-      ...overrides
+      ...overrides,
     })
   }
 
@@ -83,7 +92,7 @@ export class UserFactory {
     return this.userDto({
       fullName: 'Admin User',
       email: 'admin@test.com',
-      ...overrides
+      ...overrides,
     })
   }
 

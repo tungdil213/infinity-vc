@@ -21,18 +21,20 @@ export class SSEChannelImpl implements SSEChannel {
     const promises: Promise<boolean>[] = []
 
     for (const connectionId of this.connections) {
-      promises.push(sseConnectionManager.sendToConnection(connectionId, {
-        ...event,
-        channel: this.name,
-      }))
+      promises.push(
+        sseConnectionManager.sendToConnection(connectionId, {
+          ...event,
+          channel: this.name,
+        })
+      )
     }
 
     // Wait for all sends to complete and remove failed connections
     const results = await Promise.all(promises)
     const connectionIds = Array.from(this.connections)
-    
-    for (let i = 0; i < results.length; i++) {
-      if (!results[i]) {
+
+    for (const [i, result] of results.entries()) {
+      if (!result) {
         // Remove failed connection from channel
         this.connections.delete(connectionIds[i])
       }
@@ -83,16 +85,16 @@ export class InMemoryChannelManager implements ChannelManager {
 
     // Create channel if it doesn't exist
     const channel = this.createChannel(channelName)
-    
+
     // Subscribe connection to channel
     channel.subscribe(connectionId)
-    
+
     // Track connection's channels
     if (!this.connectionChannels.has(connectionId)) {
       this.connectionChannels.set(connectionId, new Set())
     }
     this.connectionChannels.get(connectionId)!.add(channelName)
-    
+
     // Update connection's channel list
     connection.channels.add(channelName)
 
@@ -105,7 +107,7 @@ export class InMemoryChannelManager implements ChannelManager {
 
     // Unsubscribe from channel
     channel.unsubscribe(connectionId)
-    
+
     // Update connection tracking
     const connectionChannels = this.connectionChannels.get(connectionId)
     if (connectionChannels) {
@@ -150,7 +152,7 @@ export class InMemoryChannelManager implements ChannelManager {
     for (const [channelName, channel] of this.channels) {
       // Check if all connections in this channel are still active
       const activeConnections = new Set<string>()
-      
+
       for (const connectionId of channel.connections) {
         const connection = sseConnectionManager.getConnection(connectionId)
         if (connection && connection.isActive) {
@@ -171,7 +173,7 @@ export class InMemoryChannelManager implements ChannelManager {
     }
 
     // Delete empty channels
-    channelsToDelete.forEach(channelName => this.deleteChannel(channelName))
+    channelsToDelete.forEach((channelName) => this.deleteChannel(channelName))
 
     // Clean up connection channel tracking
     const connectionsToClean: string[] = []
@@ -182,7 +184,7 @@ export class InMemoryChannelManager implements ChannelManager {
       }
     }
 
-    connectionsToClean.forEach(connectionId => {
+    connectionsToClean.forEach((connectionId) => {
       this.connectionChannels.delete(connectionId)
     })
   }

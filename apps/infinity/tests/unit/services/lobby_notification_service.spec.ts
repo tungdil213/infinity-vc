@@ -152,7 +152,7 @@ test.group('LobbyNotificationService', (group) => {
     const newPlayer = createPlayer()
     const listener1 = new MockEventListener()
     const listener2 = new MockEventListener()
-    
+
     notificationService.addListener(listener1.onLobbyEvent.bind(listener1))
     notificationService.addListener(listener2.onLobbyEvent.bind(listener2))
 
@@ -172,7 +172,7 @@ test.group('LobbyNotificationService', (group) => {
     const newPlayer = createPlayer()
     const listener1 = new MockEventListener()
     const listener2 = new MockEventListener()
-    
+
     const unsubscribe1 = notificationService.addListener(listener1.onLobbyEvent.bind(listener1))
     notificationService.addListener(listener2.onLobbyEvent.bind(listener2))
 
@@ -192,7 +192,7 @@ test.group('LobbyNotificationService', (group) => {
     const faultyListener = () => {
       throw new Error('Listener error')
     }
-    
+
     notificationService.addListener(faultyListener)
     notificationService.addListener(mockListener.onLobbyEvent.bind(mockListener))
 
@@ -210,9 +210,12 @@ test.group('LobbyNotificationService', (group) => {
     const lobby1 = createLobby()
     const lobby2 = createLobby()
     const newPlayer = createPlayer()
-    
+
     const filteredListener = new MockEventListener()
-    notificationService.addLobbyListener(lobby1.uuid, filteredListener.onLobbyEvent.bind(filteredListener))
+    notificationService.addLobbyListener(
+      lobby1.uuid,
+      filteredListener.onLobbyEvent.bind(filteredListener)
+    )
 
     // Act
     notificationService.notifyPlayerJoined(lobby1.uuid, newPlayer, lobby1)

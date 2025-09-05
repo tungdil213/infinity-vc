@@ -4,7 +4,7 @@ import { StartGameUseCase } from '../../../app/application/use_cases/start_game_
 // Mock repositories
 const mockLobbyRepository = {
   save: async (_lobby: any) => Promise.resolve(),
-  delete: async (uuid: string) => Promise.resolve(),
+  delete: async (_uuid: string) => Promise.resolve(),
   findByPlayer: async (_playerUuid: string) => null,
   findByUuid: async (_uuid: string) => null,
   findByUuidOrFail: async (_uuid: string) => {
@@ -17,7 +17,7 @@ const mockLobbyRepository = {
       createdBy: 'user-123', // Creator is the requesting user
       players: [
         { uuid: 'user-123', nickName: 'Creator' },
-        { uuid: 'user-456', nickName: 'Player 2' }
+        { uuid: 'user-456', nickName: 'Player 2' },
       ],
       playerCount: 2,
       hasAvailableSlots: false,
@@ -26,33 +26,30 @@ const mockLobbyRepository = {
       createdAt: new Date(),
       startGame: () => ({
         success: true,
-        data: 'game-uuid-123'
-      })
+        data: 'game-uuid-123',
+      }),
     }
-  }
+  },
 }
 
 const mockGameRepository = {
   save: async (_game: any) => Promise.resolve(),
   findByUuid: async (_uuid: string) => null,
-  findByLobbyUuid: async (_lobbyUuid: string) => null
+  findByLobbyUuid: async (_lobbyUuid: string) => null,
 }
 
 test.group('StartGameUseCase', (group) => {
   let startGameUseCase: StartGameUseCase
 
   group.setup(() => {
-    startGameUseCase = new StartGameUseCase(
-      mockLobbyRepository as any,
-      mockGameRepository as any
-    )
+    startGameUseCase = new StartGameUseCase(mockLobbyRepository as any, mockGameRepository as any)
   })
 
   test('should successfully start a game', async ({ assert }) => {
     // Arrange
     const request = {
       userUuid: 'user-123',
-      lobbyUuid: 'lobby-456'
+      lobbyUuid: 'lobby-456',
     }
 
     // Act
@@ -70,7 +67,7 @@ test.group('StartGameUseCase', (group) => {
     // Arrange
     const request = {
       userUuid: '',
-      lobbyUuid: 'lobby-456'
+      lobbyUuid: 'lobby-456',
     }
 
     // Act
@@ -85,7 +82,7 @@ test.group('StartGameUseCase', (group) => {
     // Arrange
     const request = {
       userUuid: 'user-123',
-      lobbyUuid: ''
+      lobbyUuid: '',
     }
 
     // Act
@@ -109,14 +106,14 @@ test.group('StartGameUseCase', (group) => {
         createdBy: 'different-user', // Different creator
         players: [
           { uuid: 'user-123', nickName: 'Player' },
-          { uuid: 'different-user', nickName: 'Creator' }
+          { uuid: 'different-user', nickName: 'Creator' },
         ],
         playerCount: 2,
         hasAvailableSlots: false,
         canStart: true,
         availableActions: ['start'],
-        createdAt: new Date()
-      })
+        createdAt: new Date(),
+      }),
     }
 
     const useCase = new StartGameUseCase(
@@ -126,7 +123,7 @@ test.group('StartGameUseCase', (group) => {
 
     const request = {
       userUuid: 'user-123',
-      lobbyUuid: 'lobby-456'
+      lobbyUuid: 'lobby-456',
     }
 
     // Act
@@ -153,18 +150,15 @@ test.group('StartGameUseCase', (group) => {
         hasAvailableSlots: true,
         canStart: false,
         availableActions: [],
-        createdAt: new Date()
-      })
+        createdAt: new Date(),
+      }),
     }
 
-    const useCase = new StartGameUseCase(
-      mockLobbyWithOnePlayer as any,
-      mockGameRepository as any
-    )
+    const useCase = new StartGameUseCase(mockLobbyWithOnePlayer as any, mockGameRepository as any)
 
     const request = {
       userUuid: 'user-123',
-      lobbyUuid: 'lobby-456'
+      lobbyUuid: 'lobby-456',
     }
 
     // Act
@@ -188,14 +182,14 @@ test.group('StartGameUseCase', (group) => {
         createdBy: 'other-user',
         players: [
           { uuid: 'other-user', nickName: 'Creator' },
-          { uuid: 'user-456', nickName: 'Player 2' }
+          { uuid: 'user-456', nickName: 'Player 2' },
         ],
         playerCount: 2,
         hasAvailableSlots: false,
         canStart: true,
         availableActions: ['start'],
-        createdAt: new Date()
-      })
+        createdAt: new Date(),
+      }),
     }
 
     const useCase = new StartGameUseCase(
@@ -205,7 +199,7 @@ test.group('StartGameUseCase', (group) => {
 
     const request = {
       userUuid: 'user-123', // Not in the lobby
-      lobbyUuid: 'lobby-456'
+      lobbyUuid: 'lobby-456',
     }
 
     // Act
@@ -222,7 +216,7 @@ test.group('StartGameUseCase', (group) => {
       ...mockLobbyRepository,
       findByUuidOrFail: async (_uuid: string) => {
         throw new Error('Lobby not found')
-      }
+      },
     }
 
     const useCase = new StartGameUseCase(
@@ -232,7 +226,7 @@ test.group('StartGameUseCase', (group) => {
 
     const request = {
       userUuid: 'user-123',
-      lobbyUuid: 'non-existent-lobby'
+      lobbyUuid: 'non-existent-lobby',
     }
 
     // Act

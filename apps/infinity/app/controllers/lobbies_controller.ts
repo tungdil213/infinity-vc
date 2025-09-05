@@ -27,7 +27,7 @@ export default class LobbiesController {
     const lobbies = await this.lobbyRepository.findAll()
 
     return inertia.render('lobbies', {
-      lobbies: lobbies.map(lobby => lobby.serialize()),
+      lobbies: lobbies.map((lobby) => lobby.serialize()),
       user: {
         uuid: user.uuid,
         nickName: user.fullName,
@@ -40,7 +40,7 @@ export default class LobbiesController {
    */
   async create({ inertia, auth }: HttpContext) {
     const user = auth.user!
-    
+
     return inertia.render('create-lobby', {
       user: {
         uuid: user.uuid,
@@ -54,11 +54,15 @@ export default class LobbiesController {
    */
   async store({ request, response, auth }: HttpContext) {
     const user = auth.user!
-    const { name, maxPlayers = 4, isPrivate = false } = request.only(['name', 'maxPlayers', 'isPrivate'])
+    const {
+      name,
+      maxPlayers = 4,
+      isPrivate = false,
+    } = request.only(['name', 'maxPlayers', 'isPrivate'])
 
     const result = await this.createLobbyUseCase.execute({
       name,
-      maxPlayers: parseInt(maxPlayers),
+      maxPlayers: Number.parseInt(maxPlayers),
       isPrivate,
       createdBy: user.uuid,
     })
@@ -194,7 +198,7 @@ export default class LobbiesController {
     const lobbies = await this.lobbyRepository.findAll()
 
     return response.json({
-      lobbies: lobbies.map(lobby => lobby.serialize()),
+      lobbies: lobbies.map((lobby) => lobby.serialize()),
     })
   }
 }

@@ -159,16 +159,28 @@ export default class User extends BaseEntity {
 
   private static validateUsername(username: string): void {
     if (username.length < 3 || username.length > 50) {
-      throw new DomainValidationException('username', username, 'must be between 3 and 50 characters')
+      throw new DomainValidationException(
+        'username',
+        username,
+        'must be between 3 and 50 characters'
+      )
     }
     if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
-      throw new DomainValidationException('username', username, 'can only contain letters, numbers, underscores and hyphens')
+      throw new DomainValidationException(
+        'username',
+        username,
+        'can only contain letters, numbers, underscores and hyphens'
+      )
     }
   }
 
   private static validatePassword(password: string): void {
     if (password.length < 8) {
-      throw new DomainValidationException('password', '[REDACTED]', 'must be at least 8 characters long')
+      throw new DomainValidationException(
+        'password',
+        '[REDACTED]',
+        'must be at least 8 characters long'
+      )
     }
   }
 

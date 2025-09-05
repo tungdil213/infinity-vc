@@ -36,8 +36,8 @@ test.group('Lobby Use Cases Integration', (group) => {
     playerRepository = new InMemoryPlayerRepository()
     gameRepository = new InMemoryGameRepository()
 
-    createLobbyUseCase = new CreateLobbyUseCase(playerRepository, lobbyRepository)
-    joinLobbyUseCase = new JoinLobbyUseCase(playerRepository, lobbyRepository)
+    createLobbyUseCase = new CreateLobbyUseCase(playerRepository, lobbyRepository, null as any)
+    joinLobbyUseCase = new JoinLobbyUseCase(playerRepository, lobbyRepository, null as any)
     leaveLobbyUseCase = new LeaveLobbyUseCase(lobbyRepository)
     startGameUseCase = new StartGameUseCase(lobbyRepository, gameRepository)
     listLobbiesUseCase = new ListLobbiesUseCase(lobbyRepository)
@@ -91,7 +91,7 @@ test.group('Lobby Use Cases Integration', (group) => {
     // 6. Démarrer la partie
     const startResult = await startGameUseCase.execute({
       lobbyUuid,
-      userUuid: player1.uuid, // Utiliser l'UUID du Player, pas du User
+      userUuid: player1.userUuid, // Corriger: utiliser userUuid du Player (référence vers User)
     })
 
     assert.isTrue(startResult.isSuccess)
@@ -134,7 +134,7 @@ test.group('Lobby Use Cases Integration', (group) => {
     // Le deuxième joueur quitte
     const leaveResult = await leaveLobbyUseCase.execute({
       lobbyUuid,
-      userUuid: player2.uuid, // Utiliser l'UUID du Player
+      userUuid: player2.userUuid, // Corriger: utiliser userUuid (référence vers User)
     })
 
     assert.isTrue(leaveResult.isSuccess)
@@ -167,7 +167,7 @@ test.group('Lobby Use Cases Integration', (group) => {
     // Le créateur quitte (seul dans le lobby)
     const leaveResult = await leaveLobbyUseCase.execute({
       lobbyUuid,
-      userUuid: player1.uuid, // Utiliser l'UUID du Player
+      userUuid: player1.userUuid, // Corriger: utiliser userUuid (référence vers User)
     })
 
     assert.isTrue(leaveResult.isSuccess)
