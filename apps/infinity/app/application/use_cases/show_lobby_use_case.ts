@@ -8,19 +8,15 @@ export interface ShowLobbyRequest {
   userUuid?: string // Optional for permission checks
 }
 
-export interface ShowLobbyResponse {
-  lobby: LobbyDto
-}
-
 export class ShowLobbyUseCase {
   constructor(private lobbyRepository: LobbyRepository) {}
 
-  async execute(request: ShowLobbyRequest): Promise<Result<ShowLobbyResponse>> {
+  async execute(request: ShowLobbyRequest): Promise<Result<LobbyDto>> {
     try {
       // Validation des données d'entrée
       const validationResult = this.validateRequest(request)
       if (validationResult.isFailure) {
-        return Result.fail<ShowLobbyResponse>(validationResult.error)
+        return Result.fail<LobbyDto>(validationResult.error)
       }
 
       // Récupérer le lobby
@@ -41,11 +37,7 @@ export class ShowLobbyUseCase {
         lobbyDto = LobbySerializer.toDto(lobby)
       }
 
-      const response: ShowLobbyResponse = {
-        lobby: lobbyDto,
-      }
-
-      return Result.ok(response)
+      return Result.ok(lobbyDto)
     } catch (error) {
       return Result.fail(
         `System error: ${error instanceof Error ? error.message : 'Unknown error'}`

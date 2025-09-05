@@ -29,18 +29,18 @@ test.group('ShowLobbyUseCase', () => {
     const result = await useCase.execute({ lobbyUuid: 'lobby-123' })
 
     assert.isTrue(result.isSuccess)
-    assert.equal(result.value.lobby.uuid, 'lobby-123')
-    assert.equal(result.value.lobby.name, 'Test Lobby')
-    assert.isFalse(result.value.lobby.isPrivate)
-    assert.equal(result.value.lobby.players.length, 2)
-    assert.exists(result.value.lobby.createdAt)
+    assert.equal(result.value.uuid, 'lobby-123')
+    assert.equal(result.value.name, 'Test Lobby')
+    assert.isFalse(result.value.isPrivate)
+    assert.equal(result.value.players.length, 2)
+    assert.exists(result.value.createdAt)
   })
 
   test('should return correct lobby structure', async ({ assert }) => {
     const result = await useCase.execute({ lobbyUuid: 'lobby-123' })
 
     assert.isTrue(result.isSuccess)
-    const lobby = result.value.lobby
+    const lobby = result.value
 
     assert.exists(lobby.uuid)
     assert.exists(lobby.name)
@@ -60,7 +60,7 @@ test.group('ShowLobbyUseCase', () => {
     const result = await useCase.execute({ lobbyUuid: 'lobby-123' })
 
     assert.isTrue(result.isSuccess)
-    const players = result.value.lobby.players
+    const players = result.value.players
 
     assert.equal(players.length, 2)
     assert.exists(players[0].uuid)
@@ -113,7 +113,7 @@ test.group('ShowLobbyUseCase', () => {
     const result = await useCase.execute({ lobbyUuid: 'private-lobby' })
 
     assert.isTrue(result.isSuccess)
-    assert.isTrue(result.value.lobby.isPrivate)
+    assert.isTrue(result.value.isPrivate)
   })
 
   test('should handle repository errors gracefully', async ({ assert }) => {
@@ -150,8 +150,8 @@ test.group('ShowLobbyUseCase', () => {
     const result = await useCase.execute({ lobbyUuid: 'lobby-123' })
 
     assert.isTrue(result.isSuccess)
-    assert.equal(result.value.lobby.name, 'Serialized Lobby')
-    assert.equal(result.value.lobby.status, 'OPEN')
+    assert.equal(result.value.name, 'Serialized Lobby')
+    assert.equal(result.value.status, 'OPEN')
   })
 
   test('should handle lobby with no players', async ({ assert }) => {
@@ -168,8 +168,8 @@ test.group('ShowLobbyUseCase', () => {
     const result = await useCase.execute({ lobbyUuid: 'empty-lobby' })
 
     assert.isTrue(result.isSuccess)
-    assert.equal(result.value.lobby.players.length, 0)
-    assert.equal(result.value.lobby.currentPlayers, 0)
+    assert.equal(result.value.players.length, 0)
+    assert.equal(result.value.currentPlayers, 0)
   })
 
   test('should handle lobby at max capacity', async ({ assert }) => {
@@ -191,8 +191,8 @@ test.group('ShowLobbyUseCase', () => {
     const result = await useCase.execute({ lobbyUuid: 'full-lobby' })
 
     assert.isTrue(result.isSuccess)
-    assert.equal(result.value.lobby.currentPlayers, 2)
-    assert.equal(result.value.lobby.maxPlayers, 2)
-    assert.isFalse(result.value.lobby.hasAvailableSlots)
+    assert.equal(result.value.currentPlayers, 2)
+    assert.equal(result.value.maxPlayers, 2)
+    assert.isFalse(result.value.hasAvailableSlots)
   })
 })
