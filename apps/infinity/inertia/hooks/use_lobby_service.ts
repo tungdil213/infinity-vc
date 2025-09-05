@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useSSEContext } from '../contexts/SSEContext'
-import { LobbyService } from '../services/LobbyService'
+import { LobbyService } from '../services/lobby_service'
 
 /**
  * Hook pour utiliser le service de lobbies avec SSE

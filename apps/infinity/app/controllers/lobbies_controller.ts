@@ -1,12 +1,14 @@
 import { HttpContext } from '@adonisjs/core/http'
 import { inject } from '@adonisjs/core'
-import crypto from 'node:crypto'
 import { CreateLobbyUseCase } from '../application/use_cases/create_lobby_use_case.js'
 import { JoinLobbyUseCase } from '../application/use_cases/join_lobby_use_case.js'
 import { LeaveLobbyUseCase } from '../application/use_cases/leave_lobby_use_case.js'
 import { StartGameUseCase } from '../application/use_cases/start_game_use_case.js'
-import { LobbyRepository } from '../domain/repositories/lobby_repository.js'
-import { UserRepository } from '../domain/repositories/user_repository.js'
+import { ListLobbiesUseCase } from '../application/use_cases/list_lobbies_use_case.js'
+import { ShowLobbyUseCase } from '../application/use_cases/show_lobby_use_case.js'
+import { KickPlayerUseCase } from '../application/use_cases/kick_player_use_case.js'
+import { UpdateLobbySettingsUseCase } from '../application/use_cases/update_lobby_settings_use_case.js'
+import { SetPlayerReadyUseCase } from '../application/use_cases/set_player_ready_use_case.js'
 
 @inject()
 export default class LobbiesController {
@@ -15,21 +17,37 @@ export default class LobbiesController {
     private joinLobbyUseCase: JoinLobbyUseCase,
     private leaveLobbyUseCase: LeaveLobbyUseCase,
     private startGameUseCase: StartGameUseCase,
-    private lobbyRepository: LobbyRepository,
-    private userRepository: UserRepository
+    private listLobbiesUseCase: ListLobbiesUseCase,
+    private showLobbyUseCase: ShowLobbyUseCase,
+    private kickPlayerUseCase: KickPlayerUseCase,
+    private updateLobbySettingsUseCase: UpdateLobbySettingsUseCase,
+    private setPlayerReadyUseCase: SetPlayerReadyUseCase
   ) {}
 
   /**
    * Display lobbies list page
    */
-  async index({ inertia, auth }: HttpContext) {
+  async index({ inertia, auth, request }: HttpContext) {
     const user = auth.user!
-    const lobbies = await this.lobbyRepository.findAll()
+    const { status, isPrivate, hasAvailableSlots } = request.qs()
+
+    const result = await this.listLobbiesUseCase.execute({
+      status,
+      isPrivate: isPrivate ? Boolean(isPrivate) : undefined,
+      hasAvailableSlots: hasAvailableSlots ? Boolean(hasAvailableSlots) : undefined,
+    })
+
+    if (result.isFailure) {
+      return inertia.render('errors/server_error', {
+        error: { message: result.error },
+      })
+    }
 
     return inertia.render('lobbies', {
-      lobbies: lobbies.map((lobby) => lobby.serialize()),
+      lobbies: result.value.lobbies,
+      total: result.value.total,
       user: {
-        uuid: user.uuid,
+        uuid: user.id,
         nickName: user.fullName,
       },
     })
@@ -43,7 +61,7 @@ export default class LobbiesController {
 
     return inertia.render('create-lobby', {
       user: {
-        uuid: user.uuid,
+        uuid: user.id,
         nickName: user.fullName,
       },
     })
@@ -64,7 +82,7 @@ export default class LobbiesController {
       name,
       maxPlayers: Number.parseInt(maxPlayers),
       isPrivate,
-      createdBy: user.uuid,
+      userUuid: user.id,
     })
 
     if (result.isFailure) {
@@ -84,17 +102,20 @@ export default class LobbiesController {
     const user = auth.user!
     const { uuid } = params
 
-    const lobby = await this.lobbyRepository.findByUuid(uuid)
-    if (!lobby) {
+    const result = await this.showLobbyUseCase.execute({
+      lobbyUuid: uuid,
+    })
+
+    if (result.isFailure) {
       return inertia.render('errors/not_found', {
-        error: { message: 'Lobby not found' },
+        error: { message: result.error },
       })
     }
 
     return inertia.render('lobby', {
-      lobby: lobby.serialize(),
+      lobby: result.value,
       user: {
-        uuid: user.uuid,
+        uuid: user.id,
         nickName: user.fullName,
       },
     })
@@ -107,18 +128,9 @@ export default class LobbiesController {
     const user = auth.user!
     const { uuid } = params
 
-    // Get user from repository
-    const userEntity = await this.userRepository.findByUuid(user.uuid)
-    if (!userEntity) {
-      return response.status(404).json({
-        error: 'User not found',
-      })
-    }
-
     const result = await this.joinLobbyUseCase.execute({
+      userUuid: user.id,
       lobbyUuid: uuid,
-      playerUuid: user.uuid,
-      playerNickName: userEntity.fullName,
     })
 
     if (result.isFailure) {
@@ -139,7 +151,7 @@ export default class LobbiesController {
 
     const result = await this.leaveLobbyUseCase.execute({
       lobbyUuid: uuid,
-      playerUuid: user.uuid,
+      userUuid: user.id,
     })
 
     if (result.isFailure) {
@@ -160,7 +172,7 @@ export default class LobbiesController {
 
     const result = await this.startGameUseCase.execute({
       lobbyUuid: uuid,
-      initiatedBy: user.uuid,
+      userUuid: user.id,
     })
 
     if (result.isFailure) {
@@ -179,26 +191,112 @@ export default class LobbiesController {
   async apiShow({ params, response }: HttpContext) {
     const { uuid } = params
 
-    const lobby = await this.lobbyRepository.findByUuid(uuid)
-    if (!lobby) {
+    const result = await this.showLobbyUseCase.execute({
+      lobbyUuid: uuid,
+    })
+
+    if (result.isFailure) {
       return response.status(404).json({
-        error: 'Lobby not found',
+        error: result.error,
       })
     }
 
     return response.json({
-      lobby: lobby.serialize(),
+      lobby: result.value,
     })
   }
 
   /**
    * API endpoint to get all lobbies
    */
-  async apiIndex({ response }: HttpContext) {
-    const lobbies = await this.lobbyRepository.findAll()
+  async apiIndex({ response, request }: HttpContext) {
+    const { status, isPrivate, hasAvailableSlots } = request.qs()
 
-    return response.json({
-      lobbies: lobbies.map((lobby) => lobby.serialize()),
+    const result = await this.listLobbiesUseCase.execute({
+      status,
+      isPrivate: isPrivate ? Boolean(isPrivate) : undefined,
+      hasAvailableSlots: hasAvailableSlots ? Boolean(hasAvailableSlots) : undefined,
     })
+
+    if (result.isFailure) {
+      return response.status(500).json({
+        error: result.error,
+      })
+    }
+
+    return response.json(result.value)
+  }
+
+  /**
+   * Kick a player from lobby
+   */
+  async kickPlayer({ params, request, response, auth }: HttpContext) {
+    const user = auth.user!
+    const { uuid } = params
+    const { playerUuid } = request.only(['playerUuid'])
+
+    const result = await this.kickPlayerUseCase.execute({
+      lobbyUuid: uuid,
+      kickerUuid: user.id,
+      targetPlayerUuid: playerUuid,
+    })
+
+    if (result.isFailure) {
+      return response.status(400).json({
+        error: result.error,
+      })
+    }
+
+    return response.json({ success: true })
+  }
+
+  /**
+   * Update lobby settings
+   */
+  async updateSettings({ params, request, response, auth }: HttpContext) {
+    const user = auth.user!
+    const { uuid } = params
+    const { name, maxPlayers, isPrivate } = request.only(['name', 'maxPlayers', 'isPrivate'])
+
+    const result = await this.updateLobbySettingsUseCase.execute({
+      lobbyUuid: uuid,
+      updaterUuid: user.id,
+      settings: {
+        name,
+        maxPlayers: maxPlayers ? Number.parseInt(maxPlayers) : undefined,
+        isPrivate: isPrivate !== undefined ? Boolean(isPrivate) : undefined,
+      },
+    })
+
+    if (result.isFailure) {
+      return response.status(400).json({
+        error: result.error,
+      })
+    }
+
+    return response.json(result.value)
+  }
+
+  /**
+   * Set player ready status
+   */
+  async setPlayerReady({ params, request, response, auth }: HttpContext) {
+    const user = auth.user!
+    const { uuid } = params
+    const { isReady } = request.only(['isReady'])
+
+    const result = await this.setPlayerReadyUseCase.execute({
+      lobbyUuid: uuid,
+      playerUuid: user.id,
+      isReady: Boolean(isReady),
+    })
+
+    if (result.isFailure) {
+      return response.status(400).json({
+        error: result.error,
+      })
+    }
+
+    return response.json(result.value)
   }
 }

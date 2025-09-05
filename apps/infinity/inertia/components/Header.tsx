@@ -22,7 +22,7 @@ import {
   Hash
 } from 'lucide-react'
 import { useSSEContext } from '../contexts/SSEContext'
-import { useLobbyService } from '../hooks/useLobbyService'
+import { useLobbyService } from '../hooks/use_lobby_service'
 
 interface User {
   uuid: string

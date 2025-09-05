@@ -4,7 +4,7 @@ import { Badge } from '@tyfo.dev/ui/primitives/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@tyfo.dev/ui/primitives/card'
 import { Users, Crown, Play, LogOut } from 'lucide-react'
 import { router } from '@inertiajs/react'
-import { useLobbyDetail } from '../hooks/useLobbyDetail'
+import { useLobbyDetail } from '../hooks/use_lobby_detail'
 import { toast } from 'sonner'
 
 interface Player {

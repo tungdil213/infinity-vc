@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useLobbyService } from './useLobbyService'
-import { LobbyListState } from '../services/LobbyService'
+import { useLobbyService } from './use_lobby_service'
+import { LobbyListState } from '../services/lobby_service'
 
 interface UseLobbyListOptions {
   status?: string

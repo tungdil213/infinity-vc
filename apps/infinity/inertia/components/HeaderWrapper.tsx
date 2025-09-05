@@ -2,7 +2,7 @@ import React from 'react'
 import { router } from '@inertiajs/react'
 import { Header } from '../../../../packages/ui/src/components/header'
 import { useSSEContext } from '../contexts/SSEContext'
-import { useLobbyService } from '../hooks/useLobbyService'
+import { useLobbyService } from '../hooks/use_lobby_service'
 
 interface User {
   uuid: string

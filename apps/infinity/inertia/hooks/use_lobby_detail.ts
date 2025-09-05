@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useLobbyService } from './useLobbyService'
-import { LobbyDetailState, LobbyData } from '../services/LobbyService'
+import { useLobbyService } from './use_lobby_service'
+import { LobbyDetailState, LobbyData } from '../services/lobby_service'
 
 /**
  * Hook pour gérer les détails d'un lobby avec mises à jour temps réel
