@@ -185,10 +185,31 @@ export function LobbyProvider({ children }: LobbyProviderProps) {
   )
 }
 
+// Contexte par défaut pour éviter les erreurs quand le provider n'est pas encore prêt
+const defaultLobbyContext: LobbyContextType = {
+  lobbyService: null,
+  lobbyListState: {
+    lobbies: [],
+    loading: true,
+    error: null,
+    total: 0,
+  },
+  fetchLobbies: async () => {},
+  refreshLobbies: async () => {},
+  createLobby: async () => null,
+  joinLobby: async () => null,
+  leaveLobby: async () => null,
+  startGame: async () => null,
+  getLobbyDetails: () => null,
+  subscribeLobbyDetails: () => {},
+  unsubscribeLobbyDetails: () => {},
+}
+
 export function useLobbyContext() {
   const context = useContext(LobbyContext)
   if (!context) {
-    throw new Error('useLobbyContext must be used within a LobbyProvider')
+    console.warn('🎯 useLobbyContext: Provider not ready, using default context')
+    return defaultLobbyContext
   }
   return context
 }

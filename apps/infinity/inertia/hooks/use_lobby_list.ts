@@ -16,9 +16,10 @@ interface UseLobbyListOptions {
  * Respecte les patterns documentés avec logging standardisé et timeout protection
  */
 export function useLobbyList(options: UseLobbyListOptions = {}) {
-  console.log('🎮 useLobbyList: Initializing hook', options)
+  console.log('🎯 useLobbyList: Initializing hook', options)
 
-  const { lobbyService } = useLobbyContext()
+  const lobbyContext = useLobbyContext()
+  const { lobbyService } = lobbyContext
   const [localState, setLocalState] = useState<LobbyListState>({
     lobbies: [],
     loading: true,
@@ -27,7 +28,7 @@ export function useLobbyList(options: UseLobbyListOptions = {}) {
   })
   const [timeoutReached, setTimeoutReached] = useState(false)
   const lastUpdateRef = useRef(Date.now())
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>()
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Timeout protection - 10 seconds max loading
   useEffect(() => {
@@ -53,29 +54,17 @@ export function useLobbyList(options: UseLobbyListOptions = {}) {
   // Subscribe to lobby list updates from service
   useEffect(() => {
     if (!lobbyService) {
-      console.warn('🎮 useLobbyList: No lobby service available')
+      console.warn('🎯 useLobbyList: No lobby service available')
       return
     }
 
-    console.log('🎮 useLobbyList: Subscribing to lobby list updates')
-
-    // Get initial state
-    const initialState = lobbyService.getLobbyListState()
-    if (initialState) {
-      console.log('🎮 useLobbyList: Setting initial state', {
-        lobbyCount: initialState.lobbies.length,
-        loading: initialState.loading,
-      })
-      // Convert service state to typed state
-      const convertedState = convertLobbyListState(initialState)
-      setLocalState(convertedState)
-    }
+    console.log('🎯 useLobbyList: Subscribing to lobby list updates')
 
     // Subscribe to updates with throttling
     const unsubscribe = lobbyService.subscribeLobbyList((newState) => {
       const now = Date.now()
       if (now - lastUpdateRef.current > 100) { // Throttle to max 10 updates per second
-        console.log('🎮 useLobbyList: Received lobby list update', {
+        console.log('🎯 useLobbyList: Received lobby list update', {
           lobbyCount: newState.lobbies.length,
           loading: newState.loading,
         })
@@ -87,7 +76,7 @@ export function useLobbyList(options: UseLobbyListOptions = {}) {
     })
 
     return () => {
-      console.log('🎮 useLobbyList: Unsubscribing from lobby list updates')
+      console.log('🎯 useLobbyList: Unsubscribing from lobby list updates')
       unsubscribe()
     }
   }, [lobbyService])
@@ -95,28 +84,21 @@ export function useLobbyList(options: UseLobbyListOptions = {}) {
   // Actions
   const refresh = async () => {
     if (!lobbyService) {
-      console.warn('🎮 useLobbyList: Cannot refresh - no service available')
+      console.warn('🎯 useLobbyList: Cannot refresh - no service available')
       return
     }
 
-    console.log('🎮 useLobbyList: Manual refresh triggered')
+    console.log('🎯 useLobbyList: Manual refresh triggered')
     try {
-      // Use fetchLobbies if refreshLobbyList doesn't exist
-      if (typeof lobbyService.refreshLobbyList === 'function') {
-        await lobbyService.refreshLobbyList()
-      } else if (typeof lobbyService.fetchLobbies === 'function') {
-        await lobbyService.fetchLobbies()
-      } else {
-        console.warn('🎮 useLobbyList: No refresh method available on service')
-      }
+      await lobbyService.fetchLobbies(options.filters)
     } catch (error) {
-      console.error('🎮 useLobbyList: Refresh failed', error)
+      console.error('🎯 useLobbyList: Refresh failed', error)
     }
   }
 
   const createLobby = async (lobbyData: any) => {
     if (!lobbyService) {
-      console.warn('🎮 useLobbyList: Cannot create lobby - no service available')
+      console.warn('🎯 useLobbyList: Cannot create lobby - no service available')
       return
     }
 
