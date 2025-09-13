@@ -7,6 +7,7 @@ import { HeaderWrapper } from '../components/HeaderWrapper'
 import { Footer } from '../../../../packages/ui/src/components/footer'
 import { toast } from 'sonner'
 import { useLobbyList } from '../hooks/use_lobby_list'
+import { useLobbyContext } from '../contexts/LobbyContext'
 
 interface Player {
   uuid: string
@@ -71,6 +72,9 @@ const transformLobbyData = (lobby: Lobby): LobbyData => ({
 export default function Lobbies({ lobbies: initialLobbies, user, currentLobby }: LobbiesProps) {
   const [loading, setLoading] = useState(false)
   
+  // Importer le contexte pour vérifier la disponibilité du service
+  const lobbyContext = useLobbyContext()
+  
   // Utiliser le nouveau hook useLobbyList
   const {
     lobbies: realtimeLobbies,
@@ -83,7 +87,7 @@ export default function Lobbies({ lobbies: initialLobbies, user, currentLobby }:
     refresh,
   } = useLobbyList({})
 
-  // Utiliser les données initiales d'Inertia par défaut, puis les données temps réel si disponibles
+  // Utiliser les données temps réel si disponibles ET non vides, sinon fallback sur Inertia
   // Cela garantit que les lobbies s'affichent immédiatement même si Transmit n'est pas encore connecté
   const lobbies = realtimeLobbies.length > 0 ? realtimeLobbies : initialLobbies
   
@@ -92,7 +96,17 @@ export default function Lobbies({ lobbies: initialLobbies, user, currentLobby }:
     realtimeLobbies: realtimeLobbies.length,
     realtimeLoading,
     realtimeError,
-    finalLobbies: lobbies.length
+    finalLobbies: lobbies.length,
+    usingRealtime: realtimeLobbies.length > 0,
+    lobbyServiceAvailable: !!lobbyContext.lobbyService,
+    contextState: lobbyContext.lobbyListState
+  })
+  
+  // Debug: Afficher les détails des lobbies
+  console.log('🎮 Lobbies: Détails des lobbies', {
+    initial: initialLobbies.map(l => ({ uuid: l.uuid, name: l.name })),
+    realtime: realtimeLobbies.map(l => ({ uuid: l.uuid, name: l.name })),
+    final: lobbies.map(l => ({ uuid: l.uuid, name: l.name }))
   })
 
   const handleCreateLobby = () => {

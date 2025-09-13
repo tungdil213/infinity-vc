@@ -124,13 +124,16 @@ export class LobbyService {
       // Vérifier si le lobby n'existe pas déjà
       const existingIndex = this.lobbyListState.lobbies.findIndex((l) => l.uuid === newLobby.uuid)
       if (existingIndex === -1) {
-        // Créer un nouvel array au lieu de muter l'existant pour déclencher React
+        // Créer un nouvel objet state complètement nouveau pour forcer la réactivité
+        const newLobbies = [...this.lobbyListState.lobbies, newLobby]
         this.lobbyListState = {
-          ...this.lobbyListState,
-          lobbies: [...this.lobbyListState.lobbies, newLobby],
-          total: this.lobbyListState.lobbies.length + 1,
+          lobbies: newLobbies,
+          loading: false,
+          error: null,
+          total: newLobbies.length,
         }
         console.log('handleLobbyCreated - lobby ajouté, total:', this.lobbyListState.total)
+        console.log('handleLobbyCreated - état complet après ajout:', this.lobbyListState)
         this.notifyLobbyListSubscribers()
       } else {
         console.log('handleLobbyCreated - lobby existe déjà, ignoré')
@@ -561,19 +564,22 @@ export class LobbyService {
   }
 
   // Abonnements
-  subscribeLobbyList(callback: (state: LobbyListState) => void) {
-    console.log(
-      'subscribeLobbyList - ajout callback, total callbacks:',
-      this.lobbyListCallbacks.size + 1
-    )
+  subscribeLobbyList(callback: (state: LobbyListState) => void): () => void {
+    console.log('📡 subscribeLobbyList appelé - ajout callback')
+    console.log('📡 subscribeLobbyList - instance service:', this)
+    console.log('📡 subscribeLobbyList - callbacks avant ajout:', this.lobbyListCallbacks.size)
     this.lobbyListCallbacks.add(callback)
+    console.log('📡 subscribeLobbyList - callbacks après ajout:', this.lobbyListCallbacks.size)
+    console.log('📡 subscribeLobbyList - état actuel à envoyer:', this.lobbyListState)
+
     // Envoyer l'état actuel immédiatement
-    console.log('subscribeLobbyList - envoi état initial:', this.lobbyListState)
     callback(this.lobbyListState)
 
+    // Retourner la fonction de désabonnement
     return () => {
-      console.log('subscribeLobbyList - suppression callback')
+      console.log('📡 unsubscribeLobbyList appelé - suppression callback')
       this.lobbyListCallbacks.delete(callback)
+      console.log('📡 unsubscribeLobbyList - callbacks restants:', this.lobbyListCallbacks.size)
     }
   }
 

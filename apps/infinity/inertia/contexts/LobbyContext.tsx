@@ -23,7 +23,24 @@ interface LobbyContextType {
   unsubscribeLobbyDetails: (lobbyUuid: string) => void
 }
 
-const LobbyContext = createContext<LobbyContextType | null>(null)
+const LobbyContext = createContext<LobbyContextType>({
+  lobbyService: null,
+  lobbyListState: {
+    lobbies: [],
+    loading: true,
+    error: null,
+    total: 0,
+  },
+  fetchLobbies: async () => {},
+  refreshLobbies: async () => {},
+  createLobby: async () => null,
+  joinLobby: async () => null,
+  leaveLobby: async () => null,
+  startGame: async () => null,
+  getLobbyDetails: () => null,
+  subscribeLobbyDetails: () => {},
+  unsubscribeLobbyDetails: () => {},
+})
 
 interface LobbyProviderProps {
   children: React.ReactNode
@@ -34,7 +51,7 @@ export function LobbyProvider({ children }: LobbyProviderProps) {
   const [lobbyService, setLobbyService] = useState<LobbyService | null>(null)
   const [lobbyListState, setLobbyListState] = useState<LobbyListState>({
     lobbies: [],
-    loading: true,
+    loading: false,
     error: null,
     total: 0,
   })
@@ -212,9 +229,5 @@ const defaultLobbyContext: LobbyContextType = {
 
 export function useLobbyContext() {
   const context = useContext(LobbyContext)
-  if (!context) {
-    console.warn('🎯 useLobbyContext: Provider not ready, using default context')
-    return defaultLobbyContext
-  }
   return context
 }

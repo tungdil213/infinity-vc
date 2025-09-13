@@ -23,10 +23,11 @@ export class LobbyEventService {
     // Émettre l'événement domain
     eventBus.emit('LobbyCreated', event)
 
-    // Diffuser via SSE pour mise à jour temps réel des listes
+    // Diffuser globalement pour les listes de lobbies
     await sseService.broadcastGlobal({
       type: 'lobby.created',
       data: {
+        lobbyUuid: lobby.uuid,
         lobby: {
           uuid: lobby.uuid,
           name: lobby.name,
@@ -135,7 +136,7 @@ export class LobbyEventService {
 
     // Diffuser globalement pour les listes de lobbies
     await sseService.broadcastGlobal({
-      type: 'lobby.list.removed',
+      type: 'lobby.deleted',
       data: {
         lobbyUuid,
         reason,

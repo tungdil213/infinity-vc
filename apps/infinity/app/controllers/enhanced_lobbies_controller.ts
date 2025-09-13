@@ -645,6 +645,48 @@ export default class EnhancedLobbiesController {
   }
 
   /**
+   * Delete a lobby (admin/creator only)
+   */
+  async destroy({ params, response, auth }: HttpContext) {
+    const user = auth.user!
+    const { uuid } = params
+
+    try {
+      const lobby = await this.lobbyRepository.findByUuid(uuid)
+      if (!lobby) {
+        return response.status(404).json({
+          error: 'Lobby not found',
+        })
+      }
+
+      // Vérifier que l'utilisateur est le créateur du lobby
+      if (lobby.createdBy !== user.userUuid) {
+        return response.status(403).json({
+          error: 'Only the lobby creator can delete the lobby',
+        })
+      }
+
+      // Supprimer le lobby
+      await this.lobbyRepository.delete(uuid)
+
+      // Émettre l'événement de suppression
+      const { LobbyEventService } = await import('../application/services/lobby_event_service.js')
+      const eventService = new LobbyEventService(this.lobbyRepository)
+      await eventService.emitLobbyDeleted(uuid, 'deleted by creator')
+
+      return response.json({
+        success: true,
+        message: 'Lobby deleted successfully',
+      })
+    } catch (error) {
+      console.error('Failed to delete lobby:', error)
+      return response.status(500).json({
+        error: 'Failed to delete lobby',
+      })
+    }
+  }
+
+  /**
    * Handle leave lobby on page close/navigation (beacon requests)
    */
   async leaveOnClose({ request, response, auth }: HttpContext) {
