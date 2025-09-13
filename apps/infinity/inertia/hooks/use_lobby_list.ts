@@ -16,13 +16,13 @@ interface UseLobbyListOptions {
  * Respecte les patterns documentés avec logging standardisé et timeout protection
  */
 export function useLobbyList(options: UseLobbyListOptions = {}) {
-  console.log('🎯 useLobbyList: Initializing hook', options)
+  console.log('🎯 useLobbyList: Hook initialized with options', options)
 
   const lobbyContext = useLobbyContext()
   const { lobbyService } = lobbyContext
   const [localState, setLocalState] = useState<LobbyListState>({
     lobbies: [],
-    loading: true,
+    loading: false,
     error: null,
     total: 0,
   })
@@ -54,11 +54,16 @@ export function useLobbyList(options: UseLobbyListOptions = {}) {
   // Subscribe to lobby list updates from service
   useEffect(() => {
     if (!lobbyService) {
-      console.warn('🎯 useLobbyList: No lobby service available')
+      console.warn('🎯 useLobbyList: No lobby service available, keeping empty state')
       return
     }
 
     console.log('🎯 useLobbyList: Subscribing to lobby list updates')
+
+    // Fetch initial data when service becomes available
+    lobbyService.fetchLobbies(options.filters).catch((error) => {
+      console.error('🎯 useLobbyList: Initial fetch failed', error)
+    })
 
     // Subscribe to updates with throttling
     const unsubscribe = lobbyService.subscribeLobbyList((newState) => {
@@ -80,7 +85,7 @@ export function useLobbyList(options: UseLobbyListOptions = {}) {
       console.log('🎯 useLobbyList: Unsubscribing from lobby list updates')
       unsubscribe()
     }
-  }, [lobbyService])
+  }, [lobbyService, options.filters])
 
   // Actions
   const refresh = async () => {

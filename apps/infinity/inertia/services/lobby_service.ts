@@ -36,8 +36,6 @@ export interface LobbyDetailState {
  */
 export class LobbyService {
   private transmitContext: TransmitContextType
-  private lobbyListSubscribers = new Set<(state: LobbyListState) => void>()
-  private lobbyDetailSubscribers = new Map<string, Set<(state: any) => void>>()
   private globalUnsubscribe: (() => void) | null = null
   private lobbyListCallbacks = new Set<(state: LobbyListState) => void>()
   private lobbyDetailCallbacks = new Map<string, Set<(state: any) => void>>()
@@ -46,7 +44,7 @@ export class LobbyService {
   // État interne pour la liste des lobbies
   private lobbyListState: LobbyListState = {
     lobbies: [],
-    loading: true,
+    loading: false, // Commencer avec loading: false pour ne pas masquer les données Inertia
     error: null,
     total: 0,
   }
@@ -289,17 +287,23 @@ export class LobbyService {
 
   private handleLobbyDeleted(event: any) {
     console.log('handleLobbyDeleted - event reçu:', event)
-    const lobbyUuid = event.data.lobbyUuid
+    const lobbyUuid = event.data.lobbyUuid || event.data.lobby?.uuid
     console.log('handleLobbyDeleted - suppression lobby:', lobbyUuid)
 
-    // Supprimer le lobby de la liste avec immutabilité
-    this.lobbyListState = {
-      ...this.lobbyListState,
-      lobbies: this.lobbyListState.lobbies.filter((l) => l.uuid !== lobbyUuid),
-      total: this.lobbyListState.lobbies.length - 1,
+    if (!lobbyUuid) {
+      console.error('handleLobbyDeleted - lobbyUuid manquant dans event.data')
+      return
     }
 
-    console.log('handleLobbyDeleted - nouveau total:', this.lobbyListState.total)
+    // Supprimer le lobby de la liste avec immutabilité
+    const filteredLobbies = this.lobbyListState.lobbies.filter((l) => l.uuid !== lobbyUuid)
+    this.lobbyListState = {
+      ...this.lobbyListState,
+      lobbies: filteredLobbies,
+      total: filteredLobbies.length,
+    }
+
+    console.log('handleLobbyDeleted - lobby supprimé, nouveau total:', this.lobbyListState.total)
     this.notifyLobbyListSubscribers()
     this.updateLobbyDetail(lobbyUuid, () => null)
   }
@@ -344,11 +348,30 @@ export class LobbyService {
   }
 
   private notifyLobbyListSubscribers() {
-    console.log('notifyLobbyListSubscribers - nombre de callbacks:', this.lobbyListCallbacks.size)
-    console.log('notifyLobbyListSubscribers - état actuel:', this.lobbyListState)
+    console.log(
+      '📡 notifyLobbyListSubscribers - nombre de callbacks:',
+      this.lobbyListCallbacks.size
+    )
+    console.log('📡 notifyLobbyListSubscribers - état actuel:', this.lobbyListState)
+
+    if (this.lobbyListCallbacks.size === 0) {
+      console.warn('📡 notifyLobbyListSubscribers - AUCUN CALLBACK ENREGISTRÉ!')
+      console.log("📡 Service créé mais pas d'abonnés - vérifier l'initialisation des hooks")
+      return
+    }
+
+    let callbackIndex = 0
     this.lobbyListCallbacks.forEach((callback) => {
-      console.log('notifyLobbyListSubscribers - appel callback')
-      callback(this.lobbyListState)
+      callbackIndex++
+      console.log(
+        `📡 notifyLobbyListSubscribers - appel callback ${callbackIndex}/${this.lobbyListCallbacks.size}`
+      )
+      try {
+        callback(this.lobbyListState)
+        console.log(`📡 notifyLobbyListSubscribers - callback ${callbackIndex} exécuté avec succès`)
+      } catch (error) {
+        console.error(`📡 notifyLobbyListSubscribers - erreur callback ${callbackIndex}:`, error)
+      }
     })
   }
 

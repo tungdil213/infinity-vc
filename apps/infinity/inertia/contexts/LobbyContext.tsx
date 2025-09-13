@@ -49,17 +49,23 @@ export function LobbyProvider({ children }: LobbyProviderProps) {
   // Initialiser le service quand le contexte Transmit est prêt
   useEffect(() => {
     if (transmitContext && transmitContext.isConnected && !lobbyService) {
-      console.log('LobbyProvider: Initialisation du LobbyService')
+      console.log('🔧 LobbyProvider: Initialisation du LobbyService')
       const service = new LobbyService(transmitContext)
       setLobbyService(service)
       
+      console.log('🔧 LobbyProvider: Abonnement aux changements de la liste des lobbies')
       // S'abonner aux changements de la liste des lobbies
       const unsubscribe = service.subscribeLobbyList((newState) => {
-        console.log('LobbyProvider: Mise à jour de la liste des lobbies:', newState)
+        console.log('🔧 LobbyProvider: Mise à jour de la liste des lobbies reçue:', {
+          lobbies: newState.lobbies.length,
+          loading: newState.loading,
+          error: newState.error
+        })
         setLobbyListState(newState)
       })
       
       unsubscribeListRef.current = unsubscribe
+      console.log('🔧 LobbyProvider: Service et abonnement initialisés avec succès')
     }
   }, [transmitContext?.isConnected, lobbyService])
 

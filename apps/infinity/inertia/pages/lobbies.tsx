@@ -83,8 +83,17 @@ export default function Lobbies({ lobbies: initialLobbies, user, currentLobby }:
     refresh,
   } = useLobbyList({})
 
-  // Utiliser les données temps réel si disponibles, sinon les données initiales
+  // Utiliser les données initiales d'Inertia par défaut, puis les données temps réel si disponibles
+  // Cela garantit que les lobbies s'affichent immédiatement même si Transmit n'est pas encore connecté
   const lobbies = realtimeLobbies.length > 0 ? realtimeLobbies : initialLobbies
+  
+  console.log('🎮 Lobbies: État des données', {
+    initialLobbies: initialLobbies.length,
+    realtimeLobbies: realtimeLobbies.length,
+    realtimeLoading,
+    realtimeError,
+    finalLobbies: lobbies.length
+  })
 
   const handleCreateLobby = () => {
     router.get('/lobbies/create')
