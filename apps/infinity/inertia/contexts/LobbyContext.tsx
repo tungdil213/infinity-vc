@@ -48,7 +48,7 @@ export function LobbyProvider({ children }: LobbyProviderProps) {
 
   // Initialiser le service quand le contexte Transmit est prêt
   useEffect(() => {
-    if (transmitContext && !lobbyService) {
+    if (transmitContext && transmitContext.isConnected && !lobbyService) {
       console.log('LobbyProvider: Initialisation du LobbyService')
       const service = new LobbyService(transmitContext)
       setLobbyService(service)
@@ -60,14 +60,8 @@ export function LobbyProvider({ children }: LobbyProviderProps) {
       })
       
       unsubscribeListRef.current = unsubscribe
-      
-      return () => {
-        console.log('LobbyProvider: Nettoyage du service')
-        unsubscribe()
-        service.destroy()
-      }
     }
-  }, [transmitContext, lobbyService])
+  }, [transmitContext?.isConnected, lobbyService])
 
   // Nettoyage lors du démontage
   useEffect(() => {
@@ -80,8 +74,13 @@ export function LobbyProvider({ children }: LobbyProviderProps) {
         unsubscribe()
       })
       unsubscribeDetailsRef.current.clear()
+      
+      // Détruire le service
+      if (lobbyService) {
+        lobbyService.destroy()
+      }
     }
-  }, [])
+  }, [lobbyService])
 
   const fetchLobbies = async (filters?: any) => {
     if (!lobbyService) {

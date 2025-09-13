@@ -30,25 +30,26 @@ export function useLobbyDetails(lobbyUuid: string | null) {
       return
     }
 
-    console.log(`useLobbyDetails: Abonnement au lobby ${lobbyUuid}`)
+    console.log(`🎯 useLobbyDetails: Abonnement au lobby ${lobbyUuid}`)
 
-    // S'abonner aux mises à jour
-    subscribeLobbyDetails(lobbyUuid)
-    // Charger les détails initiaux si pas déjà en cache
-    const cachedState = getLobbyDetails(lobbyUuid)
-    if (cachedState) {
-      console.log(`useLobbyDetails: État en cache trouvé pour ${lobbyUuid}:`, cachedState)
-      setLocalState(cachedState)
-    } else {
-      console.log(`useLobbyDetails: Chargement des détails pour ${lobbyUuid}`)
-      setLocalState({
-        lobby: null,
-        loading: true,
-        error: null,
-      })
+    // S'abonner aux mises à jour seulement si le service est disponible
+    if (lobbyService) {
+      subscribeLobbyDetails(lobbyUuid)
 
-      // Charger les détails depuis l'API
-      if (lobbyService) {
+      // Charger les détails initiaux si pas déjà en cache
+      const cachedState = getLobbyDetails(lobbyUuid)
+      if (cachedState) {
+        console.log(`🎯 useLobbyDetails: État en cache trouvé pour ${lobbyUuid}:`, cachedState)
+        setLocalState(cachedState)
+      } else {
+        console.log(`🎯 useLobbyDetails: Chargement des détails pour ${lobbyUuid}`)
+        setLocalState({
+          lobby: null,
+          loading: true,
+          error: null,
+        })
+
+        // Charger les détails depuis l'API
         lobbyService
           .fetchLobbyDetails(lobbyUuid)
           .then((lobbyData) => {
@@ -68,7 +69,7 @@ export function useLobbyDetails(lobbyUuid: string | null) {
             }
           })
           .catch((error) => {
-            console.error(`useLobbyDetails: Erreur lors du chargement de ${lobbyUuid}:`, error)
+            console.error(`🎯 useLobbyDetails: Erreur lors du chargement de ${lobbyUuid}:`, error)
             setLocalState({
               lobby: null,
               loading: false,
@@ -76,14 +77,23 @@ export function useLobbyDetails(lobbyUuid: string | null) {
             })
           })
       }
+    } else {
+      console.warn(`🎯 useLobbyDetails: Service non disponible pour ${lobbyUuid}`)
+      setLocalState({
+        lobby: null,
+        loading: true,
+        error: null,
+      })
     }
 
     // Nettoyage lors du changement d'UUID ou démontage
     return () => {
-      console.log(`useLobbyDetails: Désabonnement du lobby ${lobbyUuid}`)
-      unsubscribeLobbyDetails(lobbyUuid)
+      console.log(`🎯 useLobbyDetails: Désabonnement du lobby ${lobbyUuid}`)
+      if (lobbyService) {
+        unsubscribeLobbyDetails(lobbyUuid)
+      }
     }
-  }, [lobbyUuid])
+  }, [lobbyUuid, lobbyService])
 
   // Écouter les changements d'état depuis le contexte
   useEffect(() => {

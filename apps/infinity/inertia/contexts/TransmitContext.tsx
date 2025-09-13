@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react'
-import { transmitLobbyClient, LobbyTransmitEvent } from '../services/transmit_client'
+import { transmitLobbyClient } from '../services/transmit_client'
+import { LobbyTransmitEvent } from '../types/lobby'
 
 export interface TransmitEvent {
   type: string
@@ -47,19 +48,13 @@ export function TransmitProvider({ children }: TransmitProviderProps) {
   useEffect(() => {
     let mounted = true
     
-    // Délai pour permettre l'initialisation complète
-    const initTimer = setTimeout(() => {
-      if (mounted) {
-        console.log('TransmitProvider: Initialisation de la connexion')
-        setIsConnected(true)
-        setError(null)
-      }
-    }, 100)
+    console.log('📡 TransmitProvider: Initializing connection')
+    setIsConnected(true)
+    setError(null)
 
     return () => {
       mounted = false
-      clearTimeout(initTimer)
-      console.log('TransmitProvider: Nettoyage des souscriptions')
+      console.log('📡 TransmitProvider: Cleaning up subscriptions')
       // Cleanup lors du démontage
       transmitLobbyClient.unsubscribeAll().catch(console.error)
     }

@@ -214,7 +214,7 @@ export default class EnhancedLobbiesController {
       }
 
       session.flash('success', 'Lobby created successfully!')
-      return response.redirect(`/lobbies/${result.value.uuid}`)
+      return response.redirect(`/lobbies/${result.value.uuid}?created=true`)
     } catch (error) {
       // If it's already a BusinessException, let it handle itself
       if (error instanceof BusinessException) {

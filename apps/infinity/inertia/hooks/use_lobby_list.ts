@@ -63,7 +63,8 @@ export function useLobbyList(options: UseLobbyListOptions = {}) {
     // Subscribe to updates with throttling
     const unsubscribe = lobbyService.subscribeLobbyList((newState) => {
       const now = Date.now()
-      if (now - lastUpdateRef.current > 100) { // Throttle to max 10 updates per second
+      if (now - lastUpdateRef.current > 100) {
+        // Throttle to max 10 updates per second
         console.log('🎯 useLobbyList: Received lobby list update', {
           lobbyCount: newState.lobbies.length,
           loading: newState.loading,

@@ -6,7 +6,7 @@ import { LobbyTransmitEvent } from '../types/lobby'
  * Respecte les patterns documentés avec logging standardisé
  */
 export const transmitClient = new Transmit({
-  baseUrl: 'http://localhost:52398',
+  baseUrl: window.location.origin,
   beforeSubscribe: (request: RequestInit) => {
     console.log('📡 TransmitClient: Preparing subscription request')
     // Ajouter les headers d'authentification si nécessaire

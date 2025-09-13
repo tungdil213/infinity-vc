@@ -60,14 +60,22 @@ export class LobbyService {
     try {
       // Éviter les souscriptions multiples
       if (this.globalUnsubscribe) {
-        console.log('Listeners Transmit déjà configurés, éviter les doublons')
+        console.log('📡 LobbyService: Listeners Transmit déjà configurés, éviter les doublons')
         return
       }
 
-      console.log('Configuration des listeners Transmit pour le canal lobbies')
+      // Attendre que Transmit soit connecté
+      if (!this.transmitContext.isConnected) {
+        console.log('📡 LobbyService: Attente de la connexion Transmit...')
+        // Réessayer après un délai
+        setTimeout(() => this.setupTransmitListeners(), 500)
+        return
+      }
+
+      console.log('📡 LobbyService: Configuration des listeners Transmit pour le canal lobbies')
       // S'abonner au canal global des lobbies pour recevoir les événements de création/suppression
       this.globalUnsubscribe = await this.transmitContext.subscribeToLobbies((event) => {
-        console.log('Événement reçu sur canal lobbies:', event.type, event)
+        console.log('📡 LobbyService: Événement reçu sur canal lobbies:', event.type, event)
         switch (event.type) {
           case 'lobby.created':
             this.handleLobbyCreated({
@@ -101,7 +109,7 @@ export class LobbyService {
             break
         }
       })
-      console.log('Listeners Transmit configurés avec succès')
+      console.log('📡 LobbyService: Listeners Transmit configurés avec succès')
     } catch (error) {
       console.error('Erreur lors de la configuration des listeners Transmit:', error)
     }
