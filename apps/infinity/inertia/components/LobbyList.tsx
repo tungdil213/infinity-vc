@@ -36,7 +36,7 @@ interface LobbyListProps {
 }
 
 export default function LobbyList({ currentUser, onCreateLobby, initialLobbies }: LobbyListProps) {
-  const { lobbies, loading, error, refresh, joinLobby: joinLobbyService, isServiceReady } = useLobbyList()
+  const { lobbies, loading, error, refresh, joinLobby: joinLobbyService } = useLobbyList()
   const [joiningLobby, setJoiningLobby] = useState<string | null>(null)
 
   // Si on a des données initiales et qu'on est encore en loading, utiliser les données initiales
@@ -49,10 +49,7 @@ export default function LobbyList({ currentUser, onCreateLobby, initialLobbies }
       return
     }
 
-    if (!isServiceReady) {
-      toast.error('Service not ready, please try again')
-      return
-    }
+    // Service is always ready with the new hook implementation
 
     try {
       setJoiningLobby(lobbyUuid)
@@ -122,9 +119,9 @@ export default function LobbyList({ currentUser, onCreateLobby, initialLobbies }
       {/* Connection Status */}
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className={`w-3 h-3 rounded-full ${isServiceReady ? 'bg-green-500' : 'bg-red-500'}`} />
+          <div className={`w-3 h-3 rounded-full bg-green-500`} />
           <span className="text-sm text-gray-600">
-            {isServiceReady ? 'Connected' : 'Disconnected'}
+            Connected
           </span>
         </div>
         

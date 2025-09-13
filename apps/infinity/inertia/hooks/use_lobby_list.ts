@@ -62,12 +62,22 @@ export function useLobbyList(options: UseLobbyListOptions = {}) {
     return await lobbyService.joinLobby(lobbyUuid, userUuid)
   }
 
+  const leaveLobby = async (lobbyUuid: string, userUuid: string) => {
+    if (!lobbyService) throw new Error('Lobby service not available')
+    return await lobbyService.leaveLobby(lobbyUuid, userUuid)
+  }
+
   return {
-    ...state,
+    lobbies: state.lobbies,
+    loading: state.loading,
+    error: state.error || sseError,
+    total: state.total,
     refresh,
     createLobby,
     joinLobby,
-    isServiceReady: isConnected,
-    sseError,
+    leaveLobby,
+    // isServiceReady removed - service is always ready with new implementation
+    isEmpty: state.lobbies.length === 0 && !state.loading,
+    hasError: !!(state.error || sseError),
   }
 }

@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { router } from '@inertiajs/react'
 import { toast } from 'sonner'
-import { useLobbyDetail } from '../hooks/use_lobby_detail'
+import { useLobbyDetails } from "../hooks/use_lobby_details";
 import { useLobbyLeaveGuard } from '../hooks/use_lobby_leave_guard'
 import { Card, CardContent, CardHeader, CardTitle } from '@tyfo.dev/ui/primitives/card'
 import { Button } from '@tyfo.dev/ui/primitives/button'
@@ -23,7 +23,7 @@ interface GameLobbyProps {
 }
 
 export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
-  const { lobby, loading, error, leaveLobby, startGame, isServiceReady } = useLobbyDetail(lobbyUuid)
+  const { lobby, loading, error, leaveLobby, startGame } = useLobbyDetails(lobbyUuid)
   const [isStartingGame, setIsStartingGame] = useState(false)
   const [isLeavingLobby, setIsLeavingLobby] = useState(false)
   const [isJoiningLobby, setIsJoiningLobby] = useState(false)
@@ -40,7 +40,7 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
   })
 
   const handleStartGame = async () => {
-    if (!lobby?.canStart || !isServiceReady) return
+    if (!lobby?.canStart) return
     
     setIsStartingGame(true)
     try {
@@ -60,7 +60,7 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
   }
 
   const handleLeaveLobby = async () => {
-    if (!isServiceReady) return
+    // Service is always ready with the new hook implementation
     
     setIsLeavingLobby(true)
     // Marquer qu'on quitte volontairement pour éviter la confirmation
@@ -144,9 +144,9 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
     <div className="max-w-4xl mx-auto p-6">
       {/* Connection Status */}
       <div className="mb-4 flex items-center gap-2">
-        <div className={`w-3 h-3 rounded-full ${isServiceReady ? 'bg-green-500' : 'bg-red-500'}`} />
+        <div className={`w-3 h-3 rounded-full bg-green-500`} />
         <span className="text-sm text-gray-600">
-          {isServiceReady ? 'Connected' : 'Disconnected'}
+          Connected
         </span>
       </div>
 

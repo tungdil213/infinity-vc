@@ -21,11 +21,11 @@ export function useLobbyService() {
 
     // Réutiliser l'instance globale si elle existe
     if (globalLobbyService) {
-      console.log('useLobbyService: Réutilisation de l\'instance globale')
+      console.log("useLobbyService: Réutilisation de l'instance globale")
       return globalLobbyService
     }
 
-    console.log('useLobbyService: Création d\'une nouvelle instance LobbyService')
+    console.log("useLobbyService: Création d'une nouvelle instance LobbyService")
     globalLobbyService = new LobbyService(transmitContext)
     return globalLobbyService
   }, [transmitContext.isConnected])

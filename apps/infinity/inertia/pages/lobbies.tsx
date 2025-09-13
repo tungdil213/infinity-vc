@@ -6,8 +6,7 @@ import Layout from '../components/layout'
 import { HeaderWrapper } from '../components/HeaderWrapper'
 import { Footer } from '../../../../packages/ui/src/components/footer'
 import { toast } from 'sonner'
-import { useLobbyService } from '../hooks/use_lobby_service'
-import { LobbyListState } from '../services/lobby_service'
+import { useLobbyList } from '../hooks/use_lobby_list'
 
 interface Player {
   uuid: string
@@ -71,35 +70,21 @@ const transformLobbyData = (lobby: Lobby): LobbyData => ({
 
 export default function Lobbies({ lobbies: initialLobbies, user, currentLobby }: LobbiesProps) {
   const [loading, setLoading] = useState(false)
-  const { service: lobbyService, isConnected } = useLobbyService()
-  const [lobbyListState, setLobbyListState] = useState<LobbyListState>({
-    lobbies: initialLobbies,
-    loading: false,
-    error: null,
-    total: initialLobbies.length,
-  })
+  
+  // Utiliser le nouveau hook useLobbyList
+  const {
+    lobbies: realtimeLobbies,
+    loading: realtimeLoading,
+    error: realtimeError,
+    total,
+    createLobby,
+    joinLobby: joinLobbyAction,
+    leaveLobby: leaveLobbyAction,
+    refresh,
+  } = useLobbyList({})
 
-  // S'abonner aux mises à jour temps réel
-  useEffect(() => {
-    if (!lobbyService) return
-
-    console.log('Lobbies page - abonnement au service lobby')
-    const unsubscribe = lobbyService.subscribeLobbyList((state) => {
-      console.log('Lobbies page - callback reçu, nouvel état:', state)
-      setLobbyListState(state)
-    })
-
-    // Initialiser avec les données du serveur
-    lobbyService.fetchLobbies()
-
-    return () => {
-      console.log('Lobbies page - désabonnement du service lobby')
-      unsubscribe()
-    }
-  }, [lobbyService])
-
-  // Utiliser les données temps réel ou les données initiales
-  const lobbies = isConnected ? lobbyListState.lobbies : initialLobbies
+  // Utiliser les données temps réel si disponibles, sinon les données initiales
+  const lobbies = realtimeLobbies.length > 0 ? realtimeLobbies : initialLobbies
 
   const handleCreateLobby = () => {
     router.get('/lobbies/create')
@@ -198,7 +183,7 @@ export default function Lobbies({ lobbies: initialLobbies, user, currentLobby }:
   }
 
   const handleRefresh = () => {
-    router.reload()
+    refresh()
   }
 
   const headerUser = user.fullName ? {
@@ -208,7 +193,6 @@ export default function Lobbies({ lobbies: initialLobbies, user, currentLobby }:
   } : undefined
 
   const transformedLobbies = lobbies.map((lobby) => transformLobbyData(lobby as Lobby))
-  const isRealTimeLoading = lobbyListState.loading && isConnected
 
   return (
     <Layout>
@@ -221,9 +205,9 @@ export default function Lobbies({ lobbies: initialLobbies, user, currentLobby }:
           <LobbyList
             lobbies={transformedLobbies}
             currentUser={user}
-            loading={loading || isRealTimeLoading}
-            total={isConnected ? lobbyListState.total : lobbies.length}
-            error={isConnected ? lobbyListState.error || undefined : undefined}
+            loading={loading || realtimeLoading}
+            total={total || lobbies.length}
+            error={realtimeError || undefined}
             onJoin={handleJoinLobby}
             onLeave={handleLeaveLobby}
             onView={handleViewLobby}

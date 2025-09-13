@@ -6,6 +6,7 @@ import { ToastHandler } from './toast_handler'
 import { LobbyStatusSidebar } from './LobbyStatusSidebar'
 import { AutoLeaveLobby } from './AutoLeaveLobby'
 import { TransmitProvider } from '../contexts/TransmitContext'
+import { LobbyProvider } from '../contexts/LobbyContext'
 
 // Flash messages component using Sonner
 function FlashMessages() {
@@ -41,12 +42,14 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <TransmitProvider>
-      {children}
-      <FlashMessages />
-      <ToastHandler />
-      <LobbyStatusSidebar currentLobby={currentLobby} />
-      <AutoLeaveLobby currentLobby={currentLobby} enabled={true} />
-      <Toaster />
+      <LobbyProvider>
+        {children}
+        <FlashMessages />
+        <ToastHandler />
+        <LobbyStatusSidebar currentLobby={currentLobby} />
+        <AutoLeaveLobby currentLobby={currentLobby} enabled={true} />
+        <Toaster />
+      </LobbyProvider>
     </TransmitProvider>
   )
 }

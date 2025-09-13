@@ -43,7 +43,7 @@ export function useLobbyLeaveGuard({
       try {
         // Marquer qu'on quitte pour éviter les appels multiples
         isLeavingRef.current = true
-        
+
         // Utiliser sendBeacon pour envoyer la requête de façon fiable
         const data = JSON.stringify({
           lobbyUuid,
@@ -61,7 +61,7 @@ export function useLobbyLeaveGuard({
         try {
           // Marquer qu'on quitte pour éviter les appels multiples
           isLeavingRef.current = true
-          
+
           // Tentative de sortie du lobby quand la page devient cachée
           const data = JSON.stringify({
             lobbyUuid,

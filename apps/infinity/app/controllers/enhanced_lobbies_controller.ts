@@ -655,7 +655,7 @@ export default class EnhancedLobbiesController {
       }
 
       const { lobbyUuid, userUuid } = request.body()
-      
+
       // Validate that the user can only leave their own sessions
       if (userUuid !== user.userUuid) {
         return response.status(403).json({ error: 'Forbidden' })
@@ -667,7 +667,9 @@ export default class EnhancedLobbiesController {
       })
 
       if (result.isFailure) {
-        console.log(`Leave on close failed for user ${user.userUuid} in lobby ${lobbyUuid}: ${result.error}`)
+        console.log(
+          `Leave on close failed for user ${user.userUuid} in lobby ${lobbyUuid}: ${result.error}`
+        )
         return response.status(400).json({ error: result.error })
       }
 
