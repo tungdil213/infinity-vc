@@ -1,7 +1,8 @@
-import { LobbyRepository } from '../repositories/lobby_repository.js'
+import { inject } from '@adonisjs/core'
+import { InMemoryLobbyRepository } from '../../infrastructure/repositories/in_memory_lobby_repository.js'
 import { Result } from '../../domain/shared/result.js'
-import { TransmitLobbyService } from '../services/transmit_lobby_service.js'
-import { LobbyEventService } from '../services/lobby_event_service.js'
+import { getEventBus } from '../../infrastructure/events/event_bus_singleton.js'
+import { LobbyEventFactory } from '../../domain/events/lobby/lobby_domain_events.js'
 
 export interface LeaveLobbyRequest {
   userUuid: string
@@ -29,12 +30,9 @@ export interface LeaveLobbyResponse {
   lobbyDeleted: boolean
 }
 
+@inject()
 export class LeaveLobbyUseCase {
-  constructor(
-    private lobbyRepository: LobbyRepository,
-    private notificationService: TransmitLobbyService,
-    private eventService: LobbyEventService
-  ) {}
+  constructor(private lobbyRepository: InMemoryLobbyRepository) {}
 
   async execute(request: LeaveLobbyRequest): Promise<Result<LeaveLobbyResponse>> {
     try {
@@ -68,8 +66,12 @@ export class LeaveLobbyUseCase {
       if (lobby.players.length === 0) {
         await this.lobbyRepository.delete(lobby.uuid)
 
-        // Émettre l'événement de suppression de lobby
-        await this.eventService.emitLobbyDeleted(lobby.uuid)
+        // 🎯 EVENT-DRIVEN: Publier l'événement LobbyDeleted
+        const eventBus = await getEventBus()
+        const deleteEvent = LobbyEventFactory.lobbyDeleted(lobby.uuid, 'empty', undefined, {
+          userUuid: request.userUuid,
+        })
+        await eventBus.publish(deleteEvent)
 
         const response: LeaveLobbyResponse = {
           lobby: {
@@ -94,16 +96,32 @@ export class LeaveLobbyUseCase {
       // Sinon, sauvegarder le lobby mis à jour
       await this.lobbyRepository.save(lobby)
 
-      // Notifier que le joueur a quitté le lobby
-      this.notificationService.notifyPlayerLeft(lobby.uuid, playerToRemove, {
-        uuid: lobby.uuid,
-        name: lobby.name,
-        status: lobby.status,
-        currentPlayers: lobby.players.length,
-        maxPlayers: lobby.maxPlayers,
-        players: lobby.players,
-        creator: lobby.creator,
-      })
+      // 🎯 EVENT-DRIVEN: Publier l'événement PlayerLeft avec ÉTAT COMPLET
+      const eventBus = await getEventBus()
+      const event = LobbyEventFactory.playerLeft(
+        lobby.uuid,
+        { uuid: playerToRemove.uuid, nickName: playerToRemove.nickName },
+        {
+          currentPlayers: lobby.players.length,
+          maxPlayers: lobby.maxPlayers,
+          canStart: lobby.canStart,
+          status: lobby.status,
+          // ✅ ÉTAT COMPLET: Envoyer la liste complète des joueurs
+          players: lobby.players.map((p) => ({
+            uuid: p.uuid,
+            nickName: p.nickName,
+          })),
+        },
+        false,
+        { userUuid: request.userUuid }
+      )
+
+      const publishResult = await eventBus.publish(event)
+      if (publishResult.isFailure) {
+        console.error('❌ LeaveLobbyUseCase: Failed to publish event:', publishResult.error)
+      } else {
+        console.log('✅ LeaveLobbyUseCase: PlayerLeft event published successfully')
+      }
 
       const response: LeaveLobbyResponse = {
         lobby: {

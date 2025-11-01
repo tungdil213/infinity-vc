@@ -71,11 +71,9 @@ const transformLobbyData = (lobby: Lobby): LobbyData => ({
 
 export default function Lobbies({ lobbies: initialLobbies, user, currentLobby }: LobbiesProps) {
   const [loading, setLoading] = useState(false)
-  
-  // Importer le contexte pour vérifier la disponibilité du service
   const lobbyContext = useLobbyContext()
   
-  // Utiliser le nouveau hook useLobbyList
+  // Utiliser le nouveau hook useLobbyList avec les données Inertia initiales
   const {
     lobbies: realtimeLobbies,
     loading: realtimeLoading,
@@ -85,30 +83,11 @@ export default function Lobbies({ lobbies: initialLobbies, user, currentLobby }:
     joinLobby: joinLobbyAction,
     leaveLobby: leaveLobbyAction,
     refresh,
-  } = useLobbyList({})
+  } = useLobbyList({}, initialLobbies)
 
-  // Utiliser les données temps réel si disponibles ET non vides, sinon fallback sur Inertia
-  // Cela garantit que les lobbies s'affichent immédiatement même si Transmit n'est pas encore connecté
-  const lobbies = realtimeLobbies.length > 0 ? realtimeLobbies : initialLobbies
+  // Architecture hybride: Afficher toujours les données du hook (initialisées avec Inertia, mises à jour par Transmit)
+  const lobbies = realtimeLobbies
   
-  console.log('🎮 Lobbies: État des données', {
-    initialLobbies: initialLobbies.length,
-    realtimeLobbies: realtimeLobbies.length,
-    realtimeLoading,
-    realtimeError,
-    finalLobbies: lobbies.length,
-    usingRealtime: realtimeLobbies.length > 0,
-    lobbyServiceAvailable: !!lobbyContext.lobbyService,
-    contextState: lobbyContext.lobbyListState
-  })
-  
-  // Debug: Afficher les détails des lobbies
-  console.log('🎮 Lobbies: Détails des lobbies', {
-    initial: initialLobbies.map(l => ({ uuid: l.uuid, name: l.name })),
-    realtime: realtimeLobbies.map(l => ({ uuid: l.uuid, name: l.name })),
-    final: lobbies.map(l => ({ uuid: l.uuid, name: l.name }))
-  })
-
   const handleCreateLobby = () => {
     router.get('/lobbies/create')
   }

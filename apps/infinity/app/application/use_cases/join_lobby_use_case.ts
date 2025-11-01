@@ -1,7 +1,9 @@
-import { PlayerRepository } from '../repositories/player_repository.js'
-import { LobbyRepository } from '../repositories/lobby_repository.js'
+import { inject } from '@adonisjs/core'
+import { InMemoryPlayerRepository } from '../../infrastructure/repositories/in_memory_player_repository.js'
+import { InMemoryLobbyRepository } from '../../infrastructure/repositories/in_memory_lobby_repository.js'
 import { Result } from '../../domain/shared/result.js'
-import { TransmitLobbyService } from '../services/transmit_lobby_service.js'
+import { getEventBus } from '../../infrastructure/events/event_bus_singleton.js'
+import { LobbyEventFactory } from '../../domain/events/lobby/lobby_domain_events.js'
 
 export interface JoinLobbyRequest {
   userUuid: string
@@ -28,11 +30,11 @@ export interface JoinLobbyResponse {
   }
 }
 
+@inject()
 export class JoinLobbyUseCase {
   constructor(
-    private playerRepository: PlayerRepository,
-    private lobbyRepository: LobbyRepository,
-    private notificationService: TransmitLobbyService
+    private playerRepository: InMemoryPlayerRepository,
+    private lobbyRepository: InMemoryLobbyRepository
   ) {}
 
   async execute(request: JoinLobbyRequest): Promise<Result<JoinLobbyResponse>> {
@@ -75,16 +77,31 @@ export class JoinLobbyUseCase {
       // Sauvegarder le lobby mis à jour
       await this.lobbyRepository.save(lobby)
 
-      // Notifier les autres joueurs qu'un nouveau joueur a rejoint
-      this.notificationService.notifyPlayerJoined(lobby.uuid, player, {
-        uuid: lobby.uuid,
-        name: lobby.name,
-        status: lobby.status,
-        currentPlayers: lobby.players.length,
-        maxPlayers: lobby.maxPlayers,
-        players: lobby.players,
-        creator: lobby.creator,
-      })
+      // 🎯 EVENT-DRIVEN: Publier l'événement PlayerJoined avec ÉTAT COMPLET
+      const eventBus = await getEventBus()
+      const event = LobbyEventFactory.playerJoined(
+        lobby.uuid,
+        { uuid: player.uuid, nickName: player.nickName },
+        {
+          currentPlayers: lobby.players.length,
+          maxPlayers: lobby.maxPlayers,
+          canStart: lobby.canStart,
+          status: lobby.status,
+          // ✅ ÉTAT COMPLET: Envoyer la liste complète des joueurs
+          players: lobby.players.map((p) => ({
+            uuid: p.uuid,
+            nickName: p.nickName,
+          })),
+        },
+        { userUuid: request.userUuid }
+      )
+
+      const publishResult = await eventBus.publish(event)
+      if (publishResult.isFailure) {
+        console.error('❌ JoinLobbyUseCase: Failed to publish event:', publishResult.error)
+      } else {
+        console.log('✅ JoinLobbyUseCase: PlayerJoined event published successfully')
+      }
 
       return Result.ok({
         lobby: lobby.serialize(),

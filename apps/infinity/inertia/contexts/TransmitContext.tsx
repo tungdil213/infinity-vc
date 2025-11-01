@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react'
-import { transmitLobbyClient } from '../services/transmit_client'
+import { transmitManager, ConnectionState } from '../services/transmit_manager'
 import { LobbyTransmitEvent } from '../types/lobby'
 
 export interface TransmitEvent {
@@ -48,85 +48,113 @@ export function TransmitProvider({ children }: TransmitProviderProps) {
   useEffect(() => {
     let mounted = true
     
-    console.log('📡 TransmitProvider: Initializing connection')
-    setIsConnected(true)
-    setError(null)
+    console.log('📡 TransmitProvider: Initializing with TransmitManager')
+    
+    // Écouter les changements d'état de connexion
+    const handleStateChange = (event: any) => {
+      if (!mounted) return
+      
+      console.log('📡 TransmitProvider: Connection state changed:', event.data)
+      const state = event.data.newState
+      
+      setIsConnected(state === ConnectionState.CONNECTED)
+      
+      if (state === ConnectionState.ERROR) {
+        setError(event.data.error || 'Connection error')
+      } else {
+        setError(null)
+      }
+    }
+    
+    transmitManager.on('connection_state_changed', handleStateChange)
+    
+    // Établir la connexion
+    transmitManager.connect()
+      .then(() => {
+        if (mounted) {
+          console.log('📡 TransmitProvider: ✅ Connected via TransmitManager')
+          setIsConnected(true)
+        }
+      })
+      .catch((err) => {
+        if (mounted) {
+          console.error('📡 TransmitProvider: ❌ Connection failed:', err)
+          setError(err.message)
+        }
+      })
 
     return () => {
       mounted = false
-      console.log('📡 TransmitProvider: Cleaning up subscriptions')
-      // Cleanup lors du démontage
-      transmitLobbyClient.unsubscribeAll().catch(console.error)
+      console.log('📡 TransmitProvider: Cleaning up')
+      transmitManager.off('connection_state_changed', handleStateChange)
+      transmitManager.disconnect().catch(console.error)
     }
   }, [])
 
   const subscribeToLobbies = async (callback: (event: LobbyTransmitEvent) => void) => {
     try {
-      if (!isConnected) {
-        console.warn('TransmitProvider: Tentative de souscription avant connexion')
-        return () => {}
-      }
-      const unsubscribe = await transmitLobbyClient.subscribeToLobbies(callback)
+      console.log('📡 TransmitProvider: subscribeToLobbies called')
+      console.log('📡 TransmitProvider: transmitManager state:', {
+        isConnected: transmitManager.isConnected(),
+        hasSubscribe: typeof transmitManager.subscribe === 'function'
+      })
+      const unsubscribe = await transmitManager.subscribe<LobbyTransmitEvent>('lobbies', callback)
+      console.log('📡 TransmitProvider: ✅ Subscribed to lobbies channel')
       return unsubscribe
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur de souscription aux lobbies'
-      console.error('TransmitProvider: Erreur subscribeToLobbies:', errorMessage)
+      console.error('📡 TransmitProvider: ❌ Erreur subscribeToLobbies:', errorMessage)
       setError(errorMessage)
-      // Retourner une fonction vide au lieu de throw pour éviter les crashes
       return () => {}
     }
   }
 
   const subscribeToLobby = async (lobbyUuid: string, callback: (event: LobbyTransmitEvent) => void) => {
     try {
-      if (!isConnected) {
-        console.warn('TransmitProvider: Tentative de souscription lobby avant connexion')
-        return () => {}
-      }
-      const unsubscribe = await transmitLobbyClient.subscribeToLobby(lobbyUuid, callback)
+      console.log(`📡 TransmitProvider: subscribeToLobby called for ${lobbyUuid}`)
+      const channelName = `lobbies/${lobbyUuid}`
+      const unsubscribe = await transmitManager.subscribe<LobbyTransmitEvent>(channelName, callback)
+      console.log(`📡 TransmitProvider: ✅ Subscribed to lobby ${lobbyUuid}`)
       return unsubscribe
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur de souscription au lobby'
-      console.error('TransmitProvider: Erreur subscribeToLobby:', errorMessage)
+      console.error('📡 TransmitProvider: ❌ Erreur subscribeToLobby:', errorMessage)
       setError(errorMessage)
-      // Retourner une fonction vide au lieu de throw pour éviter les crashes
       return () => {}
     }
   }
 
   const subscribeToUserNotifications = async (userUuid: string, callback: (event: any) => void) => {
     try {
-      if (!isConnected) {
-        console.warn('TransmitProvider: Tentative de souscription notifications avant connexion')
-        return () => {}
-      }
-      const unsubscribe = await transmitLobbyClient.subscribeToUserNotifications(userUuid, callback)
+      console.log(`📡 TransmitProvider: subscribeToUserNotifications called for ${userUuid}`)
+      const channelName = `users/${userUuid}`
+      const unsubscribe = await transmitManager.subscribe(channelName, callback)
+      console.log(`📡 TransmitProvider: ✅ Subscribed to user notifications ${userUuid}`)
       return unsubscribe
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur de souscription aux notifications'
-      console.error('TransmitProvider: Erreur subscribeToUserNotifications:', errorMessage)
+      console.error('📡 TransmitProvider: ❌ Erreur subscribeToUserNotifications:', errorMessage)
       setError(errorMessage)
-      // Retourner une fonction vide au lieu de throw pour éviter les crashes
       return () => {}
     }
   }
 
   const unsubscribeFrom = async (channelName: string) => {
     try {
-      await transmitLobbyClient.unsubscribeFrom(channelName)
+      await transmitManager.unsubscribe(channelName)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur de désouscription'
-      console.error('TransmitProvider: Erreur unsubscribeFrom:', errorMessage)
+      console.error('📡 TransmitProvider: ❌ Erreur unsubscribeFrom:', errorMessage)
       setError(errorMessage)
     }
   }
 
   const unsubscribeAll = async () => {
     try {
-      await transmitLobbyClient.unsubscribeAll()
+      await transmitManager.unsubscribeAll()
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur de désouscription globale'
-      console.error('TransmitProvider: Erreur unsubscribeAll:', errorMessage)
+      console.error('📡 TransmitProvider: ❌ Erreur unsubscribeAll:', errorMessage)
       setError(errorMessage)
     }
   }

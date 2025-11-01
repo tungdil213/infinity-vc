@@ -37,7 +37,16 @@ router
     router.post('/auth/logout', '#controllers/enhanced_auth_controller.logout').as('auth.logout')
 
     // Lobbies routes
-    router.get('/lobbies', '#controllers/enhanced_lobbies_controller.index').as('lobbies.index')
+    router
+      .get('/lobbies', '#controllers/enhanced_lobbies_controller.index')
+      .as('lobbies.index')
+      .use(middleware.auth())
+    router
+      .get('/transmit-debug', async ({ inertia }) => {
+        return inertia.render('transmit_debug')
+      })
+      .as('transmit.debug')
+      .use(middleware.auth())
     router
       .get('/lobbies/create', '#controllers/enhanced_lobbies_controller.create')
       .as('lobbies.create')

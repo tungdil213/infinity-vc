@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react'
+import React, { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { LobbyService, LobbyData, LobbyListState, LobbyDetailState } from '../services/lobby_service'
 import { useTransmit } from './TransmitContext'
+import { initializeLobbyService } from '../services/lobby_service_singleton'
 
 interface LobbyContextType {
   // Service instance
@@ -48,7 +49,16 @@ interface LobbyProviderProps {
 
 export function LobbyProvider({ children }: LobbyProviderProps) {
   const transmitContext = useTransmit()
-  const [lobbyService, setLobbyService] = useState<LobbyService | null>(null)
+  
+  // ✅ Utiliser le singleton global pour éviter les race conditions
+  const lobbyService = useMemo(() => {
+    if (!transmitContext) {
+      return null
+    }
+    
+    return initializeLobbyService(transmitContext)
+  }, [transmitContext])
+  
   const [lobbyListState, setLobbyListState] = useState<LobbyListState>({
     lobbies: [],
     loading: false,
@@ -62,29 +72,6 @@ export function LobbyProvider({ children }: LobbyProviderProps) {
   // Références pour éviter les re-créations
   const unsubscribeListRef = useRef<(() => void) | null>(null)
   const unsubscribeDetailsRef = useRef<Map<string, () => void>>(new Map())
-
-  // Initialiser le service quand le contexte Transmit est prêt
-  useEffect(() => {
-    if (transmitContext && transmitContext.isConnected && !lobbyService) {
-      console.log('🔧 LobbyProvider: Initialisation du LobbyService')
-      const service = new LobbyService(transmitContext)
-      setLobbyService(service)
-      
-      console.log('🔧 LobbyProvider: Abonnement aux changements de la liste des lobbies')
-      // S'abonner aux changements de la liste des lobbies
-      const unsubscribe = service.subscribeLobbyList((newState) => {
-        console.log('🔧 LobbyProvider: Mise à jour de la liste des lobbies reçue:', {
-          lobbies: newState.lobbies.length,
-          loading: newState.loading,
-          error: newState.error
-        })
-        setLobbyListState(newState)
-      })
-      
-      unsubscribeListRef.current = unsubscribe
-      console.log('🔧 LobbyProvider: Service et abonnement initialisés avec succès')
-    }
-  }, [transmitContext?.isConnected, lobbyService])
 
   // Nettoyage lors du démontage
   useEffect(() => {
@@ -186,7 +173,20 @@ export function LobbyProvider({ children }: LobbyProviderProps) {
     }
   }, [])
 
-  const contextValue: LobbyContextType = {
+  // ✅ Mémoïser le context value pour garantir que React détecte les changements
+  const contextValue: LobbyContextType = useMemo(() => ({
+      lobbyService,
+      lobbyListState,
+      fetchLobbies,
+      refreshLobbies,
+      createLobby,
+      joinLobby,
+      leaveLobby,
+      startGame,
+      getLobbyDetails,
+      subscribeLobbyDetails,
+      unsubscribeLobbyDetails,
+    }), [
     lobbyService,
     lobbyListState,
     fetchLobbies,
@@ -198,8 +198,9 @@ export function LobbyProvider({ children }: LobbyProviderProps) {
     getLobbyDetails,
     subscribeLobbyDetails,
     unsubscribeLobbyDetails,
-  }
+  ])
 
+  // ✅ Toujours rendre - les hooks vont attendre que le service soit disponible
   return (
     <LobbyContext.Provider value={contextValue}>
       {children}

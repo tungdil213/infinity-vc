@@ -31,14 +31,13 @@ interface LayoutProps {
 }
 
 export default function Layout({ children }: LayoutProps) {
-  const { props } = usePage()
-  const currentLobby = props.currentLobby as {
-    uuid: string
-    name: string
-    status: string
-    currentPlayers: number
-    maxPlayers: number
-  } | null
+  const { props } = usePage<{
+    currentLobby?: any
+    auth?: { user?: any }
+  }>()
+  const currentLobby = props.currentLobby
+  
+  const currentUser = props.auth?.user
 
   return (
     <TransmitProvider>
@@ -46,7 +45,7 @@ export default function Layout({ children }: LayoutProps) {
         {children}
         <FlashMessages />
         <ToastHandler />
-        <LobbyStatusSidebar currentLobby={currentLobby} />
+        <LobbyStatusSidebar initialLobby={currentLobby || null} currentUser={currentUser} />
         <AutoLeaveLobby currentLobby={currentLobby} enabled={true} />
         <Toaster />
       </LobbyProvider>

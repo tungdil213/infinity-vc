@@ -28,8 +28,26 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
   const [isLeavingLobby, setIsLeavingLobby] = useState(false)
   const [isJoiningLobby, setIsJoiningLobby] = useState(false)
 
+  // Logs de debug pour comprendre l'état du lobby
+  console.log('🎮 GameLobby: Rendering', {
+    lobbyUuid,
+    hasLobby: !!lobby,
+    currentPlayers: lobby?.currentPlayers,
+    playersArrayLength: lobby?.players?.length,
+    playersUuids: lobby?.players?.map(p => p.uuid),
+    playersNames: lobby?.players?.map(p => p.nickName),
+    loading,
+    error
+  })
+
   // Détecter si l'utilisateur est dans le lobby
   const isUserInLobby = lobby?.players?.some(player => player.uuid === currentUser.uuid) || false
+  
+  console.log('🎮 GameLobby: User check', {
+    currentUserUuid: currentUser.uuid,
+    isUserInLobby,
+    playersInLobby: lobby?.players?.length
+  })
 
   // Hook pour gérer la confirmation de sortie
   const { markAsLeaving } = useLobbyLeaveGuard({

@@ -17,7 +17,11 @@ const shieldConfig = defineConfig({
    */
   csrf: {
     enabled: true,
-    exceptRoutes: [],
+    exceptRoutes: [
+      // navigator.sendBeacon cannot send custom headers, so we exempt this route
+      // Security: Route validates user session and userUuid match
+      '/api/v1/lobbies/leave-on-close',
+    ],
     enableXsrfCookie: true,
     methods: ['POST', 'PUT', 'PATCH', 'DELETE'],
   },

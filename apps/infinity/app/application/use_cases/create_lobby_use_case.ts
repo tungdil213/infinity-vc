@@ -1,8 +1,10 @@
+import { inject } from '@adonisjs/core'
 import Lobby from '../../domain/entities/lobby.js'
-import { PlayerRepository } from '../repositories/player_repository.js'
-import { LobbyRepository } from '../repositories/lobby_repository.js'
+import { InMemoryPlayerRepository } from '../../infrastructure/repositories/in_memory_player_repository.js'
+import { InMemoryLobbyRepository } from '../../infrastructure/repositories/in_memory_lobby_repository.js'
 import { Result } from '../../domain/shared/result.js'
-import { TransmitLobbyService } from '../services/transmit_lobby_service.js'
+import { getEventBus } from '../../infrastructure/events/event_bus_singleton.js'
+import { LobbyEventFactory } from '../../domain/events/lobby/lobby_domain_events.js'
 
 export interface CreateLobbyRequest {
   userUuid: string
@@ -29,11 +31,11 @@ export interface CreateLobbyResponse {
   createdAt: Date
 }
 
+@inject()
 export class CreateLobbyUseCase {
   constructor(
-    private playerRepository: PlayerRepository,
-    private lobbyRepository: LobbyRepository,
-    private notificationService: TransmitLobbyService
+    private playerRepository: InMemoryPlayerRepository,
+    private lobbyRepository: InMemoryLobbyRepository
   ) {}
 
   async execute(request: CreateLobbyRequest): Promise<Result<CreateLobbyResponse>> {
@@ -78,21 +80,9 @@ export class CreateLobbyUseCase {
       // Sauvegarder le lobby
       await this.lobbyRepository.save(lobby)
 
-      // Notifier la création du lobby pour la synchronisation temps réel
-      this.notificationService.notifyLobbyCreated(lobby.uuid, {
-        uuid: lobby.uuid,
-        name: lobby.name,
-        status: lobby.status,
-        currentPlayers: lobby.playerCount,
-        maxPlayers: lobby.maxPlayers,
-        players: lobby.players,
-        creator: lobby.creator,
-        isPrivate: lobby.isPrivate,
-        hasAvailableSlots: lobby.hasAvailableSlots,
-        canStart: lobby.canStart,
-        createdBy: lobby.createdBy,
-        createdAt: lobby.createdAt,
-      })
+      // 🎯 EVENT-DRIVEN: Publier les événements de domaine via EventBus
+      const eventBus = await getEventBus()
+      await this.publishDomainEvents(lobby, request.userUuid, eventBus)
 
       // Utiliser la sérialisation de l'entité pour garantir la cohérence
       const response = lobby.serialize() as CreateLobbyResponse
@@ -104,6 +94,64 @@ export class CreateLobbyUseCase {
         `System error: ${error instanceof Error ? error.message : 'Unknown error'}`
       )
     }
+  }
+
+  /**
+   * Publier tous les événements de domaine accumulés dans l'entité
+   */
+  private async publishDomainEvents(lobby: Lobby, userUuid: string, eventBus: any): Promise<void> {
+    // Récupérer les événements non publiés
+    const uncommittedEvents = lobby.getUncommittedEvents()
+
+    if (uncommittedEvents.length === 0) {
+      console.log('⚠️ CreateLobbyUseCase: No domain events to publish')
+      return
+    }
+
+    console.log(`📡 CreateLobbyUseCase: Publishing ${uncommittedEvents.length} domain event(s)`)
+
+    // Publier chaque événement via l'EventBus
+    for (const domainEvent of uncommittedEvents) {
+      // Convertir l'ancien format d'événement vers le nouveau
+      const event = this.convertToNewEventFormat(domainEvent, lobby, userUuid)
+
+      if (event) {
+        const result = await eventBus.publish(event)
+
+        if (result.isFailure) {
+          console.error(`❌ CreateLobbyUseCase: Failed to publish event:`, result.error)
+        } else {
+          console.log(`✅ CreateLobbyUseCase: Event ${event.type} published successfully`)
+        }
+      }
+    }
+
+    // Marquer les événements comme publiés
+    lobby.markEventsAsCommitted()
+  }
+
+  /**
+   * Convertir les anciens événements de domaine vers le nouveau format
+   */
+  private convertToNewEventFormat(oldEvent: any, lobby: Lobby, userUuid: string): any {
+    // Déterminer le type d'événement
+    if (
+      oldEvent.constructor.name === 'LobbyCreatedEvent' ||
+      oldEvent.eventName === 'LobbyCreated'
+    ) {
+      return LobbyEventFactory.lobbyCreated(
+        lobby.uuid,
+        lobby.name,
+        lobby.maxPlayers,
+        lobby.isPrivate,
+        { uuid: lobby.creator.uuid, nickName: lobby.creator.nickName },
+        { userUuid }
+      )
+    }
+
+    // Ajouter d'autres conversions ici si nécessaire
+    console.warn(`⚠️ CreateLobbyUseCase: Unknown event type:`, oldEvent.constructor.name)
+    return null
   }
 
   private validateRequest(request: CreateLobbyRequest): Result<void> {

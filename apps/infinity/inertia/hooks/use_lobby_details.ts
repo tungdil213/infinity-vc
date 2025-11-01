@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useReducer, useRef } from 'react'
 import { useLobbyContext } from '../contexts/LobbyContext'
 import { LobbyDetailState, LobbyData } from '../services/lobby_service'
+import { lobbyReducer, initialLobbyState, lobbyActions } from '../reducers/lobby_reducer'
 
 export function useLobbyDetails(lobbyUuid: string | null) {
   const {
@@ -13,20 +14,16 @@ export function useLobbyDetails(lobbyUuid: string | null) {
     startGame,
   } = useLobbyContext()
 
-  const [localState, setLocalState] = useState<LobbyDetailState>({
-    lobby: null,
-    loading: true,
-    error: null,
-  })
+  // Utiliser useReducer pour gérer l'état complexe de manière immutable
+  const [state, dispatch] = useReducer(lobbyReducer, initialLobbyState)
+
+  // Référence pour éviter les comparaisons JSON coûteuses
+  const lastKnownLobbyRef = useRef<LobbyData | null>(null)
 
   // S'abonner aux détails du lobby quand l'UUID change
   useEffect(() => {
     if (!lobbyUuid) {
-      setLocalState({
-        lobby: null,
-        loading: false,
-        error: null,
-      })
+      dispatch(lobbyActions.reset())
       return
     }
 
@@ -36,54 +33,31 @@ export function useLobbyDetails(lobbyUuid: string | null) {
     if (lobbyService) {
       subscribeLobbyDetails(lobbyUuid)
 
-      // Charger les détails initiaux si pas déjà en cache
-      const cachedState = getLobbyDetails(lobbyUuid)
-      if (cachedState) {
-        console.log(`🎯 useLobbyDetails: État en cache trouvé pour ${lobbyUuid}:`, cachedState)
-        setLocalState(cachedState)
-      } else {
-        console.log(`🎯 useLobbyDetails: Chargement des détails pour ${lobbyUuid}`)
-        setLocalState({
-          lobby: null,
-          loading: true,
-          error: null,
-        })
+      // Charger IMMÉDIATEMENT les détails depuis l'API pour éviter délai de polling
+      console.log(`🎯 useLobbyDetails: Chargement immédiat pour ${lobbyUuid}`)
+      dispatch(lobbyActions.setLoading(true))
 
-        // Charger les détails depuis l'API
-        lobbyService
-          .fetchLobbyDetails(lobbyUuid)
-          .then((lobbyData) => {
-            if (lobbyData) {
-              const newState: LobbyDetailState = {
-                lobby: lobbyData,
-                loading: false,
-                error: null,
-              }
-              setLocalState(newState)
-            } else {
-              setLocalState({
-                lobby: null,
-                loading: false,
-                error: 'Lobby non trouvé',
-              })
-            }
-          })
-          .catch((error) => {
-            console.error(`🎯 useLobbyDetails: Erreur lors du chargement de ${lobbyUuid}:`, error)
-            setLocalState({
-              lobby: null,
-              loading: false,
-              error: error.message || 'Erreur lors du chargement',
+      lobbyService
+        .fetchLobbyDetails(lobbyUuid)
+        .then((lobbyData) => {
+          if (lobbyData) {
+            console.log(`🎯 useLobbyDetails: ✅ Données chargées pour ${lobbyUuid}`, {
+              players: lobbyData.players?.length,
             })
-          })
-      }
+            lastKnownLobbyRef.current = lobbyData
+            dispatch(lobbyActions.setLobby(lobbyData))
+          } else {
+            console.log(`🎯 useLobbyDetails: ❌ Lobby non trouvé ${lobbyUuid}`)
+            dispatch(lobbyActions.setError('Lobby non trouvé'))
+          }
+        })
+        .catch((error) => {
+          console.error(`🎯 useLobbyDetails: ❌ Erreur chargement ${lobbyUuid}:`, error)
+          dispatch(lobbyActions.setError(error.message || 'Erreur lors du chargement'))
+        })
     } else {
       console.warn(`🎯 useLobbyDetails: Service non disponible pour ${lobbyUuid}`)
-      setLocalState({
-        lobby: null,
-        loading: true,
-        error: null,
-      })
+      dispatch(lobbyActions.setLoading(true))
     }
 
     // Nettoyage lors du changement d'UUID ou démontage
@@ -96,15 +70,30 @@ export function useLobbyDetails(lobbyUuid: string | null) {
   }, [lobbyUuid, lobbyService])
 
   // Écouter les changements d'état depuis le contexte
+  // Utiliser polling léger au lieu de dépendances sur localState pour éviter les boucles
   useEffect(() => {
     if (!lobbyUuid) return
 
-    const cachedState = getLobbyDetails(lobbyUuid)
-    if (cachedState && JSON.stringify(cachedState) !== JSON.stringify(localState)) {
-      console.log(`useLobbyDetails: Mise à jour depuis le contexte pour ${lobbyUuid}:`, cachedState)
-      setLocalState(cachedState)
-    }
-  }, [lobbyUuid, getLobbyDetails, localState])
+    const pollInterval = setInterval(() => {
+      const cachedState = getLobbyDetails(lobbyUuid)
+      if (cachedState?.lobby) {
+        // Vérifier si les données ont vraiment changé
+        const hasChanged =
+          JSON.stringify(cachedState.lobby) !== JSON.stringify(lastKnownLobbyRef.current)
+
+        if (hasChanged) {
+          console.log(
+            `useLobbyDetails: Mise à jour depuis le contexte pour ${lobbyUuid}:`,
+            cachedState
+          )
+          lastKnownLobbyRef.current = cachedState.lobby
+          dispatch(lobbyActions.setLobby(cachedState.lobby))
+        }
+      }
+    }, 100) // Poll toutes les 100ms
+
+    return () => clearInterval(pollInterval)
+  }, [lobbyUuid, getLobbyDetails])
 
   const handleJoinLobby = async (userUuid: string) => {
     if (!lobbyUuid) throw new Error('Aucun lobby sélectionné')
@@ -149,36 +138,32 @@ export function useLobbyDetails(lobbyUuid: string | null) {
   }
 
   const isUserInLobby = (userUuid: string): boolean => {
-    if (!localState.lobby) return false
-    return localState.lobby.players.some((player) => player.uuid === userUuid)
+    if (!state.lobby) return false
+    return state.lobby.players.some((player) => player.uuid === userUuid)
   }
 
   const isUserCreator = (userUuid: string): boolean => {
-    if (!localState.lobby) return false
-    return localState.lobby.createdBy === userUuid
+    if (!state.lobby) return false
+    return state.lobby.createdBy === userUuid
   }
 
   const canUserJoin = (userUuid: string): boolean => {
-    if (!localState.lobby) return false
+    if (!state.lobby) return false
     return (
-      !isUserInLobby(userUuid) &&
-      localState.lobby.hasAvailableSlots &&
-      localState.lobby.status === 'WAITING'
+      !isUserInLobby(userUuid) && state.lobby.hasAvailableSlots && state.lobby.status === 'WAITING'
     )
   }
 
   const canUserStart = (userUuid: string): boolean => {
-    if (!localState.lobby) return false
-    return (
-      isUserCreator(userUuid) && localState.lobby.canStart && localState.lobby.status === 'WAITING'
-    )
+    if (!state.lobby) return false
+    return isUserCreator(userUuid) && state.lobby.canStart && state.lobby.status === 'WAITING'
   }
 
   return {
     // État
-    lobby: localState.lobby,
-    loading: localState.loading,
-    error: localState.error,
+    lobby: state.lobby,
+    loading: state.loading,
+    error: state.error,
 
     // Actions
     joinLobby: handleJoinLobby,
@@ -190,7 +175,7 @@ export function useLobbyDetails(lobbyUuid: string | null) {
     isUserCreator,
     canUserJoin,
     canUserStart,
-    isEmpty: !localState.lobby && !localState.loading,
-    hasError: !!localState.error,
+    isEmpty: !state.lobby && !state.loading,
+    hasError: !!state.error,
   }
 }
