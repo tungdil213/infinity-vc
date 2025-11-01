@@ -19,19 +19,11 @@ interface LobbyStatusSidebarProps {
 }
 
 export function LobbyStatusSidebar({ initialLobby, currentUser }: LobbyStatusSidebarProps) {
-  console.log('🔧 LobbyStatusSidebar: Initializing component', { 
-    hasInitialLobby: !!initialLobby,
-    initialLobbyUuid: initialLobby?.uuid,
-    initialLobbyPlayers: initialLobby?.players?.length,
-    hasCurrentUser: !!currentUser,
-    currentUserUuid: currentUser?.uuid
-  })
-
   const { lobbyService } = useLobbyContext()
   
   // ✅ Ne charger que si on a un lobby
   const { lobby: realtimeLobby, loading, error } = useLobbyDetails(
-    initialLobby?.uuid || null  // null au lieu de '' pour éviter chargement inutile
+    initialLobby?.uuid || null
   )
   const [isLeavingLobby, setIsLeavingLobby] = useState(false)
   const [timeoutReached, setTimeoutReached] = useState(false)
@@ -39,65 +31,26 @@ export function LobbyStatusSidebar({ initialLobby, currentUser }: LobbyStatusSid
   // Garder la dernière version valide du lobby pour éviter les disparitions pendant les updates
   const [lastValidLobby, setLastValidLobby] = useState<Lobby | null>(initialLobby)
   
-  console.log('🔧 LobbyStatusSidebar: State debug', {
-    hasRealtimeLobby: !!realtimeLobby,
-    realtimeLobbyPlayers: realtimeLobby?.players?.length,
-    hasLastValidLobby: !!lastValidLobby,
-    lastValidLobbyPlayers: lastValidLobby?.players?.length,
-    loading,
-    hasError: !!error
-  })
-  
   useEffect(() => {
-    console.log('🔧 LobbyStatusSidebar: Updating lastValidLobby', {
-      hasRealtimeLobby: !!realtimeLobby,
-      hasInitialLobby: !!initialLobby
-    })
-    
     if (realtimeLobby) {
-      console.log('🔧 LobbyStatusSidebar: Setting lastValidLobby from realtimeLobby', {
-        players: realtimeLobby.players?.length
-      })
       setLastValidLobby(realtimeLobby as Lobby)
     } else if (initialLobby) {
-      console.log('🔧 LobbyStatusSidebar: Setting lastValidLobby from initialLobby', {
-        players: initialLobby.players?.length
-      })
       setLastValidLobby(initialLobby)
     }
   }, [realtimeLobby, initialLobby])
 
   // Utilise les données temps réel si disponibles, sinon la dernière version valide
   const effectiveLobby = realtimeLobby || lastValidLobby
-  
-  console.log('🔧 LobbyStatusSidebar: Effective lobby', {
-    hasEffectiveLobby: !!effectiveLobby,
-    effectiveLobbyUuid: effectiveLobby?.uuid,
-    effectiveLobbyPlayers: effectiveLobby?.players?.length,
-    source: realtimeLobby ? 'realtime' : lastValidLobby ? 'cache' : 'none'
-  })
 
   // Timeout protection - Seulement si on a un lobby à charger
   useEffect(() => {
-    // ✅ Ne démarrer le timeout QUE si on a vraiment un lobby à charger
     if (loading && !timeoutReached && initialLobby?.uuid) {
-      console.log('🔧 LobbyStatusSidebar: Starting timeout protection (30s)', {
-        lobbyUuid: initialLobby.uuid
-      })
       const timeout = setTimeout(() => {
-        console.warn('🔧 LobbyStatusSidebar: ❌ Timeout reached après 30s', {
-          loading,
-          hasRealtimeLobby: !!realtimeLobby,
-          hasLastValidLobby: !!lastValidLobby
-        })
         setTimeoutReached(true)
         toast.error('Connection timeout - using cached data')
       }, 30000)  // 30 secondes
 
-      return () => {
-        console.log('🔧 LobbyStatusSidebar: Clearing timeout protection')
-        clearTimeout(timeout)
-      }
+      return () => clearTimeout(timeout)
     }
   }, [loading, timeoutReached, initialLobby?.uuid, realtimeLobby, lastValidLobby])
 
@@ -105,32 +58,18 @@ export function LobbyStatusSidebar({ initialLobby, currentUser }: LobbyStatusSid
   // 1. Pas de lobby ET pas en chargement (vraiment rien à afficher)
   // 2. OU pas d'UUID (pas sur une page lobby)
   if (!effectiveLobby && !loading) {
-    console.log('🔧 LobbyStatusSidebar: ❌ No lobby to display', {
-      checkedRealtime: !!realtimeLobby,
-      checkedCache: !!lastValidLobby,
-      checkedInitial: !!initialLobby,
-      loading
-    })
     return null
   }
   
   // Si en chargement et pas de lobby, ne rien afficher (attendre les données)
   if (!effectiveLobby && loading) {
-    console.log('🔧 LobbyStatusSidebar: ⏳ Loading lobby data...')
     return null
   }
   
   // À ce stade, effectiveLobby existe forcément (sinon on serait retourné avant)
   if (!effectiveLobby) {
-    console.error('🔧 LobbyStatusSidebar: ❌ Impossible state - no lobby but not loading')
     return null
   }
-  
-  console.log('🔧 LobbyStatusSidebar: ✅ Rendering with lobby', {
-    uuid: effectiveLobby.uuid,
-    playersCount: effectiveLobby.players?.length,
-    players: effectiveLobby.players?.map(p => (p as any).nickName || (p as any).fullName).join(', ')
-  })
 
   // Calculer les permissions utilisateur (avec type guard pour éviter les erreurs de type)
   const permissions = currentUser ? getLobbyPermissions(effectiveLobby as Lobby, currentUser) : null
@@ -146,7 +85,6 @@ export function LobbyStatusSidebar({ initialLobby, currentUser }: LobbyStatusSid
     setIsLeavingLobby(true)
     try {
       await lobbyService.leaveLobby(effectiveLobby.uuid, currentUser.uuid)
-      console.log('🔧 LobbyStatusSidebar: Successfully left lobby')
       toast.success('Vous avez quitté le lobby avec succès')
       // Le sidebar disparaîtra automatiquement car lobby deviendra null
     } catch (error) {
@@ -158,7 +96,6 @@ export function LobbyStatusSidebar({ initialLobby, currentUser }: LobbyStatusSid
   }
 
   const handleGoToLobby = () => {
-    console.log('🔧 LobbyStatusSidebar: Navigating to lobby', { lobbyUuid: effectiveLobby.uuid })
     router.visit(`/lobbies/${effectiveLobby.uuid}`)
   }
 

@@ -2,7 +2,7 @@ import React from 'react'
 import { router } from '@inertiajs/react'
 import { Header } from '../../../../packages/ui/src/components/header'
 import { useTransmit } from '../contexts/TransmitContext'
-import { useLobbyService } from '../hooks/use_lobby_service'
+import { getLobbyService } from '../services/lobby_service_singleton'
 
 interface User {
   uuid: string
@@ -26,7 +26,7 @@ interface HeaderWrapperProps {
 
 export function HeaderWrapper({ user, currentLobby, className }: HeaderWrapperProps) {
   const { isConnected } = useTransmit()
-  const { service: lobbyService } = useLobbyService()
+  const lobbyService = getLobbyService()
 
   const handleCreateLobby = () => {
     router.visit('/lobbies/create')
