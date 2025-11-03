@@ -1,5 +1,5 @@
 import { EventTransformer, SSEEvent, ChannelPatterns, SSEEventTypes } from './types.js'
-import { DomainEvent } from '../../domain/events/domain_event.js'
+import { DomainEvent } from '../../domain/events/lobby_events.js'
 import {
   PlayerJoinedLobbyEvent,
   PlayerLeftLobbyEvent,

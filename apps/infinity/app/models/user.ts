@@ -9,10 +9,10 @@ export default class User extends BaseModel {
   @column({ isPrimary: true })
   declare id: number
 
-  @column()
+  @column({ columnName: 'user_uuid' })
   declare userUuid: string
 
-  @column()
+  @column({ columnName: 'full_name' })
   declare fullName: string | null
 
   @column()

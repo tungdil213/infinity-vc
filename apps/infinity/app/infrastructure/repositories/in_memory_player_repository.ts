@@ -1,7 +1,7 @@
-import Player from '../../domain/entities/player.js'
-import { PlayerInterface } from '../../domain/interfaces/player_interface.js'
-import { PlayerRepository } from '../../application/repositories/player_repository.js'
-import { EntityNotFoundError } from '../../application/repositories/base_repository.js'
+import Player from '#domain/entities/player'
+import { PlayerInterface } from '#domain/interfaces/player_interface'
+import { PlayerRepository } from '#application/repositories/player_repository'
+import { EntityNotFoundError } from '#application/repositories/base_repository'
 
 export class InMemoryPlayerRepository implements PlayerRepository {
   private players: Map<string, Player> = new Map()

@@ -1,7 +1,7 @@
-import Lobby from '../../domain/entities/lobby.js'
-import { LobbyStatus } from '../../domain/value_objects/lobby_status.js'
-import { LobbyRepository } from '../../application/repositories/lobby_repository.js'
-import { EntityNotFoundError } from '../../application/repositories/base_repository.js'
+import Lobby from '#domain/entities/lobby'
+import { LobbyStatus } from '#domain/value_objects/lobby_status'
+import { LobbyRepository } from '#application/repositories/lobby_repository'
+import { EntityNotFoundError } from '#application/repositories/base_repository'
 
 export class InMemoryLobbyRepository implements LobbyRepository {
   private lobbies: Map<string, Lobby> = new Map()

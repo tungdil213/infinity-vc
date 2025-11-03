@@ -1,8 +1,8 @@
+import { PlayerInterface } from '#domain/interfaces/player_interface'
+import { LobbyStatus } from '#domain/value_objects/lobby_status'
+import { LobbyValidationException } from '#exceptions/domain_exceptions'
+import { Result } from '@adonisjs/core/health'
 import { BaseEntity } from './base_entity.js'
-import { LobbyStatus } from '../value_objects/lobby_status.js'
-import { PlayerInterface } from '../interfaces/player_interface.js'
-import { LobbyValidationException } from '../../exceptions/domain_exceptions.js'
-import { Result } from '../shared/result.js'
 import {
   LobbyCreatedEvent,
   PlayerJoinedLobbyEvent,
@@ -56,7 +56,13 @@ export default class Lobby extends BaseEntity {
 
     // Enregistrer l'événement de création
     lobby.recordEvent(
-      new LobbyCreatedEvent(lobby._uuid, lobby._name, lobby._createdBy, lobby._maxPlayers)
+      new LobbyCreatedEvent(
+        lobby._uuid,
+        lobby._name,
+        data.creator,
+        lobby._maxPlayers,
+        lobby._isPrivate
+      )
     )
 
     return lobby

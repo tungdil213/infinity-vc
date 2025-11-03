@@ -1,6 +1,6 @@
-import { DomainEvent, EventHandlingResult } from '../../domain/events/base/domain_event.js'
-import { EventHandler } from '../../domain/events/base/event_handler.js'
-import { Result } from '../../domain/shared/result.js'
+import { DomainEvent, EventHandlingResult } from '#domain/events/base/domain_event'
+import { EventHandler } from '#domain/events/base/event_handler'
+import { Result } from '#domain/shared/result'
 
 /**
  * Interface du Event Bus central

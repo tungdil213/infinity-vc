@@ -1,9 +1,9 @@
 import { inject } from '@adonisjs/core'
 import transmit from '@adonisjs/transmit/services/main'
-import { BaseEventHandler, MeasureProcessingTime } from '../../domain/events/base/event_handler.js'
-import type { DomainEvent, EventHandlingResult } from '../../domain/events/base/domain_event.js'
-import { Result } from '../../domain/shared/result.js'
-import type { LobbyDomainEvent } from '../../domain/events/lobby/lobby_domain_events.js'
+import { BaseEventHandler, MeasureProcessingTime } from '#domain/events/base/event_handler'
+import type { DomainEvent, EventHandlingResult } from '#domain/events/base/domain_event'
+import { Result } from '#domain/shared/result'
+import type { LobbyDomainEvent } from '#domain/events/lobby/lobby_domain_events'
 
 /**
  * Pont entre le système d'événements et Transmit

@@ -1,5 +1,5 @@
-import { BaseDomainEvent } from './domain_event.js'
-import { Player } from '../value_objects/player.js'
+import { BaseDomainEvent } from './base/base_domain_event.js'
+import { PlayerInterface } from '../interfaces/player_interface.js'
 
 export enum GameEventType {
   GAME_STARTED = 'GameStarted',
@@ -18,7 +18,7 @@ export class GameStartedEvent extends BaseDomainEvent {
 
   constructor(
     public readonly gameUuid: string,
-    public readonly players: Player[],
+    public readonly players: PlayerInterface[],
     public readonly startedAt: Date,
     timestamp?: Date
   ) {
@@ -55,7 +55,7 @@ export class GameFinishedEvent extends BaseDomainEvent {
 
   constructor(
     public readonly gameUuid: string,
-    public readonly winner: Player | null,
+    public readonly winner: PlayerInterface | null,
     public readonly finalScores: Record<string, number>,
     public readonly duration: number,
     timestamp?: Date
@@ -69,8 +69,8 @@ export class TurnChangedEvent extends BaseDomainEvent {
 
   constructor(
     public readonly gameUuid: string,
-    public readonly previousPlayer: Player | null,
-    public readonly currentPlayer: Player,
+    public readonly previousPlayer: PlayerInterface | null,
+    public readonly currentPlayer: PlayerInterface,
     public readonly round: number,
     timestamp?: Date
   ) {
@@ -97,7 +97,7 @@ export class PlayerActionEvent extends BaseDomainEvent {
 
   constructor(
     public readonly gameUuid: string,
-    public readonly player: Player,
+    public readonly player: PlayerInterface,
     public readonly action: string,
     public readonly actionData: any,
     public readonly gameState: any,
@@ -112,10 +112,10 @@ export class PlayerEliminatedEvent extends BaseDomainEvent {
 
   constructor(
     public readonly gameUuid: string,
-    public readonly eliminatedPlayer: Player,
-    public readonly eliminatedBy: Player | null,
+    public readonly eliminatedPlayer: PlayerInterface,
+    public readonly eliminatedBy: PlayerInterface | null,
     public readonly reason: string,
-    public readonly remainingPlayers: Player[],
+    public readonly remainingPlayers: PlayerInterface[],
     timestamp?: Date
   ) {
     super(timestamp)

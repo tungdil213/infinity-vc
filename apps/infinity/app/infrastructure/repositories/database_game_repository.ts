@@ -1,12 +1,30 @@
+import { GameRepository } from '#application/repositories/game_repository'
+import Game from '#domain/entities/game'
+import { GameStatus } from '#domain/value_objects/game_status'
+import GameModel from '#models/game_model'
 import { inject } from '@adonisjs/core'
-import { GameRepository } from '../../application/repositories/game_repository.js'
-import Game from '../../domain/entities/game.js'
-import { GameStatus } from '../../domain/value_objects/game_status.js'
-import GameModel from '../../models/game_model.js'
 import { DateTime } from 'luxon'
 
 @inject()
 export class DatabaseGameRepository implements GameRepository {
+  findActiveGames(): Promise<Game[]> {
+    throw new Error('Method not implemented.')
+  }
+  findFinishedGames(): Promise<Game[]> {
+    throw new Error('Method not implemented.')
+  }
+  findRecentGames(limit?: number): Promise<Game[]> {
+    throw new Error('Method not implemented.')
+  }
+  countGamesByPlayer(playerUuid: string): Promise<number> {
+    throw new Error('Method not implemented.')
+  }
+  countWinsByPlayer(playerUuid: string): Promise<number> {
+    throw new Error('Method not implemented.')
+  }
+  findByUuidOrFail(uuid: string): Promise<Game> {
+    throw new Error('Method not implemented.')
+  }
   async save(game: Game): Promise<void> {
     const serialized = game.toJSON()
 

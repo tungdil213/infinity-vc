@@ -1,6 +1,8 @@
 import { ApplicationService } from '@adonisjs/core/types'
 import { DatabaseUserRepository } from '#infrastructure/repositories/database_user_repository'
 import { DatabasePlayerRepository } from '#infrastructure/repositories/database_player_repository'
+import { InMemoryPlayerRepository } from '#infrastructure/repositories/in_memory_player_repository'
+import { HybridPlayerRepository } from '#infrastructure/repositories/hybrid_player_repository'
 import { DatabaseLobbyRepository } from '#infrastructure/repositories/database_lobby_repository'
 import { InMemoryLobbyRepository } from '#infrastructure/repositories/in_memory_lobby_repository'
 import { DatabaseGameRepository } from '#infrastructure/repositories/database_game_repository'
@@ -14,10 +16,6 @@ import { LeaveLobbyUseCase } from '#application/use_cases/leave_lobby_use_case'
 import { StartGameUseCase } from '#application/use_cases/start_game_use_case'
 import { ListLobbiesUseCase } from '#application/use_cases/list_lobbies_use_case'
 import { ShowLobbyUseCase } from '#application/use_cases/show_lobby_use_case'
-import { KickPlayerUseCase } from '#application/use_cases/kick_player_use_case'
-import { UpdateLobbySettingsUseCase } from '#application/use_cases/update_lobby_settings_use_case'
-import { SetPlayerReadyUseCase } from '#application/use_cases/set_player_ready_use_case'
-import LobbyController from '#controllers/lobby_controller'
 
 export default class AppProvider {
   constructor(protected app: ApplicationService) {}
@@ -30,6 +28,11 @@ export default class AppProvider {
 
     this.app.container.singleton(DatabasePlayerRepository, () => {
       return new DatabasePlayerRepository()
+    })
+
+    // ✅ Utiliser HybridPlayerRepository qui cherche en mémoire puis en BD
+    this.app.container.singleton(InMemoryPlayerRepository, () => {
+      return new HybridPlayerRepository() as any
     })
 
     this.app.container.singleton(DatabaseLobbyRepository, () => {
@@ -70,25 +73,22 @@ export default class AppProvider {
       return new AuthenticateUserUseCase(userRepository, playerRepository)
     })
 
-    // Register lobby use cases
+    // Register lobby use cases (Event-Driven architecture)
     this.app.container.singleton(CreateLobbyUseCase, async (resolver) => {
-      const playerRepository = await resolver.make(DatabasePlayerRepository)
-      const hybridLobbyService = await resolver.make(HybridLobbyService)
-      const notificationService = await resolver.make(TransmitLobbyService)
-      return new CreateLobbyUseCase(playerRepository, hybridLobbyService, notificationService)
+      const playerRepository = await resolver.make(InMemoryPlayerRepository)
+      const lobbyRepository = await resolver.make(InMemoryLobbyRepository)
+      return new CreateLobbyUseCase(playerRepository, lobbyRepository)
     })
 
     this.app.container.singleton(JoinLobbyUseCase, async (resolver) => {
-      const playerRepository = await resolver.make(DatabasePlayerRepository)
-      const hybridLobbyService = await resolver.make(HybridLobbyService)
-      const notificationService = await resolver.make(TransmitLobbyService)
-      return new JoinLobbyUseCase(playerRepository, hybridLobbyService, notificationService)
+      const playerRepository = await resolver.make(InMemoryPlayerRepository)
+      const lobbyRepository = await resolver.make(InMemoryLobbyRepository)
+      return new JoinLobbyUseCase(playerRepository, lobbyRepository)
     })
 
     this.app.container.singleton(LeaveLobbyUseCase, async (resolver) => {
-      const hybridLobbyService = await resolver.make(HybridLobbyService)
-      const notificationService = await resolver.make(TransmitLobbyService)
-      return new LeaveLobbyUseCase(hybridLobbyService, notificationService)
+      const lobbyRepository = await resolver.make(InMemoryLobbyRepository)
+      return new LeaveLobbyUseCase(lobbyRepository)
     })
 
     this.app.container.singleton(StartGameUseCase, async (resolver) => {
@@ -106,41 +106,6 @@ export default class AppProvider {
     this.app.container.singleton(ShowLobbyUseCase, async (resolver) => {
       const hybridLobbyService = await resolver.make(HybridLobbyService)
       return new ShowLobbyUseCase(hybridLobbyService)
-    })
-
-    this.app.container.singleton(KickPlayerUseCase, async (resolver) => {
-      const hybridLobbyService = await resolver.make(HybridLobbyService)
-      const playerRepository = await resolver.make(DatabasePlayerRepository)
-      return new KickPlayerUseCase(hybridLobbyService, playerRepository, null as any)
-    })
-
-    this.app.container.singleton(UpdateLobbySettingsUseCase, async (resolver) => {
-      const hybridLobbyService = await resolver.make(HybridLobbyService)
-      return new UpdateLobbySettingsUseCase(hybridLobbyService, null as any)
-    })
-
-    this.app.container.singleton(SetPlayerReadyUseCase, async (resolver) => {
-      const hybridLobbyService = await resolver.make(HybridLobbyService)
-      const playerRepository = await resolver.make(DatabasePlayerRepository)
-      return new SetPlayerReadyUseCase(hybridLobbyService, playerRepository, null as any)
-    })
-
-    // Register controllers
-    this.app.container.singleton(LobbyController, async (resolver) => {
-      const createLobbyUseCase = await resolver.make(CreateLobbyUseCase)
-      const joinLobbyUseCase = await resolver.make(JoinLobbyUseCase)
-      const leaveLobbyUseCase = await resolver.make(LeaveLobbyUseCase)
-      const listLobbiesUseCase = await resolver.make(ListLobbiesUseCase)
-      const startGameUseCase = await resolver.make(StartGameUseCase)
-      const hybridLobbyService = await resolver.make(HybridLobbyService)
-      return new LobbyController(
-        createLobbyUseCase,
-        joinLobbyUseCase,
-        leaveLobbyUseCase,
-        listLobbiesUseCase,
-        startGameUseCase,
-        hybridLobbyService
-      )
     })
   }
 }

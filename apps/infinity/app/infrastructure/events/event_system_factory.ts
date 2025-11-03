@@ -1,6 +1,6 @@
 import { inject } from '@adonisjs/core'
-import { EventBus } from '../../application/events/event_bus.js'
-import { InMemoryEventBus } from '../../application/events/in_memory_event_bus.js'
+import { EventBus } from '#events/event_bus'
+import { InMemoryEventBus } from '#events/in_memory_event_bus'
 import {
   LobbyPersistenceHandler,
   LobbyBusinessRulesHandler,

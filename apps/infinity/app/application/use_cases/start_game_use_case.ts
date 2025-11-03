@@ -1,7 +1,6 @@
 import Game from '../../domain/entities/game.js'
 import { LobbyRepository } from '../repositories/lobby_repository.js'
 import { GameRepository } from '../repositories/game_repository.js'
-import { GameStartedEvent } from '../../domain/events/lobby_events.js'
 import { Result } from '../../domain/shared/result.js'
 import { TransmitLobbyService } from '../services/transmit_lobby_service.js'
 
@@ -102,9 +101,6 @@ export class StartGameUseCase {
 
       // Supprimer le lobby de la mémoire (il est maintenant persisté en base)
       await this.lobbyRepository.delete(lobby.uuid)
-
-      // Enregistrer l'événement de démarrage de partie
-      new GameStartedEvent(game.uuid, lobby.uuid, game.players)
 
       const response: StartGameResponse = {
         game: {

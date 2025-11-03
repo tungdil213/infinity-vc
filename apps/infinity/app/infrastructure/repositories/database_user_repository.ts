@@ -1,6 +1,6 @@
-import User from '../../domain/entities/user.js'
-import { UserRepository } from '../../application/repositories/user_repository.js'
-import { EntityNotFoundException } from '../../exceptions/domain_exceptions.js'
+import User from '#domain/entities/user'
+import { UserRepository } from '#application/repositories/user_repository'
+import { EntityNotFoundException } from '#exceptions/domain_exceptions'
 import UserModel from '#models/user'
 
 export class DatabaseUserRepository implements UserRepository {

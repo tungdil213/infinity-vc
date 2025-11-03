@@ -1,9 +1,9 @@
-import Player from '../../domain/entities/player.js'
-import { PlayerInterface } from '../../domain/interfaces/player_interface.js'
-import { PlayerRepository } from '../../application/repositories/player_repository.js'
-import { EntityNotFoundException } from '../../exceptions/domain_exceptions.js'
-import User from '../../models/user.js'
-import PlayerModel from '../../models/player.js'
+import Player from '#domain/entities/player'
+import { PlayerInterface } from '#domain/interfaces/player_interface'
+import { PlayerRepository } from '#application/repositories/player_repository'
+import { EntityNotFoundException } from '#exceptions/domain_exceptions'
+import User from '#models/user'
+import PlayerModel from '#models/player'
 
 export class DatabasePlayerRepository implements PlayerRepository {
   async save(player: Player): Promise<void> {

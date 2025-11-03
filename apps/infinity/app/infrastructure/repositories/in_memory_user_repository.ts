@@ -1,6 +1,6 @@
-import User from '../../domain/entities/user.js'
-import { UserRepository } from '../../application/repositories/user_repository.js'
-import { EntityNotFoundError } from '../../application/repositories/base_repository.js'
+import User from '#domain/entities/user'
+import { UserRepository } from '#application/repositories/user_repository'
+import { EntityNotFoundError } from '#application/repositories/base_repository'
 
 export class InMemoryUserRepository implements UserRepository {
   private users: Map<string, User> = new Map()
