@@ -156,9 +156,7 @@ export default function TransmitDebug() {
                 <div>
                   <div className="text-sm text-gray-500">Active Channels</div>
                   <div className="text-sm font-mono">
-                    {stats.activeChannels.length > 0
-                      ? stats.activeChannels.join(', ')
-                      : 'None'}
+                    {stats.activeChannels.length > 0 ? stats.activeChannels.join(', ') : 'None'}
                   </div>
                 </div>
               </div>

@@ -62,7 +62,7 @@ const transformLobbyData = (lobby: Lobby): LobbyData => ({
   hasAvailableSlots: lobby.hasAvailableSlots,
   creatorUuid: lobby.creatorUuid || lobby.createdBy,
   createdAt: lobby.createdAt,
-  players: lobby.players.map(player => ({
+  players: lobby.players.map((player) => ({
     ...player,
     isOnline: player.isOnline ?? true,
     isReady: player.isReady ?? false,
@@ -72,7 +72,7 @@ const transformLobbyData = (lobby: Lobby): LobbyData => ({
 export default function Lobbies({ lobbies: initialLobbies, user, currentLobby }: LobbiesProps) {
   const [loading, setLoading] = useState(false)
   const lobbyContext = useLobbyContext()
-  
+
   // Utiliser le nouveau hook useLobbyList avec les données Inertia initiales
   const {
     lobbies: realtimeLobbies,
@@ -87,7 +87,7 @@ export default function Lobbies({ lobbies: initialLobbies, user, currentLobby }:
 
   // Architecture hybride: Afficher toujours les données du hook (initialisées avec Inertia, mises à jour par Transmit)
   const lobbies = realtimeLobbies
-  
+
   const handleCreateLobby = () => {
     router.get('/lobbies/create')
   }
@@ -95,18 +95,23 @@ export default function Lobbies({ lobbies: initialLobbies, user, currentLobby }:
   const handleJoinLobby = async (lobbyUuid: string) => {
     try {
       setLoading(true)
-      router.post(`/lobbies/${lobbyUuid}/join`, {}, {
-        onSuccess: () => {
-          toast.success('Vous avez rejoint le lobby avec succès!')
-          router.visit(`/lobbies/${lobbyUuid}`)
-        },
-        onError: (errors) => {
-          const errorMessage = typeof errors === 'object' && errors !== null && 'error' in errors 
-            ? (errors as any).error 
-            : 'Impossible de rejoindre le lobby'
-          toast.error(errorMessage)
+      router.post(
+        `/lobbies/${lobbyUuid}/join`,
+        {},
+        {
+          onSuccess: () => {
+            toast.success('Vous avez rejoint le lobby avec succès!')
+            router.visit(`/lobbies/${lobbyUuid}`)
+          },
+          onError: (errors) => {
+            const errorMessage =
+              typeof errors === 'object' && errors !== null && 'error' in errors
+                ? (errors as any).error
+                : 'Impossible de rejoindre le lobby'
+            toast.error(errorMessage)
+          },
         }
-      })
+      )
     } catch (error) {
       toast.error('Une erreur est survenue')
     } finally {
@@ -116,18 +121,23 @@ export default function Lobbies({ lobbies: initialLobbies, user, currentLobby }:
 
   const handleLeaveLobby = async (lobbyUuid: string) => {
     try {
-      router.post(`/lobbies/${lobbyUuid}/leave`, {}, {
-        onSuccess: () => {
-          toast.success('Vous avez quitté le lobby')
-          router.reload()
-        },
-        onError: (errors) => {
-          const errorMessage = typeof errors === 'object' && errors !== null && 'error' in errors 
-            ? (errors as any).error 
-            : 'Impossible de quitter le lobby'
-          toast.error(errorMessage)
+      router.post(
+        `/lobbies/${lobbyUuid}/leave`,
+        {},
+        {
+          onSuccess: () => {
+            toast.success('Vous avez quitté le lobby')
+            router.reload()
+          },
+          onError: (errors) => {
+            const errorMessage =
+              typeof errors === 'object' && errors !== null && 'error' in errors
+                ? (errors as any).error
+                : 'Impossible de quitter le lobby'
+            toast.error(errorMessage)
+          },
         }
-      })
+      )
     } catch (error) {
       toast.error('Une erreur est survenue')
     }
@@ -139,27 +149,35 @@ export default function Lobbies({ lobbies: initialLobbies, user, currentLobby }:
 
   const handleShareLobby = (lobbyUuid: string) => {
     const url = `${window.location.origin}/lobbies/${lobbyUuid}`
-    navigator.clipboard.writeText(url).then(() => {
-      toast.success('Lien du lobby copié!')
-    }).catch(() => {
-      toast.error('Impossible de copier le lien')
-    })
+    navigator.clipboard
+      .writeText(url)
+      .then(() => {
+        toast.success('Lien du lobby copié!')
+      })
+      .catch(() => {
+        toast.error('Impossible de copier le lien')
+      })
   }
 
   const handleStartGame = async (lobbyUuid: string) => {
     try {
-      router.post(`/lobbies/${lobbyUuid}/start`, {}, {
-        onSuccess: (page) => {
-          toast.success('Partie démarrée!')
-          // Le contrôleur redirige automatiquement vers /games/{gameUuid}
-        },
-        onError: (errors) => {
-          const errorMessage = typeof errors === 'object' && errors !== null && 'error' in errors 
-            ? (errors as any).error 
-            : 'Impossible de démarrer la partie'
-          toast.error(errorMessage)
+      router.post(
+        `/lobbies/${lobbyUuid}/start`,
+        {},
+        {
+          onSuccess: (page) => {
+            toast.success('Partie démarrée!')
+            // Le contrôleur redirige automatiquement vers /games/{gameUuid}
+          },
+          onError: (errors) => {
+            const errorMessage =
+              typeof errors === 'object' && errors !== null && 'error' in errors
+                ? (errors as any).error
+                : 'Impossible de démarrer la partie'
+            toast.error(errorMessage)
+          },
         }
-      })
+      )
     } catch (error) {
       toast.error('Une erreur est survenue')
     }
@@ -167,18 +185,23 @@ export default function Lobbies({ lobbies: initialLobbies, user, currentLobby }:
 
   const handleKickPlayer = async (lobbyUuid: string, playerUuid: string) => {
     try {
-      router.post(`/lobbies/${lobbyUuid}/kick`, { playerUuid }, {
-        onSuccess: () => {
-          toast.success('Joueur expulsé')
-          router.reload()
-        },
-        onError: (errors) => {
-          const errorMessage = typeof errors === 'object' && errors !== null && 'error' in errors 
-            ? (errors as any).error 
-            : 'Impossible d\'expulser le joueur'
-          toast.error(errorMessage)
+      router.post(
+        `/lobbies/${lobbyUuid}/kick`,
+        { playerUuid },
+        {
+          onSuccess: () => {
+            toast.success('Joueur expulsé')
+            router.reload()
+          },
+          onError: (errors) => {
+            const errorMessage =
+              typeof errors === 'object' && errors !== null && 'error' in errors
+                ? (errors as any).error
+                : "Impossible d'expulser le joueur"
+            toast.error(errorMessage)
+          },
         }
-      })
+      )
     } catch (error) {
       toast.error('Une erreur est survenue')
     }
@@ -188,21 +211,23 @@ export default function Lobbies({ lobbies: initialLobbies, user, currentLobby }:
     refresh()
   }
 
-  const headerUser = user.fullName ? {
-    uuid: user.uuid,
-    fullName: user.fullName,
-    email: user.nickName
-  } : undefined
+  const headerUser = user.fullName
+    ? {
+        uuid: user.uuid,
+        fullName: user.fullName,
+        email: user.nickName,
+      }
+    : undefined
 
   const transformedLobbies = lobbies.map((lobby) => transformLobbyData(lobby as Lobby))
 
   return (
     <Layout>
       <Head title="Game Lobbies" />
-      
+
       <div className="min-h-screen bg-gray-50">
         <HeaderWrapper user={headerUser} currentLobby={currentLobby} />
-        
+
         <div className="container mx-auto px-4 py-8">
           <LobbyList
             lobbies={transformedLobbies}
@@ -220,7 +245,7 @@ export default function Lobbies({ lobbies: initialLobbies, user, currentLobby }:
             onRefresh={handleRefresh}
           />
         </div>
-        
+
         <Footer />
       </div>
     </Layout>

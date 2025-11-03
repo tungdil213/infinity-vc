@@ -1,6 +1,9 @@
 import React from 'react'
 import { router } from '@inertiajs/react'
-import { LobbyList as UILobbyList, type LobbyFilters } from '../../../../../packages/ui/src/components/lobby-list'
+import {
+  LobbyList as UILobbyList,
+  type LobbyFilters,
+} from '../../../../../packages/ui/src/components/lobby-list'
 import type { LobbyData } from '../../../../../packages/ui/src/components/lobby-card'
 import { useLobbyList } from '../hooks/use_lobby_list'
 import { toast } from 'sonner'
@@ -19,24 +22,27 @@ interface LobbyListWrapperProps {
 /**
  * Wrapper Inertia pour le composant UI LobbyList
  * Ajoute la logique métier (hooks, routing, toasts) au composant UI pur
- * 
+ *
  * Pattern: UI Component (@tyfo.dev/ui) + Wrapper (logique Inertia)
  */
-export default function LobbyListWrapper({ 
-  currentUser, 
-  onCreateLobby, 
-  initialLobbies = [] 
+export default function LobbyListWrapper({
+  currentUser,
+  onCreateLobby,
+  initialLobbies = [],
 }: LobbyListWrapperProps) {
-  console.log('🔧 LobbyListWrapper: Initializing', { 
-    hasUser: !!currentUser, 
-    initialCount: initialLobbies.length 
+  console.log('🔧 LobbyListWrapper: Initializing', {
+    hasUser: !!currentUser,
+    initialCount: initialLobbies.length,
   })
-  
+
   // ✅ Utiliser le hook avec les données Inertia comme fallback
-  const { lobbies, loading, error, refresh, joinLobby: joinLobbyService } = useLobbyList(
-    {},
-    initialLobbies
-  )
+  const {
+    lobbies,
+    loading,
+    error,
+    refresh,
+    joinLobby: joinLobbyService,
+  } = useLobbyList({}, initialLobbies)
 
   // ✅ Fallback gracieux: données temps réel OU données Inertia
   const effectiveLobbies = lobbies.length > 0 ? lobbies : initialLobbies
@@ -50,11 +56,11 @@ export default function LobbyListWrapper({
     }
 
     console.log('🔧 LobbyListWrapper: Joining lobby', { lobbyUuid, userUuid: currentUser.uuid })
-    
+
     try {
       await joinLobbyService(lobbyUuid, currentUser.uuid)
       console.log('🔧 LobbyListWrapper: ✅ Successfully joined')
-      
+
       // Naviguer vers la page du lobby
       router.visit(`/lobbies/${lobbyUuid}`)
       toast.success('Vous avez rejoint le lobby avec succès !')
@@ -93,15 +99,17 @@ export default function LobbyListWrapper({
   }
 
   // Adapter le format du currentUser pour correspondre à l'interface UI
-  const uiCurrentUser = currentUser ? {
-    uuid: currentUser.uuid,
-    nickName: currentUser.fullName, // Adapter fullName → nickName
-  } : undefined
+  const uiCurrentUser = currentUser
+    ? {
+        uuid: currentUser.uuid,
+        nickName: currentUser.fullName, // Adapter fullName → nickName
+      }
+    : undefined
 
-  console.log('🔧 LobbyListWrapper: Rendering', { 
+  console.log('🔧 LobbyListWrapper: Rendering', {
     effectiveLobbiesCount: effectiveLobbies.length,
     loading,
-    hasError: !!error 
+    hasError: !!error,
   })
 
   return (

@@ -30,7 +30,13 @@ interface JoinLobbyProps {
   }
 }
 
-export default function JoinLobby({ lobby, user, invitationCode, errors = {}, flash = {} }: JoinLobbyProps) {
+export default function JoinLobby({
+  lobby,
+  user,
+  invitationCode,
+  errors = {},
+  flash = {},
+}: JoinLobbyProps) {
   const [password, setPassword] = useState('')
   const [isJoining, setIsJoining] = useState(false)
 
@@ -55,7 +61,7 @@ export default function JoinLobby({ lobby, user, invitationCode, errors = {}, fl
     return (
       <>
         <Head title={`Join ${lobby.name} - Infinity Game`} />
-        
+
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
           <div className="max-w-md w-full space-y-8">
             <div className="text-center">
@@ -76,9 +82,11 @@ export default function JoinLobby({ lobby, user, invitationCode, errors = {}, fl
                 {lobby.description && (
                   <p className="text-gray-600 text-sm mb-4">{lobby.description}</p>
                 )}
-                
+
                 <div className="flex justify-center items-center gap-4 text-sm text-gray-600">
-                  <span>{lobby.currentPlayers}/{lobby.maxPlayers} players</span>
+                  <span>
+                    {lobby.currentPlayers}/{lobby.maxPlayers} players
+                  </span>
                   {lobby.isPrivate && (
                     <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded">
                       🔒 Private
@@ -93,17 +101,15 @@ export default function JoinLobby({ lobby, user, invitationCode, errors = {}, fl
               </div>
 
               <div className="space-y-4">
-                <p className="text-center text-gray-600">
-                  You need to sign in to join this lobby
-                </p>
-                
+                <p className="text-center text-gray-600">You need to sign in to join this lobby</p>
+
                 <div className="space-y-3">
                   <Link href={`/auth/login?redirect=/lobbies/join/${invitationCode}`}>
                     <Button className="w-full bg-blue-600 hover:bg-blue-700">
                       Sign In to Join
                     </Button>
                   </Link>
-                  
+
                   <Link href={`/auth/register?redirect=/lobbies/join/${invitationCode}`}>
                     <Button variant="outline" className="w-full">
                       Create Account & Join
@@ -127,7 +133,7 @@ export default function JoinLobby({ lobby, user, invitationCode, errors = {}, fl
   return (
     <>
       <Head title={`Join ${lobby.name} - Infinity Game`} />
-      
+
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           {/* Header */}
@@ -149,7 +155,7 @@ export default function JoinLobby({ lobby, user, invitationCode, errors = {}, fl
               {flash.error}
             </div>
           )}
-          
+
           {flash.success && (
             <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
               {flash.success}
@@ -160,12 +166,12 @@ export default function JoinLobby({ lobby, user, invitationCode, errors = {}, fl
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
             <div className="text-center mb-6">
               <h3 className="text-xl font-bold text-gray-900 mb-2">{lobby.name}</h3>
-              {lobby.description && (
-                <p className="text-gray-600 mb-4">{lobby.description}</p>
-              )}
-              
+              {lobby.description && <p className="text-gray-600 mb-4">{lobby.description}</p>}
+
               <div className="flex justify-center items-center gap-4 text-sm text-gray-600 mb-4">
-                <span className="font-medium">{lobby.currentPlayers}/{lobby.maxPlayers} players</span>
+                <span className="font-medium">
+                  {lobby.currentPlayers}/{lobby.maxPlayers} players
+                </span>
                 {lobby.isPrivate && (
                   <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded">
                     🔒 Private
@@ -187,7 +193,10 @@ export default function JoinLobby({ lobby, user, invitationCode, errors = {}, fl
             <form onSubmit={handleJoin} className="space-y-4">
               {lobby.hasPassword && (
                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     Lobby Password
                   </label>
                   <input

@@ -1,5 +1,6 @@
 import { Transmit } from '@adonisjs/transmit-client'
 import { LobbyTransmitEvent } from '../types/lobby'
+import { createBrowserLogger } from '../utils/browser_logger'
 
 /**
  * États de connexion du TransmitManager
@@ -41,6 +42,7 @@ type EventHandler<T = any> = (event: T) => void
  * - Fallback gracieux en cas d'erreur
  */
 export class TransmitManager {
+  private logger = createBrowserLogger('TransmitManager')
   private transmitClient: Transmit
   private state: ConnectionState = ConnectionState.DISCONNECTED
   private subscriptions = new Map<string, any>()
@@ -50,13 +52,13 @@ export class TransmitManager {
   private reconnectDelay = 2000
 
   constructor() {
-    console.log('📡 TransmitManager: Initializing...')
+    this.logger.debug('Initializing...')
 
     this.transmitClient = new Transmit({
       baseUrl: window.location.origin,
 
       beforeSubscribe: (request: RequestInit) => {
-        console.log('📡 TransmitManager: Preparing subscription request')
+        this.logger.debug('Preparing subscription request')
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
         if (csrfToken) {
           if (!request.headers) {
@@ -67,7 +69,7 @@ export class TransmitManager {
       },
 
       beforeUnsubscribe: (request: RequestInit) => {
-        console.log('📡 TransmitManager: Preparing unsubscription request')
+        this.logger.debug('Preparing unsubscription request')
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
         if (csrfToken) {
           if (!request.headers) {
@@ -78,13 +80,13 @@ export class TransmitManager {
       },
 
       onReconnectAttempt: (attempt) => {
-        console.warn(`📡 TransmitManager: 🔄 Reconnection attempt #${attempt}`)
+        this.logger.warn({ attempt }, 'Reconnection attempt')
         this.setState(ConnectionState.RECONNECTING)
         this.reconnectAttempts = attempt
       },
 
       onReconnectFailed: () => {
-        console.error('📡 TransmitManager: ❌ Reconnection failed permanently')
+        this.logger.error('Reconnection failed permanently')
         this.setState(ConnectionState.ERROR)
         this.emit('connection_state_changed', {
           state: ConnectionState.ERROR,
@@ -93,21 +95,21 @@ export class TransmitManager {
       },
 
       onSubscribeFailed: (response) => {
-        console.error('📡 TransmitManager: ❌ Subscription failed:', response)
+        this.logger.error({ response }, 'Subscription failed')
         this.emit('subscription_failed', { response })
       },
 
       onSubscription: (channel) => {
-        console.log(`📡 TransmitManager: ✅ Successfully subscribed to channel: ${channel}`)
+        this.logger.info({ channel }, 'Successfully subscribed')
         this.emit('subscription_created', { channel })
       },
 
       onUnsubscription: (channel) => {
-        console.log(`📡 TransmitManager: 📤 Unsubscribed from channel: ${channel}`)
+        this.logger.info({ channel }, 'Unsubscribed from channel')
       },
     })
 
-    console.log('📡 TransmitManager: ✅ Initialized')
+    this.logger.info('Initialized')
   }
 
   /**
@@ -117,7 +119,7 @@ export class TransmitManager {
     if (this.state !== newState) {
       const oldState = this.state
       this.state = newState
-      console.log(`📡 TransmitManager: State changed: ${oldState} → ${newState}`)
+      this.logger.info({ oldState, newState }, 'State changed')
       this.emit('connection_state_changed', {
         oldState,
         newState,
@@ -131,11 +133,11 @@ export class TransmitManager {
    */
   async connect(): Promise<void> {
     if (this.state === ConnectionState.CONNECTED) {
-      console.log('📡 TransmitManager: Already connected')
+      this.logger.debug('Already connected')
       return
     }
 
-    console.log('📡 TransmitManager: 🔌 Establishing connection...')
+    this.logger.info('Establishing connection...')
     this.setState(ConnectionState.CONNECTING)
 
     try {
@@ -143,9 +145,9 @@ export class TransmitManager {
       // On marque comme connecté ici
       this.setState(ConnectionState.CONNECTED)
       this.reconnectAttempts = 0
-      console.log('📡 TransmitManager: ✅ Connection established')
+      this.logger.info('Connection established')
     } catch (error) {
-      console.error('📡 TransmitManager: ❌ Connection failed:', error)
+      this.logger.error({ error }, 'Connection failed')
       this.setState(ConnectionState.ERROR)
       throw error
     }
@@ -155,20 +157,18 @@ export class TransmitManager {
    * S'abonner à un canal avec callback
    */
   async subscribe<T = any>(channelName: string, callback: (data: T) => void): Promise<() => void> {
-    console.log(`📡 TransmitManager: 📥 Subscribing to channel: ${channelName}`)
+    this.logger.info({ channelName }, 'Subscribing to channel')
 
     // Vérifier l'état de connexion
     if (this.state !== ConnectionState.CONNECTED) {
-      console.log('📡 TransmitManager: Not connected, establishing connection first...')
+      this.logger.debug('Not connected, establishing connection first')
       await this.connect()
     }
 
     try {
       // Vérifier si déjà abonné
       if (this.subscriptions.has(channelName)) {
-        console.warn(
-          `📡 TransmitManager: ⚠️ Already subscribed to ${channelName}, reusing subscription`
-        )
+        this.logger.warn({ channelName }, 'Already subscribed, reusing subscription')
         return () => this.unsubscribe(channelName)
       }
 
@@ -176,13 +176,13 @@ export class TransmitManager {
 
       // Configurer le handler de messages
       subscription.onMessage((data: T) => {
-        console.log(`📡 TransmitManager: 📨 Message received on ${channelName}:`, data)
+        this.logger.debug({ channelName, data }, 'Message received')
 
         // Appeler le callback
         try {
           callback(data)
         } catch (error) {
-          console.error(`📡 TransmitManager: ❌ Error in callback for ${channelName}:`, error)
+          this.logger.error({ error, channelName }, 'Error in callback')
         }
 
         // Émettre l'événement global
@@ -194,19 +194,19 @@ export class TransmitManager {
       })
 
       // Créer la subscription (établit la connexion SSE)
-      console.log(`📡 TransmitManager: Creating subscription for ${channelName}...`)
+      this.logger.debug({ channelName }, 'Creating subscription')
       await subscription.create()
 
       this.subscriptions.set(channelName, subscription)
-      console.log(`📡 TransmitManager: ✅ Subscribed to ${channelName}`)
-      console.log(
-        `📡 TransmitManager: Active subscriptions: ${this.getActiveChannels().join(', ')}`
+      this.logger.info(
+        { channelName, activeChannels: this.getActiveChannels() },
+        'Subscribed successfully'
       )
 
       // Retourner la fonction d'unsubscribe
       return () => this.unsubscribe(channelName)
     } catch (error) {
-      console.error(`📡 TransmitManager: ❌ Failed to subscribe to ${channelName}:`, error)
+      this.logger.error({ error, channelName }, 'Failed to subscribe')
       throw error
     }
   }
@@ -215,19 +215,19 @@ export class TransmitManager {
    * Se désabonner d'un canal
    */
   async unsubscribe(channelName: string): Promise<void> {
-    console.log(`📡 TransmitManager: 📤 Unsubscribing from ${channelName}`)
+    this.logger.info({ channelName }, 'Unsubscribing')
 
     const subscription = this.subscriptions.get(channelName)
     if (subscription) {
       try {
         await subscription.delete()
         this.subscriptions.delete(channelName)
-        console.log(`📡 TransmitManager: ✅ Unsubscribed from ${channelName}`)
+        this.logger.info({ channelName }, 'Unsubscribed')
       } catch (error) {
-        console.error(`📡 TransmitManager: ❌ Error unsubscribing from ${channelName}:`, error)
+        this.logger.error({ error, channelName }, 'Error unsubscribing')
       }
     } else {
-      console.warn(`📡 TransmitManager: ⚠️ Not subscribed to ${channelName}`)
+      this.logger.warn({ channelName }, 'Not subscribed')
     }
   }
 
@@ -235,7 +235,7 @@ export class TransmitManager {
    * Se désabonner de tous les canaux
    */
   async unsubscribeAll(): Promise<void> {
-    console.log('📡 TransmitManager: 📤 Unsubscribing from all channels...')
+    this.logger.info('Unsubscribing from all channels')
 
     const channels = Array.from(this.subscriptions.keys())
     const promises = channels.map((channel) => this.unsubscribe(channel))
@@ -243,19 +243,19 @@ export class TransmitManager {
     await Promise.allSettled(promises)
     this.subscriptions.clear()
 
-    console.log('📡 TransmitManager: ✅ Unsubscribed from all channels')
+    this.logger.info('Unsubscribed from all channels')
   }
 
   /**
    * Déconnecter complètement
    */
   async disconnect(): Promise<void> {
-    console.log('📡 TransmitManager: 🔌 Disconnecting...')
+    this.logger.info('Disconnecting')
 
     await this.unsubscribeAll()
     this.setState(ConnectionState.DISCONNECTED)
 
-    console.log('📡 TransmitManager: ✅ Disconnected')
+    this.logger.info('Disconnected')
   }
 
   /**
@@ -291,7 +291,7 @@ export class TransmitManager {
         try {
           handler({ type: eventType, data, timestamp: new Date() })
         } catch (error) {
-          console.error(`📡 TransmitManager: ❌ Error in event handler for ${eventType}:`, error)
+          this.logger.error({ error, eventType }, 'Error in event handler')
         }
       })
     }

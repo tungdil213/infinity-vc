@@ -3,7 +3,13 @@ import { Head, useForm } from '@inertiajs/react'
 import { Button } from '@tyfo.dev/ui/primitives/button'
 import { Input } from '@tyfo.dev/ui/primitives/input'
 import { Label } from '@tyfo.dev/ui/primitives/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@tyfo.dev/ui/primitives/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@tyfo.dev/ui/primitives/card'
 
 interface RegisterProps {
   redirect?: string
@@ -48,7 +54,7 @@ export default function Register({ redirect = '/lobbies' }: RegisterProps) {
   return (
     <>
       <Head title="Register" />
-      
+
       <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
         <Card className="w-full max-w-md mx-auto">
           <CardHeader className="space-y-1">
@@ -69,9 +75,7 @@ export default function Register({ redirect = '/lobbies' }: RegisterProps) {
                   onChange={(e) => setData('fullName', e.target.value)}
                   required
                 />
-                {errors.fullName && (
-                  <p className="text-sm text-destructive">{errors.fullName}</p>
-                )}
+                {errors.fullName && <p className="text-sm text-destructive">{errors.fullName}</p>}
               </div>
 
               <div className="space-y-2">
@@ -84,9 +88,7 @@ export default function Register({ redirect = '/lobbies' }: RegisterProps) {
                   onChange={(e) => setData('email', e.target.value)}
                   required
                 />
-                {errors.email && (
-                  <p className="text-sm text-destructive">{errors.email}</p>
-                )}
+                {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
               </div>
 
               <div className="space-y-2">
@@ -99,9 +101,7 @@ export default function Register({ redirect = '/lobbies' }: RegisterProps) {
                   onChange={(e) => setData('password', e.target.value)}
                   required
                 />
-                {errors.password && (
-                  <p className="text-sm text-destructive">{errors.password}</p>
-                )}
+                {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
               </div>
 
               <div className="space-y-2">

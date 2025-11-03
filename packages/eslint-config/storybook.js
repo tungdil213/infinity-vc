@@ -11,7 +11,7 @@ const project = resolve(process.cwd(), "tsconfig.json");
  *
  */
 
-module.exports = {
+export default {
   extends: [
     "plugin:storybook/recommended",
     "plugin:mdx/recommended",

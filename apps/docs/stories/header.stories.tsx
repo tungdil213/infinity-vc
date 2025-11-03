@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { Header } from '@tyfo.dev/ui'
-import { fn } from '@storybook/test'
+
+// Mock functions for actions
+const fn = () => () => {}
 
 const meta: Meta<typeof Header> = {
   title: 'Layout/Header',

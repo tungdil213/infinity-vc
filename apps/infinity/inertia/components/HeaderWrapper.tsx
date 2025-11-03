@@ -34,7 +34,7 @@ export function HeaderWrapper({ user, currentLobby, className }: HeaderWrapperPr
 
   const handleJoinByCode = async (code: string) => {
     if (!user || !lobbyService) throw new Error('User or lobby service not available')
-    
+
     await lobbyService.joinLobby(code, user.uuid)
     router.visit(`/lobbies/${code}`)
   }

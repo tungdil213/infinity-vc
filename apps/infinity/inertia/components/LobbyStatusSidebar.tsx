@@ -20,17 +20,15 @@ interface LobbyStatusSidebarProps {
 
 export function LobbyStatusSidebar({ initialLobby, currentUser }: LobbyStatusSidebarProps) {
   const { lobbyService } = useLobbyContext()
-  
+
   // ✅ Ne charger que si on a un lobby
-  const { lobby: realtimeLobby, loading, error } = useLobbyDetails(
-    initialLobby?.uuid || null
-  )
+  const { lobby: realtimeLobby, loading, error } = useLobbyDetails(initialLobby?.uuid || null)
   const [isLeavingLobby, setIsLeavingLobby] = useState(false)
   const [timeoutReached, setTimeoutReached] = useState(false)
-  
+
   // Garder la dernière version valide du lobby pour éviter les disparitions pendant les updates
   const [lastValidLobby, setLastValidLobby] = useState<Lobby | null>(initialLobby)
-  
+
   useEffect(() => {
     if (realtimeLobby) {
       setLastValidLobby(realtimeLobby as Lobby)
@@ -48,7 +46,7 @@ export function LobbyStatusSidebar({ initialLobby, currentUser }: LobbyStatusSid
       const timeout = setTimeout(() => {
         setTimeoutReached(true)
         toast.error('Connection timeout - using cached data')
-      }, 30000)  // 30 secondes
+      }, 30000) // 30 secondes
 
       return () => clearTimeout(timeout)
     }
@@ -60,12 +58,12 @@ export function LobbyStatusSidebar({ initialLobby, currentUser }: LobbyStatusSid
   if (!effectiveLobby && !loading) {
     return null
   }
-  
+
   // Si en chargement et pas de lobby, ne rien afficher (attendre les données)
   if (!effectiveLobby && loading) {
     return null
   }
-  
+
   // À ce stade, effectiveLobby existe forcément (sinon on serait retourné avant)
   if (!effectiveLobby) {
     return null
@@ -80,7 +78,7 @@ export function LobbyStatusSidebar({ initialLobby, currentUser }: LobbyStatusSid
       console.warn('🔧 LobbyStatusSidebar: Cannot leave lobby - missing requirements')
       return
     }
-    
+
     console.log('🔧 LobbyStatusSidebar: Leaving lobby', { lobbyUuid: effectiveLobby.uuid })
     setIsLeavingLobby(true)
     try {
@@ -182,7 +180,7 @@ export function LobbyStatusSidebar({ initialLobby, currentUser }: LobbyStatusSid
           </div>
 
           <div className="flex flex-col gap-2">
-            <Button 
+            <Button
               onClick={handleGoToLobby}
               className="w-full"
               variant="default"
@@ -191,9 +189,9 @@ export function LobbyStatusSidebar({ initialLobby, currentUser }: LobbyStatusSid
               <Play className="h-4 w-4 mr-2" />
               Aller au lobby
             </Button>
-            
+
             {permissions?.canLeave && (
-              <Button 
+              <Button
                 onClick={handleLeaveLobby}
                 variant="outline"
                 className="w-full text-red-600 border-red-200 hover:bg-red-50"
@@ -206,7 +204,8 @@ export function LobbyStatusSidebar({ initialLobby, currentUser }: LobbyStatusSid
           </div>
 
           <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
-            💡 Vous êtes actuellement dans ce lobby. Vous devez le quitter avant de rejoindre un autre.
+            💡 Vous êtes actuellement dans ce lobby. Vous devez le quitter avant de rejoindre un
+            autre.
           </div>
 
           {!isConnected && (

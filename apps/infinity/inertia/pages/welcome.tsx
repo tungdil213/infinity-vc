@@ -24,7 +24,7 @@ export default function Welcome({ user, currentLobby }: WelcomeProps) {
   return (
     <Layout>
       <Head title="Infinity Game - Multiplayer Gaming Platform" />
-      
+
       <div className="min-h-screen bg-background text-foreground font-mono">
         {/* Enhanced Navigation */}
         <HeaderWrapper user={user} currentLobby={currentLobby} />
@@ -35,26 +35,31 @@ export default function Welcome({ user, currentLobby }: WelcomeProps) {
             <div className="text-center">
               <h1 className="text-4xl sm:text-6xl font-bold text-foreground mb-8">
                 Play Multiplayer Games
-                <span className="block text-primary">
-                  In Real Time
-                </span>
+                <span className="block text-primary">In Real Time</span>
               </h1>
-              
+
               <p className="text-xl text-muted-foreground mb-12 max-w-3xl mx-auto">
-                Create lobbies, invite friends, and enjoy seamless multiplayer gaming with real-time updates. 
-                No downloads required - play directly in your browser!
+                Create lobbies, invite friends, and enjoy seamless multiplayer gaming with real-time
+                updates. No downloads required - play directly in your browser!
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 {user ? (
                   <>
                     <Link href="/lobbies">
-                      <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-4">
+                      <Button
+                        size="lg"
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-4"
+                      >
                         🎮 Browse Lobbies
                       </Button>
                     </Link>
                     <Link href="/lobbies/create">
-                      <Button size="lg" variant="outline" className="border-border text-foreground hover:bg-accent text-lg px-8 py-4">
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        className="border-border text-foreground hover:bg-accent text-lg px-8 py-4"
+                      >
                         ➕ Create Lobby
                       </Button>
                     </Link>
@@ -62,12 +67,19 @@ export default function Welcome({ user, currentLobby }: WelcomeProps) {
                 ) : (
                   <>
                     <Link href="/auth/register">
-                      <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-4">
+                      <Button
+                        size="lg"
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-4"
+                      >
                         🚀 Get Started Free
                       </Button>
                     </Link>
                     <Link href="#features">
-                      <Button size="lg" variant="outline" className="border-border text-foreground hover:bg-accent text-lg px-8 py-4">
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        className="border-border text-foreground hover:bg-accent text-lg px-8 py-4"
+                      >
                         📖 Learn More
                       </Button>
                     </Link>
@@ -101,84 +113,144 @@ export default function Welcome({ user, currentLobby }: WelcomeProps) {
               {/* Feature 1 */}
               <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-8 rounded-2xl">
                 <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-6">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
                   </svg>
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Real-Time Updates</h3>
                 <p className="text-gray-600">
-                  Experience seamless gameplay with instant updates using Server-Sent Events. 
-                  No lag, no delays - just smooth multiplayer action.
+                  Experience seamless gameplay with instant updates using Server-Sent Events. No
+                  lag, no delays - just smooth multiplayer action.
                 </p>
               </div>
 
               {/* Feature 2 */}
               <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-8 rounded-2xl">
                 <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center mb-6">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
+                    />
                   </svg>
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Easy Lobby System</h3>
                 <p className="text-gray-600">
-                  Create private or public lobbies, invite friends with shareable links, 
-                  and manage your gaming sessions with ease.
+                  Create private or public lobbies, invite friends with shareable links, and manage
+                  your gaming sessions with ease.
                 </p>
               </div>
 
               {/* Feature 3 */}
               <div className="bg-gradient-to-br from-green-50 to-green-100 p-8 rounded-2xl">
                 <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center mb-6">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                    />
                   </svg>
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">No Downloads</h3>
                 <p className="text-gray-600">
-                  Play instantly in your browser. No installations, no updates to manage. 
-                  Just click and play from any device.
+                  Play instantly in your browser. No installations, no updates to manage. Just click
+                  and play from any device.
                 </p>
               </div>
 
               {/* Feature 4 */}
               <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-8 rounded-2xl">
                 <div className="w-12 h-12 bg-yellow-600 rounded-lg flex items-center justify-center mb-6">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    />
                   </svg>
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Secure & Private</h3>
                 <p className="text-gray-600">
-                  Your games are protected with JWT authentication and secure connections. 
-                  Play with confidence knowing your data is safe.
+                  Your games are protected with JWT authentication and secure connections. Play with
+                  confidence knowing your data is safe.
                 </p>
               </div>
 
               {/* Feature 5 */}
               <div className="bg-gradient-to-br from-pink-50 to-pink-100 p-8 rounded-2xl">
                 <div className="w-12 h-12 bg-pink-600 rounded-lg flex items-center justify-center mb-6">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                    />
                   </svg>
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Multiple Games</h3>
                 <p className="text-gray-600">
-                  Enjoy various card games and board games. More games are added regularly 
-                  to keep the fun going.
+                  Enjoy various card games and board games. More games are added regularly to keep
+                  the fun going.
                 </p>
               </div>
 
               {/* Feature 6 */}
               <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 p-8 rounded-2xl">
                 <div className="w-12 h-12 bg-indigo-600 rounded-lg flex items-center justify-center mb-6">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                    />
                   </svg>
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Performance First</h3>
                 <p className="text-gray-600">
-                  Built with modern technology for optimal performance. Fast loading, 
-                  smooth animations, and responsive design.
+                  Built with modern technology for optimal performance. Fast loading, smooth
+                  animations, and responsive design.
                 </p>
               </div>
             </div>
@@ -194,16 +266,22 @@ export default function Welcome({ user, currentLobby }: WelcomeProps) {
             <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
               Join thousands of players already enjoying multiplayer games on Infinity Game
             </p>
-            
+
             {user ? (
               <Link href="/lobbies">
-                <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-4">
+                <Button
+                  size="lg"
+                  className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-4"
+                >
                   🎮 Go to Lobbies
                 </Button>
               </Link>
             ) : (
               <Link href="/auth/register">
-                <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-4">
+                <Button
+                  size="lg"
+                  className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-4"
+                >
                   🚀 Sign Up Now - It's Free!
                 </Button>
               </Link>

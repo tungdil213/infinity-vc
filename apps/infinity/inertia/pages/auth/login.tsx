@@ -35,7 +35,7 @@ export default function Login({ errors = {}, flash = {} }: LoginProps) {
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
     }))
@@ -44,7 +44,7 @@ export default function Login({ errors = {}, flash = {} }: LoginProps) {
   return (
     <Layout>
       <Head title="Login - Infinity Game" />
-      
+
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           {/* Header */}
@@ -64,7 +64,7 @@ export default function Login({ errors = {}, flash = {} }: LoginProps) {
               {flash.error}
             </div>
           )}
-          
+
           {flash.success && (
             <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
               {flash.success}
@@ -91,9 +91,7 @@ export default function Login({ errors = {}, flash = {} }: LoginProps) {
                   }`}
                   placeholder="Enter your email"
                 />
-                {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">{errors.email[0]}</p>
-                )}
+                {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email[0]}</p>}
               </div>
 
               {/* Password Field */}
@@ -168,9 +166,13 @@ export default function Login({ errors = {}, flash = {} }: LoginProps) {
               ← Back to Homepage
             </Link>
             <div className="text-sm text-gray-500">
-              <a href="#" className="hover:text-gray-700">Forgot Password?</a>
+              <a href="#" className="hover:text-gray-700">
+                Forgot Password?
+              </a>
               {' • '}
-              <a href="#" className="hover:text-gray-700">Help</a>
+              <a href="#" className="hover:text-gray-700">
+                Help
+              </a>
             </div>
           </div>
         </div>

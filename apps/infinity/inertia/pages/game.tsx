@@ -40,9 +40,9 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
   const { isConnected, addEventListener, removeEventListener } = useTransmit()
 
   const addNotification = (message: string) => {
-    setNotifications(prev => [...prev, message])
+    setNotifications((prev) => [...prev, message])
     setTimeout(() => {
-      setNotifications(prev => prev.slice(1))
+      setNotifications((prev) => prev.slice(1))
     }, 5000)
   }
 
@@ -52,11 +52,11 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
     switch (event.type) {
       case 'game.state.updated':
         if (event.data.gameUuid === game.uuid) {
-          setGame(prev => ({
+          setGame((prev) => ({
             ...prev,
             ...event.data.gameState,
           }))
-          
+
           if (event.data.gameState.currentTurn === currentUser.uuid) {
             setIsMyTurn(true)
             addNotification("It's your turn!")
@@ -68,13 +68,13 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
 
       case 'game.turn.changed':
         if (event.data.gameUuid === game.uuid) {
-          setGame(prev => ({
+          setGame((prev) => ({
             ...prev,
             currentTurn: event.data.currentTurn,
             round: event.data.round,
           }))
-          
-          const currentPlayer = game.players.find(p => p.uuid === event.data.currentTurn)
+
+          const currentPlayer = game.players.find((p) => p.uuid === event.data.currentTurn)
           if (event.data.currentTurn === currentUser.uuid) {
             setIsMyTurn(true)
             addNotification("It's your turn!")
@@ -87,12 +87,12 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
 
       case 'game.player.action':
         if (event.data.gameUuid === game.uuid) {
-          const player = game.players.find(p => p.uuid === event.data.playerUuid)
+          const player = game.players.find((p) => p.uuid === event.data.playerUuid)
           addNotification(`${player?.nickName} ${event.data.action}`)
-          
+
           // Update game state based on action
           if (event.data.gameState) {
-            setGame(prev => ({
+            setGame((prev) => ({
               ...prev,
               ...event.data.gameState,
             }))
@@ -102,12 +102,12 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
 
       case 'game.finished':
         if (event.data.gameUuid === game.uuid) {
-          setGame(prev => ({
+          setGame((prev) => ({
             ...prev,
             status: 'FINISHED',
             winner: event.data.winner,
           }))
-          
+
           if (event.data.winner?.uuid === currentUser.uuid) {
             addNotification('🎉 Congratulations! You won!')
           } else {
@@ -118,15 +118,13 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
 
       case 'game.player.disconnected':
         if (event.data.gameUuid === game.uuid) {
-          const player = game.players.find(p => p.uuid === event.data.playerUuid)
+          const player = game.players.find((p) => p.uuid === event.data.playerUuid)
           addNotification(`${player?.nickName} disconnected`)
-          
-          setGame(prev => ({
+
+          setGame((prev) => ({
             ...prev,
-            players: prev.players.map(p => 
-              p.uuid === event.data.playerUuid 
-                ? { ...p, isActive: false }
-                : p
+            players: prev.players.map((p) =>
+              p.uuid === event.data.playerUuid ? { ...p, isActive: false } : p
             ),
           }))
         }
@@ -134,15 +132,13 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
 
       case 'game.player.reconnected':
         if (event.data.gameUuid === game.uuid) {
-          const player = game.players.find(p => p.uuid === event.data.playerUuid)
+          const player = game.players.find((p) => p.uuid === event.data.playerUuid)
           addNotification(`${player?.nickName} reconnected`)
-          
-          setGame(prev => ({
+
+          setGame((prev) => ({
             ...prev,
-            players: prev.players.map(p => 
-              p.uuid === event.data.playerUuid 
-                ? { ...p, isActive: true }
-                : p
+            players: prev.players.map((p) =>
+              p.uuid === event.data.playerUuid ? { ...p, isActive: true } : p
             ),
           }))
         }
@@ -229,18 +225,24 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
   return (
     <>
       <Head title={`Game - Round ${game.round}`} />
-      
+
       <div className="max-w-6xl mx-auto p-6">
         {/* Connection Status */}
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+            <div
+              className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}
+            />
             <span className="text-sm text-gray-600">
               {isConnected ? 'Connected' : 'Disconnected'}
             </span>
           </div>
-          
-          <Button onClick={handleLeaveGame} variant="outline" className="text-red-600 border-red-300 hover:bg-red-50">
+
+          <Button
+            onClick={handleLeaveGame}
+            variant="outline"
+            className="text-red-600 border-red-300 hover:bg-red-50"
+          >
             Leave Game
           </Button>
         </div>
@@ -265,7 +267,9 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Game Session</h1>
               <div className="flex items-center gap-4 mt-2">
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(game.status)}`}>
+                <span
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(game.status)}`}
+                >
                   {game.status}
                 </span>
                 <span className="text-sm text-gray-600">
@@ -273,7 +277,7 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
                 </span>
               </div>
             </div>
-            
+
             {game.winner && (
               <div className="text-right">
                 <div className="text-lg font-semibold text-green-600">🏆 Winner</div>
@@ -284,7 +288,9 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
 
           {/* Current Turn Indicator */}
           {game.status === 'IN_PROGRESS' && game.currentTurn && (
-            <div className={`p-4 rounded-lg ${isMyTurn ? 'bg-green-50 border border-green-200' : 'bg-blue-50 border border-blue-200'}`}>
+            <div
+              className={`p-4 rounded-lg ${isMyTurn ? 'bg-green-50 border border-green-200' : 'bg-blue-50 border border-blue-200'}`}
+            >
               <div className="flex items-center justify-center">
                 {isMyTurn ? (
                   <>
@@ -295,7 +301,8 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
                   <>
                     <div className="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
                     <span className="text-blue-800">
-                      Waiting for {game.players.find(p => p.uuid === game.currentTurn)?.nickName}...
+                      Waiting for {game.players.find((p) => p.uuid === game.currentTurn)?.nickName}
+                      ...
                     </span>
                   </>
                 )}
@@ -307,7 +314,7 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
         {/* Players Status */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Players</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {game.players.map((player) => (
               <div
@@ -316,8 +323,8 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
                   player.uuid === currentUser.uuid
                     ? 'border-blue-300 bg-blue-50'
                     : player.uuid === game.currentTurn
-                    ? 'border-green-300 bg-green-50'
-                    : 'border-gray-200 bg-gray-50'
+                      ? 'border-green-300 bg-green-50'
+                      : 'border-gray-200 bg-gray-50'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
@@ -330,7 +337,9 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
                     <div>
                       <h3 className="font-medium text-gray-900">{player.nickName}</h3>
                       <div className="flex items-center gap-1">
-                        <div className={`w-2 h-2 rounded-full ${player.isActive ? 'bg-green-500' : 'bg-red-500'}`} />
+                        <div
+                          className={`w-2 h-2 rounded-full ${player.isActive ? 'bg-green-500' : 'bg-red-500'}`}
+                        />
                         <span className="text-xs text-gray-600">
                           {player.isActive ? 'Online' : 'Offline'}
                         </span>
@@ -338,21 +347,23 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="flex gap-1">
                     {player.uuid === currentUser.uuid && (
-                      <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">You</span>
+                      <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                        You
+                      </span>
                     )}
                     {player.uuid === game.currentTurn && game.status === 'IN_PROGRESS' && (
-                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">Turn</span>
+                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
+                        Turn
+                      </span>
                     )}
                   </div>
-                  
+
                   {typeof player.score !== 'undefined' && (
-                    <div className="text-sm font-medium text-gray-900">
-                      Score: {player.score}
-                    </div>
+                    <div className="text-sm font-medium text-gray-900">Score: {player.score}</div>
                   )}
                 </div>
               </div>
@@ -363,7 +374,7 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
         {/* Game Board/Actions */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Game Board</h2>
-          
+
           {game.status === 'STARTING' && (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -376,7 +387,7 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
               {/* Game-specific UI would go here */}
               <div className="bg-gray-50 rounded-lg p-8 text-center">
                 <p className="text-gray-600 mb-4">Game interface will be implemented here</p>
-                
+
                 {isMyTurn && (
                   <div className="space-x-4">
                     <Button
@@ -385,10 +396,7 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
                     >
                       Sample Action
                     </Button>
-                    <Button
-                      onClick={() => handleGameAction('end_turn')}
-                      variant="outline"
-                    >
+                    <Button onClick={() => handleGameAction('end_turn')} variant="outline">
                       End Turn
                     </Button>
                   </div>
@@ -403,16 +411,19 @@ export default function Game({ game: initialGame, currentUser }: GameProps) {
               <h3 className="text-2xl font-bold text-gray-900 mb-2">Game Finished!</h3>
               {game.winner && (
                 <p className="text-lg text-gray-600 mb-6">
-                  {game.winner.uuid === currentUser.uuid ? 'Congratulations! You won!' : `${game.winner.nickName} won the game!`}
+                  {game.winner.uuid === currentUser.uuid
+                    ? 'Congratulations! You won!'
+                    : `${game.winner.nickName} won the game!`}
                 </p>
               )}
               <div className="space-x-4">
-                <Button onClick={() => window.location.href = '/lobbies'} className="bg-blue-600 hover:bg-blue-700">
+                <Button
+                  onClick={() => (window.location.href = '/lobbies')}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
                   Back to Lobbies
                 </Button>
-                <Button variant="outline">
-                  View Game Statistics
-                </Button>
+                <Button variant="outline">View Game Statistics</Button>
               </div>
             </div>
           )}

@@ -1,4 +1,5 @@
 import { TransmitContextType } from '../contexts/TransmitContext'
+import { createBrowserLogger } from '../utils/browser_logger'
 
 export interface LobbyData {
   uuid: string
@@ -35,6 +36,7 @@ export interface LobbyDetailState {
  * Utilise Transmit pour les mises à jour temps réel
  */
 export class LobbyService {
+  private logger = createBrowserLogger('LobbyService')
   private transmitContext: TransmitContextType
   private globalUnsubscribe: (() => void) | null = null
   private lobbyUnsubscribes = new Map<string, () => void>()
@@ -52,7 +54,7 @@ export class LobbyService {
   }
 
   constructor(transmitContext: TransmitContextType) {
-    console.log('📡 LobbyService: Constructor called')
+    this.logger.debug('Constructor called')
     this.transmitContext = transmitContext
     // Ne pas initialiser automatiquement - attendre l'appel explicite
   }
@@ -66,7 +68,7 @@ export class LobbyService {
       return
     }
 
-    console.log(`📡 LobbyService: Initializing with ${initialLobbies.length} lobbies`)
+    this.logger.info({ count: initialLobbies.length }, 'Initializing with Inertia data')
 
     // Source de vérité initiale = données Inertia
     this.lobbyListState = {
@@ -88,11 +90,11 @@ export class LobbyService {
         return
       }
 
-      console.log('📡 LobbyService: Configuration Transmit listeners')
+      this.logger.debug('Configuring Transmit listeners')
 
       // S'abonner au canal global des lobbies
       this.globalUnsubscribe = await this.transmitContext.subscribeToLobbies((event) => {
-        console.log(`📡 LobbyService: Event received: ${event.type}`)
+        this.logger.debug({ eventType: event.type }, 'Event received')
 
         // Router l'événement vers le bon handler
         switch (event.type) {
@@ -132,13 +134,13 @@ export class LobbyService {
             break
 
           default:
-            console.warn('📡 LobbyService: Événement non géré:', event.type)
+            this.logger.warn({ eventType: event.type }, 'Unhandled event')
         }
       })
 
-      console.log('📡 LobbyService: Transmit listeners ready')
+      this.logger.info('Transmit listeners ready')
     } catch (error) {
-      console.error('📡 LobbyService: ❌ Erreur lors de la configuration:', error)
+      this.logger.error({ error }, 'Failed to configure Transmit listeners')
       // Fallback gracieux - le service continue de fonctionner avec les données Inertia uniquement
     }
   }
@@ -148,7 +150,7 @@ export class LobbyService {
     const newLobby = event.data.lobby
 
     if (!newLobby || !newLobby.uuid) {
-      console.error('📡 LobbyService: Invalid lobby data in create event')
+      this.logger.error('Invalid lobby data in create event')
       return
     }
 
@@ -170,8 +172,9 @@ export class LobbyService {
       error: null,
     }
 
-    console.log(
-      `📡 LobbyService: Lobby created: ${newLobby.name} (total: ${this.lobbyListState.total})`
+    this.logger.info(
+      { lobbyName: newLobby.name, total: this.lobbyListState.total },
+      'Lobby created'
     )
 
     // Notifier tous les abonnés
@@ -209,17 +212,7 @@ export class LobbyService {
     const playerCount = eventData.playerCount || eventData.lobby?.currentPlayers
     const updatedLobby = eventData.lobby
 
-    console.log('📡 LobbyService: handleLobbyPlayerJoined - données:', {
-      lobbyUuid,
-      player,
-      playerCount,
-      // ⚠️ DEBUG: Vérifier l'état complet reçu
-      hasUpdatedLobby: !!updatedLobby,
-      updatedLobbyKeys: updatedLobby ? Object.keys(updatedLobby) : [],
-      hasPlayers: !!updatedLobby?.players,
-      playersCount: updatedLobby?.players?.length,
-      playersValue: updatedLobby?.players,
-    })
+    this.logger.debug({ lobbyUuid, player, playerCount }, 'Player joined event received')
 
     if (lobbyUuid) {
       // Mettre à jour la liste globale
@@ -231,12 +224,9 @@ export class LobbyService {
       this.updateLobbyDetail(lobbyUuid, (currentLobby) => {
         // ✅ SOURCE DE VÉRITÉ: Le backend envoie l'état complet, on remplace simplement
         if (updatedLobby && updatedLobby.players) {
-          console.log(
-            '📡 LobbyService: Remplacement complet avec état du serveur (player joined)',
-            {
-              players: updatedLobby.players?.length,
-              currentPlayers: updatedLobby.currentPlayers,
-            }
+          this.logger.debug(
+            { players: updatedLobby.players?.length },
+            'Replacing with complete server state (player joined)'
           )
           // Fusionner pour préserver les champs non envoyés (name, createdAt, etc.)
           return currentLobby ? { ...currentLobby, ...updatedLobby } : updatedLobby
@@ -244,13 +234,11 @@ export class LobbyService {
 
         // Fallback: mise à jour partielle si pas d'état complet (ne devrait plus arriver)
         if (!currentLobby) {
-          console.warn('📡 LobbyService: Pas de lobby en cache pour mise à jour partielle')
+          this.logger.warn('No lobby in cache for partial update')
           return currentLobby
         }
 
-        console.log(
-          '📡 LobbyService: ⚠️ Fallback mise à jour partielle (état incomplet du serveur)'
-        )
+        this.logger.warn('Fallback to partial update (incomplete server state)')
         const updatedCurrentLobby = { ...currentLobby }
 
         if (playerCount !== undefined) {
@@ -276,12 +264,7 @@ export class LobbyService {
     const playerCount = eventData.playerCount || eventData.lobby?.currentPlayers
     const updatedLobby = eventData.lobby
 
-    console.log('handleLobbyPlayerLeft - données:', {
-      lobbyUuid,
-      player,
-      playerCount,
-      updatedLobby,
-    })
+    this.logger.debug({ lobbyUuid, player, playerCount }, 'Player left event received')
 
     if (lobbyUuid) {
       // Mettre à jour la liste globale
@@ -291,36 +274,32 @@ export class LobbyService {
 
       // Mettre à jour les détails du lobby
       this.updateLobbyDetail(lobbyUuid, (currentLobby) => {
-        console.log('📡 LobbyService: updateLobbyDetail callback (player left)', {
-          hasCurrentLobby: !!currentLobby,
-          currentLobbyPlayers: currentLobby?.players?.length,
-          hasUpdatedLobby: !!updatedLobby,
-          updatedLobbyHasPlayers: !!updatedLobby?.players,
-          updatedLobbyPlayersLength: updatedLobby?.players?.length,
-        })
+        this.logger.debug(
+          {
+            hasCurrentLobby: !!currentLobby,
+            currentLobbyPlayers: currentLobby?.players?.length,
+            hasUpdatedLobby: !!updatedLobby,
+            updatedLobbyPlayers: updatedLobby?.players?.length,
+          },
+          'Update lobby detail callback (player left)'
+        )
 
         // ✅ SOURCE DE VÉRITÉ: Le backend envoie l'état complet, on remplace simplement
         if (updatedLobby && updatedLobby.players) {
-          console.log(
-            '📡 LobbyService: ✅ Remplacement complet avec état du serveur (player left)',
-            {
-              players: updatedLobby.players.length,
-              currentPlayers: updatedLobby.currentPlayers,
-            }
+          this.logger.debug(
+            { players: updatedLobby.players.length },
+            'Replacing with complete server state (player left)'
           )
           const merged = currentLobby ? { ...currentLobby, ...updatedLobby } : updatedLobby
-          console.log('📡 LobbyService: ✅ Lobby merged', {
-            uuid: merged.uuid,
-            players: merged.players?.length,
-          })
+          this.logger.debug({ uuid: merged.uuid, players: merged.players?.length }, 'Lobby merged')
           return merged
         }
 
-        console.log("📡 LobbyService: ⚠️ Fallback - pas d'état complet du serveur")
+        this.logger.warn('Fallback - no complete server state')
 
         // Fallback
         if (!currentLobby) {
-          console.warn('📡 LobbyService: ❌ Pas de currentLobby, retourne null')
+          this.logger.warn('No currentLobby, returning null')
           return null
         }
 
@@ -336,9 +315,7 @@ export class LobbyService {
         updatedCurrentLobby.hasAvailableSlots =
           updatedCurrentLobby.currentPlayers < updatedCurrentLobby.maxPlayers
 
-        console.log('📡 LobbyService: ✅ Fallback update done', {
-          players: updatedCurrentLobby.players.length,
-        })
+        this.logger.debug({ players: updatedCurrentLobby.players.length }, 'Fallback update done')
         return updatedCurrentLobby
       })
     }
@@ -366,12 +343,12 @@ export class LobbyService {
   }
 
   private handleLobbyDeleted(event: any) {
-    console.log('handleLobbyDeleted - event reçu:', event)
+    this.logger.debug({ event }, 'Lobby deleted event received')
     const lobbyUuid = event.data.lobbyUuid || event.data.lobby?.uuid
-    console.log('handleLobbyDeleted - suppression lobby:', lobbyUuid)
+    this.logger.info({ lobbyUuid }, 'Deleting lobby')
 
     if (!lobbyUuid) {
-      console.error('handleLobbyDeleted - lobbyUuid manquant dans event.data')
+      this.logger.error('lobbyUuid missing in event.data')
       return
     }
 
@@ -383,7 +360,7 @@ export class LobbyService {
       total: filteredLobbies.length,
     }
 
-    console.log('handleLobbyDeleted - lobby supprimé, nouveau total:', this.lobbyListState.total)
+    this.logger.info({ total: this.lobbyListState.total }, 'Lobby deleted')
     this.notifyLobbyListSubscribers()
     this.updateLobbyDetail(lobbyUuid, () => null)
   }
@@ -394,7 +371,7 @@ export class LobbyService {
 
     if (index === -1) {
       // ✅ Normal: la liste n'est pas forcément chargée (ex: sur GameLobby)
-      console.log('📡 LobbyService: Liste non chargée, skip updateLobbyInList:', lobbyUuid)
+      this.logger.debug({ lobbyUuid }, 'List not loaded, skipping updateLobbyInList')
       return
     }
 
@@ -407,7 +384,7 @@ export class LobbyService {
       lobbies: updatedLobbies,
     }
 
-    console.log('📡 LobbyService: Lobby mis à jour:', { lobbyUuid, updates })
+    this.logger.debug({ lobbyUuid, updates }, 'Lobby updated in list')
     this.notifyLobbyListSubscribers()
   }
 
@@ -417,7 +394,7 @@ export class LobbyService {
   ) {
     const callbacks = this.lobbyDetailCallbacks.get(lobbyUuid)
     if (callbacks && callbacks.size > 0) {
-      console.log(`Mise à jour des détails du lobby ${lobbyUuid} pour ${callbacks.size} abonnés`)
+      this.logger.debug({ lobbyUuid, subscribersCount: callbacks.size }, 'Updating lobby details')
 
       // Utiliser un état par défaut si pas d'état actuel
       const currentState = this.lobbyDetailStates.get(lobbyUuid) || {
@@ -433,45 +410,42 @@ export class LobbyService {
 
       // Notifier tous les abonnés
       callbacks.forEach((callback) => {
-        console.log("Notification d'un abonné pour le lobby", lobbyUuid)
+        this.logger.debug({ lobbyUuid }, 'Notifying subscriber')
         callback(newState)
       })
     } else {
-      console.log(`Aucun abonné pour le lobby ${lobbyUuid}, pas de mise à jour`)
+      this.logger.debug({ lobbyUuid }, 'No subscribers, skipping update')
     }
   }
 
   private notifyLobbyListSubscribers() {
-    console.log(
-      '📡 notifyLobbyListSubscribers - nombre de callbacks:',
-      this.lobbyListCallbacks.size
+    this.logger.debug(
+      { callbackCount: this.lobbyListCallbacks.size, state: this.lobbyListState },
+      'Notifying lobby list subscribers'
     )
-    console.log('📡 notifyLobbyListSubscribers - état actuel:', this.lobbyListState)
 
     if (this.lobbyListCallbacks.size === 0) {
-      console.warn('📡 notifyLobbyListSubscribers - AUCUN CALLBACK ENREGISTRÉ!')
-      console.log("📡 Service créé mais pas d'abonnés - vérifier l'initialisation des hooks")
+      this.logger.warn('No callbacks registered for lobby list')
+      this.logger.debug('Service created but no subscribers - check hooks initialization')
       return
     }
 
     let callbackIndex = 0
     this.lobbyListCallbacks.forEach((callback) => {
       callbackIndex++
-      console.log(
-        `📡 notifyLobbyListSubscribers - appel callback ${callbackIndex}/${this.lobbyListCallbacks.size}`
-      )
+      this.logger.debug({ callbackIndex, total: this.lobbyListCallbacks.size }, 'Calling callback')
       try {
         callback(this.lobbyListState)
-        console.log(`📡 notifyLobbyListSubscribers - callback ${callbackIndex} exécuté avec succès`)
+        this.logger.debug({ callbackIndex }, 'Callback executed successfully')
       } catch (error) {
-        console.error(`📡 notifyLobbyListSubscribers - erreur callback ${callbackIndex}:`, error)
+        this.logger.error({ error, callbackIndex }, 'Callback execution failed')
       }
     })
   }
 
   // API publique
   async fetchLobbies(filters?: { status?: string; hasSlots?: boolean; includePrivate?: boolean }) {
-    console.log('📡 LobbyService: fetchLobbies appelé avec filtres:', filters)
+    this.logger.info({ filters }, 'Fetching lobbies')
 
     this.lobbyListState = {
       ...this.lobbyListState,
@@ -488,7 +462,7 @@ export class LobbyService {
         params.append('includePrivate', filters.includePrivate.toString())
 
       const url = `/api/v1/lobbies?${params.toString()}`
-      console.log('📡 LobbyService: Appel API:', url)
+      this.logger.debug({ url }, 'API call')
 
       const response = await fetch(url, {
         credentials: 'include',
@@ -499,10 +473,10 @@ export class LobbyService {
       }
 
       const data = await response.json()
-      console.log('📡 LobbyService: Données reçues:', {
-        count: data.data?.length,
-        total: data.meta?.total,
-      })
+      this.logger.info(
+        { count: data.data?.length, total: data.meta?.total },
+        'Lobbies fetched successfully'
+      )
 
       this.lobbyListState = {
         ...this.lobbyListState,
@@ -515,7 +489,7 @@ export class LobbyService {
       this.notifyLobbyListSubscribers()
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      console.error('📡 LobbyService: ❌ Erreur fetch:', errorMessage)
+      this.logger.error({ error: errorMessage }, 'Failed to fetch lobbies')
 
       this.lobbyListState = {
         ...this.lobbyListState,
@@ -528,39 +502,39 @@ export class LobbyService {
   }
 
   async fetchLobbyDetails(lobbyUuid: string): Promise<LobbyData | null> {
-    console.log(`LobbyService: Récupération des détails du lobby ${lobbyUuid}`)
+    this.logger.info({ lobbyUuid }, 'Fetching lobby details')
     try {
       const url = `/api/v1/lobbies/${lobbyUuid}`
-      console.log(`LobbyService: Appel API vers ${url}`)
+      this.logger.debug({ url }, 'API call')
 
       const response = await fetch(url, {
         credentials: 'include',
       })
 
-      console.log(`LobbyService: Réponse API status: ${response.status}`)
+      this.logger.debug({ status: response.status }, 'API response received')
 
       if (!response.ok) {
         const errorText = await response.text()
-        console.error(`LobbyService: Erreur API ${response.status}: ${errorText}`)
+        this.logger.error({ status: response.status, error: errorText }, 'API error')
         throw new Error(`Failed to fetch lobby: ${response.status} ${response.statusText}`)
       }
 
       const data = await response.json()
-      console.log("LobbyService: Données reçues de l'API:", data)
+      this.logger.debug({ data }, 'API data received')
 
       // Vérifier la structure de la réponse
       if (data.lobby) {
-        console.log('LobbyService: Lobby trouvé:', data.lobby)
+        this.logger.debug('Lobby found in response.lobby')
         return data.lobby
       } else if (data.data) {
-        console.log('LobbyService: Lobby trouvé dans data:', data.data)
+        this.logger.debug('Lobby found in response.data')
         return data.data
       } else {
-        console.log('LobbyService: Structure de réponse inattendue:', data)
+        this.logger.warn({ data }, 'Unexpected response structure')
         return data
       }
     } catch (error) {
-      console.error('LobbyService: Erreur lors de la récupération des détails:', error)
+      this.logger.error({ error }, 'Failed to fetch lobby details')
       throw error
     }
   }

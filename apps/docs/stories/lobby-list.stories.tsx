@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { LobbyList } from '@tyfo.dev/ui/components/lobby-list'
-import { LobbyData } from '@tyfo.dev/ui/components/lobby-card'
+import { LobbyList } from '@tyfo.dev/ui'
+import { LobbyData } from '@tyfo.dev/ui' 
 
 const meta: Meta<typeof LobbyList> = {
   title: 'Lobby/LobbyList',

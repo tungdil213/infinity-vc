@@ -49,22 +49,24 @@ export default function CreateLobby({ user, errors = {}, flash = {} }: CreateLob
     })
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
     const { name, value, type } = e.target
-    
+
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         [name]: checked,
       }))
     } else if (type === 'number') {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         [name]: parseInt(value) || 0,
       }))
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         [name]: value,
       }))
@@ -74,7 +76,7 @@ export default function CreateLobby({ user, errors = {}, flash = {} }: CreateLob
   return (
     <Layout>
       <Head title="Create Lobby - Infinity Game" />
-      
+
       <div className="min-h-screen bg-gray-50">
         {/* Navigation */}
         <nav className="bg-white shadow-sm border-b">
@@ -87,7 +89,7 @@ export default function CreateLobby({ user, errors = {}, flash = {} }: CreateLob
                   </h1>
                 </Link>
               </div>
-              
+
               <div className="flex items-center space-x-4">
                 <span className="text-gray-700">Welcome, {user.fullName}!</span>
                 <Link href="/lobbies">
@@ -111,7 +113,7 @@ export default function CreateLobby({ user, errors = {}, flash = {} }: CreateLob
               {flash.error}
             </div>
           )}
-          
+
           {flash.success && (
             <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
               {flash.success}
@@ -138,14 +140,15 @@ export default function CreateLobby({ user, errors = {}, flash = {} }: CreateLob
                   }`}
                   placeholder="Enter a catchy lobby name"
                 />
-                {errors.name && (
-                  <p className="mt-1 text-sm text-red-600">{errors.name[0]}</p>
-                )}
+                {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name[0]}</p>}
               </div>
 
               {/* Description */}
               <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Description (Optional)
                 </label>
                 <textarea
@@ -180,7 +183,10 @@ export default function CreateLobby({ user, errors = {}, flash = {} }: CreateLob
 
               {/* Max Players */}
               <div>
-                <label htmlFor="maxPlayers" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="maxPlayers"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Maximum Players
                 </label>
                 <select
@@ -206,7 +212,7 @@ export default function CreateLobby({ user, errors = {}, flash = {} }: CreateLob
               {/* Privacy Settings */}
               <div className="space-y-4">
                 <h3 className="text-lg font-medium text-gray-900">Privacy Settings</h3>
-                
+
                 {/* Private Lobby */}
                 <div className="flex items-start">
                   <div className="flex items-center h-5">
@@ -245,9 +251,7 @@ export default function CreateLobby({ user, errors = {}, flash = {} }: CreateLob
                     <label htmlFor="hasPassword" className="text-sm font-medium text-gray-700">
                       Password Protection
                     </label>
-                    <p className="text-sm text-gray-500">
-                      Require a password to join the lobby
-                    </p>
+                    <p className="text-sm text-gray-500">Require a password to join the lobby</p>
                   </div>
                 </div>
 
@@ -295,7 +299,7 @@ export default function CreateLobby({ user, errors = {}, flash = {} }: CreateLob
                     '🎮 Create Lobby'
                   )}
                 </Button>
-                
+
                 <Link href="/lobbies">
                   <Button variant="outline" className="flex-1 py-3 text-lg">
                     Cancel

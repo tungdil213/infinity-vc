@@ -22,10 +22,10 @@
   "devDependencies": {
     "@julr/tooling-configs": "^4.0.0",
     "@types/sinon": "^17.0.4",
-    "eslint": "^9.34.0",
+    "eslint": "^9.39.0",
     "prettier": "^3.6.2",
     "prettier-edgejs": "^0.2.36",
-    "turbo": "^2.5.6"
+    "turbo": "^2.6.0"
   },
   "pnpm": {
     "overrides": {

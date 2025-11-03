@@ -14,6 +14,7 @@ import {
 } from '../../domain/events/base/domain_event.js'
 import { EventHandler } from '../../domain/events/base/event_handler.js'
 import { Result } from '../../domain/shared/result.js'
+import { createContextLogger } from '#infrastructure/logging/logger'
 
 /**
  * Implémentation en mémoire du Event Bus
@@ -21,6 +22,7 @@ import { Result } from '../../domain/shared/result.js'
  */
 @inject()
 export class InMemoryEventBus implements EventBus {
+  private logger = createContextLogger('EventBus')
   private subscriptions = new Map<string, Set<EventHandler>>()
   private stats: EventBusStats
   private config: EventBusConfig
@@ -47,7 +49,7 @@ export class InMemoryEventBus implements EventBus {
     }
 
     if (this.config.enableDetailedLogging) {
-      console.log('🎯 EventBus: Initialized with config', this.config)
+      this.logger.info({ config: this.config }, 'Initialized')
     }
   }
 
@@ -56,29 +58,33 @@ export class InMemoryEventBus implements EventBus {
       this.stats.eventsPublished++
 
       if (this.config.enableDetailedLogging) {
-        console.log(`📡 EventBus: Publishing event ${event.type}`, {
-          eventId: event.eventId,
-          correlationId: event.metadata.correlationId,
-        })
+        this.logger.debug(
+          {
+            eventType: event.type,
+            eventId: event.eventId,
+            correlationId: event.metadata.correlationId,
+          },
+          'Publishing event'
+        )
       }
 
       const handlers = this.getHandlersForEvent(event)
       if (handlers.length === 0) {
         if (this.config.enableDetailedLogging) {
-          console.log(`⚠️ EventBus: No handlers found for event ${event.type}`)
+          this.logger.warn({ eventType: event.type }, 'No handlers found')
         }
         return Result.ok()
       }
 
       // Exécution asynchrone sans attendre les résultats
       this.executeHandlers(event, handlers).catch((error) => {
-        console.error(`❌ EventBus: Error processing event ${event.type}:`, error)
+        this.logger.error({ error, eventType: event.type }, 'Error processing event')
         this.stats.errorCount++
       })
 
       return Result.ok()
     } catch (error) {
-      console.error('❌ EventBus: Failed to publish event:', error)
+      this.logger.error({ error }, 'Failed to publish event')
       this.stats.errorCount++
       return Result.fail(error instanceof Error ? error.message : 'Unknown error during publish')
     }
@@ -89,9 +95,10 @@ export class InMemoryEventBus implements EventBus {
       this.stats.eventsPublished++
 
       if (this.config.enableDetailedLogging) {
-        console.log(`📡 EventBus: Publishing and waiting for event ${event.type}`, {
-          eventId: event.eventId,
-        })
+        this.logger.debug(
+          { eventType: event.type, eventId: event.eventId },
+          'Publishing and waiting for event'
+        )
       }
 
       const handlers = this.getHandlersForEvent(event)
@@ -102,7 +109,7 @@ export class InMemoryEventBus implements EventBus {
       const executionResult = await this.executeHandlers(event, handlers)
       return Result.ok(executionResult.results)
     } catch (error) {
-      console.error('❌ EventBus: Failed to publish and wait for event:', error)
+      this.logger.error({ error }, 'Failed to publish and wait for event')
       this.stats.errorCount++
       return Result.fail(
         error instanceof Error ? error.message : 'Unknown error during publishAndWait'
@@ -124,7 +131,7 @@ export class InMemoryEventBus implements EventBus {
     this.stats.totalSubscriptions++
 
     if (this.config.enableDetailedLogging) {
-      console.log(`🔔 EventBus: Handler ${handler.name} subscribed to ${eventType}`)
+      this.logger.debug({ handlerName: handler.name, eventType }, 'Handler subscribed')
     }
 
     // Retourner la fonction de désabonnement
@@ -138,7 +145,7 @@ export class InMemoryEventBus implements EventBus {
       }
 
       if (this.config.enableDetailedLogging) {
-        console.log(`🔕 EventBus: Handler ${handler.name} unsubscribed from ${eventType}`)
+        this.logger.debug({ handlerName: handler.name, eventType }, 'Handler unsubscribed')
       }
     }
   }
@@ -162,7 +169,7 @@ export class InMemoryEventBus implements EventBus {
       this.stats.eventTypesCount--
 
       if (this.config.enableDetailedLogging) {
-        console.log(`🔕 EventBus: All handlers unsubscribed from ${eventType}`)
+        this.logger.info({ eventType }, 'All handlers unsubscribed')
       }
     }
   }

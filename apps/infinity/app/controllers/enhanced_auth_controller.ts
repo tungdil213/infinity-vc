@@ -6,9 +6,12 @@ import { DatabaseUserRepository } from '#infrastructure/repositories/database_us
 import User from '#models/user'
 import hash from '@adonisjs/core/services/hash'
 import app from '@adonisjs/core/services/app'
+import { createContextLogger } from '#infrastructure/logging/logger'
 
 @inject()
 export default class EnhancedAuthController {
+  private logger = createContextLogger('AuthController')
+
   constructor(
     private userRepository: DatabaseUserRepository,
     private authenticateUserUseCase: AuthenticateUserUseCase
@@ -100,9 +103,8 @@ export default class EnhancedAuthController {
         password: password, // Pass plain password, will be hashed by User model
       })
 
-      console.log(result)
-
       if (result.isFailure) {
+        this.logger.warn({ error: result.error }, 'User registration failed')
         session.flash('error', result.error || 'Failed to create account')
         return response.redirect().back()
       }
@@ -120,7 +122,7 @@ export default class EnhancedAuthController {
       }
       return response.redirect(redirect)
     } catch (error) {
-      console.error('Registration error:', error)
+      this.logger.error({ error }, 'Registration error')
       session.flash('error', 'Failed to create account. Please try again.')
       return response.redirect().back()
     }
@@ -133,53 +135,53 @@ export default class EnhancedAuthController {
     const { email, password } = request.only(['email', 'password'])
     const redirect = request.input('redirect', '/lobbies')
 
-    console.log('🔐 Login attempt:', { email, redirect })
+    this.logger.info({ email, redirect }, 'Login attempt')
 
     try {
       // Validation
       if (!email || email.trim().length === 0) {
-        console.log('❌ Login failed: Email is required')
+        this.logger.warn('Login failed: Email is required')
         session.flash('error', 'Email is required')
         return response.redirect().back()
       }
 
       if (!password || password.length === 0) {
-        console.log('❌ Login failed: Password is required')
+        this.logger.warn('Login failed: Password is required')
         session.flash('error', 'Password is required')
         return response.redirect().back()
       }
 
-      console.log('✅ Validation passed, searching for user...')
+      this.logger.debug('Validation passed, searching for user')
 
       // Find user using Lucid model directly for auth
       const user = await User.query().where('email', email.trim().toLowerCase()).first()
       if (!user) {
-        console.log('❌ Login failed: User not found for email:', email.trim().toLowerCase())
+        this.logger.warn({ email: email.trim().toLowerCase() }, 'Login failed: User not found')
         session.flash('error', 'Invalid email or password')
         return response.redirect().back()
       }
 
-      console.log('✅ User found:', { userUuid: user.userUuid, fullName: user.fullName })
+      this.logger.debug({ userUuid: user.userUuid, fullName: user.fullName }, 'User found')
 
       // Verify password
       const isValidPassword = await hash.verify(user.password, password)
       if (!isValidPassword) {
-        console.log('❌ Login failed: Invalid password for user:', user.userUuid)
+        this.logger.warn({ userUuid: user.userUuid }, 'Login failed: Invalid password')
         session.flash('error', 'Invalid email or password')
         return response.redirect().back()
       }
 
-      console.log('✅ Password verified, logging in user...')
+      this.logger.debug('Password verified, logging in user')
 
       // Log the user in
       await auth.use('web').login(user)
 
-      console.log('✅ User logged in successfully, redirecting to:', redirect)
+      this.logger.info({ userUuid: user.userUuid, redirect }, 'User logged in successfully')
 
       session.flash('success', `Welcome back, ${user.fullName}!`)
       return response.redirect(redirect)
     } catch (error) {
-      console.error('❌ Login error:', error)
+      this.logger.error({ error }, 'Login error')
       session.flash('error', 'Login failed. Please try again.')
       return response.redirect().back()
     }
@@ -194,7 +196,7 @@ export default class EnhancedAuthController {
       session.flash('success', 'You have been logged out successfully')
       return response.redirect('/')
     } catch (error) {
-      console.error('Logout error:', error)
+      this.logger.error({ error }, 'Logout error')
       session.flash('error', 'Logout failed')
       return response.redirect().back()
     }
@@ -221,7 +223,7 @@ export default class EnhancedAuthController {
         },
       })
     } catch (error) {
-      console.error('Profile error:', error)
+      this.logger.error({ error }, 'Profile retrieval error')
       return response.status(500).json({
         error: 'Failed to retrieve profile',
       })
@@ -246,7 +248,7 @@ export default class EnhancedAuthController {
           : null,
       })
     } catch (error) {
-      console.error('Auth check error:', error)
+      this.logger.error({ error }, 'Auth check error')
       return response.status(500).json({
         error: 'Failed to check authentication',
       })

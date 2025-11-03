@@ -38,7 +38,7 @@ router
 
     // Lobbies routes
     router
-      .get('/lobbies', '#controllers/enhanced_lobbies_controller.index')
+      .get('/lobbies', '#controllers/lobbies_controller.index')
       .as('lobbies.index')
       .use(middleware.auth())
     router
@@ -47,30 +47,22 @@ router
       })
       .as('transmit.debug')
       .use(middleware.auth())
+    router.get('/lobbies/create', '#controllers/lobbies_controller.create').as('lobbies.create')
+    router.post('/lobbies', '#controllers/lobbies_controller.store').as('lobbies.store')
+    router.get('/lobbies/:uuid', '#controllers/lobbies_controller.show').as('lobbies.show')
+    router.post('/lobbies/:uuid/join', '#controllers/lobbies_controller.join').as('lobbies.join')
+    router.post('/lobbies/:uuid/leave', '#controllers/lobbies_controller.leave').as('lobbies.leave')
     router
-      .get('/lobbies/create', '#controllers/enhanced_lobbies_controller.create')
-      .as('lobbies.create')
-    router.post('/lobbies', '#controllers/enhanced_lobbies_controller.store').as('lobbies.store')
-    router.get('/lobbies/:uuid', '#controllers/enhanced_lobbies_controller.show').as('lobbies.show')
-    router
-      .post('/lobbies/:uuid/join', '#controllers/enhanced_lobbies_controller.join')
-      .as('lobbies.join')
-    router
-      .post('/lobbies/:uuid/leave', '#controllers/enhanced_lobbies_controller.leave')
-      .as('lobbies.leave')
-    router
-      .post('/lobbies/leave-on-close', '#controllers/enhanced_lobbies_controller.leaveOnClose')
+      .post('/lobbies/leave-on-close', '#controllers/lobbies_controller.leaveOnClose')
       .as('lobbies.leave.close')
-    router
-      .post('/lobbies/:uuid/start', '#controllers/enhanced_lobbies_controller.start')
-      .as('lobbies.start')
+    router.post('/lobbies/:uuid/start', '#controllers/lobbies_controller.start').as('lobbies.start')
 
     // Advanced lobby management (owner only)
     router
-      .post('/lobbies/:uuid/kick', '#controllers/enhanced_lobbies_controller.kickPlayer')
+      .post('/lobbies/:uuid/kick', '#controllers/lobbies_controller.kickPlayer')
       .as('lobbies.kick')
     router
-      .post('/lobbies/:uuid/transfer', '#controllers/enhanced_lobbies_controller.transferOwnership')
+      .post('/lobbies/:uuid/transfer', '#controllers/lobbies_controller.transferOwnership')
       .as('lobbies.transfer')
 
     // Games routes
@@ -81,10 +73,10 @@ router
 
 // Public invitation routes (can be accessed without auth)
 router
-  .get('/lobbies/join/:invitationCode', '#controllers/enhanced_lobbies_controller.showJoinByInvite')
+  .get('/lobbies/join/:invitationCode', '#controllers/lobbies_controller.showJoinByInvite')
   .as('lobbies.join.invite.show')
 router
-  .post('/lobbies/join/:invitationCode', '#controllers/enhanced_lobbies_controller.joinByInvite')
+  .post('/lobbies/join/:invitationCode', '#controllers/lobbies_controller.joinByInvite')
   .as('lobbies.join.invite')
 
 // API routes
@@ -95,20 +87,16 @@ router
     router.get('/auth/check', '#controllers/enhanced_auth_controller.check').as('api.auth.check')
 
     // Lobbies API
+    router.get('/lobbies', '#controllers/lobbies_controller.apiIndex').as('api.lobbies.index')
+    router.get('/lobbies/:uuid', '#controllers/lobbies_controller.apiShow').as('api.lobbies.show')
     router
-      .get('/lobbies', '#controllers/enhanced_lobbies_controller.apiIndex')
-      .as('api.lobbies.index')
-    router
-      .get('/lobbies/:uuid', '#controllers/enhanced_lobbies_controller.apiShow')
-      .as('api.lobbies.show')
-    router
-      .post('/lobbies/:uuid/join', '#controllers/enhanced_lobbies_controller.join')
+      .post('/lobbies/:uuid/join', '#controllers/lobbies_controller.join')
       .as('api.lobbies.join')
     router
-      .post('/lobbies/:uuid/leave', '#controllers/enhanced_lobbies_controller.leave')
+      .post('/lobbies/:uuid/leave', '#controllers/lobbies_controller.leave')
       .as('api.lobbies.leave')
     router
-      .post('/lobbies/leave-on-close', '#controllers/enhanced_lobbies_controller.leaveOnClose')
+      .post('/lobbies/leave-on-close', '#controllers/lobbies_controller.leaveOnClose')
       .as('api.lobbies.leave.close')
 
     // Games API

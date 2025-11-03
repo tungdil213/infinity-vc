@@ -4,6 +4,7 @@ import { BaseEventHandler, MeasureProcessingTime } from '#domain/events/base/eve
 import type { DomainEvent, EventHandlingResult } from '#domain/events/base/domain_event'
 import { Result } from '#domain/shared/result'
 import type { LobbyDomainEvent } from '#domain/events/lobby/lobby_domain_events'
+import { createContextLogger } from '#infrastructure/logging/logger'
 
 /**
  * Pont entre le système d'événements et Transmit
@@ -11,6 +12,7 @@ import type { LobbyDomainEvent } from '#domain/events/lobby/lobby_domain_events'
  */
 @inject()
 export class TransmitEventBridge extends BaseEventHandler<DomainEvent> {
+  private logger = createContextLogger('TransmitEventBridge')
   readonly name = 'TransmitEventBridge'
   readonly priority = 5 // Priorité moyenne - après persistence et validation
 
@@ -22,7 +24,7 @@ export class TransmitEventBridge extends BaseEventHandler<DomainEvent> {
   @MeasureProcessingTime
   async handle(event: DomainEvent): Promise<Result<EventHandlingResult>> {
     try {
-      console.log(`📡 TransmitEventBridge: Broadcasting ${event.type} via Transmit`)
+      this.logger.debug({ eventType: event.type }, 'Broadcasting event via Transmit')
 
       const transmitData = this.convertToTransmitData(event)
 
@@ -36,11 +38,11 @@ export class TransmitEventBridge extends BaseEventHandler<DomainEvent> {
         })
       )
     } catch (error) {
-      console.error(`❌ TransmitEventBridge: Error broadcasting ${event.type}:`, error)
+      this.logger.error({ error, eventType: event.type }, 'Error broadcasting event')
 
       // Le bridge Transmit ne doit pas faire échouer le traitement global
       // On log l'erreur mais on retourne succès pour ne pas bloquer les autres handlers
-      console.warn(`⚠️ TransmitEventBridge: Continuing despite broadcast error for ${event.type}`)
+      this.logger.warn({ eventType: event.type }, 'Continuing despite broadcast error')
 
       return Result.ok(
         this.success('Event processing continued despite Transmit error', {
@@ -171,7 +173,7 @@ export class TransmitEventBridge extends BaseEventHandler<DomainEvent> {
 
       default:
         // Fallback pour futurs événements non gérés
-        console.warn('TransmitEventBridge: Unhandled lobby event')
+        this.logger.warn({ eventType: lobbyEvent.type }, 'Unhandled lobby event')
         return baseData
     }
   }
@@ -227,16 +229,16 @@ export class TransmitEventBridge extends BaseEventHandler<DomainEvent> {
     for (const channel of channels) {
       try {
         transmit.broadcast(channel, transmitData)
-        console.log(`✅ TransmitEventBridge: Successfully broadcasted to channel ${channel}`)
+        this.logger.debug({ channel }, 'Successfully broadcasted to channel')
       } catch (error) {
         // Log l'erreur pour ce canal spécifique mais continue avec les autres
         if (
           error.message?.includes('non-existent channel') ||
           error.message?.includes('no subscribers')
         ) {
-          console.log(`ℹ️ TransmitEventBridge: No subscribers for channel ${channel}`)
+          this.logger.debug({ channel }, 'No subscribers for channel')
         } else {
-          console.error(`❌ TransmitEventBridge: Failed to broadcast to channel ${channel}:`, error)
+          this.logger.error({ error, channel }, 'Failed to broadcast to channel')
         }
       }
     }

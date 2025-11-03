@@ -18,19 +18,48 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
-      - database
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     command: >
       sh -c "pnpm run build:assets && node ./apps/tyfo.dev/bin/server.js"
 
   database:
     image: postgres:16-alpine3.19
+    container_name: infinity-postgres
     ports:
       - "5432:5432"
     volumes:
       - psql-data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=root
+      - POSTGRES_USER=infinity
+      - POSTGRES_PASSWORD=infinity_dev
+      - POSTGRES_DB=infinity
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U infinity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: infinity-redis
+    command: >
+      redis-server
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --save 60 1000
+      --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
   mailer:
     image: axllent/mailpit:v1.21
@@ -40,3 +69,4 @@ services:
 
 volumes:
   psql-data:
+  redis-data:

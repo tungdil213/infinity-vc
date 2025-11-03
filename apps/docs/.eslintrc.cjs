@@ -1,4 +1,4 @@
 /** @type {import("eslint").Linter.Config} */
-module.exports = {
+export default  {
   extends: ["@tyfo.dev/eslint-config/storybook.js"],
 };

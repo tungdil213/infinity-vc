@@ -17,7 +17,7 @@ function FlashMessages() {
     if (flash?.success) {
       toast.success(flash.success)
     }
-    
+
     if (flash?.error) {
       toast.error(flash.error)
     }
@@ -36,7 +36,7 @@ export default function Layout({ children }: LayoutProps) {
     auth?: { user?: any }
   }>()
   const currentLobby = props.currentLobby
-  
+
   const currentUser = props.auth?.user
 
   return (

@@ -13,8 +13,14 @@ export interface TransmitContextType {
   isConnected: boolean
   error: string | null
   subscribeToLobbies: (callback: (event: LobbyTransmitEvent) => void) => Promise<() => void>
-  subscribeToLobby: (lobbyUuid: string, callback: (event: LobbyTransmitEvent) => void) => Promise<() => void>
-  subscribeToUserNotifications: (userUuid: string, callback: (event: any) => void) => Promise<() => void>
+  subscribeToLobby: (
+    lobbyUuid: string,
+    callback: (event: LobbyTransmitEvent) => void
+  ) => Promise<() => void>
+  subscribeToUserNotifications: (
+    userUuid: string,
+    callback: (event: any) => void
+  ) => Promise<() => void>
   unsubscribeFrom: (channelName: string) => Promise<void>
   unsubscribeAll: () => Promise<void>
   addEventListener: (type: string, handler: (event: TransmitEvent) => void) => void
@@ -47,29 +53,30 @@ export function TransmitProvider({ children }: TransmitProviderProps) {
 
   useEffect(() => {
     let mounted = true
-    
+
     console.log('📡 TransmitProvider: Initializing with TransmitManager')
-    
+
     // Écouter les changements d'état de connexion
     const handleStateChange = (event: any) => {
       if (!mounted) return
-      
+
       console.log('📡 TransmitProvider: Connection state changed:', event.data)
       const state = event.data.newState
-      
+
       setIsConnected(state === ConnectionState.CONNECTED)
-      
+
       if (state === ConnectionState.ERROR) {
         setError(event.data.error || 'Connection error')
       } else {
         setError(null)
       }
     }
-    
+
     transmitManager.on('connection_state_changed', handleStateChange)
-    
+
     // Établir la connexion
-    transmitManager.connect()
+    transmitManager
+      .connect()
       .then(() => {
         if (mounted) {
           console.log('📡 TransmitProvider: ✅ Connected via TransmitManager')
@@ -96,7 +103,7 @@ export function TransmitProvider({ children }: TransmitProviderProps) {
       console.log('📡 TransmitProvider: subscribeToLobbies called')
       console.log('📡 TransmitProvider: transmitManager state:', {
         isConnected: transmitManager.isConnected(),
-        hasSubscribe: typeof transmitManager.subscribe === 'function'
+        hasSubscribe: typeof transmitManager.subscribe === 'function',
       })
       const unsubscribe = await transmitManager.subscribe<LobbyTransmitEvent>('lobbies', callback)
       console.log('📡 TransmitProvider: ✅ Subscribed to lobbies channel')
@@ -109,7 +116,10 @@ export function TransmitProvider({ children }: TransmitProviderProps) {
     }
   }
 
-  const subscribeToLobby = async (lobbyUuid: string, callback: (event: LobbyTransmitEvent) => void) => {
+  const subscribeToLobby = async (
+    lobbyUuid: string,
+    callback: (event: LobbyTransmitEvent) => void
+  ) => {
     try {
       console.log(`📡 TransmitProvider: subscribeToLobby called for ${lobbyUuid}`)
       const channelName = `lobbies/${lobbyUuid}`
@@ -132,7 +142,8 @@ export function TransmitProvider({ children }: TransmitProviderProps) {
       console.log(`📡 TransmitProvider: ✅ Subscribed to user notifications ${userUuid}`)
       return unsubscribe
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur de souscription aux notifications'
+      const errorMessage =
+        err instanceof Error ? err.message : 'Erreur de souscription aux notifications'
       console.error('📡 TransmitProvider: ❌ Erreur subscribeToUserNotifications:', errorMessage)
       setError(errorMessage)
       return () => {}
@@ -194,7 +205,9 @@ export function TransmitProvider({ children }: TransmitProviderProps) {
 export function useTransmit(): TransmitContextType {
   const context = useContext(TransmitContext)
   if (!context || context === defaultTransmitContext) {
-    console.warn('useTransmit: Utilisation du contexte par défaut, TransmitProvider peut-être manquant')
+    console.warn(
+      'useTransmit: Utilisation du contexte par défaut, TransmitProvider peut-être manquant'
+    )
     return defaultTransmitContext
   }
   return context

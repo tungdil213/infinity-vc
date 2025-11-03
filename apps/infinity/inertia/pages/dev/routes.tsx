@@ -42,7 +42,7 @@ export default function DevRoutes({ routes }: DevRoutesProps) {
   return (
     <Layout>
       <Head title="Routes de développement - Infinity Game" />
-      
+
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
@@ -55,9 +55,7 @@ export default function DevRoutes({ routes }: DevRoutesProps) {
                 </p>
               </div>
               <Link href="/">
-                <Button variant="outline">
-                  ← Retour à l'accueil
-                </Button>
+                <Button variant="outline">← Retour à l'accueil</Button>
               </Link>
             </div>
           </div>
@@ -67,7 +65,11 @@ export default function DevRoutes({ routes }: DevRoutesProps) {
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  <path
+                    fillRule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </div>
               <div className="ml-3">
@@ -75,7 +77,10 @@ export default function DevRoutes({ routes }: DevRoutesProps) {
                   Page de développement uniquement
                 </h3>
                 <div className="mt-2 text-sm text-yellow-700">
-                  <p>Cette page n'est accessible qu'en mode développement et ne sera pas disponible en production.</p>
+                  <p>
+                    Cette page n'est accessible qu'en mode développement et ne sera pas disponible
+                    en production.
+                  </p>
                 </div>
               </div>
             </div>
@@ -88,19 +93,21 @@ export default function DevRoutes({ routes }: DevRoutesProps) {
                 <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
                   <h2 className="text-xl font-semibold text-gray-900">{group.group}</h2>
                 </div>
-                
+
                 <div className="divide-y divide-gray-200">
                   {group.routes.map((route, routeIndex) => (
                     <div key={routeIndex} className="px-6 py-4 hover:bg-gray-50">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getMethodColor(route.method)}`}>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getMethodColor(route.method)}`}
+                          >
                             {route.method}
                           </span>
-                          
+
                           {isClickableRoute(route.path, route.method) ? (
-                            <Link 
-                              href={route.path} 
+                            <Link
+                              href={route.path}
                               className="font-mono text-sm text-blue-600 hover:text-blue-800 hover:underline"
                             >
                               {route.path}
@@ -110,15 +117,11 @@ export default function DevRoutes({ routes }: DevRoutesProps) {
                               {route.path}
                             </code>
                           )}
-                          
-                          <span className="text-sm text-gray-500">
-                            ({route.name})
-                          </span>
+
+                          <span className="text-sm text-gray-500">({route.name})</span>
                         </div>
-                        
-                        <div className="text-sm text-gray-600">
-                          {route.description}
-                        </div>
+
+                        <div className="text-sm text-gray-600">{route.description}</div>
                       </div>
                     </div>
                   ))}
