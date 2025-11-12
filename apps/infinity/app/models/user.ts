@@ -18,8 +18,14 @@ export default class User extends BaseModel {
   @column()
   declare email: string
 
+  @column()
+  declare username: string
+
   @column({ serializeAs: null })
   declare password: string
+
+  @column({ columnName: 'is_active' })
+  declare isActive: boolean
 
   @column.dateTime({ columnName: 'deleted_at' })
   declare deletedAt: DateTime | null

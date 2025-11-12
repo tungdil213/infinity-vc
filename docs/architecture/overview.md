@@ -74,8 +74,12 @@ apps/infinity/
 │   ├── pages/
 │   ├── services/
 │   └── hooks/
-└── docs/
-    └── BOILERPLATE_ARCHITECTURE.md
+└── docs/                            # Documentation
+    ├── README.md                   # Point d'entrée
+    ├── GETTING_STARTED.md          # Guide installation
+    ├── TECHNICAL_REFERENCE.md      # Référence technique
+    ├── architecture/               # Architecture
+    └── guides/                     # Guides pratiques
 ```
 
 ## 🎮 Système de plugins de jeux
@@ -318,6 +322,41 @@ Ce boilerplate est conçu pour être extensible. Les contributions sont les bien
 3. Committez vos changements (`git commit -m 'Ajout nouvelle fonctionnalité'`)
 4. Pushez vers la branche (`git push origin feature/nouvelle-fonctionnalite`)
 5. Ouvrez une Pull Request
+
+## 🚀 Quick Start
+
+### Installation
+```bash
+# Installer les dépendances
+pnpm install
+
+# Configurer l'environnement
+cp .env.example .env
+
+# Lancer les migrations
+cd apps/infinity
+node ace migration:run
+node ace db:seed
+
+# Démarrer le serveur
+node ace serve --watch
+```
+
+Visitez `http://localhost:3333` 🎉
+
+### Créer votre premier jeu
+
+Suivez le guide détaillé : [Créer un jeu en 15 minutes](../guides/creating-a-game.md)
+
+## 🎯 Cas d'Usage
+
+Infinity est adapté pour :
+- 🎲 Jeux de plateau (Échecs, Dames, Go)
+- 🎴 Jeux de cartes (Poker, Uno, Cards Against Humanity)
+- 🎉 Party games (Trivia, Pictionary)
+- ⚔️ Jeux de stratégie
+- 💬 Applications de chat temps réel
+- 🤝 Outils collaboratifs
 
 ## 📄 Licence
 

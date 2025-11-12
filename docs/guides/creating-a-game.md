@@ -350,9 +350,11 @@ Maintenant que vous avez créé votre premier jeu, vous pouvez :
 
 ## 📚 Ressources
 
-- [Architecture complète](./BOILERPLATE_ARCHITECTURE.md)
-- [Interface GamePlugin](../app/domain/games/base/game_plugin.ts)
-- [Exemple Tic-Tac-Toe](../app/domain/games/plugins/tic-tac-toe/)
+- [Architecture complète](../architecture/overview.md)
+- [Architecture par domaines](../architecture/bounded-contexts.md)
+- [Documentation complète](../README.md)
+- Interface GamePlugin : `apps/infinity/app/domain/games/base/game_plugin.ts`
+- Exemple Tic-Tac-Toe : `apps/infinity/app/domain/games/plugins/tic-tac-toe/`
 
 ---
 

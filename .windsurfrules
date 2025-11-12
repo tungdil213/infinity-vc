@@ -677,3 +677,283 @@ windsurf:
       autofix: |
         Déplacer les factories de test/seed en dehors du dossier `app/`.
         Supprimer les imports interdits dans le code applicatif.
+
+# ============================================================================
+# RÈGLES SPÉCIFIQUES AU PROJET INFINITY
+# À COPIER-COLLER À LA FIN DU FICHIER .windsurfrules
+# ============================================================================
+
+# Projet Infinity - Configuration
+infinity_project:
+  name: Infinity
+  description: Plateforme de jeux multijoueurs en temps réel avec lobbies
+  root: apps/infinity
+  architecture: DDD (Domain-Driven Design)
+  frontend: React + Inertia.js
+  backend: AdonisJS
+  realtime: Transmit (WebSocket)
+
+# Règles Infinity spécifiques
+infinity_rules:
+  
+  # 1. STRUCTURE DES ROUTES
+  - name: "Infinity Routes Structure"
+    description: |
+      Un seul fichier de routes actif pour toute l'application.
+      Aucun fichier de routes dans app/routes/.
+      Convention REST stricte pour les méthodes de contrôleur.
+    location: apps/infinity/start/routes.ts
+    forbidden:
+      - apps/infinity/app/routes/web.ts
+      - apps/infinity/app/routes/api_routes.ts
+      - apps/infinity/app/routes/complete_routes.ts
+    checks:
+      - Vérifier qu'aucun fichier n'existe dans apps/infinity/app/routes/
+      - S'assurer que toutes les routes sont dans start/routes.ts
+      - Vérifier que les méthodes suivent la convention REST (index, show, store, update, destroy)
+      - Confirmer que GET/POST sont séparés (showCreateForm vs store)
+    autofix: |
+      Déplacer automatiquement les routes vers start/routes.ts
+      Archiver les anciens fichiers dans _archive/
+      Corriger les noms de méthodes non-conventionnels
+  
+  # 2. STRUCTURE DES PAGES INERTIA
+  - name: "Infinity Pages Organization"
+    description: |
+      Pages organisées par domaine DDD dans inertia/pages/.
+      Convention stricte : index.tsx (liste), show.tsx (détail), create.tsx (création).
+      Aucune page de domaine à la racine (sauf home/welcome).
+    structure: |
+      inertia/pages/
+      ├── auth/              (Domaine IAM)
+      │   ├── login.tsx
+      │   └── register.tsx
+      ├── lobbies/          (Domaine Lobby)
+      │   ├── index.tsx     → Liste
+      │   ├── create.tsx    → Création
+      │   ├── show.tsx      → Détail
+      │   └── join.tsx      → Action spécifique
+      ├── games/            (Domaine Game Engine)
+      │   └── show.tsx
+      ├── dev/              (Outils développement)
+      ├── errors/           (Pages d'erreur)
+      ├── home.tsx          (Pages publiques)
+      └── welcome.tsx
+    forbidden:
+      - Pages de domaine à la racine (create-lobby.tsx, lobby.tsx, game.tsx)
+      - Dossiers vides (pages/lobbies/ vide)
+      - Noms avec tirets ou underscores pour les domaines
+      - Pages dupliquées
+    checks:
+      - Vérifier qu'aucune page {domaine}* n'est à la racine
+      - S'assurer que chaque dossier contient au moins 1 fichier
+      - Confirmer la convention de nommage (index, show, create, edit)
+      - Vérifier l'absence de doublons
+    autofix: |
+      Déplacer automatiquement les pages vers leur dossier de domaine
+      Renommer selon la convention (create-lobby.tsx → lobbies/create.tsx)
+      Supprimer les dossiers vides
+      Mettre à jour les imports relatifs après déplacement
+  
+  # 3. STRUCTURE DES COMPOSANTS
+  - name: "Infinity Components Separation"
+    description: |
+      Séparation stricte entre composants réutilisables et spécifiques.
+      Composants réutilisables dans packages/ui/.
+      Composants spécifiques Infinity dans apps/infinity/inertia/components/.
+    packages_ui: |
+      Composants RÉUTILISABLES (multi-apps)
+      - Pas de logique métier spécifique
+      - Props génériques
+      - Documentés dans Storybook
+      - Exemples: header.tsx, footer.tsx, lobby-card.tsx
+    apps_components: |
+      Composants SPÉCIFIQUES (app Infinity uniquement)
+      - Logique métier spécifique
+      - Hooks/contexts applicatifs
+      - Services applicatifs
+      - Exemples: layout.tsx, HeaderWrapper.tsx, GameLobby.tsx
+    checks:
+      - Vérifier que packages/ui n'importe rien de apps/
+      - S'assurer qu'il n'y a pas de doublons
+      - Confirmer que chaque composant UI a une story Storybook
+      - Vérifier que les composants spécifiques ne sont pas dans packages/ui
+    autofix: |
+      Bloquer automatiquement les imports de apps/ dans packages/ui/
+      Créer une story Storybook pour les nouveaux composants UI
+      Déplacer les composants réutilisables vers packages/ui/
+  
+  # 4. CONTRÔLEURS INERTIA
+  - name: "Infinity Controllers Render Paths"
+    description: |
+      Les contrôleurs doivent rendre les bonnes pages avec chemins relatifs corrects.
+      Format: inertia.render('domain/action') relatif à inertia/pages/
+    convention:
+      - "inertia.render('lobbies/index')   // pages/lobbies/index.tsx"
+      - "inertia.render('lobbies/create')  // pages/lobbies/create.tsx"
+      - "inertia.render('games/show')      // pages/games/show.tsx"
+    checks:
+      - Vérifier que chaque inertia.render() pointe vers un fichier existant
+      - S'assurer que les chemins sont relatifs à pages/
+      - Confirmer l'absence de chemins obsolètes
+      - Vérifier que les props correspondent aux interfaces TypeScript
+    autofix: |
+      Mettre à jour automatiquement les chemins après migration
+      Corriger les chemins obsolètes (lobbies → lobbies/index)
+      Ajouter les props manquantes dans les interfaces
+  
+  # 5. REPOSITORIES DDD
+  - name: "Infinity Repository Completeness"
+    description: |
+      Tous les repositories doivent implémenter l'interface base complète.
+      Méthodes obligatoires: save, findById, delete, exists.
+      Retours en Result<T> uniquement.
+    base_methods:
+      - "save(entity: T): Promise<Result<T>>"
+      - "findById(id: string): Promise<Result<T | null>>"
+      - "delete(id: string): Promise<Result<void>>"
+      - "exists(id: string): Promise<boolean>"
+    checks:
+      - Vérifier que tous les repositories implémentent toutes les méthodes
+      - S'assurer que les retours sont Result<T> et non des valeurs brutes
+      - Confirmer l'enregistrement dans app_provider.ts (IoC container)
+    autofix: |
+      Ajouter automatiquement les méthodes manquantes
+      Transformer les retours bruts en Result.ok()/Result.fail()
+      Enregistrer dans le container IoC si absent
+  
+  # 6. COMMANDS ET HANDLERS DDD
+  - name: "Infinity Commands Consistency"
+    description: |
+      Les commandes et handlers doivent être cohérents.
+      Nombre d'arguments correct, types corrects, Result<T> en retour.
+    checks:
+      - Vérifier la cohérence des arguments du constructeur
+      - S'assurer que les types sont corrects
+      - Confirmer l'utilisation d'EventBus pour les événements
+      - Vérifier que le handler retourne Result<T>
+    autofix: |
+      Corriger automatiquement le nombre d'arguments
+      Ajouter les imports manquants
+      Transformer les retours en Result<T>
+  
+  # 7. ÉVÉNEMENTS DOMAIN
+  - name: "Infinity Domain Events Naming"
+    description: |
+      Convention stricte pour les noms d'événements domain.
+      Format obligatoire: {domain}.{entity}.{action}
+    naming_convention:
+      format: "{domain}.{entity}.{action}"
+      examples:
+        - "iam.user.logged.in"
+        - "lobby.lobby.created"
+        - "game.game.started"
+    registry_location: "domains/{domain}/infrastructure/events/{domain}.event_registry.ts"
+    checks:
+      - Vérifier la convention de nommage des événements
+      - S'assurer que les registries sont importés dans module_event_provider.ts
+      - Confirmer que domainName correspond au préfixe des événements
+    autofix: |
+      Renommer automatiquement les événements non-conformes
+      Corriger le domainName dans les registries
+      Ajouter les registries manquants dans module_event_provider.ts
+  
+  # 8. AUTHENTIFICATION SÉCURISÉE
+  - name: "Infinity Auth Security"
+    description: |
+      Gestion sécurisée de l'authentification et des mots de passe.
+      Pas de double hash, types corrects pour auth.login(), sharedData obligatoire.
+    password_rules:
+      - "Ne JAMAIS hasher dans le seeder (laisser le hook @beforeSave())"
+      - "Passer le password en clair au seeder"
+    auth_login_rules:
+      - "auth.login() attend un modèle Lucid, pas une entité DDD"
+      - "Récupérer le modèle Lucid après authentification DDD réussie"
+    shared_data_rules:
+      - "Toujours partager user via inertia sharedData"
+      - "Ne pas passer user en prop si déjà dans sharedData"
+    checks:
+      - Vérifier que les seeders passent des passwords en clair
+      - S'assurer que auth.login() reçoit un modèle Lucid
+      - Confirmer que user est dans sharedData (config/inertia.ts)
+    autofix: |
+      Supprimer hash.make() dans les seeders
+      Ajouter la récupération du modèle Lucid après auth DDD
+      Ajouter user dans sharedData si absent
+  
+  # 9. DOCUMENTATION OBLIGATOIRE
+  - name: "Infinity Documentation Requirement"
+    description: |
+      Chaque changement majeur doit être documenté dans docs/.
+      Tests obligatoires pour les nouvelles fonctionnalités.
+    required_docs:
+      migrations: "docs/migrations/{FEATURE}_MIGRATION.md"
+      corrections: "docs/corrections/{PROBLEM}_FIX.md"
+      architecture: "docs/architecture/{CONCEPT}_STRATEGY.md"
+    tests:
+      unit: "tests/unit/**/*.spec.ts"
+      integration: "tests/integration/**/*.spec.ts"
+    checks:
+      - Vérifier qu'un fichier .md existe pour chaque changement majeur
+      - S'assurer que les tests existent pour les nouvelles fonctionnalités
+      - Confirmer que la documentation est à jour
+    autofix: |
+      Créer automatiquement un template de documentation
+      Générer des tests de base pour les nouvelles fonctionnalités
+  
+  # 10. CHECKLIST DE VALIDATION
+  - name: "Infinity Validation Checklist"
+    description: |
+      Checklist obligatoire avant chaque commit important.
+      Valide la structure, les conventions, et les tests.
+    after_route_changes:
+      - "Toutes les routes dans /start/routes.ts"
+      - "Aucun fichier dans app/routes/"
+      - "Tous les contrôleurs ont les méthodes référencées"
+      - "node ace list:routes affiche toutes les routes"
+    after_page_changes:
+      - "Toutes les pages dans leurs dossiers de domaine"
+      - "Aucun dossier vide"
+      - "Tous les imports relatifs corrects"
+      - "Tous les inertia.render() à jour"
+    after_component_changes:
+      - "Composants réutilisables dans packages/ui/"
+      - "Composants spécifiques dans apps/infinity/components/"
+      - "Pas de doublons"
+      - "Story Storybook créée (si packages/ui)"
+    after_ddd_changes:
+      - "Repositories implémentent toutes les méthodes"
+      - "Repositories enregistrés dans app_provider.ts"
+      - "Commands ont le bon nombre d'arguments"
+      - "Handlers retournent Result<T>"
+      - "Événements suivent la convention"
+
+# Erreurs fréquentes à éviter (Infinity)
+infinity_forbidden_patterns:
+  routes:
+    - "Créer des fichiers dans app/routes/"
+    - "Utiliser des méthodes non-REST (.create() au lieu de .store())"
+  pages:
+    - "Pages de domaine à la racine"
+    - "Dossiers vides"
+    - "Noms avec tirets (create-lobby.tsx)"
+  components:
+    - "Composants réutilisables dans apps/"
+    - "Imports de apps/ dans packages/ui/"
+  repositories:
+    - "Repository sans méthode exists()"
+    - "Retours directs sans Result<T>"
+  auth:
+    - "Hasher le password dans le seeder"
+    - "Passer une entité DDD à auth.login()"
+  events:
+    - "Noms d'événements non-conventionnés"
+    - "Registry non importé dans module_event_provider"
+
+# Commandes de validation (Infinity)
+infinity_validation_commands:
+  routes: "node ace list:routes"
+  pages_structure: "find apps/infinity/inertia/pages -type d -empty"
+  obsolete_routes: "ls apps/infinity/app/routes/*.ts 2>/dev/null"
+  component_imports: "grep -r 'from.*apps/' packages/ui/src/components/"
+  tests: "node ace test"

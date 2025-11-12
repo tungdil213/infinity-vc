@@ -1,8 +1,9 @@
 import type { ApplicationService } from '@adonisjs/core/types'
-import { initializeGamePlugins } from '#domain/games/index'
 
 /**
- * Provider pour initialiser automatiquement les plugins de jeux
+ * Provider pour initialiser automatiquement les plugins de jeux DDD
+ *
+ * TODO: Réactiver après configuration correcte des paths aliases
  */
 export default class GamePluginProvider {
   constructor(protected app: ApplicationService) {}
@@ -11,7 +12,9 @@ export default class GamePluginProvider {
    * S'exécute au démarrage de l'application
    */
   async boot() {
-    // Initialiser tous les plugins de jeux disponibles
-    initializeGamePlugins()
+    // Temporairement désactivé pendant configuration paths
+    // Les plugins seront chargés dynamiquement depuis les controllers
+
+    console.log('⚠️  Game Plugins: Temporairement désactivés (configuration paths en cours)')
   }
 }

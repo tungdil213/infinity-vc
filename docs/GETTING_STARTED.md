@@ -167,9 +167,10 @@ PORT=4000
 
 ## Next steps
 
-- 📚 Lire la [documentation](./README.md)
+- 📚 Lire la [documentation complète](./README.md)
 - 🎮 [Créer votre premier jeu](./guides/creating-a-game.md)
 - 🏗️ Comprendre l'[architecture](./architecture/overview.md)
+- 📖 Consulter la [référence technique](./TECHNICAL_REFERENCE.md)
 - 🧪 Écrire des [tests](../apps/infinity/tests)
 
 Bon développement ! 🚀

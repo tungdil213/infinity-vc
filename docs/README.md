@@ -1,26 +1,27 @@
 # 📚 Documentation Infinity
 
-Documentation complète du projet Infinity - Plateforme de jeux multijoueurs production-ready.
-
----
-
-## 📖 Index de Navigation
-
-Consultez **[INDEX.md](./INDEX.md)** pour l'index complet de la documentation.
+Bienvenue dans la documentation complète du projet Infinity - Plateforme de jeux multijoueurs temps réel production-ready.
 
 ---
 
 ## 🚀 Démarrage Rapide
 
-### Pour commencer
-1. **[Installation (5 min)](./GETTING_STARTED.md)** - Setup complet du projet
-2. **[Vue d'ensemble](../README.md)** - Features et architecture
-3. **[Créer votre premier jeu](./guides/creating-a-game.md)** - Tutoriel 15 minutes
+### Par où commencer ?
 
-### Documentation Technique
-- **[Référence technique](./TECHNICAL_REFERENCE.md)** - Stack, patterns, conventions
-- **[Architecture](./architecture/overview.md)** - Vue d'ensemble système
-- **[Changelog](../CHANGELOG.md)** - Historique des modifications
+**Nouveau sur le projet ?**
+1. 📖 [Installation (5 min)](./GETTING_STARTED.md) - Setup complet du projet
+2. 🎮 [Vue d'ensemble](../README.md) - Features et fonctionnalités
+3. 📊 [Status Actuel](./PROJECT_STATUS.md) - État du projet (13 nov 2025)
+
+**Développeur ?**
+1. 📘 [Référence technique](./TECHNICAL_REFERENCE.md) - Stack, patterns, conventions
+2. 🏗️ [Architecture](./architecture/overview.md) - Vue d'ensemble système
+3. 🔧 [Corrections](./corrections/CONSOLIDATED_FIXES.md) - 19 fixes appliqués
+
+**Ops/DevOps ?**
+1. 🔧 [Installation](./GETTING_STARTED.md) - Setup infrastructure
+2. 📊 [Status Production](./PROJECT_STATUS.md) - Status au 13 nov (100% Lobbies)
+3. 📖 [Référence technique](./TECHNICAL_REFERENCE.md) - Section Déploiement
 
 ---
 
@@ -28,21 +29,24 @@ Consultez **[INDEX.md](./INDEX.md)** pour l'index complet de la documentation.
 
 ```
 docs/
-├── INDEX.md                    # Index complet (COMMENCEZ ICI)
-├── GETTING_STARTED.md          # Guide installation 5 min
-├── TECHNICAL_REFERENCE.md      # Référence technique complète
+├── README.md                   # ⭐ Point d'entrée (vous êtes ici)
+├── PROJECT_STATUS.md           # 📊 État actuel (13 nov 2025)
+├── GETTING_STARTED.md          # 🚀 Guide installation 5 min
+├── TECHNICAL_REFERENCE.md      # 📖 Référence technique complète
 │
-├── architecture/               # Architecture système
+├── architecture/               # 🏗️ Architecture système
 │   ├── overview.md             # Vue d'ensemble
+│   ├── bounded-contexts.md     # Architecture DDD par domaines
 │   ├── event-driven-architecture.md
 │   └── error-handling-system.md
 │
-├── guides/                     # Guides pratiques
-│   ├── creating-a-game.md      # Créer un jeu (15 min)
-│   └── infinity-app.md         # Guide application
+├── corrections/                # 🔧 Historique corrections
+│   ├── CONSOLIDATED_FIXES.md   # Résumé 19 fixes
+│   └── ...                     # Détails par fix
 │
-└── specification/              # Specs métier
-    └── Infinity-Gauntlet-Rulebook.pdf
+├── migrations/                 # 📦 Guides migration
+└── guides/                     # 📘 Guides pratiques
+    └── creating-a-game.md      # Créer un jeu (15 min)
 ```
 
 ---
@@ -50,118 +54,147 @@ docs/
 ## 🎯 Documentation par Profil
 
 ### 👨‍💻 Développeur Backend
-- [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md) - Stack & patterns
-- [architecture/overview.md](./architecture/overview.md) - Architecture DDD
-- [guides/creating-a-game.md](./guides/creating-a-game.md) - Plugin système
+| Document | Description | Niveau |
+|----------|-------------|--------|
+| [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md) | Stack & patterns DDD | ⭐⭐ |
+| [architecture/overview.md](./architecture/overview.md) | Architecture système | ⭐⭐ |
+| [architecture/bounded-contexts.md](./architecture/bounded-contexts.md) | Architecture par domaines | ⭐⭐⭐ |
+| [guides/creating-a-game.md](./guides/creating-a-game.md) | Plugin système | ⭐ |
 
 ### 👩‍💻 Développeur Frontend
-- [guides/infinity-app.md](./guides/infinity-app.md) - Application React
-- [architecture/overview.md](./architecture/overview.md) - Frontend architecture
-- Storybook → `apps/docs/` (design system)
+| Document | Description | Niveau |
+|----------|-------------|--------|
+| [architecture/overview.md](./architecture/overview.md) | Frontend architecture | ⭐⭐ |
+| [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md) | Stack frontend | ⭐ |
+| Storybook | Design system | ⭐ |
 
 ### 🔧 DevOps
-- [GETTING_STARTED.md](./GETTING_STARTED.md) - Setup infrastructure
-- [../README.md#infrastructure](../README.md) - Docker + Health checks
-- [TECHNICAL_REFERENCE.md#déploiement](./TECHNICAL_REFERENCE.md) - Production deploy
+| Document | Description | Niveau |
+|----------|-------------|--------|
+| [GETTING_STARTED.md](./GETTING_STARTED.md) | Setup infrastructure | ⭐ |
+| [../README.md#infrastructure](../README.md) | Docker + Health checks | ⭐ |
+| [TECHNICAL_REFERENCE.md#déploiement](./TECHNICAL_REFERENCE.md) | Production deploy | ⭐⭐ |
 
 ### 📊 Product Owner
-- [../README.md](../README.md) - Vue d'ensemble + roadmap
-- [../FINAL_SUMMARY.md](../FINAL_SUMMARY.md) - Status production (82/100)
-- [../CHANGELOG.md](../CHANGELOG.md) - Historique features
+| Document | Description | Niveau |
+|----------|-------------|--------|
+| [../README.md](../README.md) | Vue d'ensemble + roadmap | ⭐ |
+| [../FINAL_SUMMARY.md](../FINAL_SUMMARY.md) | Status production | ⭐ |
+| [../CHANGELOG.md](../CHANGELOG.md) | Historique features | ⭐ |
 
 ---
 
-## ✨ Highlights
+## ✨ Caractéristiques du Projet
 
-### 🔒 Production-Ready
-- **Score : 82/100** après audit complet
-- Logger Pino + Sentry error tracking
-- Redis cache + PostgreSQL
-- Health checks K8s-ready
-- CI/CD pipeline complet
+### 🔒 Production-Ready (Score: 82/100)
+- ✅ Logger Pino structuré + Sentry error tracking
+- ✅ Redis cache + PostgreSQL 16
+- ✅ Health checks K8s-ready
+- ✅ CI/CD pipeline complet
+- ✅ Tests Japa + ESLint + TypeScript strict
 
 ### 🏗️ Architecture Moderne
-- **Domain-Driven Design (DDD)**
-- **Event-Driven Architecture**
-- **Result<T> Pattern**
-- **Hybrid Inertia + Transmit**
+- ✅ **Domain-Driven Design (DDD)** - Bounded contexts par domaine
+- ✅ **Event-Driven Architecture** - Système événements modulaire
+- ✅ **Result<T> Pattern** - Gestion erreurs robuste
+- ✅ **Hybrid Inertia + Transmit** - SSR + temps réel
 
-### 🎮 Système de Plugins
-- Interface `GamePlugin<TState, TAction>` standardisée
-- Exemple Tic-Tac-Toe complet
-- Créer un jeu en 15 minutes
-- Chargement dynamique
+### 🎮 Système de Plugins Extensible
+- ✅ Interface `GamePlugin<TState, TAction>` standardisée
+- ✅ Exemple Tic-Tac-Toe complet inclus
+- ✅ Créer un jeu en 15 minutes
+- ✅ Chargement dynamique et registre centralisé
+
+---
+
+## 🎓 Parcours d'Apprentissage
+
+### 📍 Niveau 1 : Découverte (30 min)
+1. Lire [README principal](../README.md)
+2. Suivre [GETTING_STARTED.md](./GETTING_STARTED.md)
+3. Lancer l'application
+4. Créer un compte et un lobby
+
+### 📍 Niveau 2 : Développement (2h)
+1. Lire [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md)
+2. Comprendre l'[architecture](./architecture/overview.md)
+3. Suivre [Creating a Game](./guides/creating-a-game.md)
+4. Créer votre premier jeu !
+
+### 📍 Niveau 3 : Maîtrise (1 semaine)
+1. Étudier l'[Event-Driven Architecture](./architecture/event-driven-architecture.md)
+2. Comprendre le [Error Handling System](./architecture/error-handling-system.md)
+3. Découvrir l'[architecture par domaines](./architecture/bounded-contexts.md)
+4. Écrire des tests et contribuer
+
+---
+
+## 🔍 Recherche Rapide par Thème
+
+### Sécurité & Monitoring
+- Logger Pino → [TECHNICAL_REFERENCE.md#logging](./TECHNICAL_REFERENCE.md)
+- Sentry → [README.md#sécurité](../README.md)
+- Validation env → [TECHNICAL_REFERENCE.md#configuration](./TECHNICAL_REFERENCE.md)
+- Health checks → [TECHNICAL_REFERENCE.md#health-checks](./TECHNICAL_REFERENCE.md)
+
+### Infrastructure & Déploiement
+- Docker → [README.md#infrastructure](../README.md)
+- Redis → [TECHNICAL_REFERENCE.md#redis](./TECHNICAL_REFERENCE.md)
+- PostgreSQL → [GETTING_STARTED.md](./GETTING_STARTED.md)
+- Déploiement → [TECHNICAL_REFERENCE.md#déploiement](./TECHNICAL_REFERENCE.md)
+
+### Tests & Qualité
+- Tests Japa → [TECHNICAL_REFERENCE.md#testing](./TECHNICAL_REFERENCE.md)
+- CI/CD → [README.md#tests--cicd](../README.md)
+- ESLint + TypeScript → [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md)
+
+### Développement
+- Créer un jeu → [guides/creating-a-game.md](./guides/creating-a-game.md)
+- Use Cases → [TECHNICAL_REFERENCE.md#result-t-pattern](./TECHNICAL_REFERENCE.md)
+- Events → [architecture/event-driven-architecture.md](./architecture/event-driven-architecture.md)
+- DDD → [architecture/bounded-contexts.md](./architecture/bounded-contexts.md)
 
 ---
 
 ## 📚 Ressources Externes
 
-### Frameworks & Librairies
-- [AdonisJS 6](https://docs.adonisjs.com/) - Backend framework
-- [React 19](https://react.dev/) - Frontend library
-- [Inertia.js](https://inertiajs.com/) - Modern monolith stack
+### Stack Technique
+
+**Backend:**
+- [AdonisJS 6](https://docs.adonisjs.com/) - Framework backend
+- [PostgreSQL](https://www.postgresql.org/docs/) - Base de données
+- [Redis](https://redis.io/docs/) - Cache & sessions
 - [Transmit](https://docs.adonisjs.com/guides/transmit) - WebSocket SSE
-- [Shadcn UI](https://ui.shadcn.com/) - Component library
+
+**Frontend:**
+- [React 19](https://react.dev/) - Library frontend
+- [Inertia.js](https://inertiajs.com/) - Modern monolith
+- [Shadcn UI](https://ui.shadcn.com/) - Composants UI
 - [TailwindCSS](https://tailwindcss.com/) - Utility CSS
 
-### Infrastructure
-- [Pino](https://getpino.io/) - Fast logger
-- [Sentry](https://docs.sentry.io/) - Error tracking
-- [Redis](https://redis.io/docs/) - Cache & sessions
-- [PostgreSQL](https://www.postgresql.org/docs/) - Database
+**Infrastructure:**
 - [Docker](https://docs.docker.com/) - Containerization
-
-### Testing & CI/CD
+- [Pino](https://getpino.io/) - Logger rapide
+- [Sentry](https://docs.sentry.io/) - Error tracking
 - [Japa](https://japa.dev/) - Test runner
-- [GitHub Actions](https://docs.github.com/actions) - CI/CD
 
 ---
 
-## 🎓 Parcours d'Apprentissage Recommandé
+## 📞 Support & Contributions
 
-### Niveau 1 : Découverte (30 min)
-1. Lire [README principal](../README.md)
-2. Suivre [GETTING_STARTED.md](./GETTING_STARTED.md)
-3. Lancer l'application
-4. Créer un lobby de test
+### Besoin d'aide ?
+- 🐛 **Bugs** : [GitHub Issues](https://github.com/.../issues)
+- 💬 **Questions** : [GitHub Discussions](https://github.com/.../discussions)
+- 📚 **Documentation** : Vous êtes au bon endroit !
 
-### Niveau 2 : Développement (2h)
-1. Lire [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md)
-2. Étudier l'[architecture](./architecture/overview.md)
-3. Suivre [Creating a Game](./guides/creating-a-game.md)
-4. Implémenter votre premier jeu !
-
-### Niveau 3 : Maîtrise (1 semaine)
-1. Comprendre l'[Event-Driven Architecture](./architecture/event-driven-architecture.md)
-2. Maîtriser le [Error Handling System](./architecture/error-handling-system.md)
-3. Écrire des tests complets
-4. Contribuer au projet
-
----
-
-## 🔄 Mise à Jour de la Documentation
-
-Cette documentation est **vivante** et évolue avec le projet.
-
-### Dernière mise à jour
-**3 novembre 2025** - Version 1.0.0 Production Ready
-
-### Contributions
+### Contribuer
 La documentation accueille vos contributions :
-1. Améliorations de clarté
-2. Ajout d'exemples
-3. Corrections d'erreurs
-4. Traductions
+- ✏️ Améliorations de clarté
+- 📝 Ajout d'exemples concrets
+- 🐛 Corrections d'erreurs
+- 🌍 Traductions
 
-Créez une Pull Request avec le tag `documentation`.
-
----
-
-## 📞 Support
-
-- **Issues** : [GitHub Issues](https://github.com/.../issues)
-- **Discussions** : [GitHub Discussions](https://github.com/.../discussions)
-- **Documentation** : Vous êtes ici ! 📚
+**Process:** Créez une Pull Request avec le tag `documentation`
 
 ---
 
@@ -170,9 +203,11 @@ Créez une Pull Request avec le tag `documentation`.
 ✅ **Accessible** - Du débutant à l'expert  
 ✅ **Complète** - Tous les aspects couverts  
 ✅ **À jour** - Synchronisé avec le code  
-✅ **Pratique** - Exemples concrets  
+✅ **Pratique** - Exemples concrets et tutoriels  
 ✅ **Partageable** - Production-ready  
+
+**Dernière mise à jour : 13 novembre 2025**
 
 ---
 
-**🚀 Prêt à commencer ? Consultez l'[INDEX](./INDEX.md) !**
+**🚀 Bon développement avec Infinity !**
