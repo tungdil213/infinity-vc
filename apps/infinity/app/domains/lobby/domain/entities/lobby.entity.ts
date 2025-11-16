@@ -75,12 +75,20 @@ export class Lobby extends BaseEntity {
 
   public changeStatus(newStatus: LobbyStatus): Result<void> {
     if (!LobbyStatusTransitions.canTransition(this.props.status, newStatus)) {
-      return Result.fail(
-        `Cannot transition from ${this.props.status} to ${newStatus}`
-      )
+      return Result.fail(`Cannot transition from ${this.props.status} to ${newStatus}`)
     }
 
     this.props.status = newStatus
+    this.touch()
+    return Result.ok()
+  }
+
+  public changeOwner(newOwnerId: string): Result<void> {
+    if (!newOwnerId) {
+      return Result.fail('New owner ID is required')
+    }
+
+    this.props.ownerId = newOwnerId
     this.touch()
     return Result.ok()
   }
@@ -91,7 +99,7 @@ export class Lobby extends BaseEntity {
     }
 
     this.props.currentPlayers++
-    
+
     if (this.isFull) {
       this.props.status = LobbyStatus.FULL
     } else if (this.canStart && this.props.status === LobbyStatus.WAITING) {

@@ -81,4 +81,16 @@ export class Player extends BaseEntity {
     this.touch()
     return Result.ok()
   }
+
+  public makeOwner(): Result<void> {
+    this.props.isOwner = true
+    this.touch()
+    return Result.ok()
+  }
+
+  public removeOwnership(): Result<void> {
+    this.props.isOwner = false
+    this.touch()
+    return Result.ok()
+  }
 }

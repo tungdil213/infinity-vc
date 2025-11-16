@@ -106,7 +106,7 @@ export class LobbyRepositoryLucid implements LobbyRepository {
         model.uuid = lobby.id
       }
 
-      model.ownerId = owner.id  // Use integer ID
+      model.ownerId = owner.id // Use integer ID
       model.name = lobby.settings.name
       model.maxPlayers = lobby.settings.maxPlayers
       model.minPlayers = lobby.settings.minPlayers
@@ -145,7 +145,7 @@ export class LobbyRepositoryLucid implements LobbyRepository {
           // Don't set id (autoincrement)
         }
 
-        playerModel.userId = playerUser.id  // Integer ID
+        playerModel.userId = playerUser.id // Integer ID
         playerModel.username = player.username
         playerModel.lobbyId = model.id
         playerModel.isReady = player.isReady
@@ -238,7 +238,7 @@ export class LobbyRepositoryLucid implements LobbyRepository {
         invitationCode: model.invitationCode || undefined,
         gameId: model.gameId || undefined,
       },
-      model.uuid  // Use UUID as domain id
+      model.uuid // Use UUID as domain id
     )
 
     if (lobbyResult.isFailure) {
@@ -251,17 +251,17 @@ export class LobbyRepositoryLucid implements LobbyRepository {
       // Get user UUID
       const playerUser = await UserModel.find(playerModel.userId)
       if (!playerUser) {
-        continue  // Skip if user not found
+        continue // Skip if user not found
       }
 
       const playerResult = Player.create(
         {
-          userId: playerUser.userUuid,  // Use UUID for domain
+          userId: playerUser.userUuid, // Use UUID for domain
           username: playerModel.username,
-          lobbyId: model.uuid,  // Use UUID for domain
+          lobbyId: model.uuid, // Use UUID for domain
           isOwner: playerModel.isOwner,
         },
-        playerModel.id.toString()  // Convert to string for domain
+        playerModel.id.toString() // Convert to string for domain
       )
 
       if (playerResult.isSuccess) {

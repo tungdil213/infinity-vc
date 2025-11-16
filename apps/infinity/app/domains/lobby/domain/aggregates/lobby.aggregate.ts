@@ -6,6 +6,8 @@ import { LobbyStatus } from '../value_objects/lobby_status.vo.js'
 import { LobbyCreatedEvent } from '../events/lobby_created.event.js'
 import { PlayerJoinedEvent } from '../events/player_joined.event.js'
 import { PlayerLeftEvent } from '../events/player_left.event.js'
+import { LobbyClosedEvent } from '../events/lobby_closed.event.js'
+import { OwnerChangedEvent } from '../events/owner_changed.event.js'
 import { GameStartedEvent } from '../events/game_started.event.js'
 
 /**
@@ -37,7 +39,7 @@ export class LobbyAggregate extends BaseAggregateRoot {
 
   public static create(lobby: Lobby, players: Player[] = []): LobbyAggregate {
     const aggregate = new LobbyAggregate(lobby, players)
-    
+
     // Create event with full lobby data for frontend
     aggregate.addDomainEvent(
       new LobbyCreatedEvent({
@@ -58,7 +60,7 @@ export class LobbyAggregate extends BaseAggregateRoot {
         })),
       })
     )
-    
+
     return aggregate
   }
 
@@ -77,7 +79,7 @@ export class LobbyAggregate extends BaseAggregateRoot {
     }
 
     this.players.set(player.userId, player)
-    
+
     // Create event with full data for frontend
     const allPlayers = Array.from(this.players.values())
     this.addDomainEvent(
@@ -122,11 +124,66 @@ export class LobbyAggregate extends BaseAggregateRoot {
 
     // Store player data before deletion
     const leftPlayer = player
-    
+    const wasOwner = leftPlayer.isOwner
+
     this.players.delete(userId)
-    
-    // Create event with full data for frontend
+
     const remainingPlayers = Array.from(this.players.values())
+
+    // CAS 1: Dernier joueur part → Fermer le lobby (SEULEMENT lobby.closed)
+    if (remainingPlayers.length === 0) {
+      this.addDomainEvent(
+        new LobbyClosedEvent({
+          lobbyUuid: this.lobby.id,
+          reason: 'empty',
+          finalPlayerCount: 0,
+        })
+      )
+      // NE PAS émettre lobby.player.left car le lobby n'existe plus
+      return Result.ok()
+    }
+
+    // CAS 2: Owner part (mais il reste des joueurs) → Transférer ownership
+    if (wasOwner) {
+      // Le joueur le plus ancien devient owner (premier dans la Map)
+      const newOwner = remainingPlayers[0]
+      newOwner.makeOwner()
+      this.lobby.changeOwner(newOwner.userId)
+
+      this.addDomainEvent(
+        new OwnerChangedEvent({
+          lobbyUuid: this.lobby.id,
+          previousOwner: {
+            uuid: leftPlayer.userId,
+            nickName: leftPlayer.username,
+            isReady: leftPlayer.isReady,
+            isOwner: true,
+          },
+          newOwner: {
+            uuid: newOwner.userId,
+            nickName: newOwner.username,
+            isReady: newOwner.isReady,
+            isOwner: true,
+          },
+          playerCount: remainingPlayers.length,
+          lobby: {
+            uuid: this.lobby.id,
+            name: this.lobby.settings.name,
+            status: this.lobby.status,
+            currentPlayers: remainingPlayers.length,
+            maxPlayers: this.lobby.settings.maxPlayers,
+            players: remainingPlayers.map((p) => ({
+              uuid: p.userId,
+              nickName: p.username,
+              isReady: p.isReady,
+              isOwner: p.isOwner,
+            })),
+          },
+        })
+      )
+    }
+
+    // CAS 3: Joueur normal part (il reste des joueurs) → Événement standard
     this.addDomainEvent(
       new PlayerLeftEvent({
         lobbyUuid: this.lobby.id,

@@ -38,6 +38,16 @@ export class LobbyEventRegistry extends BaseDomainEventRegistry {
         TransmitBridgeService, // Diffuse aux clients
       ]),
 
+      // Événement: Lobby fermé (dernier joueur part)
+      this.event('closed', [
+        TransmitBridgeService, // Diffuse aux clients pour retirer de la liste
+      ]),
+
+      // Événement: Propriétaire du lobby change
+      this.event('owner.changed', [
+        TransmitBridgeService, // Diffuse aux clients pour mettre à jour l'owner
+      ]),
+
       // Événement: Statut du lobby change
       this.event('status.changed', [
         TransmitBridgeService, // Diffuse aux clients

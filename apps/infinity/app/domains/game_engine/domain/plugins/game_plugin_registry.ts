@@ -29,7 +29,7 @@ export class GamePluginRegistry {
 
   public getPlugin(name: string): Result<GamePlugin> {
     const plugin = this.plugins.get(name)
-    
+
     if (!plugin) {
       return Result.fail(`Plugin ${name} not found`)
     }

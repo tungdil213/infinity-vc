@@ -9,7 +9,7 @@ export class GetUserHandler implements QueryHandler<GetUserQuery, User> {
 
   async handle(query: GetUserQuery): Promise<Result<User>> {
     const userResult = await this.userRepository.findById(query.userId)
-    
+
     if (userResult.isFailure || !userResult.value) {
       return Result.fail('User not found')
     }

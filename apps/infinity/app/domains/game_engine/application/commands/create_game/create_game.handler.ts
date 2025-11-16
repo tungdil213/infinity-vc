@@ -24,8 +24,13 @@ export class CreateGameHandler implements CommandHandler<CreateGameCommand, Game
     const plugin = pluginResult.value
 
     // 2. Validate player count
-    if (command.playerIds.length < plugin.minPlayers || command.playerIds.length > plugin.maxPlayers) {
-      return Result.fail(`Player count must be between ${plugin.minPlayers} and ${plugin.maxPlayers}`)
+    if (
+      command.playerIds.length < plugin.minPlayers ||
+      command.playerIds.length > plugin.maxPlayers
+    ) {
+      return Result.fail(
+        `Player count must be between ${plugin.minPlayers} and ${plugin.maxPlayers}`
+      )
     }
 
     // 3. Initialize game state

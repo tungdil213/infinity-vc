@@ -39,10 +39,7 @@ export class AuthenticateUserHandler implements CommandHandler<AuthenticateUserC
     }
 
     const user = userResult.value
-    logger.debug(
-      { email: command.email, userId: user.id, isActive: user.isActive },
-      'User found'
-    )
+    logger.debug({ email: command.email, userId: user.id, isActive: user.isActive }, 'User found')
 
     // 3. Authenticate
     const authResult = await user.authenticate(command.password)

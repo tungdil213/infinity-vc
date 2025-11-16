@@ -12,7 +12,7 @@ import { KickPlayerHandler } from '../../application/commands/kick_player/kick_p
 import { KickPlayerCommand } from '../../application/commands/kick_player/kick_player.command.js'
 import { ListLobbiesHandler } from '../../application/queries/list_lobbies/list_lobbies.handler.js'
 import { ListLobbiesQuery } from '../../application/queries/list_lobbies/list_lobbies.query.js'
-import { LobbyRepositoryLucid } from '../../infrastructure/persistence/lobby_repository.lucid.js'
+import { LobbyRepositoryInMemory } from '../../infrastructure/persistence/lobby_repository.in_memory.js'
 import { EventBusService } from '#shared_kernel/infrastructure/event_bus.service'
 import { createContextLogger } from '#infrastructure/logging/logger'
 import { LobbySettings } from '../../domain/value_objects/lobby_settings.vo.js'
@@ -20,13 +20,14 @@ import { LobbySettings } from '../../domain/value_objects/lobby_settings.vo.js'
 /**
  * Lobby Domain - Lobbies Controller
  * Handles all lobby operations using DDD handlers
+ * Uses IN-MEMORY repository - lobbies are ephemeral until game starts
  */
 @inject()
 export default class LobbiesController {
   private logger = createContextLogger('Lobby.LobbiesController')
 
   constructor(
-    private lobbyRepository: LobbyRepositoryLucid,
+    private lobbyRepository: LobbyRepositoryInMemory,
     private eventBus: EventBusService
   ) {}
 
@@ -306,7 +307,7 @@ export default class LobbiesController {
         return response.redirect().back()
       }
 
-      session.flash('success', 'Joined lobby successfully!')
+      session.flash('success', 'Joined lobby successfully! lobbies_controller.ts:310')
       this.logger.info({ lobbyId, userId: user.userUuid }, 'User joined lobby')
 
       return response.redirect(`/lobbies/${lobbyId}`)
@@ -318,9 +319,9 @@ export default class LobbiesController {
   }
 
   /**
-   * Leave lobby using DDD Command
+   * Leave lobby using DDD Command (API endpoint - returns JSON)
    */
-  async leave({ params, auth, response, session }: HttpContext) {
+  async leave({ params, auth, response }: HttpContext) {
     const user = auth.user!
     const lobbyId = params.uuid
 
@@ -333,18 +334,24 @@ export default class LobbiesController {
 
       if (result.isFailure) {
         this.logger.error({ error: result.error, lobbyId }, 'Failed to leave lobby')
-        session.flash('error', result.error)
-        return response.redirect().back()
+        return response.status(400).json({
+          success: false,
+          error: result.error,
+        })
       }
 
-      session.flash('success', 'Left lobby successfully!')
       this.logger.info({ lobbyId, userId: user.userUuid }, 'User left lobby')
 
-      return response.redirect('/lobbies')
+      return response.json({
+        success: true,
+        message: 'Successfully left lobby',
+      })
     } catch (error) {
       this.logger.error({ error, lobbyId }, 'Unexpected error leaving lobby')
-      session.flash('error', 'Failed to leave lobby')
-      return response.redirect().back()
+      return response.status(500).json({
+        success: false,
+        error: 'Failed to leave lobby',
+      })
     }
   }
 
@@ -505,7 +512,7 @@ export default class LobbiesController {
         return response.redirect().back()
       }
 
-      session.flash('success', 'Joined lobby successfully!')
+      session.flash('success', 'Joined lobby successfully! lobbies_controller.ts:515')
       this.logger.info(
         { lobbyId: lobby.id, userId: user.userUuid, invitationCode },
         'User joined via invitation'

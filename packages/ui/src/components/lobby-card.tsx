@@ -50,12 +50,22 @@ export interface LobbyCardProps {
   className?: string
 }
 
-const statusConfig = {
+const statusConfig: Record<string, { color: string; label: string }> = {
   WAITING: { color: 'bg-blue-100 text-blue-800', label: 'En attente' },
+  waiting: { color: 'bg-blue-100 text-blue-800', label: 'En attente' },
   READY: { color: 'bg-green-100 text-green-800', label: 'Prêt' },
+  ready: { color: 'bg-green-100 text-green-800', label: 'Prêt' },
   FULL: { color: 'bg-yellow-100 text-yellow-800', label: 'Complet' },
+  full: { color: 'bg-yellow-100 text-yellow-800', label: 'Complet' },
   IN_GAME: { color: 'bg-purple-100 text-purple-800', label: 'En jeu' },
+  in_game: { color: 'bg-purple-100 text-purple-800', label: 'En jeu' },
+  STARTING: { color: 'bg-orange-100 text-orange-800', label: 'Démarrage' },
+  starting: { color: 'bg-orange-100 text-orange-800', label: 'Démarrage' },
   PRIVATE: { color: 'bg-gray-100 text-gray-800', label: 'Privé' },
+}
+
+const getStatusConfig = (status: string) => {
+  return statusConfig[status] || { color: 'bg-gray-100 text-gray-800', label: status }
 }
 
 export function LobbyCard({
@@ -88,8 +98,8 @@ export function LobbyCard({
                   {lobby.isPrivate && <Lock className="h-3 w-3 text-gray-500" />}
                 </div>
                 <div className="flex items-center gap-2 mt-1">
-                  <Badge className={cn('text-xs', statusConfig[lobby.status].color)}>
-                    {statusConfig[lobby.status].label}
+                  <Badge className={cn('text-xs', getStatusConfig(lobby.status).color)}>
+                    {getStatusConfig(lobby.status).label}
                   </Badge>
                   <span className="text-xs text-gray-500 flex items-center gap-1">
                     <Users className="h-3 w-3" />
@@ -129,8 +139,8 @@ export function LobbyCard({
                 {lobby.isPrivate && <Lock className="h-4 w-4 text-gray-500" />}
               </CardTitle>
               <div className="flex items-center gap-3 mt-2">
-                <Badge className={cn('text-sm', statusConfig[lobby.status].color)}>
-                  {statusConfig[lobby.status].label}
+                <Badge className={cn('text-sm', getStatusConfig(lobby.status).color)}>
+                  {getStatusConfig(lobby.status).label}
                 </Badge>
                 <span className="text-sm text-gray-600 flex items-center gap-1">
                   <Users className="h-4 w-4" />
@@ -196,8 +206,8 @@ export function LobbyCard({
               {lobby.isPrivate && <Lock className="h-4 w-4 text-gray-500" />}
             </CardTitle>
             <div className="flex items-center gap-3 mt-2">
-              <Badge className={cn(statusConfig[lobby.status].color)}>
-                {statusConfig[lobby.status].label}
+              <Badge className={cn(getStatusConfig(lobby.status).color)}>
+                {getStatusConfig(lobby.status).label}
               </Badge>
               <span className="text-sm text-gray-600 flex items-center gap-1">
                 <Users className="h-4 w-4" />
@@ -252,7 +262,7 @@ export function LobbyCard({
                   <Avatar key={player.uuid} className="h-6 w-6 border-2 border-white">
                     <AvatarImage src={player.avatar} />
                     <AvatarFallback className="text-xs">
-                      {player.nickName.charAt(0).toUpperCase()}
+                      {player.nickName?.charAt(0).toUpperCase() || '?'}
                     </AvatarFallback>
                   </Avatar>
                 ))}

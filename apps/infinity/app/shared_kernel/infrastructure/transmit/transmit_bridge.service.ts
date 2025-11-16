@@ -113,14 +113,17 @@ export class TransmitBridgeService {
 
   /**
    * Vérifie si l'événement lobby doit être diffusé globalement
+   * Ces événements affectent la liste des lobbies visible par tous les utilisateurs
    */
   private isGlobalLobbyEvent(eventName: string): boolean {
     return [
-      'lobby.created',
-      'lobby.deleted',
-      'lobby.player.joined',
-      'lobby.player.left',
-      'lobby.status.changed',
+      'lobby.created',        // Nouveau lobby → Ajouter à la liste
+      'lobby.deleted',        // Lobby supprimé → Retirer de la liste
+      'lobby.closed',         // Lobby fermé (vide) → Retirer de la liste
+      'lobby.player.joined',  // Joueur rejoint → Mettre à jour compteur
+      'lobby.player.left',    // Joueur part → Mettre à jour compteur
+      'lobby.owner.changed',  // Nouveau propriétaire → Mettre à jour owner
+      'lobby.status.changed', // Statut changé → Mettre à jour statut
     ].includes(eventName)
   }
 

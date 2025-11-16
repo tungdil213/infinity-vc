@@ -7,10 +7,10 @@ export default class extends BaseSchema {
     this.schema.createTable(this.tableName, (table) => {
       // Primary key - Integer (internal)
       table.increments('id').primary()
-      
+
       // Public UUID (for API/frontend)
       table.uuid('uuid').notNullable().unique()
-      
+
       // Lobby info
       table.integer('owner_id').unsigned().notNullable()
       table.string('name').notNullable()
@@ -19,18 +19,18 @@ export default class extends BaseSchema {
       table.boolean('is_private').defaultTo(false)
       table.string('game_type').notNullable()
       table.string('status').notNullable().defaultTo('waiting')
-      
+
       // Optional fields
       table.string('invitation_code', 20).nullable()
       table.string('game_id', 36).nullable()
-      
+
       // Timestamps
       table.timestamp('created_at', { useTz: true })
       table.timestamp('updated_at', { useTz: true })
 
       // Foreign keys
       table.foreign('owner_id').references('id').inTable('users').onDelete('CASCADE')
-      
+
       // Indexes
       table.index(['uuid'])
       table.index(['status'])

@@ -7,14 +7,14 @@ export default class extends BaseSchema {
     this.schema.createTable(this.tableName, (table) => {
       // Primary key - Integer (internal)
       table.increments('id').primary()
-      
+
       // Player info
       table.integer('user_id').unsigned().notNullable()
       table.string('username').notNullable()
       table.integer('lobby_id').unsigned().notNullable()
       table.boolean('is_ready').defaultTo(false)
       table.boolean('is_owner').defaultTo(false)
-      
+
       // Timestamps
       table.timestamp('created_at', { useTz: true })
       table.timestamp('updated_at', { useTz: true })

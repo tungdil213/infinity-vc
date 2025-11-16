@@ -103,7 +103,7 @@ export default function Lobbies({ lobbies: initialLobbies, currentLobby, props }
         {},
         {
           onSuccess: () => {
-            toast.success('Vous avez rejoint le lobby avec succès!')
+            toast.success('Vous avez rejoint le lobby avec succès! index.tsx')
             router.visit(`/lobbies/${lobbyUuid}`)
           },
           onError: (errors) => {

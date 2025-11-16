@@ -4,13 +4,13 @@ import { Result } from '#shared_kernel/domain/result'
 
 /**
  * In-Memory Lobby Repository
- * 
+ *
  * Used for lobbies in WAITING state (not yet started).
  * Lobbies are stored in RAM and lost on server restart.
- * 
+ *
  * When a lobby starts (.start()), it should be migrated to LobbyRepositoryLucid
  * for persistence.
- * 
+ *
  * Benefits:
  * - Ultra-fast (RAM)
  * - No DB pollution

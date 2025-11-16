@@ -96,41 +96,42 @@ export class LobbyService {
       this.globalUnsubscribe = await this.transmitContext.subscribeToLobbies((event) => {
         this.logger.debug({ eventType: event.type }, 'Event received')
 
+        // Normaliser le format de l'événement pour les handlers
+        const transmitEvent = {
+          type: event.type,
+          data: event,
+          timestamp: event.timestamp || new Date().toISOString(),
+          channel: 'lobbies',
+        }
+
         // Router l'événement vers le bon handler
         switch (event.type) {
           case 'lobby.created':
-            this.handleLobbyCreated({
-              type: event.type,
-              data: event,
-              timestamp: event.timestamp,
-              channel: 'lobbies',
-            })
+            this.handleLobbyCreated(transmitEvent)
             break
 
           case 'lobby.deleted':
-            this.handleLobbyDeleted({
-              type: event.type,
-              data: event,
-              timestamp: event.timestamp,
-              channel: 'lobbies',
-            })
+            this.handleLobbyDeleted(transmitEvent)
             break
 
           case 'lobby.player.joined':
-            this.handleLobbyPlayerJoined(event)
+            this.handleLobbyPlayerJoined(transmitEvent)
             break
 
           case 'lobby.player.left':
-            this.handleLobbyPlayerLeft(event)
+            this.handleLobbyPlayerLeft(transmitEvent)
+            break
+
+          case 'lobby.closed':
+            this.handleLobbyClosed(transmitEvent)
+            break
+
+          case 'lobby.owner.changed':
+            this.handleOwnerChanged(transmitEvent)
             break
 
           case 'lobby.status.changed':
-            this.handleLobbyStatusChanged({
-              type: event.type,
-              data: event,
-              timestamp: event.timestamp,
-              channel: 'lobbies',
-            })
+            this.handleLobbyStatusChanged(transmitEvent)
             break
 
           default:
@@ -319,6 +320,60 @@ export class LobbyService {
         return updatedCurrentLobby
       })
     }
+  }
+
+  private handleLobbyClosed(event: any) {
+    const eventData = event.data
+    const lobbyUuid = eventData.lobbyUuid
+    const reason = eventData.reason
+
+    this.logger.info({ lobbyUuid, reason }, 'Lobby closed event received')
+
+    if (!lobbyUuid) return
+
+    // Supprimer le lobby de la liste globale
+    this.lobbyListState.lobbies = this.lobbyListState.lobbies.filter(
+      (lobby: any) => lobby.uuid !== lobbyUuid
+    )
+    this.lobbyListState.total = this.lobbyListState.lobbies.length
+    this.notifyLobbyListSubscribers()
+
+    // Notifier les abonnés de détails que le lobby n'existe plus
+    this.updateLobbyDetail(lobbyUuid, () => null)
+
+    // Nettoyer l'état interne (le prochain subscribe repartira d'un état propre)
+    this.lobbyDetailStates.delete(lobbyUuid)
+  }
+
+  private handleOwnerChanged(event: any) {
+    const eventData = event.data
+    const lobbyUuid = eventData.lobbyUuid
+    const newOwner = eventData.newOwner
+    const updatedLobby = eventData.lobby
+
+    this.logger.info({ lobbyUuid, newOwner }, 'Owner changed event received')
+
+    if (!lobbyUuid) return
+
+    // Mettre à jour les détails du lobby avec le nouvel owner
+    this.updateLobbyDetail(lobbyUuid, (currentLobby) => {
+      if (updatedLobby && updatedLobby.players) {
+        return { ...currentLobby, ...updatedLobby }
+      }
+
+      // Fallback: mettre à jour juste l'owner dans les players
+      if (currentLobby && currentLobby.players) {
+        return {
+          ...currentLobby,
+          players: currentLobby.players.map((p) => ({
+            ...p,
+            isOwner: p.uuid === newOwner.uuid,
+          })),
+        }
+      }
+
+      return currentLobby
+    })
   }
 
   private handleLobbyStatusChanged(event: any) {
@@ -699,6 +754,14 @@ export class LobbyService {
           case 'lobby.player.left':
             console.log('Traitement événement lobby.player.left pour détails')
             this.handleLobbyPlayerLeft(transmitEvent)
+            break
+          case 'lobby.owner.changed':
+            console.log('Traitement événement lobby.owner.changed pour détails')
+            this.handleOwnerChanged(transmitEvent)
+            break
+          case 'lobby.closed':
+            console.log('Traitement événement lobby.closed pour détails')
+            this.handleLobbyClosed(transmitEvent)
             break
           case 'lobby.status.changed':
             console.log('Traitement événement lobby.status.changed pour détails')

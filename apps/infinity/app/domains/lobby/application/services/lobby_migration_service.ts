@@ -5,9 +5,9 @@ import { inject } from '@adonisjs/core'
 
 /**
  * Lobby Migration Service
- * 
+ *
  * Handles migration of lobbies from InMemory to Lucid (DB) when a game starts.
- * 
+ *
  * Flow:
  * 1. Lobby created → InMemory (WAITING)
  * 2. Lobby.start() called → Migrate to DB (IN_GAME)
@@ -28,7 +28,7 @@ export class LobbyMigrationService {
     try {
       // 1. Export from InMemory (removes it)
       const exportResult = await this.inMemoryRepository.exportForPersistence?.(lobbyId)
-      
+
       if (!exportResult || exportResult.isFailure || !exportResult.value) {
         return Result.fail('Lobby not found in memory or already migrated')
       }
@@ -37,7 +37,7 @@ export class LobbyMigrationService {
 
       // 2. Save to DB
       const saveResult = await this.lucidRepository.save(aggregate)
-      
+
       if (saveResult.isFailure) {
         // Rollback: put back in memory
         await this.inMemoryRepository.save(aggregate)
@@ -55,16 +55,18 @@ export class LobbyMigrationService {
    */
   async findLobby(identifier: string): Promise<Result<LobbyAggregate | null>> {
     // Try InMemory first (most recent lobbies)
-    const memoryResult = await this.inMemoryRepository.findByUuid?.(identifier) 
-      ?? await this.inMemoryRepository.findById(identifier)
+    const memoryResult =
+      (await this.inMemoryRepository.findByUuid?.(identifier)) ??
+      (await this.inMemoryRepository.findById(identifier))
 
     if (memoryResult.isSuccess && memoryResult.value) {
       return memoryResult
     }
 
     // Try DB (started games)
-    return this.lucidRepository.findByUuid?.(identifier)
-      ?? this.lucidRepository.findById(identifier)
+    return (
+      this.lucidRepository.findByUuid?.(identifier) ?? this.lucidRepository.findById(identifier)
+    )
   }
 
   /**

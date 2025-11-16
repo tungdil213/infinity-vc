@@ -54,10 +54,7 @@ export class GameEndedHandler {
        * // EventBus publiera automatiquement lobby.status.changed
        */
 
-      logger.info(
-        { gameId: gameId || gameUuid },
-        'Game ended event handled (basic implementation)'
-      )
+      logger.info({ gameId: gameId || gameUuid }, 'Game ended event handled (basic implementation)')
     } catch (error) {
       logger.error(
         { error, eventId: event.eventId, eventName: event.eventName },

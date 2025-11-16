@@ -32,9 +32,7 @@ export class EventRegistryLoader {
    * Charge et enregistre tous les registries de domaines
    * @param registries - Liste des registries à charger
    */
-  async loadRegistries(
-    registries: (new () => DomainEventRegistryInterface)[]
-  ): Promise<void> {
+  async loadRegistries(registries: (new () => DomainEventRegistryInterface)[]): Promise<void> {
     logger.info({ count: registries.length }, 'Loading domain event registries')
 
     for (const RegistryClass of registries) {
@@ -53,9 +51,7 @@ export class EventRegistryLoader {
   /**
    * Charge un registry spécifique
    */
-  private async loadRegistry(
-    RegistryClass: new () => DomainEventRegistryInterface
-  ): Promise<void> {
+  private async loadRegistry(RegistryClass: new () => DomainEventRegistryInterface): Promise<void> {
     const registry = new RegistryClass()
     const domainName = registry.domainName
 
@@ -95,10 +91,7 @@ export class EventRegistryLoader {
         // Enregistrer le handler sur l'EventBus
         this.eventBus.subscribe(eventName, handler.handle.bind(handler))
 
-        logger.debug(
-          { eventName, handlerName: HandlerClass.name },
-          'Event handler registered'
-        )
+        logger.debug({ eventName, handlerName: HandlerClass.name }, 'Event handler registered')
       } catch (error) {
         logger.error(
           { error, eventName, handlerName: HandlerClass.name },

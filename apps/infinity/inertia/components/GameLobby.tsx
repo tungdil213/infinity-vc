@@ -104,7 +104,7 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
         {},
         {
           onSuccess: () => {
-            toast.success('Vous avez rejoint le lobby avec succès!')
+            toast.success('Vous avez rejoint le lobby avec succès! GameLobby.tsx')
             // Reload the page to update the lobby state
             router.reload()
           },

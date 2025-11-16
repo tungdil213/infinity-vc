@@ -3,6 +3,9 @@ import type { EventBus } from '#shared_kernel/application/event_bus.interface'
 import { Result } from '#shared_kernel/domain/result'
 import type { LeaveLobbyCommand } from './leave_lobby.command.js'
 import type { LobbyRepository } from '../../../domain/repositories/lobby_repository.interface.js'
+import { createContextLogger } from '#infrastructure/logging/logger'
+
+const logger = createContextLogger('LeaveLobbyHandler')
 
 export class LeaveLobbyHandler implements CommandHandler<LeaveLobbyCommand, void> {
   constructor(
@@ -18,6 +21,7 @@ export class LeaveLobbyHandler implements CommandHandler<LeaveLobbyCommand, void
     }
 
     const aggregate = lobbyResult.value
+    const playerCountBefore = aggregate.playersList.length
 
     // 2. Remove player from aggregate
     const removeResult = aggregate.removePlayer(command.userId)
@@ -25,13 +29,42 @@ export class LeaveLobbyHandler implements CommandHandler<LeaveLobbyCommand, void
       return Result.fail(removeResult.error)
     }
 
-    // 3. Save aggregate
-    const saveResult = await this.lobbyRepository.save(aggregate)
-    if (saveResult.isFailure) {
-      return Result.fail(saveResult.error)
+    const playerCountAfter = aggregate.playersList.length
+    logger.info(
+      {
+        lobbyId: command.lobbyId,
+        userId: command.userId,
+        playerCountBefore,
+        playerCountAfter,
+        emittedEvents: aggregate.domainEvents.map((e) => e.eventName),
+      },
+      'Player removed from lobby'
+    )
+
+    // 3. Check if lobby is empty (LobbyClosedEvent was emitted)
+    const lobbyClosedEvent = aggregate.domainEvents.find((e) => e.eventName === 'lobby.closed')
+
+    if (lobbyClosedEvent) {
+      logger.info({ lobbyId: command.lobbyId }, 'Lobby is empty - deleting from repository')
+      // Lobby is empty → Delete from repository
+      await this.lobbyRepository.delete(command.lobbyId)
+    } else {
+      logger.debug({ lobbyId: command.lobbyId, playerCount: playerCountAfter }, 'Lobby still has players - saving updated state')
+      // Lobby still has players → Save updated state
+      const saveResult = await this.lobbyRepository.save(aggregate)
+      if (saveResult.isFailure) {
+        return Result.fail(saveResult.error)
+      }
     }
 
-    // 4. Publish events
+    // 4. Publish events (lobby.closed, lobby.owner.changed, or lobby.player.left)
+    logger.info(
+      {
+        lobbyId: command.lobbyId,
+        events: aggregate.domainEvents.map((e) => e.eventName),
+      },
+      'Publishing domain events'
+    )
     await this.eventBus.publishAll(aggregate.domainEvents)
     aggregate.clearEvents()
 

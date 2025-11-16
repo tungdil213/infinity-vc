@@ -90,7 +90,7 @@ export function LobbyList({
       console.log('LobbyList - rejeté par hasSlots:', lobby.hasAvailableSlots)
       return false
     }
-    if (filters.isPrivate !== undefined && lobby.isPrivate !== filters.isPrivate) {
+    if (filters.isPrivate !== undefined && !!lobby.isPrivate !== filters.isPrivate) {
       console.log('LobbyList - rejeté par isPrivate:', lobby.isPrivate, 'vs', filters.isPrivate)
       return false
     }

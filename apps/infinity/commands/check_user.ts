@@ -10,7 +10,7 @@ export default class CheckUser extends BaseCommand {
     startApp: true,
   }
 
-  @args.string({ description: 'Email de l\'utilisateur' })
+  @args.string({ description: "Email de l'utilisateur" })
   declare email: string
 
   async run() {
