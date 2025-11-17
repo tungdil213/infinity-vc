@@ -91,7 +91,7 @@ export default defineConfig({
   */
   metaFiles: [
     {
-      pattern: 'resources/views/**/*.edge',
+      pattern: 'inertia/resources/views/**/*.edge',
       reloadServer: false,
     },
     {
