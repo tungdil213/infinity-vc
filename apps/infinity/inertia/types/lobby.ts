@@ -68,6 +68,8 @@ export interface LobbyTransmitEvent {
     | 'lobby.player.left'
     | 'lobby.status.changed'
     | 'lobby.game.started'
+    | 'lobby.closed'
+    | 'lobby.owner.changed'
   data: {
     lobby?: Lobby
     lobbyUuid?: string

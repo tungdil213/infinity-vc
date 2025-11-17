@@ -93,8 +93,10 @@ export function TransmitProvider({ children }: TransmitProviderProps) {
     return () => {
       mounted = false
       console.log('📡 TransmitProvider: Cleaning up')
+      // Ne pas déconnecter complètement Transmit ici :
+      // la connexion SSE reste globale pour toute l'application,
+      // on se contente de détacher le listener local.
       transmitManager.off('connection_state_changed', handleStateChange)
-      transmitManager.disconnect().catch(console.error)
     }
   }, [])
 

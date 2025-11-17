@@ -85,9 +85,18 @@ export class LobbyService {
 
   private async setupTransmitListeners() {
     try {
-      // Éviter les souscriptions multiples
+      // Si une subscription existe déjà, la nettoyer proprement avant de se réabonner.
+      // Ceci couvre les cas où Transmit a fait un unsubscribeAll() (reconnect, cleanup, etc.)
       if (this.globalUnsubscribe) {
-        return
+        this.logger.debug(
+          'Existing global lobbies subscription found, unsubscribing before re-subscribe'
+        )
+        try {
+          this.globalUnsubscribe()
+        } catch (error) {
+          this.logger.error({ error }, 'Error while unsubscribing previous lobbies subscription')
+        }
+        this.globalUnsubscribe = null
       }
 
       this.logger.debug('Configuring Transmit listeners')
@@ -804,5 +813,15 @@ export class LobbyService {
     }
     this.lobbyListCallbacks.clear()
     this.lobbyDetailCallbacks.clear()
+
+    // Réinitialiser complètement l'état interne pour permettre une nouvelle initialisation propre
+    this.lobbyListState = {
+      lobbies: [],
+      loading: false,
+      error: null,
+      total: 0,
+    }
+    this.lobbyDetailStates.clear()
+    this.isInitialized = false
   }
 }
