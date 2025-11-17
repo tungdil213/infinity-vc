@@ -25,7 +25,7 @@ interface HeaderWrapperProps {
 }
 
 export function HeaderWrapper({ user, currentLobby, className }: HeaderWrapperProps) {
-  const { isConnected } = useTransmit()
+  const { isConnected, unsubscribeAll } = useTransmit()
   const lobbyService = getLobbyService()
 
   const handleCreateLobby = () => {
@@ -57,7 +57,8 @@ export function HeaderWrapper({ user, currentLobby, className }: HeaderWrapperPr
     router.visit('/auth/register')
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await unsubscribeAll()
     router.post('/auth/logout')
   }
 
