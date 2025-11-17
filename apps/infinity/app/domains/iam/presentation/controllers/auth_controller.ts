@@ -7,7 +7,7 @@ import { AuthenticateUserCommand } from '../../application/commands/authenticate
 import { LucidUserRepository } from '../../infrastructure/persistence/user_repository.lucid.js'
 import { EventBusService } from '#shared_kernel/infrastructure/event_bus.service'
 import { createContextLogger } from '#infrastructure/logging/logger'
-import User from '#models/user'
+import UserModel from '#domains/iam/infrastructure/persistence/user.model'
 
 /**
  * IAM Domain - Authentication Controller
@@ -145,7 +145,7 @@ export default class AuthController {
 
       // Récupérer le modèle Lucid pour auth.login()
       // Le handler retourne une entité DDD, mais auth.login() attend un modèle Lucid
-      const userModel = await User.findBy('user_uuid', userEntity.id)
+      const userModel = await UserModel.findBy('userUuid', userEntity.id)
 
       if (!userModel) {
         this.logger.error({ userId: userEntity.id }, 'User model not found after authentication')

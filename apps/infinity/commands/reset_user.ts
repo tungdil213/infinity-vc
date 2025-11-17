@@ -1,6 +1,6 @@
 import { BaseCommand, args } from '@adonisjs/core/ace'
 import type { CommandOptions } from '@adonisjs/core/types/ace'
-import User from '#models/user'
+import UserModel from '#domains/iam/infrastructure/persistence/user.model'
 import hash from '@adonisjs/core/services/hash'
 import { randomUUID } from 'node:crypto'
 
@@ -22,14 +22,14 @@ export default class ResetUser extends BaseCommand {
     this.logger.info(`🔄 Reset de l'utilisateur: ${email}`)
 
     // 1. Supprimer l'ancien utilisateur
-    const existingUser = await User.findBy('email', email)
+    const existingUser = await UserModel.findBy('email', email)
     if (existingUser) {
       await existingUser.delete()
       this.logger.warning(`🗑️  Ancien utilisateur supprimé`)
     }
 
     // 2. Créer le nouvel utilisateur
-    const user = await User.create({
+    const user = await UserModel.create({
       userUuid: randomUUID(),
       email: email,
       fullName: 'Eric Monnier',

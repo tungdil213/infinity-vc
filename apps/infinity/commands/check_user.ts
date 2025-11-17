@@ -1,6 +1,6 @@
 import { BaseCommand, args } from '@adonisjs/core/ace'
 import type { CommandOptions } from '@adonisjs/core/types/ace'
-import User from '#models/user'
+import UserModel from '#domains/iam/infrastructure/persistence/user.model'
 
 export default class CheckUser extends BaseCommand {
   static commandName = 'check:user'
@@ -18,7 +18,7 @@ export default class CheckUser extends BaseCommand {
 
     this.logger.info(`🔍 Recherche de l'utilisateur: ${email}`)
 
-    const user = await User.findBy('email', email)
+    const user = await UserModel.findBy('email', email)
 
     if (!user) {
       this.logger.error(`❌ Utilisateur NON trouvé: ${email}`)

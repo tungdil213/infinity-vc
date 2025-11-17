@@ -1,5 +1,5 @@
 import { BaseSeeder } from '@adonisjs/lucid/seeders'
-import User from '#models/user'
+import UserModel from '#domains/iam/infrastructure/persistence/user.model'
 import { randomUUID } from 'node:crypto'
 
 /**
@@ -11,7 +11,7 @@ export default class DevUserSeeder extends BaseSeeder {
     console.log('🔹 Création des utilisateurs de développement...')
 
     // Utilisateur de test 1
-    await User.updateOrCreate(
+    await UserModel.updateOrCreate(
       { email: 'eric@structo.ch' },
       {
         userUuid: randomUUID(),
@@ -23,7 +23,7 @@ export default class DevUserSeeder extends BaseSeeder {
     )
 
     // Utilisateur de test 2
-    await User.updateOrCreate(
+    await UserModel.updateOrCreate(
       { email: 'eric2@structo.ch' },
       {
         userUuid: randomUUID(),
@@ -35,7 +35,7 @@ export default class DevUserSeeder extends BaseSeeder {
     )
 
     // Utilisateur admin
-    await User.updateOrCreate(
+    await UserModel.updateOrCreate(
       { email: 'admin@infinity.dev' },
       {
         userUuid: randomUUID(),
