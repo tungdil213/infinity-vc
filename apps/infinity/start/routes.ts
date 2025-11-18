@@ -136,17 +136,21 @@ router
   )
   .as('lobbies.join.invite')
 
-// API routes (DDD Controllers)
+// API Auth routes (no auth middleware, returns authenticated flag)
 router
   .group(() => {
-    // Auth API
     router
       .get('/auth/me', '#domains/iam/presentation/controllers/auth_controller.me')
       .as('api.auth.me')
     router
       .get('/auth/check', '#domains/iam/presentation/controllers/auth_controller.check')
       .as('api.auth.check')
+  })
+  .prefix('/api/v1')
 
+// API routes (DDD Controllers) - protected by auth middleware
+router
+  .group(() => {
     // Lobbies API
     router
       .get('/lobbies', '#domains/lobby/presentation/controllers/lobbies_controller.index')

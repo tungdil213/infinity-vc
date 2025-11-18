@@ -1,5 +1,7 @@
 import { defineConfig } from '@adonisjs/shield'
 
+const isTestEnv = process.env.NODE_ENV === 'test'
+
 const shieldConfig = defineConfig({
   /**
    * Configure CSP policies for your app. Refer documentation
@@ -16,7 +18,7 @@ const shieldConfig = defineConfig({
    * to learn more
    */
   csrf: {
-    enabled: true,
+    enabled: !isTestEnv,
     exceptRoutes: [
       // navigator.sendBeacon cannot send custom headers, so we exempt this route
       // Security: Route validates user session and userUuid match

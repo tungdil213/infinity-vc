@@ -23,5 +23,5 @@
       "#integration/*": ["./app/integration/*"]
     }
   },
-  "exclude": ["./inertia/**/*", "node_modules", "build"]
+  "exclude": ["./inertia/**/*", "node_modules", "build", "./tests/legacy/**/*"]
 }

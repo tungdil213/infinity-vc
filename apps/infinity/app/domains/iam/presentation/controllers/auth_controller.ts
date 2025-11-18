@@ -157,4 +157,43 @@ export default class AuthController {
     session.flash('success', 'Logged out successfully')
     return response.redirect('/')
   }
+
+  async me({ auth, response }: HttpContext) {
+    try {
+      const authenticated = await auth.check()
+
+      if (!authenticated || !auth.user) {
+        return response.status(200).json({
+          authenticated: false,
+          user: null,
+        })
+      }
+
+      const user = auth.user as any
+
+      return response.status(200).json({
+        authenticated: true,
+        user: {
+          id: user.userUuid ?? user.id,
+          email: user.email,
+          username: user.username,
+          fullName: user.fullName,
+        },
+      })
+    } catch {
+      return response.status(200).json({
+        authenticated: false,
+        user: null,
+      })
+    }
+  }
+
+  async check({ auth, response }: HttpContext) {
+    try {
+      const authenticated = await auth.check()
+      return response.status(200).json({ authenticated })
+    } catch {
+      return response.status(200).json({ authenticated: false })
+    }
+  }
 }
