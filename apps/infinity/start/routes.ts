@@ -190,12 +190,18 @@ router
       .as('api.games.show')
 
     // SSE (Server-Sent Events) routes
-    router.get('/sse/connect', '#controllers/sse_controller.connect').as('api.sse.connect')
-    router.post('/sse/subscribe', '#controllers/sse_controller.subscribe').as('api.sse.subscribe')
     router
-      .post('/sse/unsubscribe', '#controllers/sse_controller.unsubscribe')
+      .get('/sse/connect', '#domains/lobby/infrastructure/sse/sse_http_controller.connect')
+      .as('api.sse.connect')
+    router
+      .post('/sse/subscribe', '#domains/lobby/infrastructure/sse/sse_http_controller.subscribe')
+      .as('api.sse.subscribe')
+    router
+      .post('/sse/unsubscribe', '#domains/lobby/infrastructure/sse/sse_http_controller.unsubscribe')
       .as('api.sse.unsubscribe')
-    router.get('/sse/stats', '#controllers/sse_controller.stats').as('api.sse.stats')
+    router
+      .get('/sse/stats', '#domains/lobby/infrastructure/sse/sse_http_controller.stats')
+      .as('api.sse.stats')
   })
   .prefix('/api/v1')
   .use(middleware.auth())

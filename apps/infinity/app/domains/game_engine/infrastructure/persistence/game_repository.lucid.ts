@@ -7,9 +7,15 @@ import { GameStatus } from '../../domain/value_objects/game_status.vo.js'
 import GameModel from './game.model.js'
 
 export class GameRepositoryLucid implements GameRepository {
-  exists(id: string): Promise<boolean> {
-    throw new Error('Method not implemented.')
+  async exists(id: string): Promise<boolean> {
+    try {
+      const model = await GameModel.find(id)
+      return !!model
+    } catch (error) {
+      return false
+    }
   }
+
   async findById(id: string): Promise<Result<Game | null>> {
     try {
       const model = await GameModel.find(id)

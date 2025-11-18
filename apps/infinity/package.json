@@ -21,12 +21,10 @@
     "typecheck": "tsc --noEmit"
   },
   "imports": {
-    "#controllers/*": "./app/controllers/*.js",
     "#contracts/*": "./app/contracts/*.js",
     "#exceptions/*": "./app/exceptions/*.js",
     "#factories/*": "./database/factories/*.js",
     "#mails/*": "./app/mails/*.js",
-    "#services/*": "./app/services/*.js",
     "#listeners/*": "./app/listeners/*.js",
     "#middleware/*": "./app/middleware/*.js",
     "#validators/*": "./app/validators/*.js",

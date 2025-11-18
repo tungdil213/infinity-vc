@@ -3,8 +3,7 @@
  */
 
 import { test } from '@japa/runner'
-import HealthController from '#controllers/health_controller'
-import Database from '@adonisjs/lucid/services/db'
+import HealthController from '#infrastructure/health/health_controller'
 
 test.group('HealthController', (group) => {
   let controller: HealthController
