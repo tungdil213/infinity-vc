@@ -8,6 +8,7 @@ import { LucidUserRepository } from '../../infrastructure/persistence/user_repos
 import { EventBusService } from '#shared_kernel/infrastructure/event_bus.service'
 import { createContextLogger } from '#infrastructure/logging/logger'
 import UserModel from '#domains/iam/infrastructure/persistence/user.model'
+import { registerUserValidator, loginUserValidator } from '../validators/auth_validator.js'
 
 /**
  * IAM Domain - Authentication Controller
@@ -52,37 +53,11 @@ export default class AuthController {
    * Register new user using DDD Handler
    */
   async register({ request, response, auth, session }: HttpContext) {
-    const {
-      fullName,
-      email,
-      password,
-      password_confirmation: passwordConfirmation,
-    } = request.only(['fullName', 'email', 'password', 'password_confirmation'])
+    const { fullName, email, password } = await request.validateUsing(registerUserValidator)
 
     const redirect = request.input('redirect', '/lobbies')
 
     try {
-      // Basic validation
-      if (!fullName || fullName.trim().length === 0) {
-        session.flash('error', 'Full name is required')
-        return response.redirect().back()
-      }
-
-      if (!email || email.trim().length === 0) {
-        session.flash('error', 'Email is required')
-        return response.redirect().back()
-      }
-
-      if (!password || password.length < 8) {
-        session.flash('error', 'Password must be at least 8 characters long')
-        return response.redirect().back()
-      }
-
-      if (password !== passwordConfirmation) {
-        session.flash('error', 'Passwords do not match')
-        return response.redirect().back()
-      }
-
       // Generate username from email (before @)
       const username = email.split('@')[0].toLowerCase()
 
@@ -125,7 +100,7 @@ export default class AuthController {
    * Login user using DDD Handler
    */
   async login({ request, response, auth, session }: HttpContext) {
-    const { email, password } = request.only(['email', 'password'])
+    const { email, password } = await request.validateUsing(loginUserValidator)
     const redirect = request.input('redirect', '/lobbies')
 
     try {

@@ -16,6 +16,7 @@ import { LobbyRepositoryInMemory } from '../../infrastructure/persistence/lobby_
 import { EventBusService } from '#shared_kernel/infrastructure/event_bus.service'
 import { createContextLogger } from '#infrastructure/logging/logger'
 import { LobbySettings } from '../../domain/value_objects/lobby_settings.vo.js'
+import { createLobbyValidator, kickPlayerValidator } from '../validators/lobby_validator.js'
 
 /**
  * Lobby Domain - Lobbies Controller
@@ -242,13 +243,13 @@ export default class LobbiesController {
     const user = auth.user!
 
     try {
-      const { name, maxPlayers, minPlayers, isPrivate, gameType } = request.only([
-        'name',
-        'maxPlayers',
-        'minPlayers',
-        'isPrivate',
-        'gameType',
-      ])
+      const { name, maxPlayers, minPlayers, isPrivate, gameType } =
+        await request.validateUsing(createLobbyValidator)
+
+      const resolvedMaxPlayers = maxPlayers ?? 4
+      const resolvedMinPlayers = minPlayers ?? 2
+      const resolvedIsPrivate = isPrivate ?? false
+      const resolvedGameType = gameType ?? 'tic-tac-toe'
 
       // Use DDD Command Handler
       const handler = new CreateLobbyHandler(this.lobbyRepository, this.eventBus)
@@ -256,10 +257,10 @@ export default class LobbiesController {
         user.userUuid,
         user.fullName || user.username,
         name,
-        Number.parseInt(maxPlayers) || 4,
-        Number.parseInt(minPlayers) || 2,
-        isPrivate === 'true' || isPrivate === true,
-        gameType || 'tic-tac-toe'
+        resolvedMaxPlayers,
+        resolvedMinPlayers,
+        resolvedIsPrivate,
+        resolvedGameType
       )
 
       const result = await handler.handle(command)
@@ -395,12 +396,7 @@ export default class LobbiesController {
   async kickPlayer({ params, auth, request, response, session }: HttpContext) {
     const user = auth.user!
     const lobbyId = params.uuid
-    const targetUserId = request.input('userId')
-
-    if (!targetUserId) {
-      session.flash('error', 'Target user ID is required')
-      return response.redirect().back()
-    }
+    const { userId: targetUserId } = await request.validateUsing(kickPlayerValidator)
 
     try {
       const handler = new KickPlayerHandler(this.lobbyRepository, this.eventBus)

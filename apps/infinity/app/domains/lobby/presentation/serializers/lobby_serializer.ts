@@ -1,4 +1,5 @@
-import Lobby from '../../domain/entities/lobby.js'
+import type { LobbyAggregate } from '../../domain/aggregates/lobby.aggregate.js'
+import type { Player } from '../../domain/entities/player.entity.js'
 import { LobbyDto, PlayerDto, CreateLobbyResponseDto } from '../dtos/lobby_dto.js'
 
 /**
@@ -9,63 +10,53 @@ export class LobbySerializer {
   /**
    * Convertit une entité Lobby en LobbyDto
    */
-  static toDto(lobby: Lobby): LobbyDto {
+  static toDto(aggregate: LobbyAggregate): LobbyDto {
+    const lobby = aggregate.lobbyEntity
+    const players = aggregate.playersList
+
+    const hasAvailableSlots = players.length < lobby.settings.maxPlayers
+    const canStart = players.length >= lobby.settings.minPlayers
+
     return {
-      uuid: lobby.uuid,
-      name: lobby.name,
-      createdBy: lobby.createdBy,
-      maxPlayers: lobby.maxPlayers,
-      isPrivate: lobby.isPrivate,
+      uuid: lobby.id,
+      name: lobby.settings.name,
+      createdBy: lobby.ownerId,
+      maxPlayers: lobby.settings.maxPlayers,
+      isPrivate: lobby.settings.isPrivate,
       status: lobby.status,
-      currentPlayers: lobby.playerCount,
-      hasAvailableSlots: lobby.hasAvailableSlots,
-      canStart: lobby.canStart,
+      currentPlayers: players.length,
+      hasAvailableSlots,
+      canStart,
       createdAt: lobby.createdAt,
-      players: lobby.players.map((player) => ({
-        uuid: player.uuid,
-        nickName: player.nickName,
-      })),
-      availableActions: lobby.availableActions,
+      players: players.map((player) => this.playerToDto(player)),
+      availableActions: [],
     }
   }
 
   /**
    * Convertit une entité Lobby en CreateLobbyResponseDto
    */
-  static toCreateResponseDto(lobby: Lobby): CreateLobbyResponseDto {
+  static toCreateResponseDto(aggregate: LobbyAggregate): CreateLobbyResponseDto {
+    const dto = this.toDto(aggregate)
     return {
-      uuid: lobby.uuid,
-      name: lobby.name,
-      status: lobby.status,
-      currentPlayers: lobby.playerCount,
-      maxPlayers: lobby.maxPlayers,
-      isPrivate: lobby.isPrivate,
-      hasAvailableSlots: lobby.hasAvailableSlots,
-      canStart: lobby.canStart,
-      createdBy: lobby.createdBy,
-      players: lobby.players.map((player) => ({
-        uuid: player.uuid,
-        nickName: player.nickName,
-      })),
-      availableActions: lobby.availableActions,
-      createdAt: lobby.createdAt,
+      ...dto,
     }
   }
 
   /**
    * Convertit un tableau d'entités Lobby en tableau de LobbyDto
    */
-  static toDtoArray(lobbies: Lobby[]): LobbyDto[] {
+  static toDtoArray(lobbies: LobbyAggregate[]): LobbyDto[] {
     return lobbies.map((lobby) => this.toDto(lobby))
   }
 
   /**
    * Convertit un PlayerInterface en PlayerDto
    */
-  static playerToDto(player: any): PlayerDto {
+  static playerToDto(player: Player): PlayerDto {
     return {
-      uuid: player.uuid,
-      nickName: player.nickName,
+      uuid: player.userId,
+      nickName: player.username,
     }
   }
 }
