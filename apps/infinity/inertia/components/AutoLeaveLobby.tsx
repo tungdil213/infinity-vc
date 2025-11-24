@@ -47,14 +47,18 @@ export function AutoLeaveLobby({ currentLobby, enabled = true }: AutoLeaveLobbyP
     if (!currentLobby) return
 
     try {
-      await router.post(`/lobbies/${currentLobby.uuid}/leave`, {}, {
-        onSuccess: () => {
-          toast.success(`Vous avez automatiquement quitté le lobby "${currentLobby.name}"`)
-        },
-        onError: () => {
-          toast.error('Erreur lors de la sortie automatique du lobby')
+      await router.post(
+        `/lobbies/${currentLobby.uuid}/leave`,
+        {},
+        {
+          onSuccess: () => {
+            toast.success(`Vous avez automatiquement quitté le lobby "${currentLobby.name}"`)
+          },
+          onError: () => {
+            toast.error('Erreur lors de la sortie automatique du lobby')
+          },
         }
-      })
+      )
     } catch (error) {
       console.error('Auto-leave lobby error:', error)
     }
@@ -65,7 +69,10 @@ export function AutoLeaveLobby({ currentLobby, enabled = true }: AutoLeaveLobbyP
 }
 
 // Hook version for more flexibility
-export function useAutoLeaveLobby(currentLobby: { uuid: string; name: string } | null, enabled = true) {
+export function useAutoLeaveLobby(
+  currentLobby: { uuid: string; name: string } | null,
+  enabled = true
+) {
   useEffect(() => {
     if (!currentLobby || !enabled) {
       return
@@ -88,14 +95,18 @@ export function useAutoLeaveLobby(currentLobby: { uuid: string; name: string } |
     if (!currentLobby) return
 
     try {
-      await router.post(`/lobbies/${currentLobby.uuid}/leave`, {}, {
-        onSuccess: () => {
-          toast.success(`Vous avez automatiquement quitté le lobby "${currentLobby.name}"`)
-        },
-        onError: () => {
-          toast.error('Erreur lors de la sortie automatique du lobby')
+      await router.post(
+        `/lobbies/${currentLobby.uuid}/leave`,
+        {},
+        {
+          onSuccess: () => {
+            toast.success(`Vous avez automatiquement quitté le lobby "${currentLobby.name}"`)
+          },
+          onError: () => {
+            toast.error('Erreur lors de la sortie automatique du lobby')
+          },
         }
-      })
+      )
     } catch (error) {
       console.error('Auto-leave lobby error:', error)
     }

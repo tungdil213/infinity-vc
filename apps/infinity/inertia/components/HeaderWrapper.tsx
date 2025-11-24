@@ -2,7 +2,7 @@ import React from 'react'
 import { router } from '@inertiajs/react'
 import { Header } from '../../../../packages/ui/src/components/header'
 import { useTransmit } from '../contexts/TransmitContext'
-import { useLobbyService } from '../hooks/use_lobby_service'
+import { getLobbyService } from '../services/lobby_service_singleton'
 
 interface User {
   uuid: string
@@ -25,8 +25,8 @@ interface HeaderWrapperProps {
 }
 
 export function HeaderWrapper({ user, currentLobby, className }: HeaderWrapperProps) {
-  const { isConnected } = useTransmit()
-  const { service: lobbyService } = useLobbyService()
+  const { isConnected, unsubscribeAll } = useTransmit()
+  const lobbyService = getLobbyService()
 
   const handleCreateLobby = () => {
     router.visit('/lobbies/create')
@@ -34,7 +34,7 @@ export function HeaderWrapper({ user, currentLobby, className }: HeaderWrapperPr
 
   const handleJoinByCode = async (code: string) => {
     if (!user || !lobbyService) throw new Error('User or lobby service not available')
-    
+
     await lobbyService.joinLobby(code, user.uuid)
     router.visit(`/lobbies/${code}`)
   }
@@ -57,7 +57,8 @@ export function HeaderWrapper({ user, currentLobby, className }: HeaderWrapperPr
     router.visit('/auth/register')
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await unsubscribeAll()
     router.post('/auth/logout')
   }
 

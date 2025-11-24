@@ -5,6 +5,10 @@
 	"license": "MIT",
 	"sideEffects": false,
 	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
 		"./primitives/*": {
 			"types": "./dist/components/primitives/*.d.ts",
 			"import": "./dist/components/primitives/*.js"

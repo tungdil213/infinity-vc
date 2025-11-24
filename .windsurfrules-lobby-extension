@@ -1,0 +1,306 @@
+# Extension des règles Windsurf pour le système de lobbies temps réel
+# À intégrer dans le fichier .windsurfrules principal
+
+# Règles spécifiques pour l'architecture lobby temps réel avec Transmit
+lobby_realtime_rules:
+  - name: "Hybrid Inertia+Transmit Architecture"
+    description: |
+      Architecture hybride obligatoire pour les lobbies temps réel :
+      - Inertia.js fournit les données initiales (affichage immédiat)
+      - Transmit gère les mises à jour temps réel uniquement
+      - Fallback gracieux si Transmit échoue
+      - Jamais de duplication entre les deux sources
+    checks:
+      - Vérifier que les pages lobby reçoivent des props Inertia (initialLobby, currentUser)
+      - S'assurer que les hooks utilisent les données Inertia comme fallback
+      - Contrôler que Transmit ne remplace jamais complètement Inertia
+      - Vérifier la logique : `const effectiveLobby = realtimeLobby || initialLobby`
+    autofix: |
+      Ajouter les props Inertia manquantes dans les contrôleurs
+      Implémenter le pattern de fallback dans les hooks
+      Corriger les accès directs à Transmit sans fallback Inertia
+
+  - name: "Mandatory Timeout Protection"
+    description: |
+      Protection timeout obligatoire de 10 secondes sur tous les composants avec état de chargement.
+      Prévient les loading infinis et améliore l'UX.
+    checks:
+      - Vérifier que tout useState avec loading a un timeout de 10s
+      - S'assurer que le timeout déclenche un fallback approprié
+      - Contrôler la présence de cleanup dans les useEffect
+      - Vérifier les logs de timeout avec préfixes appropriés
+    autofix: |
+      Ajouter automatiquement le pattern de timeout :
+      ```typescript
+      const [timeoutReached, setTimeoutReached] = useState(false)
+      useEffect(() => {
+        if (loading && !timeoutReached) {
+          const timeout = setTimeout(() => {
+            console.warn('🎯 Component: Timeout reached')
+            setTimeoutReached(true)
+            // Fallback action
+          }, 10000)
+          return () => clearTimeout(timeout)
+        }
+      }, [loading, timeoutReached])
+      ```
+
+  - name: "Standardized Logging Prefixes"
+    description: |
+      Logging standardisé avec préfixes obligatoires pour traçabilité :
+      - 🎮 Pages lobby
+      - 🔧 Composants lobby  
+      - 📡 Services Transmit
+      - 🎯 Hooks lobby
+    checks:
+      - Vérifier que tous les console.log utilisent les bons préfixes
+      - S'assurer que les logs incluent le contexte (lobbyUuid, userUuid)
+      - Contrôler la cohérence des messages de log
+    autofix: |
+      Remplacer console.log() par console.log('🎮 ComponentName: Message', context)
+      Ajouter le contexte manquant dans les logs existants
+
+  - name: "Board Game Arena State Management"
+    description: |
+      États de lobby standardisés Board Game Arena avec transitions validées :
+      WAITING → READY → FULL → STARTING → IN_GAME → PAUSED/FINISHED
+      Utilisation obligatoire des constantes LOBBY_STATUS et validateLobbyTransition()
+    checks:
+      - Vérifier que tous les états utilisent les constantes LOBBY_STATUS
+      - S'assurer que les transitions sont validées avec validateLobbyTransition()
+      - Contrôler que les composants gèrent tous les états possibles
+      - Vérifier les couleurs et textes appropriés pour chaque état
+    autofix: |
+      Remplacer les strings hardcodées par LOBBY_STATUS.WAITING
+      Ajouter la validation de transition avant changement d'état
+      Implémenter les handlers manquants pour les nouveaux états
+
+  - name: "Granular Permissions System"
+    description: |
+      Système de permissions granulaire obligatoire avec getLobbyPermissions().
+      Toutes les actions utilisateur doivent vérifier les permissions avant exécution.
+    checks:
+      - Vérifier que toutes les actions utilisent getLobbyPermissions()
+      - S'assurer que les boutons sont conditionnels selon les permissions
+      - Contrôler que les permissions sont recalculées lors des changements
+      - Vérifier les messages d'erreur appropriés si permission refusée
+    autofix: |
+      Ajouter const permissions = getLobbyPermissions(lobby, currentUser)
+      Rendre les actions conditionnelles : {permissions?.canJoin && <Button />}
+      Ajouter les vérifications de permissions dans les handlers
+
+  - name: "Immutable State Updates"
+    description: |
+      Immutabilité stricte obligatoire pour tous les états lobby.
+      Interdiction absolue des mutations directes (push, splice, etc.)
+    checks:
+      - Interdire lobby.players.push(), state.loading = false, etc.
+      - Vérifier l'utilisation de spread operator et méthodes immutables
+      - S'assurer que les services notifient avec des copies immutables
+      - Contrôler que React détecte bien les changements d'état
+    autofix: |
+      Remplacer lobby.players.push(player) par 
+      setLobby(prev => ({...prev, players: [...prev.players, player]}))
+      Ajouter des copies immutables dans les services
+
+  - name: "Throttled Real-time Updates"
+    description: |
+      Throttling obligatoire des mises à jour temps réel (max 10/seconde).
+      Prévient les re-renders excessifs et améliore les performances.
+    checks:
+      - Vérifier la présence de throttling dans tous les hooks temps réel
+      - S'assurer d'un délai minimum de 100ms entre les mises à jour
+      - Contrôler l'utilisation de useRef pour le timestamp
+      - Vérifier les logs de throttling
+    autofix: |
+      Ajouter le pattern de throttling :
+      ```typescript
+      const lastUpdateRef = useRef(Date.now())
+      const handleUpdate = (newState) => {
+        const now = Date.now()
+        if (now - lastUpdateRef.current > 100) {
+          setState(newState)
+          lastUpdateRef.current = now
+        }
+      }
+      ```
+
+  - name: "Context-based Service Access"
+    description: |
+      Accès aux services uniquement via contexte React.
+      Interdiction des imports directs de services dans les composants.
+    checks:
+      - Interdire import { lobbyService } from '../services/lobby_service'
+      - Vérifier l'utilisation de const { lobbyService } = useLobbyContext()
+      - S'assurer que tous les services passent par le contexte
+      - Contrôler la gestion des services null/undefined
+    autofix: |
+      Remplacer les imports directs par l'utilisation du contexte
+      Ajouter les vérifications de nullité : if (!lobbyService) return
+
+  - name: "Transmit Event Handling"
+    description: |
+      Gestion standardisée des événements Transmit avec types stricts.
+      Événements obligatoires : lobby.created, lobby.updated, lobby.player.joined/left, etc.
+    checks:
+      - Vérifier que tous les événements utilisent LobbyTransmitEvent
+      - S'assurer de la gestion de tous les types d'événements
+      - Contrôler la structure des données d'événement
+      - Vérifier les logs d'événements avec contexte
+    autofix: |
+      Ajouter les handlers manquants pour les nouveaux types d'événements
+      Typer les événements avec LobbyTransmitEvent
+      Ajouter les logs standardisés pour chaque événement
+
+  - name: "Error Handling with Toast Integration"
+    description: |
+      Gestion d'erreurs avec BusinessException et toasts automatiques.
+      Toutes les actions lobby doivent gérer les erreurs avec feedback utilisateur.
+    checks:
+      - Vérifier que les actions utilisent try/catch avec toast
+      - S'assurer de l'utilisation de BusinessException côté backend
+      - Contrôler les messages d'erreur utilisateur appropriés
+      - Vérifier les logs d'erreur avec contexte complet
+    autofix: |
+      Ajouter le pattern de gestion d'erreur :
+      ```typescript
+      try {
+        await action()
+        toast.success('Action réussie')
+      } catch (error) {
+        console.error('🔧 Component: Action failed', error)
+        toast.error('Erreur lors de l\'action')
+      }
+      ```
+
+  - name: "Lobby Action Validation"
+    description: |
+      Validation obligatoire des actions lobby côté client et serveur.
+      Vérification des permissions, états et données avant exécution.
+    checks:
+      - Vérifier la validation des permissions avant chaque action
+      - S'assurer de la validation des états de lobby appropriés
+      - Contrôler la validation des données utilisateur (UUID, etc.)
+      - Vérifier les messages d'erreur explicites en cas d'échec
+    autofix: |
+      Ajouter les validations manquantes dans les handlers d'action
+      Implémenter les vérifications d'état de lobby
+      Ajouter les validations de données utilisateur
+
+# Patterns d'implémentation recommandés
+lobby_patterns:
+  page_structure: |
+    ```typescript
+    export default function LobbyPage({ initialLobby, currentUser }: Props) {
+      console.log('🎮 LobbyPage: Initializing', { lobbyUuid: initialLobby?.uuid })
+      
+      const { lobby, loading, error } = useLobbyDetails(initialLobby?.uuid || '')
+      const [timeoutReached, setTimeoutReached] = useState(false)
+      
+      // Timeout protection obligatoire
+      useEffect(() => {
+        if (loading && !timeoutReached) {
+          const timeout = setTimeout(() => {
+            console.warn('🎮 LobbyPage: Timeout reached')
+            setTimeoutReached(true)
+          }, 10000)
+          return () => clearTimeout(timeout)
+        }
+      }, [loading, timeoutReached])
+      
+      const effectiveLobby = lobby || initialLobby
+      const permissions = currentUser ? getLobbyPermissions(effectiveLobby, currentUser) : null
+      
+      return (
+        <div>
+          {/* Composants avec permissions */}
+        </div>
+      )
+    }
+    ```
+
+  hook_structure: |
+    ```typescript
+    export function useLobbyDetails(lobbyUuid: string) {
+      console.log('🎯 useLobbyDetails: Initializing', { lobbyUuid })
+      
+      const { lobbyService } = useLobbyContext()
+      const [state, setState] = useState<LobbyDetailState>({
+        lobby: null,
+        loading: true,
+        error: null
+      })
+      const [timeoutReached, setTimeoutReached] = useState(false)
+      const lastUpdateRef = useRef(Date.now())
+      
+      // Timeout + Throttling + Cleanup obligatoires
+      
+      return { ...state, timeoutReached }
+    }
+    ```
+
+  service_structure: |
+    ```typescript
+    export class LobbyService {
+      private subscribers = new Set<(state: LobbyState) => void>()
+      
+      private notifySubscribers(newState: LobbyState) {
+        console.log('📡 LobbyService: Notifying subscribers')
+        // Copie immutable obligatoire
+        const immutableState = { ...newState }
+        this.subscribers.forEach(callback => callback(immutableState))
+      }
+      
+      updateLobby(lobby: Lobby) {
+        console.log('📡 LobbyService: Updating lobby', { lobbyUuid: lobby.uuid })
+        // Mise à jour immutable
+        this.currentState = {
+          ...this.currentState,
+          lobby: { ...lobby }
+        }
+        this.notifySubscribers(this.currentState)
+      }
+    }
+    ```
+
+  action_handler_structure: |
+    ```typescript
+    const handleLobbyAction = async () => {
+      if (!permissions?.canAction) {
+        console.warn('🔧 Component: Cannot perform action - no permission')
+        toast.warning('Action non autorisée')
+        return
+      }
+      
+      console.log('🔧 Component: Performing action', { lobbyUuid, userUuid })
+      setLoading(true)
+      
+      try {
+        await lobbyService.performAction(lobbyUuid, userUuid)
+        console.log('🔧 Component: Action successful')
+        toast.success('Action réalisée avec succès')
+      } catch (error) {
+        console.error('🔧 Component: Action failed', error)
+        toast.error('Erreur lors de l\'action')
+      } finally {
+        setLoading(false)
+      }
+    }
+    ```
+
+# Checklist d'implémentation automatique
+lobby_implementation_checklist:
+  - "✅ Props Inertia (initialLobby, currentUser) dans toutes les pages lobby"
+  - "✅ Timeout de 10 secondes sur tous les états de chargement"
+  - "✅ Logging avec préfixes standardisés (🎮🔧📡🎯)"
+  - "✅ Fallback gracieux : effectiveLobby = realtimeLobby || initialLobby"
+  - "✅ Permissions calculées avec getLobbyPermissions()"
+  - "✅ Actions conditionnelles basées sur les permissions"
+  - "✅ États LOBBY_STATUS avec transitions validées"
+  - "✅ Immutabilité stricte dans toutes les mises à jour"
+  - "✅ Throttling des mises à jour temps réel (100ms min)"
+  - "✅ Accès aux services via contexte uniquement"
+  - "✅ Gestion d'erreurs avec toast feedback"
+  - "✅ Cleanup des souscriptions dans useEffect"
+  - "✅ Événements Transmit typés avec LobbyTransmitEvent"
+  - "✅ Validation des actions côté client et serveur"

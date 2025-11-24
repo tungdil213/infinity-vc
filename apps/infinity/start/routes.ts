@@ -12,101 +12,200 @@ import { middleware } from './kernel.js'
 import transmit from '@adonisjs/transmit/services/main'
 import './transmit.js'
 
-// Public routes
-router.get('/', '#controllers/simple_lobbies_controller.welcome').as('home')
+/**
+ * DDD Controllers - Using lazy loading
+ * Format: '#path/to/controller' loads the default export
+ */
+
+// Public routes (using new DDD controller)
+router.get('/', '#domains/lobby/presentation/controllers/lobbies_controller.welcome').as('home')
 
 // Development routes (only in dev mode)
-router.get('/dev/routes', '#controllers/dev_routes_controller.index').as('dev.routes')
+router.get('/dev/routes', '#infrastructure/dev/dev_routes_controller.index').as('dev.routes')
 
-// Authentication routes
+// Health check
+router.get('/health', '#infrastructure/health/health_controller.check').as('health')
+
+// Authentication routes (DDD Controllers)
 router
   .group(() => {
-    router.get('/login', '#controllers/enhanced_auth_controller.showLogin').as('auth.login.show')
-    router.post('/login', '#controllers/enhanced_auth_controller.login').as('auth.login')
     router
-      .get('/register', '#controllers/enhanced_auth_controller.showRegister')
+      .get('/login', '#domains/iam/presentation/controllers/auth_controller.showLogin')
+      .as('auth.login.show')
+    router
+      .post('/login', '#domains/iam/presentation/controllers/auth_controller.login')
+      .as('auth.login')
+    router
+      .get('/register', '#domains/iam/presentation/controllers/auth_controller.showRegister')
       .as('auth.register.show')
-    router.post('/register', '#controllers/enhanced_auth_controller.register').as('auth.register')
+    router
+      .post('/register', '#domains/iam/presentation/controllers/auth_controller.register')
+      .as('auth.register')
   })
   .prefix('/auth')
 
 // Authentication required routes
 router
   .group(() => {
-    // Auth actions
-    router.post('/auth/logout', '#controllers/enhanced_auth_controller.logout').as('auth.logout')
-
-    // Lobbies routes
-    router.get('/lobbies', '#controllers/enhanced_lobbies_controller.index').as('lobbies.index')
+    // Auth actions (DDD Controller)
     router
-      .get('/lobbies/create', '#controllers/enhanced_lobbies_controller.create')
+      .post('/auth/logout', '#domains/iam/presentation/controllers/auth_controller.logout')
+      .as('auth.logout')
+
+    // Lobbies routes (DDD Controller)
+    router
+      .get('/lobbies', '#domains/lobby/presentation/controllers/lobbies_controller.index')
+      .as('lobbies.index')
+    router
+      .get(
+        '/lobbies/create',
+        '#domains/lobby/presentation/controllers/lobbies_controller.showCreateForm'
+      )
       .as('lobbies.create')
-    router.post('/lobbies', '#controllers/enhanced_lobbies_controller.store').as('lobbies.store')
-    router.get('/lobbies/:uuid', '#controllers/enhanced_lobbies_controller.show').as('lobbies.show')
     router
-      .post('/lobbies/:uuid/join', '#controllers/enhanced_lobbies_controller.join')
+      .post('/lobbies', '#domains/lobby/presentation/controllers/lobbies_controller.store')
+      .as('lobbies.store')
+    router
+      .get('/lobbies/:uuid', '#domains/lobby/presentation/controllers/lobbies_controller.show')
+      .as('lobbies.show')
+      .where('uuid', /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
+    router
+      .post(
+        '/lobbies/:uuid/join',
+        '#domains/lobby/presentation/controllers/lobbies_controller.join'
+      )
       .as('lobbies.join')
+      .where('uuid', /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
     router
-      .post('/lobbies/:uuid/leave', '#controllers/enhanced_lobbies_controller.leave')
+      .post(
+        '/lobbies/:uuid/leave',
+        '#domains/lobby/presentation/controllers/lobbies_controller.leave'
+      )
       .as('lobbies.leave')
+      .where('uuid', /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
     router
-      .post('/lobbies/leave-on-close', '#controllers/lobbies_controller.leaveOnClose')
-      .as('lobbies.leave.close')
-    router
-      .post('/lobbies/:uuid/start', '#controllers/enhanced_lobbies_controller.start')
+      .post(
+        '/lobbies/:uuid/start',
+        '#domains/lobby/presentation/controllers/lobbies_controller.start'
+      )
       .as('lobbies.start')
-
-    // Advanced lobby management (owner only)
+      .where('uuid', /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
     router
-      .post('/lobbies/:uuid/kick', '#controllers/enhanced_lobbies_controller.kickPlayer')
+      .post(
+        '/lobbies/:uuid/kick',
+        '#domains/lobby/presentation/controllers/lobbies_controller.kickPlayer'
+      )
       .as('lobbies.kick')
-    router
-      .post('/lobbies/:uuid/transfer', '#controllers/enhanced_lobbies_controller.transferOwnership')
-      .as('lobbies.transfer')
+      .where('uuid', /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
 
-    // Games routes
-    router.get('/games/:uuid', '#controllers/games_controller.show').as('games.show')
-    router.post('/games/:uuid/leave', '#controllers/games_controller.leave').as('games.leave')
+    // Debug route
+    router
+      .get('/transmit-debug', async ({ inertia }) => {
+        return inertia.render('dev/transmit')
+      })
+      .as('transmit.debug')
+
+    // Games routes (DDD Controller)
+    router
+      .get('/games/:uuid', '#domains/game_engine/presentation/controllers/games_controller.show')
+      .as('games.show')
+    router
+      .post(
+        '/games/:uuid/leave',
+        '#domains/game_engine/presentation/controllers/games_controller.leave'
+      )
+      .as('games.leave')
+
+    // TODO: Routes à implémenter dans les domaines
+    // router.post('/lobbies/:uuid/transfer', '#domains/lobby/presentation/controllers/lobbies_controller.transferOwnership').as('lobbies.transfer')
+    // router.post('/lobbies/leave-on-close', '#domains/lobby/presentation/controllers/lobbies_controller.leaveOnClose').as('lobbies.leave.close')
   })
   .use(middleware.auth())
 
-// Public invitation routes (can be accessed without auth)
+// Public invitation routes (no auth required)
 router
-  .get('/lobbies/join/:invitationCode', '#controllers/enhanced_lobbies_controller.showJoinByInvite')
+  .get(
+    '/lobbies/join/:invitationCode',
+    '#domains/lobby/presentation/controllers/lobbies_controller.showJoinByInvite'
+  )
   .as('lobbies.join.invite.show')
 router
-  .post('/lobbies/join/:invitationCode', '#controllers/enhanced_lobbies_controller.joinByInvite')
+  .post(
+    '/lobbies/join/:invitationCode',
+    '#domains/lobby/presentation/controllers/lobbies_controller.joinByInvite'
+  )
   .as('lobbies.join.invite')
 
-// API routes
+// API Auth routes (no auth middleware, returns authenticated flag)
 router
   .group(() => {
-    // Auth API
-    router.get('/auth/me', '#controllers/enhanced_auth_controller.me').as('api.auth.me')
-    router.get('/auth/check', '#controllers/enhanced_auth_controller.check').as('api.auth.check')
+    router
+      .get('/auth/me', '#domains/iam/presentation/controllers/auth_controller.me')
+      .as('api.auth.me')
+    router
+      .get('/auth/check', '#domains/iam/presentation/controllers/auth_controller.check')
+      .as('api.auth.check')
+  })
+  .prefix('/api/v1')
 
+// API routes (DDD Controllers) - protected by auth middleware
+router
+  .group(() => {
     // Lobbies API
     router
-      .get('/lobbies', '#controllers/enhanced_lobbies_controller.apiIndex')
+      .get('/lobbies', '#domains/lobby/presentation/controllers/lobbies_controller.index')
       .as('api.lobbies.index')
     router
-      .get('/lobbies/:uuid', '#controllers/enhanced_lobbies_controller.apiShow')
+      .get('/lobbies/:uuid', '#domains/lobby/presentation/controllers/lobbies_controller.showApi')
       .as('api.lobbies.show')
+      .where('uuid', /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
     router
-      .post('/lobbies/:uuid/join', '#controllers/enhanced_lobbies_controller.join')
+      .post(
+        '/lobbies/:uuid/join',
+        '#domains/lobby/presentation/controllers/lobbies_controller.join'
+      )
       .as('api.lobbies.join')
+      .where('uuid', /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
     router
-      .post('/lobbies/:uuid/leave', '#controllers/enhanced_lobbies_controller.leave')
+      .post(
+        '/lobbies/:uuid/leave',
+        '#domains/lobby/presentation/controllers/lobbies_controller.leave'
+      )
       .as('api.lobbies.leave')
+      .where('uuid', /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
     router
-      .post('/lobbies/leave-on-close', '#controllers/enhanced_lobbies_controller.leaveOnClose')
-      .as('api.lobbies.leave.close')
+      .post(
+        '/lobbies/:uuid/kick',
+        '#domains/lobby/presentation/controllers/lobbies_controller.kickPlayer'
+      )
+      .as('api.lobbies.kick')
+      .where('uuid', /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
+    router
+      .post(
+        '/lobbies/:uuid/start',
+        '#domains/lobby/presentation/controllers/lobbies_controller.startGame'
+      )
+      .as('api.lobbies.start')
+      .where('uuid', /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
 
     // Games API
-    router.get('/games/:uuid', '#controllers/games_controller.apiShow').as('api.games.show')
     router
-      .post('/games/:uuid/action', '#controllers/games_controller.action')
-      .as('api.games.action')
+      .get('/games/:uuid', '#domains/game_engine/presentation/controllers/games_controller.show')
+      .as('api.games.show')
+
+    // SSE (Server-Sent Events) routes
+    router
+      .get('/sse/connect', '#domains/lobby/infrastructure/sse/sse_http_controller.connect')
+      .as('api.sse.connect')
+    router
+      .post('/sse/subscribe', '#domains/lobby/infrastructure/sse/sse_http_controller.subscribe')
+      .as('api.sse.subscribe')
+    router
+      .post('/sse/unsubscribe', '#domains/lobby/infrastructure/sse/sse_http_controller.unsubscribe')
+      .as('api.sse.unsubscribe')
+    router
+      .get('/sse/stats', '#domains/lobby/infrastructure/sse/sse_http_controller.stats')
+      .as('api.sse.stats')
   })
   .prefix('/api/v1')
   .use(middleware.auth())
@@ -117,27 +216,8 @@ transmit.registerRoutes((route) => {
   route.middleware(middleware.auth())
 })
 
-// Lobby synchronization routes
-router
-  .group(() => {
-    router
-      .post('/lobbies/:lobbyUuid/subscribe', '#controllers/lobby_sync_controller.subscribeLobby')
-      .as('api.lobbies.sync.subscribe')
-    router
-      .post(
-        '/lobbies/:lobbyUuid/unsubscribe',
-        '#controllers/lobby_sync_controller.unsubscribeLobby'
-      )
-      .as('api.lobbies.sync.unsubscribe')
-    router
-      .get('/lobbies/:lobbyUuid/state', '#controllers/lobby_sync_controller.getLobbyState')
-      .as('api.lobbies.sync.state')
-    router
-      .get('/lobbies/sync/stats', '#controllers/lobby_sync_controller.getSyncStats')
-      .as('api.lobbies.sync.stats')
-    router
-      .post('/lobbies/:lobbyUuid/test-event', '#controllers/lobby_sync_controller.sendTestEvent')
-      .as('api.lobbies.sync.test')
-  })
-  .prefix('/api/v1')
-  .use(middleware.auth())
+// TODO: Routes non-critiques à implémenter plus tard
+// - Lobby synchronization
+// - Transfer ownership
+// - Leave on close (beacon)
+// - Advanced game actions

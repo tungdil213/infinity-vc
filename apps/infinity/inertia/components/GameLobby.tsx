@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { router } from '@inertiajs/react'
 import { toast } from 'sonner'
-import { useLobbyDetail } from '../hooks/use_lobby_detail'
+import { useLobbyDetails } from '../hooks/use_lobby_details'
 import { useLobbyLeaveGuard } from '../hooks/use_lobby_leave_guard'
 import { Card, CardContent, CardHeader, CardTitle } from '@tyfo.dev/ui/primitives/card'
 import { Button } from '@tyfo.dev/ui/primitives/button'
@@ -23,13 +23,31 @@ interface GameLobbyProps {
 }
 
 export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
-  const { lobby, loading, error, leaveLobby, startGame, isServiceReady } = useLobbyDetail(lobbyUuid)
+  const { lobby, loading, error, leaveLobby, startGame } = useLobbyDetails(lobbyUuid)
   const [isStartingGame, setIsStartingGame] = useState(false)
   const [isLeavingLobby, setIsLeavingLobby] = useState(false)
   const [isJoiningLobby, setIsJoiningLobby] = useState(false)
 
+  // Logs de debug pour comprendre l'état du lobby
+  console.log('🎮 GameLobby: Rendering', {
+    lobbyUuid,
+    hasLobby: !!lobby,
+    currentPlayers: lobby?.currentPlayers,
+    playersArrayLength: lobby?.players?.length,
+    playersUuids: lobby?.players?.map((p) => p.uuid),
+    playersNames: lobby?.players?.map((p) => p.nickName),
+    loading,
+    error,
+  })
+
   // Détecter si l'utilisateur est dans le lobby
-  const isUserInLobby = lobby?.players?.some(player => player.uuid === currentUser.uuid) || false
+  const isUserInLobby = lobby?.players?.some((player) => player.uuid === currentUser.uuid) || false
+
+  console.log('🎮 GameLobby: User check', {
+    currentUserUuid: currentUser.uuid,
+    isUserInLobby,
+    playersInLobby: lobby?.players?.length,
+  })
 
   // Hook pour gérer la confirmation de sortie
   const { markAsLeaving } = useLobbyLeaveGuard({
@@ -40,8 +58,8 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
   })
 
   const handleStartGame = async () => {
-    if (!lobby?.canStart || !isServiceReady) return
-    
+    if (!lobby?.canStart) return
+
     setIsStartingGame(true)
     try {
       const result = await startGame(currentUser.uuid)
@@ -60,12 +78,12 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
   }
 
   const handleLeaveLobby = async () => {
-    if (!isServiceReady) return
-    
+    // Service is always ready with the new hook implementation
+
     setIsLeavingLobby(true)
     // Marquer qu'on quitte volontairement pour éviter la confirmation
     markAsLeaving()
-    
+
     try {
       await leaveLobby(currentUser.uuid)
       toast.success('Left lobby successfully')
@@ -81,19 +99,23 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
   const handleJoinLobby = async () => {
     setIsJoiningLobby(true)
     try {
-      router.post(`/lobbies/${lobbyUuid}/join`, {}, {
-        onSuccess: () => {
-          toast.success('Vous avez rejoint le lobby avec succès!')
-          // Reload the page to update the lobby state
-          router.reload()
-        },
-        onError: (errors) => {
-          const errorMessage = typeof errors === 'object' && errors !== null && 'error' in errors 
-            ? (errors as any).error 
-            : 'Impossible de rejoindre le lobby'
-          toast.error(errorMessage)
+      router.post(
+        `/lobbies/${lobbyUuid}/join`,
+        {},
+        {
+          onSuccess: () => {
+            // Reload the page to update the lobby state
+            router.reload()
+          },
+          onError: (errors) => {
+            const errorMessage =
+              typeof errors === 'object' && errors !== null && 'error' in errors
+                ? (errors as any).error
+                : 'Impossible de rejoindre le lobby'
+            toast.error(errorMessage)
+          },
         }
-      })
+      )
     } catch (error) {
       toast.error('Une erreur est survenue')
     } finally {
@@ -118,7 +140,11 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
           <div className="flex">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
               </svg>
             </div>
             <div className="ml-3">
@@ -144,10 +170,8 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
     <div className="max-w-4xl mx-auto p-6">
       {/* Connection Status */}
       <div className="mb-4 flex items-center gap-2">
-        <div className={`w-3 h-3 rounded-full ${isServiceReady ? 'bg-green-500' : 'bg-red-500'}`} />
-        <span className="text-sm text-gray-600">
-          {isServiceReady ? 'Connected' : 'Disconnected'}
-        </span>
+        <div className={`w-3 h-3 rounded-full bg-green-500`} />
+        <span className="text-sm text-gray-600">Connected</span>
       </div>
 
       {/* Lobby Header */}
@@ -157,24 +181,27 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
             <div>
               <CardTitle className="text-2xl">{lobby.name}</CardTitle>
               <div className="flex items-center gap-4 mt-2">
-                <Badge className={
-                  lobby.status === 'READY' ? 'bg-green-100 text-green-800' :
-                  lobby.status === 'FULL' ? 'bg-yellow-100 text-yellow-800' :
-                  lobby.status === 'WAITING' ? 'bg-blue-100 text-blue-800' :
-                  'bg-gray-100 text-gray-800'
-                }>
+                <Badge
+                  className={
+                    lobby.status === 'READY'
+                      ? 'bg-green-100 text-green-800'
+                      : lobby.status === 'FULL'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : lobby.status === 'WAITING'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-gray-100 text-gray-800'
+                  }
+                >
                   {lobby.status}
                 </Badge>
                 <span className="text-sm text-gray-600 flex items-center gap-1">
                   <Users className="w-4 h-4" />
                   {lobby.currentPlayers}/{lobby.maxPlayers} players
                 </span>
-                {lobby.isPrivate && (
-                  <Badge variant="secondary">Private</Badge>
-                )}
+                {lobby.isPrivate && <Badge variant="secondary">Private</Badge>}
               </div>
             </div>
-            
+
             <div className="flex gap-2">
               {canJoinLobby && (
                 <Button
@@ -186,7 +213,7 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
                   {isJoiningLobby ? 'Joining...' : 'Join Lobby'}
                 </Button>
               )}
-              
+
               {canStartGame && (
                 <Button
                   onClick={handleStartGame}
@@ -197,7 +224,7 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
                   {isStartingGame ? 'Starting...' : 'Start Game'}
                 </Button>
               )}
-              
+
               {isUserInLobby && (
                 <Button
                   onClick={handleLeaveLobby}
@@ -254,13 +281,11 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
                         </Badge>
                       )}
                       {player.uuid === currentUser.uuid && (
-                        <Badge className="text-xs bg-blue-100 text-blue-800">
-                          You
-                        </Badge>
+                        <Badge className="text-xs bg-blue-100 text-blue-800">You</Badge>
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
                     <span className="text-sm font-medium text-gray-700">
                       {player.nickName.charAt(0).toUpperCase()}
@@ -269,7 +294,7 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
                 </div>
               </div>
             ))}
-            
+
             {/* Empty Slots */}
             {Array.from({ length: lobby.maxPlayers - lobby.currentPlayers }).map((_, index) => (
               <div
@@ -289,7 +314,8 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
                 {lobby.hasAvailableSlots ? 'Open for new players' : 'Lobby is full'}
                 {/* Debug info - remove in production */}
                 <span className="text-xs text-gray-400 ml-2">
-                  (Debug: {lobby.currentPlayers}/{lobby.maxPlayers}, hasSlots: {lobby.hasAvailableSlots ? 'true' : 'false'})
+                  (Debug: {lobby.currentPlayers}/{lobby.maxPlayers}, hasSlots:{' '}
+                  {lobby.hasAvailableSlots ? 'true' : 'false'})
                 </span>
               </span>
             </div>

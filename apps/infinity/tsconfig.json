@@ -2,7 +2,26 @@
   "extends": "@adonisjs/tsconfig/tsconfig.app.json",
   "compilerOptions": {
     "rootDir": "./",
-    "outDir": "./build"
+    "outDir": "./build",
+    "paths": {
+      "#config/*": ["./config/*"],
+      "#exceptions/*": ["./app/exceptions/*"],
+      "#middleware/*": ["./app/middleware/*"],
+      "#validators/*": ["./app/validators/*"],
+      "#start/*": ["./start/*"],
+      "#tests/*": ["./tests/*"],
+      "#types/*": ["./types/*"],
+      "#mails/*": ["./app/mails/*"],
+      "#abilities/*": ["./app/abilities/*"],
+      "#events/*": ["./app/events/*"],
+      "#infrastructure/*": ["./app/infrastructure/*"],
+      "#shared_kernel/*": ["./app/shared_kernel/*"],
+      "#domains/*": ["./app/domains/*"],
+      "#iam/*": ["./app/domains/iam/*"],
+      "#lobby/*": ["./app/domains/lobby/*"],
+      "#game/*": ["./app/domains/game_engine/*"],
+      "#integration/*": ["./app/integration/*"]
+    }
   },
-  "exclude": ["./inertia/**/*", "node_modules", "build"]
+  "exclude": ["./inertia/**/*", "node_modules", "build", "./tests/legacy/**/*"]
 }

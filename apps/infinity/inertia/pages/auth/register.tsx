@@ -39,7 +39,7 @@ export default function Register({ errors = {}, flash = {} }: RegisterProps) {
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
     }))
@@ -48,7 +48,7 @@ export default function Register({ errors = {}, flash = {} }: RegisterProps) {
   return (
     <Layout>
       <Head title="Sign Up - Infinity Game" />
-      
+
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           {/* Header */}
@@ -68,7 +68,7 @@ export default function Register({ errors = {}, flash = {} }: RegisterProps) {
               {flash.error}
             </div>
           )}
-          
+
           {flash.success && (
             <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
               {flash.success}
@@ -117,9 +117,7 @@ export default function Register({ errors = {}, flash = {} }: RegisterProps) {
                   }`}
                   placeholder="Enter your email"
                 />
-                {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">{errors.email[0]}</p>
-                )}
+                {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email[0]}</p>}
               </div>
 
               {/* Password Field */}
@@ -142,14 +140,15 @@ export default function Register({ errors = {}, flash = {} }: RegisterProps) {
                 {errors.password && (
                   <p className="mt-1 text-sm text-red-600">{errors.password[0]}</p>
                 )}
-                <p className="mt-1 text-xs text-gray-500">
-                  Must be at least 8 characters long
-                </p>
+                <p className="mt-1 text-xs text-gray-500">Must be at least 8 characters long</p>
               </div>
 
               {/* Password Confirmation Field */}
               <div>
-                <label htmlFor="password_confirmation" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="password_confirmation"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Confirm Password
                 </label>
                 <input
@@ -179,9 +178,13 @@ export default function Register({ errors = {}, flash = {} }: RegisterProps) {
               {/* Terms and Privacy */}
               <div className="text-sm text-gray-600">
                 By creating an account, you agree to our{' '}
-                <a href="#" className="text-blue-600 hover:text-blue-700">Terms of Service</a>
-                {' '}and{' '}
-                <a href="#" className="text-blue-600 hover:text-blue-700">Privacy Policy</a>
+                <a href="#" className="text-blue-600 hover:text-blue-700">
+                  Terms of Service
+                </a>{' '}
+                and{' '}
+                <a href="#" className="text-blue-600 hover:text-blue-700">
+                  Privacy Policy
+                </a>
               </div>
 
               {/* Submit Button */}
@@ -227,9 +230,13 @@ export default function Register({ errors = {}, flash = {} }: RegisterProps) {
               ← Back to Homepage
             </Link>
             <div className="text-sm text-gray-500">
-              <a href="#" className="hover:text-gray-700">Need Help?</a>
+              <a href="#" className="hover:text-gray-700">
+                Need Help?
+              </a>
               {' • '}
-              <a href="#" className="hover:text-gray-700">Contact Support</a>
+              <a href="#" className="hover:text-gray-700">
+                Contact Support
+              </a>
             </div>
           </div>
         </div>

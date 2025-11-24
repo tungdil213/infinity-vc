@@ -5,22 +5,38 @@ export default class extends BaseSchema {
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
+      // Primary key - Integer (internal)
       table.increments('id').primary()
+
+      // Public UUID (for API/frontend)
       table.uuid('uuid').notNullable().unique()
+
+      // Lobby info
+      table.integer('owner_id').unsigned().notNullable()
       table.string('name').notNullable()
-      table.integer('max_players').notNullable()
+      table.integer('max_players').notNullable().defaultTo(4)
+      table.integer('min_players').notNullable().defaultTo(2)
       table.boolean('is_private').defaultTo(false)
-      table.string('status').notNullable()
-      table.string('created_by').notNullable()
-      table.json('available_actions').defaultTo('[]')
-      table.timestamp('deleted_at').nullable()
-      table.timestamp('created_at')
-      table.timestamp('updated_at')
+      table.string('game_type').notNullable()
+      table.string('status').notNullable().defaultTo('waiting')
+
+      // Optional fields
+      table.string('invitation_code', 20).nullable()
+      table.string('game_id', 36).nullable()
+
+      // Timestamps
+      table.timestamp('created_at', { useTz: true })
+      table.timestamp('updated_at', { useTz: true })
+
+      // Foreign keys
+      table.foreign('owner_id').references('id').inTable('users').onDelete('CASCADE')
 
       // Indexes
-      table.index(['status', 'deleted_at'])
-      table.index(['created_by'])
+      table.index(['uuid'])
+      table.index(['status'])
+      table.index(['owner_id'])
       table.index(['is_private', 'status'])
+      table.index(['invitation_code'])
     })
   }
 

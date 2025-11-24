@@ -39,8 +39,10 @@ export default defineConfig({
     () => import('@adonisjs/auth/auth_provider'),
     () => import('@adonisjs/inertia/inertia_provider'),
     () => import('@adonisjs/drive/drive_provider'),
-    () => import('#providers/app_provider'),
     () => import('@adonisjs/transmit/transmit_provider'),
+    () => import('#providers/app_provider'),
+    () => import('#providers/module_event_provider'),
+    () => import('#providers/game_plugin_provider'),
   ],
 
   /*
@@ -89,7 +91,7 @@ export default defineConfig({
   */
   metaFiles: [
     {
-      pattern: 'resources/views/**/*.edge',
+      pattern: 'inertia/resources/views/**/*.edge',
       reloadServer: false,
     },
     {

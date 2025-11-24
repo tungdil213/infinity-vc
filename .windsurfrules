@@ -1,7 +1,10 @@
 # Tyfo.dev Project Windsurf Rules
 # Configuration complète pour l'assistant Windsurf AI
+# Contexte: Monorepo pnpm, AdonisJS + TypeScript, Inertia + React
 
-# Information générale sur le projet
+# =====================================================================
+# INFORMATION GÉNÉRALE
+# =====================================================================
 project:
   name: Tyfo.dev
   description: Plateforme collaborative de gestion de fichiers avec gestion avancée des utilisateurs, rôles et cercles
@@ -10,20 +13,43 @@ project:
   structure: monorepo
   packageManager: pnpm
   containerization: Docker
+  language: TypeScript
+  runtime: Node.js
+  framework: AdonisJS
 
-# Architecture technique
+# =====================================================================
+# ARCHITECTURE TECHNIQUE
+# =====================================================================
 architecture:
   backend: AdonisJS
+  backendVersion: 6
+  language: TypeScript
+  tsconfig:
+    strict: true
+    noImplicitAny: true
+    strictNullChecks: true
+    noUnusedLocals: true
+    noUnusedParameters: true
+    noImplicitReturns: true
   frontend: React
   styling: TailwindCSS
   viewEngine: InertiaJS
   database: PostgreSQL
+  orm: Lucid
   authentication: JWT
   testing: Jest
   apiVersion: v1
   apiBasePath: /api/v1
+  # Exemple de modules DDD par domaine
+  modules:
+    iam: apps/tyfo.dev/app/Modules/IAM
+    files: apps/tyfo.dev/app/Modules/Files
+    circles: apps/tyfo.dev/app/Modules/Circles
+    notifications: apps/tyfo.dev/app/Modules/Notifications
 
-# Répertoires importants
+# =====================================================================
+# RÉPERTOIRES IMPORTANTS
+# =====================================================================
 directories:
   app: apps/tyfo.dev/app
   config: apps/tyfo.dev/config
@@ -39,8 +65,15 @@ directories:
   migrations: apps/tyfo.dev/database/migrations
   seeds: apps/tyfo.dev/database/seeders
   commands: apps/tyfo.dev/commands
+  ddd:
+    domain: apps/tyfo.dev/app/Modules/**/Domain
+    application: apps/tyfo.dev/app/Modules/**/Application
+    infrastructure: apps/tyfo.dev/app/Modules/**/Infrastructure
+    presentation: apps/tyfo.dev/app/Modules/**/Presentation
 
-# Commandes principales
+# =====================================================================
+# COMMANDES PRINCIPALES
+# =====================================================================
 scripts:
   test: cd apps/tyfo.dev && pnpm run test
   lint: cd apps/tyfo.dev && pnpm run lint
@@ -49,7 +82,9 @@ scripts:
   reset: cd apps/tyfo.dev && node ace db:wipe && node ace migration:run && node ace db:seed
   dev: cd apps/tyfo.dev && node ace serve --watch
 
-# Entités et modèles du domaine
+# =====================================================================
+# ENTITÉS / MODÈLES (EXEMPLE)
+# =====================================================================
 entities:
   - name: User
     fields:
@@ -79,7 +114,7 @@ entities:
       - name: files
         type: oneToMany
         entity: File
-  
+
   - name: Role
     fields:
       - name: uuid
@@ -234,7 +269,9 @@ entities:
         type: belongsTo
         entity: User
 
-# Configuration des tests
+# =====================================================================
+# TESTS
+# =====================================================================
 testing:
   approach: TDD
   resetDbBeforeEach: true
@@ -248,7 +285,9 @@ testing:
     - circle-management
     - full-permission-check
 
-# Conventions de codage
+# =====================================================================
+# CONVENTIONS DE CODAGE
+# =====================================================================
 conventions:
   userNameField: fullName
   requireDescriptions:
@@ -265,7 +304,9 @@ conventions:
   fileUploadDirectory: tmp/uploads
   fileStoragePath: storage/app/uploads
 
-# Permissions et sécurité
+# =====================================================================
+# PERMISSIONS & SÉCURITÉ
+# =====================================================================
 permissions:
   roles:
     - admin
@@ -285,7 +326,9 @@ permissions:
       requireNumber: true
       requireSpecial: true
 
-# API endpoints
+# =====================================================================
+# API
+# =====================================================================
 api:
   auth:
     strategy: jwt
@@ -300,7 +343,9 @@ api:
   paginationParam: page
   perPageParam: perPage
 
-# Commandes CLI disponibles
+# =====================================================================
+# COMMANDES CLI
+# =====================================================================
 cli:
   userCommands:
     - create-user
@@ -320,7 +365,9 @@ cli:
     - remove-user-circle
     - list-circles
 
-# Intégration continue
+# =====================================================================
+# INTÉGRATION CONTINUE
+# =====================================================================
 ci:
   enabled: true
   provider: GitHub Actions
@@ -336,7 +383,9 @@ ci:
     success: false
     failure: true
 
-# Configuration du comportement de l'assistant Windsurf
+# =====================================================================
+# CONFIGURATION WINDSURF / RÈGLES D'ARCHI & QUALITÉ
+# =====================================================================
 windsurf:
   preferredApproach: TDD
   testFirst: true
@@ -366,314 +415,232 @@ windsurf:
   maxContextFiles: 50
   maxSearchDepth: 5
   enforceResultPattern: true
+
   rules:
     - name: "Use Result<T> pattern everywhere"
       description: |
-        Toute fonction métier, repository, service ou use case doit retourner un objet Result<T> 
+        Toute fonction métier dans les couches Domain, Application ou Infrastructure
+        (services, use cases, repositories) doit retourner un objet Result<T>
         (succès ou échec explicite) et non pas une valeur brute ni un throw.
-        Les exceptions doivent être encapsulées dans Result<T>. 
-        Les appels de méthodes doivent être gérés via pattern matching explicite sur Result.
+        Les exceptions métier doivent être encapsulées dans Result<T>.
       checks:
-        - Vérifier que chaque méthode publique dans `application/use_cases/`, `application/services/` et `infrastructure/repositories/` retourne Result<T>.
+        - Vérifier que chaque méthode publique dans les couches Application/Services/Repositories retourne Result<T>.
         - Refuser les `throw` en dehors des BusinessException dans les couches métier.
-        - S'assurer que chaque appelant gère Result avec `if (result.isFailure)` avant d'accéder à [result.value](cci:1://file:///Users/ericmonnier/dev/proto/infinity-test/apps/infinity/app/domain/shared/result.ts:39:2-48:3).
-        - Vérifier que les contrôleurs utilisent le pattern : `if (result.isFailure) { throw new BusinessException(...) }`.
-        - Interdire l'accès direct à [result.value](cci:1://file:///Users/ericmonnier/dev/proto/infinity-test/apps/infinity/app/domain/shared/result.ts:39:2-48:3) sans vérification préalable de [result.isSuccess](cci:1://file:///Users/ericmonnier/dev/proto/infinity-test/apps/infinity/app/domain/shared/result.ts:25:2-30:3).
+        - S'assurer que chaque appelant gère Result avec `if (result.isFailure)` avant d'accéder à `result.value`.
+        - Vérifier que les contrôleurs Adonis utilisent le pattern : 
+          `if (result.isFailure) { throw new BusinessException(...) }`.
+        - Interdire l'accès direct à `result.value` sans vérification préalable de `result.isSuccess`.
       autofix: |
-        Si une méthode retourne une valeur brute, la transformer en Result.ok().
-        Si une méthode lève une exception métier, l'encapsuler dans Result.fail().
+        Transformer les valeurs brutes de retour en Result.ok().
+        Encapsuler les exceptions métier dans Result.fail().
         Corriger "Result.err()" vers "Result.fail()".
-        Ajouter les types Result<T> aux signatures manquantes.
-        Ajouter les vérifications isFailure/isSuccess manquantes.
+        Ajouter les types Result<T> et les vérifications isFailure/isSuccess manquantes.
 
     - name: "BusinessException pattern enforcement"
       description: |
-        Toutes les exceptions métier doivent hériter de la classe BusinessException.
-        Elles doivent fournir automatiquement :
-          - un message technique (context) pour les logs
-          - un message utilisateur (userMessage) sécurisé
-          - une classification (ErrorClassification: USER_SAFE, INTERNAL, SECURITY)
-          - un niveau de gravité (ErrorSeverity: low, medium, high, critical)
-          - un type de toast (ToastType: error, warning, info)
-          - une intégration automatique avec Sentry
-        Aucun `throw` direct de `Error` ne doit se faire dans le code métier.
+        Toutes les exceptions métier doivent hériter de BusinessException.
+        Intégration avec HttpExceptionHandler et (optionnellement) Sentry.
       checks:
-        - Vérifier que toutes les classes d'exception héritent de BusinessException.
-        - Vérifier que toutes les exceptions définissent : classification, severity, userMessage, toastType, context.
-        - Interdire les `throw new Error()` dans les couches `application/`, `domain/` et `infrastructure/`.
-        - S'assurer que les exceptions SECURITY n'exposent jamais d'informations sensibles dans userMessage.
-        - Vérifier que chaque exception a un nom explicite (ex: EmailAlreadyExistsException, LobbyCreationException).
-        - Contrôler que les exceptions sont catchées dans HttpExceptionHandler pour génération automatique de toasts.
+        - Vérifier que les exceptions métier héritent de BusinessException.
+        - Vérifier classification, severity, userMessage, toastType, context.
+        - Interdire les `throw new Error()` dans Domain/Application/Infrastructure.
+        - S'assurer que les exceptions SECURITY n'exposent jamais d'infos sensibles.
+        - Vérifier l'intégration dans HttpExceptionHandler.
       autofix: |
-        Si une exception lève `throw new Error()`, la transformer en `throw new <DomainSpecific>Exception()`.
-        Ajouter userMessage, classification, severity et toastType si absent.
-        Générer automatiquement les messages sécurisés pour les erreurs SECURITY.
+        Remplacer `throw new Error()` par une exception métier dédiée.
+        Ajouter les champs manquants (userMessage, classification, severity, toastType).
 
     - name: "Toast integration with Sonner"
       description: |
-        Toutes les interactions utilisateur doivent fournir un feedback via le système de toast Sonner.
-        Les BusinessException génèrent automatiquement des toasts via flash messages.
-        Les succès d'opérations importantes doivent déclencher des toasts de confirmation.
+        Feedback utilisateur systématique via Sonner côté front (Inertia + React).
       checks:
-        - Vérifier que HttpExceptionHandler convertit automatiquement les BusinessException en flash messages.
-        - S'assurer que les contrôleurs utilisent `session.flash('success', message)` pour les opérations réussies.
-        - Contrôler que le composant ToastHandler est présent dans le layout principal.
-        - Vérifier que les toasts utilisent les types appropriés : success, error, warning, info.
-        - S'assurer que les messages de toast sont cohérents avec les userMessage des exceptions.
+        - HttpExceptionHandler → flash messages pour BusinessException.
+        - Contrôleurs → `session.flash('success', ...)` pour les succès importants.
+        - ToastHandler présent dans le layout principal.
+        - Types de toast cohérents avec userMessage / classification.
       autofix: |
-        Ajouter `session.flash('success', 'Operation completed successfully')` après les opérations critiques.
-        Intégrer ToastHandler dans le layout si absent.
-        Convertir les console.log d'erreur en toasts appropriés.
+        Ajouter des flash success après opérations critiques.
+        Ajouter ToastHandler dans le layout si absent.
 
     - name: "Domain Driven Design architecture"
       description: |
-        Respect strict de l'architecture DDD avec séparation claire des couches :
-        - Domain : Entités, Value Objects, Events (aucune dépendance externe)
-        - Application : Use Cases, Services applicatifs (orchestration)
-        - Infrastructure : Repositories, Adaptateurs techniques
-        - Presentation : Contrôleurs, DTOs (transformation des données)
+        Séparation claire Domain / Application / Infrastructure / Presentation.
       checks:
-        - Vérifier que les entités du `domain/` n'importent aucune dépendance externe.
-        - S'assurer que les use cases dans `application/use_cases/` n'accèdent jamais directement aux modèles Lucid.
-        - Contrôler que l'injection de dépendances se fait via constructeur dans les use cases.
-        - Vérifier que les repositories implémentent des interfaces définies dans `application/repositories/`.
-        - S'assurer que les contrôleurs ne contiennent que de la logique de transformation et d'orchestration.
-        - Interdire les appels directs aux repositories depuis les contrôleurs (utiliser les use cases).
+        - Domain n'importe aucune dépendance externe (Adonis, Lucid, HTTP...).
+        - Application n'accède pas directement aux modèles Lucid (passe par des ports/repositories).
+        - Use cases injectent leurs dépendances (via constructeur/provider).
+        - Repositories implémentent des interfaces (Contracts).
+        - Contrôleurs Adonis ne contiennent pas de logique métier.
       autofix: |
-        Déplacer la logique métier des contrôleurs vers les use cases.
-        Créer des interfaces de repository manquantes dans application/repositories/.
-        Ajouter l'injection de dépendances via constructeur si manquante.
+        Déplacer la logique métier des contrôleurs vers des use cases.
+        Créer des interfaces de repository manquantes.
+        Mettre en place l'injection de dépendances via constructeur.
 
     - name: "Security-first error handling"
       description: |
-        Gestion sécurisée des erreurs pour éviter l'exposition d'informations sensibles :
-        - Prévention des attaques d'énumération d'utilisateurs
-        - Messages génériques pour les erreurs sensibles
-        - Logs détaillés pour le debugging sans exposition publique
+        Gestion sécurisée des erreurs pour éviter l'exposition d'informations sensibles.
       checks:
-        - Vérifier que les erreurs d'authentification utilisent des messages génériques.
-        - S'assurer que les erreurs de validation n'exposent pas la structure interne.
-        - Contrôler que les erreurs SECURITY ont des userMessage génériques mais des logs détaillés.
-        - Vérifier que les stack traces ne sont jamais exposées en production.
-        - S'assurer que les erreurs de base de données sont encapsulées dans des BusinessException.
+        - Messages d'erreur d'authentification génériques.
+        - Erreurs de validation sans structure interne sensible.
+        - Stack traces non exposées en prod.
+        - Erreurs DB encapsulées dans BusinessException ou Result.fail().
       autofix: |
-        Remplacer les messages d'erreur spécifiques par des messages génériques pour les opérations sensibles.
-        Ajouter la classification SECURITY aux exceptions sensibles.
-        Encapsuler les erreurs techniques dans des BusinessException appropriées.
-    
+        Remplacer les messages sensibles par des messages génériques.
+        Classifier les erreurs de sécurité (SECURITY) et adapter userMessage/logs.
+
     - name: "Service Testing Strategy"
       description: |
-        Les tests doivent se concentrer sur la logique métier des services et use cases.
-        Les repositories ne sont pas testés directement car ils ne contiennent que de la persistance.
-        Utiliser des DTOs pour découpler les tests des entités domain.
-        Privilégier les tests unitaires avec mocks pour les dépendances externes.
+        Tests focalisés sur la logique métier (use cases/services), avec mocks pour les dépendances externes.
       checks:
-        - Vérifier que chaque use case a au moins un test unitaire dans `tests/unit/use_cases/`.
-        - S'assurer que les tests utilisent des DTOs plutôt que des entités domain directement.
-        - Confirmer que les repositories sont mockés dans les tests de use cases.
-        - Vérifier que les tests couvrent les cas de succès ET d'échec (Result.ok et Result.fail).
-        - S'assurer que les tests vérifient les side effects (événements domain, logs, etc.).
+        - Chaque use case a au moins un test unitaire.
+        - Tests utilisent DTOs plutôt que Domain Entities brutes.
+        - Repositories mockés dans les tests des use cases.
+        - Couverture des cas succès + échec (Result.ok / Result.fail).
       autofix: |
-        Créer automatiquement un fichier de test pour chaque nouveau use case.
-        Générer des mocks basiques pour les repositories utilisés.
-        Ajouter des tests pour les cas d'erreur manquants.
-    
+        Générer des fichiers de test pour les nouveaux use cases.
+        Ajouter des mocks basiques pour les repositories utilisés.
+
     - name: "DTO and Serialization Pattern"
       description: |
-        Utiliser des DTOs (Data Transfer Objects) pour découpler les couches.
-        Les DTOs servent d'interface entre les use cases et les entités domain.
-        Implémenter des serializers pour convertir entités → DTOs et DTOs → entités.
-        Les DTOs doivent être immutables et contenir uniquement des données.
+        DTOs pour découpler Domain/Lucid des APIs & use cases, avec serializers dédiés.
       checks:
-        - Vérifier que chaque use case utilise des DTOs en input/output plutôt que des entités.
-        - S'assurer que les DTOs sont dans `application/dtos/` avec suffixe `Dto`.
-        - Confirmer que les serializers sont dans `application/serializers/` avec suffixe `Serializer`.
-        - Vérifier que les DTOs n'ont pas de logique métier (seulement des propriétés).
-        - S'assurer que les serializers gèrent les conversions bidirectionnelles.
+        - DTOs regroupés (ex: app/DTOs ou Modules/**/Application/DTOs/).
+        - Suffixe `Dto` pour les DTOs, `Serializer` pour les serializers.
+        - DTOs sans logique métier.
       autofix: |
-        Générer automatiquement des DTOs pour les nouvelles entités.
-        Créer des serializers basiques pour les conversions entity ↔ DTO.
-        Refactorer les use cases pour utiliser DTOs au lieu d'entités.
-    
+        Générer automatiquement DTOs et serializers de base.
+        Refactorer les use cases pour passer par DTOs.
+
     - name: "Factory and Test Data Strategy"
       description: |
-        Utiliser des factories pour créer des données de test cohérentes et réutilisables.
-        Les factories doivent générer des DTOs plutôt que des entités directement.
-        Séparer les factories de test des seeders de base de données.
-        Permettre la customisation des propriétés via des paramètres optionnels.
+        Factories de test pour générer des données cohérentes et réutilisables.
       checks:
-        - Vérifier que chaque entité a une factory correspondante dans `tests/factories/`.
-        - S'assurer que les factories génèrent des DTOs avec suffixe `Factory`.
-        - Confirmer que les factories utilisent des données réalistes mais anonymisées.
-        - Vérifier que les factories permettent l'override de propriétés spécifiques.
-        - S'assurer que les factories sont utilisées dans tous les tests unitaires.
+        - Une factory pour chaque entité importante dans `tests/factories/`.
+        - Factories produisent des DTOs ou modèles de test.
+        - Données réalistes mais anonymisées.
       autofix: |
-        Générer automatiquement une factory pour chaque nouvelle entité.
-        Créer des factories basiques avec des valeurs par défaut cohérentes.
+        Générer des factories pour chaque entité manquante.
         Refactorer les tests existants pour utiliser les factories.
-    
+
     - name: "Comprehensive Test Architecture"
       description: |
-        Architecture de test en couches avec séparation claire des responsabilités.
-        Tests unitaires pour use cases, tests d'intégration pour services, pas de tests pour repositories.
-        Utiliser des mocks pour les dépendances externes, des factories pour les données.
-        Couvrir les cas de succès, d'échec, et les edge cases.
+        Tests unitaires, intégration, e2e bien séparés avec responsabilités claires.
       checks:
-        - Vérifier la structure : tests/unit/, tests/integration/, tests/factories/.
-        - S'assurer que les use cases ont des tests unitaires avec mocks.
-        - Confirmer que les services ont des tests d'intégration.
-        - Vérifier que les tests utilisent factories + DTOs + serializers.
-        - S'assurer de la couverture des cas Result.ok et Result.fail.
+        - Structure: tests/unit, tests/integration, tests/e2e, tests/factories.
+        - Use cases → tests unitaires avec mocks.
+        - Services techniques → tests d'intégration ciblés.
       autofix: |
-        Créer la structure de dossiers de test manquante.
+        Créer la structure de dossiers manquante.
         Générer des tests basiques pour les nouveaux use cases.
-        Ajouter des assertions pour les cas d'erreur manquants.
-    
+
     - name: "Factory and Faker Strategy"
       description: |
-        Les factories doivent être complétées par des fakers qui héritent des classes de base.
-        Les fakers remplacent l’usage de sinon pour la génération de données réalistes.
-        Chaque faker doit générer des données cohérentes, réalistes et anonymisées.
-        Les fakers doivent être fortement typés et découplés de la logique métier.
+        Fakers pour générer des données réalistes, typées, sans sinon (préférer jest.fn()).
       checks:
-        - Vérifier qu'aucun test n'utilise sinon (préférer jest.fn() ou des mocks internes).
-        - S'assurer que chaque entité/DTO a un faker correspondant dans `tests/fakers/`.
-        - Confirmer que les fakers héritent d'une classe de base (BaseFaker).
-        - Vérifier que les fakers permettent l'override de propriétés spécifiques.
-        - S'assurer que les fakers sont utilisés dans toutes les factories.
+        - Aucun test n'utilise sinon.
+        - Un faker par entité/DTO dans `tests/fakers/`.
       autofix: |
-        Supprimer les imports de sinon et remplacer par jest.fn().
-        Générer automatiquement un BaseFaker pour chaque entité.
-        Créer les fakers hérités pour les entités manquantes.
-        Refactorer les factories pour consommer les fakers.
-    
+        Remplacer sinon par jest.fn().
+        Générer BaseFaker + fakers dérivés.
+
     - name: "Hexagonal Architecture Enforcement"
       description: |
-        Respect strict du pattern Ports & Adapters :
-        - Les use cases ne dépendent que d’interfaces (ports).
-        - Les implémentations concrètes (adapters : S3, Mailer, etc.) résident dans infrastructure/.
-        - L’injection de dépendances se fait uniquement via constructeur.
+        Ports & Adapters: use cases ne dépendent que d'interfaces (ports).
       checks:
-        - Vérifier que les use cases n’importent pas directement d’implémentations techniques.
-        - S'assurer que toutes les dépendances externes passent par des interfaces dans `application/ports/`.
-        - Contrôler que l'infrastructure implémente les ports définis.
+        - Use cases n'importent pas d'implémentations techniques concrètes.
+        - Ports définis (ex: app/Ports ou Modules/**/Application/Ports).
+        - Infrastructure implémente ces ports.
       autofix: |
-        Générer automatiquement des interfaces ports pour les dépendances externes.
-        Déplacer les appels techniques dans infrastructure/.
-        Injecter les adapters via constructeur dans les use cases.
-   
+        Générer des interfaces ports pour les dépendances externes.
+        Déplacer la logique technique dans Infrastructure.
+
     - name: "Contract Testing Strategy"
       description: |
-        Les contrats entre couches doivent être validés par des tests de contrat.
-        Les tests de contrat garantissent la compatibilité entre DTOs, serializers et API endpoints.
+        Tests de contrat pour vérifier la compatibilité DTOs/serializers/API.
       checks:
-        - Vérifier que chaque endpoint API a un test de contrat dans `tests/contract/`.
-        - S'assurer que les serializers respectent les schémas DTO.
-        - Confirmer que les changements de schéma cassants déclenchent une erreur de test.
+        - Un test de contrat par endpoint critique (tests/contract/).
+        - Schémas respectés (Zod/Joi ou OpenAPI).
       autofix: |
         Générer un test de contrat pour chaque nouvel endpoint.
-        Ajouter un validateur de schéma JSON (Zod ou Joi) dans les tests.
-   
+        Ajouter un validateur de schéma JSON.
+
     - name: "Mutation Testing Strategy"
       description: |
-        Utiliser des tests de mutation (ex: StrykerJS) pour valider la robustesse des tests.
-        Les tests doivent échouer si une mutation est introduite dans le code.
+        Tests de mutation (StrykerJS, par ex.) pour valider la robustesse de la base de tests.
       checks:
-        - Vérifier que le pipeline CI exécute les mutation tests au moins sur la couche application.
-        - S'assurer que le seuil de mutation coverage est > 80%.
+        - Pipeline CI exécute les mutation tests au moins sur Application.
+        - Seuil de mutation coverage > 80%.
       autofix: |
-        Ajouter StrykerJS dans la configuration du projet.
-        Générer une configuration de mutation par défaut.
-    
+        Ajouter StrykerJS + config par défaut.
+
     - name: "Test Coverage Enforcement"
       description: |
-        Les tests doivent couvrir au moins 80% du code de la couche application et domain.
-        Les contrôleurs et infrastructure peuvent avoir une couverture plus faible.
+        Couverture minimale de tests sur Application et Domain.
       checks:
-        - Vérifier que le coverage global est >= 80%.
-        - Vérifier que la couche application/ est >= 90%.
-        - Vérifier que la couche domain/ est >= 90%.
+        - Coverage global >= 80%.
+        - Coverage Domain/Application >= 90%.
       autofix: |
         Ajouter la vérification du coverage dans la CI.
-        Générer un rapport coverage HTML à chaque run.
-    
+        Générer un rapport coverage HTML.
+
     - name: "Dependency Injection Enforcement"
       description: |
-        Toutes les dépendances doivent être injectées explicitement (via constructeur ou factory).
-        Aucun service ou repository ne doit être instancié directement dans un use case ou contrôleur.
-        Les dépendances doivent être définies sous forme d’interfaces dans `application/ports/`
-        et fournies via injection par l’infrastructure.
+        Utiliser l'IoC Adonis pour enregistrer les implémentations,
+        mais injecter les dépendances dans les classes métier (pas de `ioc.use` partout).
       checks:
-        - Vérifier que les use cases n’appellent pas `new` pour instancier une dépendance.
-        - S’assurer que les contrôleurs n’instancient pas de services/repositories directement.
-        - Contrôler que l’injection se fait toujours via constructeur (pas via propriété statique).
-        - Vérifier que les adapters dans `infrastructure/` implémentent les interfaces définies dans `application/ports/`.
-        - Interdire l’utilisation d’un container global ou singleton pour résoudre les dépendances.
+        - Pas de `new` direct de services/repositories dans les use cases/contrôleurs.
+        - Dépendances résolues via injection (constructeur, providers) plutôt que `ioc.use` dans Domain/Application.
+        - Adapters dans Infrastructure implémentent les contrats définis.
       autofix: |
-        Déplacer les instanciations de dépendances vers des factories ou des modules d’injection.
-        Ajouter les interfaces manquantes dans `application/ports/`.
-        Injecter les dépendances via constructeur dans les use cases et services.
-    
+        Déplacer les instanciations vers des providers/factories.
+        Ajouter les interfaces manquantes dans Contracts/Ports.
+
     - name: "UI Library Consistency"
       description: |
-        Les composants dans `packages/ui` constituent une librairie réutilisable.
-        Ils doivent être découplés de la logique métier et testés isolément.
-        Les composants doivent être documentés et exposés dans `apps/docs` (Storybook).
+        `packages/ui` = librairie UI réutilisable, découplée de la logique métier.
       checks:
-        - Vérifier que `packages/ui` ne contient aucune dépendance vers `apps/`.
-        - S'assurer que chaque nouveau composant est accompagné d'une story dans `apps/docs`.
-        - Vérifier que les composants UI sont testés avec React Testing Library.
-        - Confirmer que chaque composant a des props typées avec TypeScript.
+        - `packages/ui` n'importe jamais `apps/`.
+        - Chaque nouveau composant a une story `apps/docs` (Storybook).
+        - Composants testés avec React Testing Library.
       autofix: |
-        Créer automatiquement un fichier de story pour chaque composant.
-        Ajouter des tests unitaires de rendu basiques si absents.
-        Bloquer l’import de code applicatif dans `packages/ui`.
+        Créer une story minimale par composant.
+        Ajouter des tests de rendu basiques.
 
     - name: "Storybook Documentation Enforcement"
       description: |
-        Storybook (`apps/docs`) sert de documentation vivante pour les composants UI.
-        Il doit être mis à jour à chaque ajout ou modification d’un composant.
+        Storybook = documentation vivante des composants UI.
       checks:
-        - Vérifier que chaque composant de `packages/ui` a une story correspondante.
-        - S'assurer que les stories couvrent tous les états/variantes des composants.
-        - Contrôler que Storybook build sans erreur dans la CI.
+        - Chaque composant `packages/ui` a une story.
+        - Stories couvrent les principaux états/variantes.
       autofix: |
-        Générer une story minimale lors de la création d’un nouveau composant.
-        Ajouter automatiquement les variantes manquantes détectées.
-        Lancer `pnpm storybook:build` en CI pour détecter les incohérences.
+        Générer une story minimale pour chaque nouveau composant.
+        Lancer `pnpm storybook:build` en CI.
 
     - name: "Visual Regression Testing"
       description: |
-        Les composants UI doivent être validés par des tests de régression visuelle.
-        Les différences de rendu doivent être détectées automatiquement lors des PR.
+        Tests de régression visuelle sur les composants UI (Chromatic/Playwright).
       checks:
-        - Vérifier que la CI exécute les tests visuels sur `apps/docs`.
-        - S'assurer que les PR échouent en cas de différence non approuvée.
+        - CI exécute des tests visuels sur `apps/docs`.
+        - PR échoue en cas de diff visuel non approuvé.
       autofix: |
-        Ajouter Chromatic ou Playwright dans la CI.
-        Générer automatiquement des snapshots visuels pour les nouveaux composants.
+        Ajouter l'outil de visuel regression (Chromatic/Playwright).
+        Générer des snapshots pour les nouveaux composants.
 
     - name: "Domain Factory Rule"
       description: |
-        Les entités complexes doivent être créées via des factories métier dans `domain/factories/`.
-        Les factories métier encapsulent la logique de création et garantissent la validité métier.
-        Les repositories utilisent les factories métier pour hydrater les entités depuis la base.
+        Entités complexes créées via des factories métier (Domain Factories).
       checks:
-        - Vérifier que les entités ne sont pas instanciées directement dans les use cases.
-        - S'assurer que les repositories appellent une factory métier pour reconstruire une entité.
-        - Contrôler que les factories métier vivent uniquement dans `domain/factories/`.
+        - Pas d'instanciation directe d'entités Domain dans les use cases.
+        - Repositories utilisent des factories métier pour hydrater les entités.
       autofix: |
-        Déplacer la logique de création d'entité vers une factory métier.
-        Ajouter une factory manquante dans `domain/factories/`.
+        Déplacer la logique de création d'entité vers Domain Factories.
 
     - name: "Test/Seed Factory Rule"
       description: |
-        Les factories de test/seed (DTO builders) sont réservées aux tests et à l’initialisation de données.
-        Elles ne doivent jamais être utilisées dans le code applicatif (domain, application, infrastructure).
+        Factories de test/seed réservées aux tests et seeders, jamais au code applicatif.
       checks:
-        - Vérifier que les factories de test/seed résident uniquement dans `tests/factories/` ou `database/factories/`.
-        - Interdire leur import dans `app/`.
-        - Confirmer que les seeders utilisent ces factories au lieu d’objets bruts.
+        - Factories de test/seed dans `tests/factories/` ou `database/factories/` uniquement.
+        - Pas d'import de ces factories dans `app/`.
       autofix: |
-        Déplacer les factories de test/seed en dehors du dossier `app/`.
-        Supprimer les imports interdits dans le code applicatif.
+        Déplacer les factories de test/seed hors de `app/`.
+        Supprimer les imports interdits.

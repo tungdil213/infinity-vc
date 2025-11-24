@@ -1,6 +1,6 @@
 import { BaseCommand } from '@adonisjs/core/ace'
 import type { CommandOptions } from '@adonisjs/core/types/ace'
-import User from '#models/user'
+import UserModel from '#domains/iam/infrastructure/persistence/user.model'
 import hash from '@adonisjs/core/services/hash'
 
 export default class ResetUserPasswords extends BaseCommand {
@@ -16,7 +16,7 @@ export default class ResetUserPasswords extends BaseCommand {
 
     try {
       // Get all users
-      const users = await User.all()
+      const users = await UserModel.all()
 
       if (users.length === 0) {
         this.logger.info('No users found in database')

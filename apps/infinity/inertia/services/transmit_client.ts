@@ -1,11 +1,14 @@
 import { Transmit } from '@adonisjs/transmit-client'
+import { LobbyTransmitEvent } from '../types/lobby'
 
 /**
  * Client Transmit configuré pour l'application
+ * Respecte les patterns documentés avec logging standardisé
  */
 export const transmitClient = new Transmit({
   baseUrl: window.location.origin,
   beforeSubscribe: (request: RequestInit) => {
+    console.log('📡 TransmitClient: Preparing subscription request')
     // Ajouter les headers d'authentification si nécessaire
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
     if (csrfToken) {
@@ -16,6 +19,7 @@ export const transmitClient = new Transmit({
     }
   },
   beforeUnsubscribe: (request: RequestInit) => {
+    console.log('📡 TransmitClient: Preparing unsubscription request')
     // Ajouter les headers d'authentification si nécessaire
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
     if (csrfToken) {
@@ -26,40 +30,21 @@ export const transmitClient = new Transmit({
     }
   },
   onReconnectAttempt: (attempt) => {
-    console.log(`Tentative de reconnexion Transmit #${attempt}`)
+    console.log(`📡 TransmitClient: Reconnection attempt #${attempt}`)
   },
   onReconnectFailed: () => {
-    console.error('Échec de la reconnexion Transmit')
+    console.error('📡 TransmitClient: Reconnection failed - falling back to polling')
   },
   onSubscribeFailed: (response) => {
-    console.error('Échec de souscription Transmit:', response)
+    console.error('📡 TransmitClient: Subscription failed:', response)
   },
   onSubscription: (channel) => {
-    console.log(`Souscription Transmit réussie au channel: ${channel}`)
+    console.log(`📡 TransmitClient: Successfully subscribed to ${channel}`)
   },
   onUnsubscription: (channel) => {
-    console.log(`Désouscription Transmit du channel: ${channel}`)
+    console.log(`📡 TransmitClient: Unsubscribed from ${channel}`)
   },
 })
-
-/**
- * Interface pour les événements de lobby reçus via Transmit
- */
-export interface LobbyTransmitEvent {
-  type: string
-  lobbyUuid: string
-  lobby: any
-  timestamp: string
-  player?: {
-    uuid: string
-    nickName: string
-  }
-  playerCount?: number
-  oldStatus?: string
-  newStatus?: string
-  status?: string
-  gameUuid?: string
-}
 
 /**
  * Service de gestion des événements de lobby via Transmit
