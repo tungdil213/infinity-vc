@@ -109,6 +109,12 @@ router
     // Games API
     router.get('/games/:uuid', '#controllers/games_controller.apiShow').as('api.games.show')
     router
+      .get('/games/:uuid/actions', '#controllers/games_controller.getActions')
+      .as('api.games.actions')
+    router
+      .get('/games/:uuid/players', '#controllers/games_controller.getPlayers')
+      .as('api.games.players')
+    router
       .post('/games/:uuid/action', '#controllers/games_controller.action')
       .as('api.games.action')
   })

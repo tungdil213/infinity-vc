@@ -1,9 +1,10 @@
 import Game from '../../domain/entities/game.js'
 import { LobbyRepository } from '../repositories/lobby_repository.js'
 import { GameRepository } from '../repositories/game_repository.js'
-import { GameStartedEvent } from '../../domain/events/lobby_events.js'
 import { Result } from '../../domain/shared/result.js'
 import { TransmitLobbyService } from '../services/transmit_lobby_service.js'
+import { gameEngineService } from '../services/game_engine_service.js'
+import { Cards } from '../../games/love-letter/types.js'
 
 export interface StartGameRequest {
   userUuid: string
@@ -18,24 +19,25 @@ export interface StartGameResponse {
       uuid: string
       nickName: string
     }>
-    gameData: {
-      currentRound: number
-      currentTurn: number
-      deck: {
-        remaining: number
-      }
-      discardPile: any[]
-      eliminatedPlayers: string[]
+    /** Love Letter specific game state */
+    gameState: {
+      phase: string
+      currentPlayerId: string | null
+      round: number
+      turn: number
+      isFinished: boolean
+      deckCount: number
+      discardPile: Array<{ type: string; value: number }>
+      players: Array<{
+        id: string
+        name: string
+        isActive: boolean
+        isProtected: boolean
+        isEliminated: boolean
+        handCount: number
+      }>
     }
     startedAt: Date
-    currentPlayer?: {
-      uuid: string
-      nickName: string
-    }
-    activePlayers: Array<{
-      uuid: string
-      nickName: string
-    }>
   }
   lobbyDeleted: boolean
 }
@@ -70,27 +72,38 @@ export class StartGameUseCase {
         return Result.fail('Lobby is not ready to start a game')
       }
 
-      // Démarrer la partie dans le lobby (cela génère l'UUID de la partie)
+      // Démarrer la partie dans le lobby (met à jour le statut)
       const gameResult = lobby.startGame()
       if (gameResult.isFailure) {
         return Result.fail(gameResult.error || 'Failed to start game')
       }
-      const gameUuid = gameResult.value
 
       // Sauvegarder le lobby mis à jour
       await this.lobbyRepository.save(lobby)
 
-      // Créer l'entité Game
+      // Créer la session de jeu avec le LoveLetterEngine
+      const gameSession = gameEngineService.createGame(lobby.uuid, lobby.players)
+      const gameState = gameSession.state
+
+      // Créer l'entité Game pour la persistance
       const game = Game.create({
-        uuid: gameUuid,
+        uuid: gameSession.gameId,
         players: lobby.players,
+        gameData: {
+          currentRound: gameState.round,
+          currentTurn: gameState.turn,
+          deck: { remaining: gameState.deck.length },
+          discardPile: gameState.publicDiscards,
+          eliminatedPlayers: gameState.players.filter((p) => p.isEliminated).map((p) => p.id),
+          playerHands: {},
+        },
       })
 
       // Sauvegarder la partie
       await this.gameRepository.save(game)
 
-      // Notifier que le jeu a commencé avant de supprimer le lobby
-      this.notificationService.notifyGameStarted(lobby.uuid, gameUuid, {
+      // Notifier que le jeu a commencé
+      this.notificationService.notifyGameStarted(lobby.uuid, gameSession.gameId, {
         uuid: lobby.uuid,
         name: lobby.name,
         status: lobby.status,
@@ -100,21 +113,36 @@ export class StartGameUseCase {
         creator: lobby.creator,
       })
 
-      // Supprimer le lobby de la mémoire (il est maintenant persisté en base)
+      // Supprimer le lobby de la mémoire
       await this.lobbyRepository.delete(lobby.uuid)
 
-      // Enregistrer l'événement de démarrage de partie
-      new GameStartedEvent(game.uuid, lobby.uuid, game.players)
-
+      // Préparer la réponse avec l'état du jeu Love Letter
       const response: StartGameResponse = {
         game: {
-          uuid: game.uuid,
-          status: game.status,
-          players: game.players,
-          gameData: game.gameData,
-          startedAt: game.startedAt,
-          currentPlayer: game.currentPlayer,
-          activePlayers: game.activePlayers,
+          uuid: gameSession.gameId,
+          status: 'in_progress',
+          players: lobby.players.map((p) => ({ uuid: p.uuid, nickName: p.nickName })),
+          gameState: {
+            phase: gameState.phase,
+            currentPlayerId: gameState.currentPlayerId,
+            round: gameState.round,
+            turn: gameState.turn,
+            isFinished: gameState.isFinished,
+            deckCount: gameState.deck.length,
+            discardPile: gameState.publicDiscards.map((cardType) => ({
+              type: cardType,
+              value: Cards[cardType].value,
+            })),
+            players: gameState.players.map((p) => ({
+              id: p.id,
+              name: p.name,
+              isActive: p.isActive,
+              isProtected: p.isProtected,
+              isEliminated: p.isEliminated,
+              handCount: p.hand.length,
+            })),
+          },
+          startedAt: gameSession.createdAt,
         },
         lobbyDeleted: true,
       }
