@@ -2,6 +2,15 @@
 	"name": "@tyfo.dev/typescript-config",
 	"version": "1.0.0",
 	"license": "MIT",
+	"type": "module",
+	"exports": {
+		"./base.json": "./base.json",
+		"./react-app.json": "./react-app.json",
+		"./react-library.json": "./react-library.json"
+	},
+	"files": [
+		"*.json"
+	],
 	"publishConfig": {
 		"access": "public"
 	}

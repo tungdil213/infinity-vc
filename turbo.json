@@ -6,24 +6,31 @@
 			"cache": false
 		},
 		"build": {
-			"dependsOn": ["build:ui", "build:adonis", "^build"]
+			"dependsOn": ["^build"],
+			"outputs": ["dist/**"]
 		},
 		"build:ui": {
 			"inputs": ["packages/ui/src/**/*", "packages/ui/tailwind.config.js"],
-			"outputs": ["packages/ui/dist"]
+			"outputs": ["packages/ui/dist/**"]
 		},
 		"build:adonis": {
-			"inputs": ["apps/tyfo.dev/"],
-			"outputs": ["apps/tyfo.dev/build/public", "apps/tyfo.dev/build/inertia"],
-			"dependsOn": ["build:ui"],
+			"inputs": ["apps/infinity/**"],
+			"outputs": ["apps/infinity/build/**"],
+			"dependsOn": ["^build"],
 			"cache": true
 		},
 		"lint": {
 			"dependsOn": ["^lint"]
 		},
+		"typecheck": {
+			"dependsOn": ["^build"]
+		},
 		"dev": {
 			"cache": false,
 			"persistent": true
+		},
+		"test": {
+			"dependsOn": ["^build"]
 		},
 		"preview-storybook": {
 			"dependsOn": ["^build"],

@@ -1,0 +1,51 @@
+{
+  "name": "@tyfo.dev/transcript",
+  "version": "1.0.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "Real-time communication abstraction for SSE and WebSocket",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "import": "./dist/server/index.js"
+    },
+    "./client": {
+      "types": "./dist/client/index.d.ts",
+      "import": "./dist/client/index.js"
+    },
+    "./channels": {
+      "types": "./dist/channels/index.d.ts",
+      "import": "./dist/channels/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w",
+    "clean": "rm -rf dist .turbo node_modules",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tyfo.dev/events": "workspace:*"
+  },
+  "devDependencies": {
+    "@tyfo.dev/typescript-config": "workspace:*",
+    "typescript": "~5.7.3"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
