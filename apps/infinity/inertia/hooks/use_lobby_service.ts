@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useTransmit } from '../contexts/TransmitContext'
 import { LobbyService } from '../services/lobby_service'
 
@@ -10,32 +10,41 @@ let globalLobbyService: LobbyService | null = null
  */
 export function useLobbyService() {
   const transmitContext = useTransmit()
-  const isInitializedRef = useRef(false)
+  const hasUpdatedContext = useRef(false)
 
-  // Utiliser useMemo pour créer le service une seule fois
+  // Créer ou récupérer le service
   const service = useMemo(() => {
     if (!transmitContext.isConnected) {
       console.log('useLobbyService: En attente de la connexion Transmit')
-      return null
+      return globalLobbyService // Retourner l'instance existante même si non connecté
     }
 
     // Réutiliser l'instance globale si elle existe
     if (globalLobbyService) {
-      console.log('useLobbyService: Réutilisation de l\'instance globale')
+      console.log("useLobbyService: Réutilisation de l'instance globale")
       return globalLobbyService
     }
 
-    console.log('useLobbyService: Création d\'une nouvelle instance LobbyService')
+    console.log("useLobbyService: Création d'une nouvelle instance LobbyService")
     globalLobbyService = new LobbyService(transmitContext)
     return globalLobbyService
   }, [transmitContext.isConnected])
 
+  // Mettre à jour le contexte quand la connexion change
   useEffect(() => {
-    return () => {
-      // Ne pas détruire l'instance globale lors du démontage d'un composant
-      console.log('useLobbyService: Démontage du hook (instance préservée)')
+    if (transmitContext.isConnected && globalLobbyService && !hasUpdatedContext.current) {
+      console.log('useLobbyService: Connexion établie, mise à jour du contexte')
+      globalLobbyService.updateContext(transmitContext)
+      hasUpdatedContext.current = true
     }
-  }, [])
+  }, [transmitContext.isConnected, transmitContext])
+
+  // Reset le flag quand on se déconnecte
+  useEffect(() => {
+    if (!transmitContext.isConnected) {
+      hasUpdatedContext.current = false
+    }
+  }, [transmitContext.isConnected])
 
   return {
     service,

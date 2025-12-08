@@ -51,16 +51,36 @@ export class LobbyService {
     total: 0,
   }
 
+  private isSubscribed = false
+
   constructor(transmitContext: TransmitContextType) {
     this.transmitContext = transmitContext
     this.setupTransmitListeners()
   }
 
+  /**
+   * Réinitialise les listeners avec un nouveau contexte (utile après reconnexion)
+   */
+  updateContext(transmitContext: TransmitContextType) {
+    this.transmitContext = transmitContext
+    // Si pas encore abonné, réessayer
+    if (!this.isSubscribed) {
+      console.log('LobbyService: Mise à jour du contexte et retry de souscription')
+      this.setupTransmitListeners()
+    }
+  }
+
   private async setupTransmitListeners() {
     try {
       // Éviter les souscriptions multiples
-      if (this.globalUnsubscribe) {
+      if (this.isSubscribed) {
         console.log('Listeners Transmit déjà configurés, éviter les doublons')
+        return
+      }
+
+      // Vérifier que le contexte est connecté
+      if (!this.transmitContext.isConnected) {
+        console.log('LobbyService: En attente de connexion Transmit pour souscription')
         return
       }
 
@@ -101,9 +121,11 @@ export class LobbyService {
             break
         }
       })
+      this.isSubscribed = true
       console.log('Listeners Transmit configurés avec succès')
     } catch (error) {
       console.error('Erreur lors de la configuration des listeners Transmit:', error)
+      this.isSubscribed = false
     }
   }
 
@@ -113,7 +135,7 @@ export class LobbyService {
     // L'événement contient directement les données du lobby dans event.data.lobby
     const newLobby = event.data.lobby
     console.log('handleLobbyCreated - nouveau lobby:', newLobby)
-    
+
     if (newLobby) {
       // Vérifier si le lobby n'existe pas déjà
       const existingIndex = this.lobbyListState.lobbies.findIndex((l) => l.uuid === newLobby.uuid)
@@ -165,37 +187,43 @@ export class LobbyService {
     const playerCount = eventData.playerCount || eventData.lobby?.currentPlayers
     const updatedLobby = eventData.lobby
 
-    console.log('handleLobbyPlayerJoined - données:', { lobbyUuid, player, playerCount, updatedLobby })
+    console.log('handleLobbyPlayerJoined - données:', {
+      lobbyUuid,
+      player,
+      playerCount,
+      updatedLobby,
+    })
 
     if (lobbyUuid) {
       // Mettre à jour la liste globale
       if (playerCount !== undefined) {
         this.updateLobbyInList(lobbyUuid, { currentPlayers: playerCount })
       }
-      
+
       // Mettre à jour les détails du lobby
       this.updateLobbyDetail(lobbyUuid, (currentLobby) => {
         // Si on a le lobby complet dans l'événement, l'utiliser même si currentLobby est null
         if (updatedLobby) {
           return currentLobby ? { ...currentLobby, ...updatedLobby } : updatedLobby
         }
-        
+
         // Si pas de lobby complet et pas de currentLobby, on ne peut pas faire de mise à jour partielle
         if (!currentLobby) return currentLobby
-        
+
         // Sinon, mise à jour partielle
         const updatedCurrentLobby = { ...currentLobby }
-        
+
         if (playerCount !== undefined) {
           updatedCurrentLobby.currentPlayers = playerCount
         }
-        
+
         if (player && !updatedCurrentLobby.players.find((p) => p.uuid === player.uuid)) {
           updatedCurrentLobby.players = [...updatedCurrentLobby.players, player]
         }
-        
-        updatedCurrentLobby.hasAvailableSlots = updatedCurrentLobby.currentPlayers < updatedCurrentLobby.maxPlayers
-        
+
+        updatedCurrentLobby.hasAvailableSlots =
+          updatedCurrentLobby.currentPlayers < updatedCurrentLobby.maxPlayers
+
         return updatedCurrentLobby
       })
     }
@@ -208,37 +236,45 @@ export class LobbyService {
     const playerCount = eventData.playerCount || eventData.lobby?.currentPlayers
     const updatedLobby = eventData.lobby
 
-    console.log('handleLobbyPlayerLeft - données:', { lobbyUuid, player, playerCount, updatedLobby })
+    console.log('handleLobbyPlayerLeft - données:', {
+      lobbyUuid,
+      player,
+      playerCount,
+      updatedLobby,
+    })
 
     if (lobbyUuid) {
       // Mettre à jour la liste globale
       if (playerCount !== undefined) {
         this.updateLobbyInList(lobbyUuid, { currentPlayers: playerCount })
       }
-      
+
       // Mettre à jour les détails du lobby
       this.updateLobbyDetail(lobbyUuid, (currentLobby) => {
         // Si on a le lobby complet dans l'événement, l'utiliser même si currentLobby est null
         if (updatedLobby) {
           return currentLobby ? { ...currentLobby, ...updatedLobby } : updatedLobby
         }
-        
+
         // Si pas de lobby complet et pas de currentLobby, on ne peut pas faire de mise à jour partielle
         if (!currentLobby) return currentLobby
-        
+
         // Sinon, mise à jour partielle
         const updatedCurrentLobby = { ...currentLobby }
-        
+
         if (playerCount !== undefined) {
           updatedCurrentLobby.currentPlayers = playerCount
         }
-        
+
         if (player) {
-          updatedCurrentLobby.players = updatedCurrentLobby.players.filter((p) => p.uuid !== player.uuid)
+          updatedCurrentLobby.players = updatedCurrentLobby.players.filter(
+            (p) => p.uuid !== player.uuid
+          )
         }
-        
-        updatedCurrentLobby.hasAvailableSlots = updatedCurrentLobby.currentPlayers < updatedCurrentLobby.maxPlayers
-        
+
+        updatedCurrentLobby.hasAvailableSlots =
+          updatedCurrentLobby.currentPlayers < updatedCurrentLobby.maxPlayers
+
         return updatedCurrentLobby
       })
     }
@@ -269,14 +305,14 @@ export class LobbyService {
     console.log('handleLobbyDeleted - event reçu:', event)
     const lobbyUuid = event.data.lobbyUuid
     console.log('handleLobbyDeleted - suppression lobby:', lobbyUuid)
-    
+
     // Supprimer le lobby de la liste avec immutabilité
     this.lobbyListState = {
       ...this.lobbyListState,
       lobbies: this.lobbyListState.lobbies.filter((l) => l.uuid !== lobbyUuid),
       total: this.lobbyListState.lobbies.length - 1,
     }
-    
+
     console.log('handleLobbyDeleted - nouveau total:', this.lobbyListState.total)
     this.notifyLobbyListSubscribers()
     this.updateLobbyDetail(lobbyUuid, () => null)
@@ -298,18 +334,22 @@ export class LobbyService {
     const callbacks = this.lobbyDetailCallbacks.get(lobbyUuid)
     if (callbacks && callbacks.size > 0) {
       console.log(`Mise à jour des détails du lobby ${lobbyUuid} pour ${callbacks.size} abonnés`)
-      
+
       // Utiliser un état par défaut si pas d'état actuel
-      const currentState = this.lobbyDetailStates.get(lobbyUuid) || { lobby: null, loading: false, error: null }
+      const currentState = this.lobbyDetailStates.get(lobbyUuid) || {
+        lobby: null,
+        loading: false,
+        error: null,
+      }
       const updatedLobby = updater(currentState.lobby)
       const newState = { ...currentState, lobby: updatedLobby }
-      
+
       // Sauvegarder l'état
       this.lobbyDetailStates.set(lobbyUuid, newState)
-      
+
       // Notifier tous les abonnés
       callbacks.forEach((callback) => {
-        console.log('Notification d\'un abonné pour le lobby', lobbyUuid)
+        console.log("Notification d'un abonné pour le lobby", lobbyUuid)
         callback(newState)
       })
     } else {
@@ -364,13 +404,13 @@ export class LobbyService {
     try {
       const url = `/api/v1/lobbies/${lobbyUuid}`
       console.log(`LobbyService: Appel API vers ${url}`)
-      
+
       const response = await fetch(url, {
         credentials: 'include',
       })
 
       console.log(`LobbyService: Réponse API status: ${response.status}`)
-      
+
       if (!response.ok) {
         const errorText = await response.text()
         console.error(`LobbyService: Erreur API ${response.status}: ${errorText}`)
@@ -378,8 +418,8 @@ export class LobbyService {
       }
 
       const data = await response.json()
-      console.log('LobbyService: Données reçues de l\'API:', data)
-      
+      console.log("LobbyService: Données reçues de l'API:", data)
+
       // Vérifier la structure de la réponse
       if (data.lobby) {
         console.log('LobbyService: Lobby trouvé:', data.lobby)
@@ -513,7 +553,10 @@ export class LobbyService {
 
   // Abonnements
   subscribeLobbyList(callback: (state: LobbyListState) => void) {
-    console.log('subscribeLobbyList - ajout callback, total callbacks:', this.lobbyListCallbacks.size + 1)
+    console.log(
+      'subscribeLobbyList - ajout callback, total callbacks:',
+      this.lobbyListCallbacks.size + 1
+    )
     this.lobbyListCallbacks.add(callback)
     // Envoyer l'état actuel immédiatement
     console.log('subscribeLobbyList - envoi état initial:', this.lobbyListState)
@@ -529,11 +572,11 @@ export class LobbyService {
     if (!this.lobbyDetailCallbacks.has(lobbyUuid)) {
       this.lobbyDetailCallbacks.set(lobbyUuid, new Set())
       console.log(`S'abonner au canal spécifique du lobby: lobbies/${lobbyUuid}`)
-      
+
       // S'abonner au canal Transmit pour ce lobby
       this.transmitContext.subscribeToLobby(lobbyUuid, (event) => {
         console.log(`Événement reçu sur canal lobbies/${lobbyUuid}:`, event.type, event)
-        
+
         // Convertir l'événement Transmit en format compatible
         const transmitEvent = {
           type: event.type,
