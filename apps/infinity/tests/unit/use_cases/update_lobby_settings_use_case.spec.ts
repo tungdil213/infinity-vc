@@ -13,7 +13,7 @@ const mockLobbyRepository = {
         maxPlayers: 4,
         isPrivate: false,
         status: 'OPEN',
-        playerCount: 2,
+        currentPlayers: 2,
       })
       return {
         ...lobbyDto,

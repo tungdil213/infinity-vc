@@ -1,5 +1,5 @@
 import React from 'react'
-import { Head, useForm } from '@inertiajs/react'
+import { Head, useForm, usePage } from '@inertiajs/react'
 import { Button } from '@tyfo.dev/ui/primitives/button'
 import { Input } from '@tyfo.dev/ui/primitives/input'
 import { Label } from '@tyfo.dev/ui/primitives/label'
@@ -17,6 +17,10 @@ export default function Register({ redirect = '/lobbies' }: RegisterProps) {
     password_confirmation: '',
     redirect,
   })
+
+  const { props } = usePage<any>()
+  const flashError = props.flash?.error as string | undefined
+  const flashSuccess = props.flash?.success as string | undefined
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -58,6 +62,12 @@ export default function Register({ redirect = '/lobbies' }: RegisterProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {flashError && (
+              <p className="mb-2 text-sm text-destructive text-center">{flashError}</p>
+            )}
+            {flashSuccess && (
+              <p className="mb-2 text-sm text-emerald-500 text-center">{flashSuccess}</p>
+            )}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="fullName">Full Name</Label>

@@ -80,11 +80,9 @@ export default class SimpleLobbiesController {
    * Create a new lobby (mock implementation)
    */
   async store({ request, response, session }: HttpContext) {
-    const {
-      name,
-      description,
-      maxPlayers = 4,
-    } = request.only(['name', 'description', 'maxPlayers'])
+    const { name } = request.only(['name', 'description', 'maxPlayers'])
+    // TODO: Use description and maxPlayers
+    // const { name, description, maxPlayers = 4 } = ...
 
     try {
       // Validate required fields

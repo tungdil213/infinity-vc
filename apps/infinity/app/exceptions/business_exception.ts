@@ -138,21 +138,19 @@ export default class BusinessException extends Exception {
     )
   }
 
-  /**
-   * Conversion de la sévérité pour Sentry
-   */
-  private getSentryLevel(): string {
-    switch (this.metadata.severity) {
-      case ErrorSeverity.LOW:
-        return 'info'
-      case ErrorSeverity.MEDIUM:
-        return 'warning'
-      case ErrorSeverity.HIGH:
-        return 'error'
-      case ErrorSeverity.CRITICAL:
-        return 'fatal'
-      default:
-        return 'error'
-    }
-  }
+  // TODO: Use for Sentry integration
+  // private getSentryLevel(): string {
+  //   switch (this.metadata.severity) {
+  //     case ErrorSeverity.LOW:
+  //       return 'info'
+  //     case ErrorSeverity.MEDIUM:
+  //       return 'warning'
+  //     case ErrorSeverity.HIGH:
+  //       return 'error'
+  //     case ErrorSeverity.CRITICAL:
+  //       return 'fatal'
+  //     default:
+  //       return 'error'
+  //   }
+  // }
 }

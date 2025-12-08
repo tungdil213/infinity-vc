@@ -9,7 +9,18 @@ import { InMemoryPlayerRepository } from '../../infrastructure/repositories/in_m
 import { InMemoryGameRepository } from '../../infrastructure/repositories/in_memory_game_repository.js'
 import { PlayerFactory } from '../factories/player_factory.js'
 import { LobbyStatus } from '../../domain/value_objects/lobby_status.js'
-import { LobbyNotificationService } from '../../application/services/lobby_notification_service.js'
+
+// Mock services for testing
+const mockNotificationService = {
+  notifyPlayerLeft: async () => Promise.resolve(),
+  notifyPlayerJoined: async () => Promise.resolve(),
+  notifyGameStarted: async () => Promise.resolve(),
+}
+
+const mockEventService = {
+  emitLobbyDeleted: async () => Promise.resolve(),
+  emitLobbyUpdated: async () => Promise.resolve(),
+}
 
 test.group('Lobby Use Cases Integration', () => {
   let lobbyRepository: InMemoryLobbyRepository
@@ -26,17 +37,26 @@ test.group('Lobby Use Cases Integration', () => {
     playerRepository = new InMemoryPlayerRepository()
     gameRepository = new InMemoryGameRepository()
 
-    // Create a real notification service instance for testing
-    const notificationService = new LobbyNotificationService()
-
     createLobbyUseCase = new CreateLobbyUseCase(
       playerRepository,
       lobbyRepository,
-      notificationService
+      mockNotificationService as any
     )
-    joinLobbyUseCase = new JoinLobbyUseCase(playerRepository, lobbyRepository, notificationService)
-    leaveLobbyUseCase = new LeaveLobbyUseCase(lobbyRepository)
-    startGameUseCase = new StartGameUseCase(lobbyRepository, gameRepository)
+    joinLobbyUseCase = new JoinLobbyUseCase(
+      playerRepository,
+      lobbyRepository,
+      mockNotificationService as any
+    )
+    leaveLobbyUseCase = new LeaveLobbyUseCase(
+      lobbyRepository,
+      mockNotificationService as any,
+      mockEventService as any
+    )
+    startGameUseCase = new StartGameUseCase(
+      lobbyRepository,
+      gameRepository,
+      mockNotificationService as any
+    )
     listLobbiesUseCase = new ListLobbiesUseCase(lobbyRepository)
   }
 

@@ -33,9 +33,9 @@ export default class LobbyController {
       return response.status(200).json({
         success: true,
         message: 'Lobbies retrieved successfully',
-        data: result.lobbies,
+        data: result.value.lobbies,
         meta: {
-          total: result.total,
+          total: result.value.total,
         },
       })
     } catch (error) {
@@ -51,7 +51,7 @@ export default class LobbyController {
    * POST /lobbies
    * Create a new lobby
    */
-  async create({ request, response, auth }: HttpContext) {
+  async create({ request, response, auth: _auth }: HttpContext) {
     try {
       // TODO: Get user UUID from auth
       // const userUuid = auth.user!.uuid
@@ -104,7 +104,7 @@ export default class LobbyController {
    * POST /lobbies/:lobbyId/join
    * Join a lobby
    */
-  async join({ params, request, response, auth }: HttpContext) {
+  async join({ params, request, response, auth: _auth }: HttpContext) {
     try {
       // TODO: Get user UUID from auth
       // const userUuid = auth.user!.uuid
@@ -134,7 +134,7 @@ export default class LobbyController {
    * POST /lobbies/:lobbyId/leave
    * Leave a lobby
    */
-  async leave({ params, request, response, auth }: HttpContext) {
+  async leave({ params, request, response, auth: _auth }: HttpContext) {
     try {
       // TODO: Get user UUID from auth
       // const userUuid = auth.user!.uuid
@@ -147,9 +147,9 @@ export default class LobbyController {
 
       return response.status(200).json({
         success: true,
-        message: result.message,
+        message: 'Left lobby successfully',
         data: {
-          lobbyDeleted: result.lobbyDeleted,
+          lobbyDeleted: result.value.lobbyDeleted,
         },
       })
     } catch (error) {
@@ -166,7 +166,7 @@ export default class LobbyController {
    * POST /lobbies/:lobbyId/start
    * Start a game from lobby
    */
-  async start({ params, request, response, auth }: HttpContext) {
+  async start({ params, request, response, auth: _auth }: HttpContext) {
     try {
       // TODO: Get user UUID from auth
       // const userUuid = auth.user!.uuid
@@ -180,8 +180,8 @@ export default class LobbyController {
       return response.status(201).json({
         success: true,
         message: 'Game started successfully',
-        data: result,
-        redirectUrl: `/games/${result.game.uuid}`,
+        data: result.value,
+        redirectUrl: `/games/${result.value.game.uuid}`,
       })
     } catch (error) {
       const statusCode = error.message.includes('not found')

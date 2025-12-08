@@ -1,5 +1,6 @@
 import { HttpContext } from '@adonisjs/core/http'
 import BusinessException from '#exceptions/business_exception'
+import { ErrorClassification, ErrorSeverity } from '#exceptions/types/error_classification'
 import { inject } from '@adonisjs/core'
 import { CreateLobbyUseCase } from '../application/use_cases/create_lobby_use_case.js'
 import { JoinLobbyUseCase } from '../application/use_cases/join_lobby_use_case.js'
@@ -34,8 +35,8 @@ export default class LobbiesController {
 
     const result = await this.listLobbiesUseCase.execute({
       status,
-      isPrivate: isPrivate ? Boolean(isPrivate) : undefined,
-      hasAvailableSlots: hasAvailableSlots ? Boolean(hasAvailableSlots) : undefined,
+      includePrivate: isPrivate ? Boolean(isPrivate) : undefined,
+      hasSlots: hasAvailableSlots ? Boolean(hasAvailableSlots) : undefined,
     })
 
     if (result.isFailure) {
@@ -48,7 +49,7 @@ export default class LobbiesController {
       lobbies: result.value.lobbies,
       total: result.value.total,
       user: {
-        uuid: user.id,
+        uuid: user.uuid,
         nickName: user.fullName,
       },
     })
@@ -62,7 +63,7 @@ export default class LobbiesController {
 
     return inertia.render('create-lobby', {
       user: {
-        uuid: user.id,
+        uuid: user.uuid,
         nickName: user.fullName,
       },
     })
@@ -83,7 +84,7 @@ export default class LobbiesController {
       name,
       maxPlayers: Number.parseInt(maxPlayers),
       isPrivate,
-      userUuid: user.id,
+      userUuid: user.uuid,
     })
 
     if (result.isFailure) {
@@ -116,7 +117,7 @@ export default class LobbiesController {
     return inertia.render('lobby', {
       lobby: result.value,
       user: {
-        uuid: user.id,
+        uuid: user.uuid,
         nickName: user.fullName,
       },
     })
@@ -130,7 +131,7 @@ export default class LobbiesController {
     const { uuid } = params
 
     const result = await this.joinLobbyUseCase.execute({
-      userUuid: user.id,
+      userUuid: user.uuid,
       lobbyUuid: uuid,
     })
 
@@ -156,10 +157,10 @@ export default class LobbiesController {
     })
 
     if (result.isFailure) {
-      throw new BusinessException({
-        classification: 'user_safe',
-        severity: 'medium',
-        userMessage: result.error,
+      throw new BusinessException(result.error || 'Failed to leave lobby', {
+        classification: ErrorClassification.USER_SAFE,
+        severity: ErrorSeverity.MEDIUM,
+        userMessage: result.error || 'Failed to leave lobby',
       })
     }
 
@@ -194,7 +195,7 @@ export default class LobbiesController {
 
     const result = await this.startGameUseCase.execute({
       lobbyUuid: uuid,
-      userUuid: user.id,
+      userUuid: user.uuid,
     })
 
     if (result.isFailure) {
@@ -236,8 +237,8 @@ export default class LobbiesController {
 
     const result = await this.listLobbiesUseCase.execute({
       status,
-      isPrivate: isPrivate ? Boolean(isPrivate) : undefined,
-      hasAvailableSlots: hasAvailableSlots ? Boolean(hasAvailableSlots) : undefined,
+      includePrivate: isPrivate ? Boolean(isPrivate) : undefined,
+      hasSlots: hasAvailableSlots ? Boolean(hasAvailableSlots) : undefined,
     })
 
     if (result.isFailure) {
@@ -259,7 +260,7 @@ export default class LobbiesController {
 
     const result = await this.kickPlayerUseCase.execute({
       lobbyUuid: uuid,
-      kickerUuid: user.id,
+      kickerUuid: user.uuid,
       targetPlayerUuid: playerUuid,
     })
 
@@ -282,7 +283,7 @@ export default class LobbiesController {
 
     const result = await this.updateLobbySettingsUseCase.execute({
       lobbyUuid: uuid,
-      updaterUuid: user.id,
+      updaterUuid: user.uuid,
       settings: {
         name,
         maxPlayers: maxPlayers ? Number.parseInt(maxPlayers) : undefined,
@@ -309,7 +310,7 @@ export default class LobbiesController {
 
     const result = await this.setPlayerReadyUseCase.execute({
       lobbyUuid: uuid,
-      playerUuid: user.id,
+      playerUuid: user.uuid,
       isReady: Boolean(isReady),
     })
 

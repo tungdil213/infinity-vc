@@ -21,7 +21,7 @@ export class LobbyEventService {
     const event = new LobbyCreatedEvent(lobby.uuid, lobby.name, lobby.createdBy, lobby.maxPlayers)
 
     // Émettre l'événement domain
-    eventBus.emit('LobbyCreated', event)
+    await eventBus.publish(event)
 
     // Diffuser via SSE pour mise à jour temps réel des listes
     await sseService.broadcastGlobal({
@@ -45,19 +45,6 @@ export class LobbyEventService {
   }
 
   /**
-   * Émet un événement de suppression de lobby
-   */
-  async emitLobbyDeleted(lobbyUuid: string): Promise<void> {
-    // Diffuser globalement pour les listes de lobbies
-    await sseService.broadcastGlobal({
-      type: 'lobby.deleted',
-      data: {
-        lobbyUuid,
-      },
-    })
-  }
-
-  /**
    * Émet un événement de mise à jour de lobby
    */
   async emitLobbyUpdated(lobby: Lobby): Promise<void> {
@@ -71,7 +58,7 @@ export class LobbyEventService {
     )
 
     // Émettre l'événement domain
-    eventBus.emit('LobbyUpdated', event)
+    await eventBus.publish(event)
 
     // Diffuser via SSE
     await sseService.broadcastToLobby(lobby.uuid, {
@@ -122,7 +109,7 @@ export class LobbyEventService {
     const event = new LobbyDeletedEvent(lobbyUuid, reason)
 
     // Émettre l'événement domain
-    eventBus.emit('LobbyDeleted', event)
+    await eventBus.publish(event)
 
     // Diffuser via SSE
     await sseService.broadcastToLobby(lobbyUuid, {

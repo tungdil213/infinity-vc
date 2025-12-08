@@ -1,5 +1,5 @@
 import router from '@adonisjs/core/services/router'
-import { middleware } from './kernel.js'
+import { middleware } from '#start/kernel'
 
 // SSE routes - all require authentication
 router

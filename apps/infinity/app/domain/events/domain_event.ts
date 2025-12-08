@@ -5,10 +5,11 @@ export interface DomainEvent<T = any> {
 }
 
 export abstract class BaseDomainEvent<T = any> implements DomainEvent<T> {
-  readonly timestamp: Date = new Date()
+  abstract readonly eventType: string
+  readonly timestamp: Date
+  readonly data?: T
 
-  constructor(
-    public readonly eventType: string,
-    public readonly data?: T
-  ) {}
+  constructor(timestamp?: Date) {
+    this.timestamp = timestamp ?? new Date()
+  }
 }

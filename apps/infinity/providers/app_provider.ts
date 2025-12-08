@@ -17,6 +17,7 @@ import { ShowLobbyUseCase } from '#application/use_cases/show_lobby_use_case'
 import { KickPlayerUseCase } from '#application/use_cases/kick_player_use_case'
 import { UpdateLobbySettingsUseCase } from '#application/use_cases/update_lobby_settings_use_case'
 import { SetPlayerReadyUseCase } from '#application/use_cases/set_player_ready_use_case'
+import { LobbyEventService } from '#application/services/lobby_event_service'
 import LobbyController from '#controllers/lobby_controller'
 
 export default class AppProvider {
@@ -57,6 +58,12 @@ export default class AppProvider {
       return new TransmitLobbyService()
     })
 
+    // Register LobbyEventService
+    this.app.container.singleton(LobbyEventService, async (resolver) => {
+      const hybridLobbyService = await resolver.make(HybridLobbyService)
+      return new LobbyEventService(hybridLobbyService)
+    })
+
     // Register use cases as singletons with dependency injection
     this.app.container.singleton(RegisterUserUseCase, async (resolver) => {
       const userRepository = await resolver.make(DatabaseUserRepository)
@@ -88,7 +95,8 @@ export default class AppProvider {
     this.app.container.singleton(LeaveLobbyUseCase, async (resolver) => {
       const hybridLobbyService = await resolver.make(HybridLobbyService)
       const notificationService = await resolver.make(TransmitLobbyService)
-      return new LeaveLobbyUseCase(hybridLobbyService, notificationService)
+      const eventService = await resolver.make(LobbyEventService)
+      return new LeaveLobbyUseCase(hybridLobbyService, notificationService, eventService)
     })
 
     this.app.container.singleton(StartGameUseCase, async (resolver) => {

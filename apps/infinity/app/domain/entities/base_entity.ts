@@ -1,5 +1,3 @@
-import { DomainEvent } from '../events/lobby_events.js'
-
 export abstract class BaseEntity {
   private _domainEvents: any[] = []
 

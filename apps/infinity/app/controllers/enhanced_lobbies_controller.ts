@@ -1,6 +1,6 @@
 import { HttpContext } from '@adonisjs/core/http'
 import { inject } from '@adonisjs/core'
-import crypto from 'node:crypto'
+// import crypto from 'node:crypto' // TODO: Use for invitation codes
 import { CreateLobbyUseCase } from '../application/use_cases/create_lobby_use_case.js'
 import { JoinLobbyUseCase } from '../application/use_cases/join_lobby_use_case.js'
 import { LeaveLobbyUseCase } from '../application/use_cases/leave_lobby_use_case.js'
@@ -12,11 +12,10 @@ import {
   LobbyCreationException,
   InvalidLobbyConfigurationException,
   LobbyCreationInternalException,
-} from '../exceptions/lobby_exceptions.js'
-import {
-  LobbyNotFoundException,
-  LobbyFullException,
-  InvalidLobbyPasswordException,
+  // LobbyNotFoundException, // TODO: Use these exceptions
+  // LobbyFullException,
+  // InvalidLobbyPasswordException,
+  InvalidLobbyNameException,
 } from '../exceptions/lobby_exceptions.js'
 
 @inject()
@@ -199,8 +198,8 @@ export default class EnhancedLobbiesController {
       // La vérification de lobby existant est maintenant gérée dans le use case
       // qui fait automatiquement quitter l'utilisateur de son lobby actuel
 
-      // Generate invitation code
-      const invitationCode = crypto.randomUUID()
+      // TODO: Generate invitation code for private lobbies
+      // const invitationCode = crypto.randomUUID()
 
       const result = await this.createLobbyUseCase.execute({
         userUuid: user.userUuid,
@@ -309,9 +308,10 @@ export default class EnhancedLobbiesController {
   /**
    * Join a lobby by invitation code
    */
-  async joinByInvite({ params, request, response, auth, session }: HttpContext) {
+  async joinByInvite({ params, response, auth, session }: HttpContext) {
     const { invitationCode } = params
-    const { password } = request.only(['password'])
+    // TODO: Use password for private lobbies
+    // const { password } = request.only(['password']) // request removed from destructuring
     const user = auth.user!
 
     try {
@@ -460,7 +460,7 @@ export default class EnhancedLobbiesController {
     try {
       const result = await this.startGameUseCase.execute({
         lobbyUuid: uuid,
-        initiatedBy: user.userUuid,
+        userUuid: user.userUuid,
       })
 
       if (result.isFailure) {
@@ -527,7 +527,7 @@ export default class EnhancedLobbiesController {
 
       const result = await this.leaveLobbyUseCase.execute({
         lobbyUuid: uuid,
-        playerUuid: playerUuid,
+        userUuid: playerUuid,
       })
 
       if (result.isFailure) {
@@ -655,7 +655,7 @@ export default class EnhancedLobbiesController {
       }
 
       const { lobbyUuid, userUuid } = request.body()
-      
+
       // Validate that the user can only leave their own sessions
       if (userUuid !== user.userUuid) {
         return response.status(403).json({ error: 'Forbidden' })
@@ -667,7 +667,9 @@ export default class EnhancedLobbiesController {
       })
 
       if (result.isFailure) {
-        console.log(`Leave on close failed for user ${user.userUuid} in lobby ${lobbyUuid}: ${result.error}`)
+        console.log(
+          `Leave on close failed for user ${user.userUuid} in lobby ${lobbyUuid}: ${result.error}`
+        )
         return response.status(400).json({ error: result.error })
       }
 

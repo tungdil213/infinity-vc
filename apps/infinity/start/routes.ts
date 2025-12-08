@@ -78,13 +78,17 @@ router
   .post('/lobbies/join/:invitationCode', '#controllers/enhanced_lobbies_controller.joinByInvite')
   .as('lobbies.join.invite')
 
-// API routes
+// API Auth routes (no auth middleware, returns authenticated flag)
 router
   .group(() => {
-    // Auth API
     router.get('/auth/me', '#controllers/enhanced_auth_controller.me').as('api.auth.me')
     router.get('/auth/check', '#controllers/enhanced_auth_controller.check').as('api.auth.check')
+  })
+  .prefix('/api/v1')
 
+// API routes - protected by auth middleware
+router
+  .group(() => {
     // Lobbies API
     router
       .get('/lobbies', '#controllers/enhanced_lobbies_controller.apiIndex')

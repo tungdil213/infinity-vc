@@ -3,7 +3,6 @@ import Lobby from '../../../domain/entities/lobby.js'
 import { LobbyStatus } from '../../../domain/value_objects/lobby_status.js'
 import { LobbyFactory } from '../../factories/lobby_factory.js'
 import { PlayerFactory } from '../../factories/player_factory.js'
-import { describe, beforeEach, it } from 'node:test'
 
 test.group('Lobby Entity', () => {
   test.group('creation', () => {

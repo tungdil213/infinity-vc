@@ -16,12 +16,12 @@ export class UserSerializer {
    */
   static toDto(user: User): UserDto {
     return {
-      userUuid: user.userUuid,
+      userUuid: user.uuid,
       fullName: user.fullName,
       email: user.email,
-      isArchived: user.isArchived,
+      isArchived: false, // Domain entity doesn't track archive status
       createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
+      updatedAt: user.createdAt, // Use createdAt as fallback
     }
   }
 
@@ -30,7 +30,7 @@ export class UserSerializer {
    */
   static toPlayerDto(user: User): PlayerDto {
     return {
-      uuid: user.userUuid,
+      uuid: user.uuid,
       nickName: user.fullName,
       email: user.email,
       isOnline: true, // TODO: Implement online status
@@ -46,7 +46,7 @@ export class UserSerializer {
     message: string = 'User registered successfully'
   ): RegisterUserResponseDto {
     return {
-      userUuid: user.userUuid,
+      userUuid: user.uuid,
       fullName: user.fullName,
       email: user.email,
       message,
@@ -62,7 +62,7 @@ export class UserSerializer {
     message: string = 'Authentication successful'
   ): AuthenticateUserResponseDto {
     return {
-      userUuid: user.userUuid,
+      userUuid: user.uuid,
       fullName: user.fullName,
       email: user.email,
       token,

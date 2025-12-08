@@ -292,7 +292,7 @@ export class GameActionUseCase {
     }
   }
 
-  private async handleEndTurn(game: any, player: Player): Promise<Result<GameActionResponse>> {
+  private async handleEndTurn(game: any, _player: Player): Promise<Result<GameActionResponse>> {
     try {
       // Passer au joueur suivant
       const previousPlayer = game.currentPlayer

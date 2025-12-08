@@ -1,5 +1,5 @@
 import { BaseDomainEvent } from './domain_event.js'
-import { Player } from '../value_objects/player.js'
+import Player from '../entities/player.js'
 
 export enum GameEventType {
   GAME_STARTED = 'GameStarted',

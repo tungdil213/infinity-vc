@@ -1,5 +1,4 @@
 import { BaseEntity } from './base_entity.js'
-import { PlayerInterface } from '../interfaces/player_interface.js'
 import { DomainValidationException } from '../../exceptions/domain_exceptions.js'
 
 export interface UserData {
@@ -75,6 +74,7 @@ export default class User extends BaseEntity {
       username,
       email,
       password,
+      false, // isEmailVerified
       avatarUrl,
       emailVerifiedAt,
       createdAt || new Date()

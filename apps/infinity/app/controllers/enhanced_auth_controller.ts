@@ -1,40 +1,33 @@
 import { HttpContext } from '@adonisjs/core/http'
 import { inject } from '@adonisjs/core'
 import { RegisterUserUseCase } from '#application/use_cases/register_user_use_case'
-import AuthenticateUserUseCase from '#application/use_cases/authenticate_user_use_case'
-import { DatabaseUserRepository } from '#infrastructure/repositories/database_user_repository'
+// import AuthenticateUserUseCase from '#application/use_cases/authenticate_user_use_case' // TODO: Use
+// import { DatabaseUserRepository } from '#infrastructure/repositories/database_user_repository' // TODO: Use
 import User from '#models/user'
 import hash from '@adonisjs/core/services/hash'
 import app from '@adonisjs/core/services/app'
 
 @inject()
 export default class EnhancedAuthController {
-  constructor(
-    private userRepository: DatabaseUserRepository,
-    private authenticateUserUseCase: AuthenticateUserUseCase
-  ) {}
+  // TODO: Inject these when needed
+  // constructor(
+  //   private userRepository: DatabaseUserRepository,
+  //   private authenticateUserUseCase: AuthenticateUserUseCase
+  // ) {}
 
   /**
    * Show login form
    */
-  async showLogin({ inertia, request, auth }: HttpContext) {
+  async showLogin({ inertia, request }: HttpContext) {
     const redirect = request.input('redirect', '/lobbies')
-    const user = auth.user
 
     // Check if user is currently in a lobby
-    const currentLobby = user ? await this.userRepository.findCurrentLobby(user.userUuid) : null
+    // TODO: Implement findCurrentLobby in UserRepository
+    // const currentLobby = user ? await this.userRepository.findCurrentLobby(user.userUuid) : null
 
     return inertia.render('auth/login', {
       redirect,
-      currentLobby: currentLobby
-        ? {
-            uuid: currentLobby.uuid,
-            name: currentLobby.name,
-            status: currentLobby.status,
-            currentPlayers: currentLobby.players?.length || 0,
-            maxPlayers: currentLobby.maxPlayers,
-          }
-        : null,
+      currentLobby: null, // Feature not yet implemented
     })
   }
 
@@ -202,17 +195,22 @@ export default class EnhancedAuthController {
 
   /**
    * Get current user profile (API)
+   * Always returns 200 with an `authenticated` flag and `user` payload or null.
    */
   async me({ response, auth }: HttpContext) {
     try {
+      await auth.authenticate()
       const user = auth.user
+
       if (!user) {
-        return response.status(401).json({
-          error: 'Not authenticated',
+        return response.status(200).json({
+          authenticated: false,
+          user: null,
         })
       }
 
-      return response.json({
+      return response.status(200).json({
+        authenticated: true,
         user: {
           uuid: user.userUuid,
           fullName: user.fullName,
@@ -222,20 +220,23 @@ export default class EnhancedAuthController {
       })
     } catch (error) {
       console.error('Profile error:', error)
-      return response.status(500).json({
-        error: 'Failed to retrieve profile',
+      return response.status(200).json({
+        authenticated: false,
+        user: null,
       })
     }
   }
 
   /**
    * Check authentication status (API)
+   * Always returns 200 with an `authenticated` flag and `user` payload or null.
    */
   async check({ response, auth }: HttpContext) {
     try {
+      await auth.authenticate()
       const user = auth.user
 
-      return response.json({
+      return response.status(200).json({
         authenticated: !!user,
         user: user
           ? {
@@ -247,8 +248,9 @@ export default class EnhancedAuthController {
       })
     } catch (error) {
       console.error('Auth check error:', error)
-      return response.status(500).json({
-        error: 'Failed to check authentication',
+      return response.status(200).json({
+        authenticated: false,
+        user: null,
       })
     }
   }

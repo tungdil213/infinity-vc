@@ -1,15 +1,5 @@
-import { beforeEach, afterEach } from '@jest/globals'
-
-// Global test setup
-beforeEach(() => {
-  // Reset any global state before each test
-  // This ensures test isolation
-})
-
-afterEach(() => {
-  // Clean up after each test
-  // Clear any timers, mocks, etc.
-})
+// Global test setup for Japa test runner
+// Note: Japa handles test lifecycle differently from Jest
 
 // Mock crypto.randomUUID for consistent testing
 if (!global.crypto) {

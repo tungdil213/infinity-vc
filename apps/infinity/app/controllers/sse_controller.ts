@@ -9,7 +9,7 @@ export default class SSEController {
    * Establish SSE connection for a user
    * GET /api/v1/sse/connect
    */
-  async connect({ request, response, auth }: HttpContext) {
+  async connect({ response, auth }: HttpContext) {
     try {
       // Authenticate user (assuming JWT middleware is applied)
       const user = auth.user

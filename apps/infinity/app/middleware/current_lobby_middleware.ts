@@ -23,16 +23,16 @@ export default class CurrentLobbyMiddleware {
                 currentPlayers: currentLobby.players.length,
                 maxPlayers: currentLobby.maxPlayers,
               }
-            : null,
+            : (null as any),
         })
       } catch (error) {
         console.error('Error fetching current lobby in middleware:', error)
         // Don't block the request if lobby fetch fails
-        inertia.share({ currentLobby: null })
+        inertia.share({ currentLobby: null as any })
       }
     } else {
       // For non-authenticated users
-      inertia.share({ currentLobby: null })
+      inertia.share({ currentLobby: null as any })
     }
 
     await next()

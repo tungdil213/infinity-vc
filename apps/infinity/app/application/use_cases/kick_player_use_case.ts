@@ -3,6 +3,7 @@ import type { LobbyRepository } from '../repositories/lobby_repository.js'
 import type { PlayerRepository } from '../repositories/player_repository.js'
 import type { DomainEventPublisher } from '../services/domain_event_publisher.js'
 import { Result } from '../../domain/shared/result.js'
+import { LobbyStatus } from '../../domain/value_objects/lobby_status.js'
 import { PlayerKickedEvent } from '../../domain/events/lobby_events.js'
 import Player from '../../domain/entities/player.js'
 
@@ -44,7 +45,7 @@ export class KickPlayerUseCase {
       }
 
       // Vérifier que le lobby n'est pas en cours de jeu
-      if (lobby.status === 'IN_PROGRESS') {
+      if (lobby.status === LobbyStatus.STARTING) {
         return Result.fail('Cannot kick players from a game in progress')
       }
 

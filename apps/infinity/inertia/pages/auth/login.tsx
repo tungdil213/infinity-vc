@@ -4,6 +4,7 @@ import { Button } from '@tyfo.dev/ui/primitives/button'
 import Layout from '../../components/layout'
 
 interface LoginProps {
+  redirect?: string
   errors?: {
     email?: string[]
     password?: string[]
@@ -15,10 +16,11 @@ interface LoginProps {
   }
 }
 
-export default function Login({ errors = {}, flash = {} }: LoginProps) {
+export default function Login({ errors = {}, flash = {}, redirect = '/lobbies' }: LoginProps) {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    redirect,
   })
   const [isLoading, setIsLoading] = useState(false)
 

@@ -1,5 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import RegisterUserUseCase from '../application/use_cases/register_user_use_case.js'
+import { RegisterUserUseCase } from '../application/use_cases/register_user_use_case.js'
 import AuthenticateUserUseCase from '../application/use_cases/authenticate_user_use_case.js'
 
 export default class AuthController {
@@ -46,7 +46,7 @@ export default class AuthController {
    * POST /auth/login
    * Authenticate user
    */
-  async login({ request, response, auth }: HttpContext) {
+  async login({ request, response, auth: _auth }: HttpContext) {
     try {
       const { email, password } = request.only(['email', 'password'])
 
@@ -74,7 +74,7 @@ export default class AuthController {
    * POST /auth/logout
    * Logout user
    */
-  async logout({ response, auth }: HttpContext) {
+  async logout({ response, auth: _auth }: HttpContext) {
     try {
       // TODO: Logout with AdonisJS auth
       // await auth.use('web').logout()
@@ -96,7 +96,7 @@ export default class AuthController {
    * GET /auth/me
    * Get current user profile
    */
-  async me({ response, auth }: HttpContext) {
+  async me({ response, auth: _auth }: HttpContext) {
     try {
       // TODO: Get current user from auth
       // const user = auth.user

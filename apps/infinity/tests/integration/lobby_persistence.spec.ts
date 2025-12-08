@@ -15,12 +15,19 @@ test.group('Lobby Persistence Integration', (group) => {
   let gameRepo: DatabaseGameRepository
   let startGameUseCase: StartGameUseCase
 
+  // Mock notification service
+  const mockNotificationService = {
+    notifyPlayerLeft: async () => Promise.resolve(),
+    notifyPlayerJoined: async () => Promise.resolve(),
+    notifyGameStarted: async () => Promise.resolve(),
+  }
+
   group.setup(async () => {
     inMemoryRepo = new InMemoryLobbyRepository()
     databaseRepo = new DatabaseLobbyRepository()
     gameRepo = new DatabaseGameRepository()
     hybridService = new HybridLobbyService(inMemoryRepo, databaseRepo)
-    startGameUseCase = new StartGameUseCase(hybridService, gameRepo)
+    startGameUseCase = new StartGameUseCase(hybridService, gameRepo, mockNotificationService as any)
   })
 
   group.each.teardown(async () => {
@@ -101,7 +108,7 @@ test.group('Lobby Persistence Integration', (group) => {
     // Note: Le lobby est supprimé après création de la partie,
     // mais on peut vérifier que la partie a été créée
     assert.isDefined(result.value)
-    assert.equal(result.value.players.length, 2)
+    assert.equal(result.value.game.players.length, 2)
   })
 
   test('server restart simulation - in-memory lobbies should be lost', async ({ assert }) => {

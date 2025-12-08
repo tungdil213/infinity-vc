@@ -1,13 +1,13 @@
 import { HttpContext } from '@adonisjs/core/http'
 import { inject } from '@adonisjs/core'
-import { GameRepository } from '../domain/repositories/game_repository.js'
-import { UserRepository } from '../domain/repositories/user_repository.js'
+import * as GameRepo from '../application/repositories/game_repository.js'
+// import * as UserRepo from '../application/repositories/user_repository.js' // TODO: Use
 
 @inject()
 export default class GamesController {
   constructor(
-    private gameRepository: GameRepository,
-    private userRepository: UserRepository
+    private gameRepository: GameRepo.GameRepository
+    // TODO: Inject UserRepository when needed
   ) {}
 
   /**
@@ -33,7 +33,7 @@ export default class GamesController {
     }
 
     return inertia.render('game', {
-      game: game.serialize(),
+      game: game.toJSON(),
       user: {
         uuid: user.uuid,
         nickName: user.fullName,
@@ -86,7 +86,7 @@ export default class GamesController {
 
       if (result.isFailure) {
         return response.status(400).json({
-          error: result.error,
+          error: (result as any).error || 'Action failed',
         })
       }
 
@@ -124,15 +124,15 @@ export default class GamesController {
     }
 
     return response.json({
-      game: game.serialize(),
+      game: game.toJSON(),
     })
   }
 
   /**
    * Leave game
    */
-  async leave({ params, response, auth }: HttpContext) {
-    const user = auth.user!
+  async leave({ params, response }: HttpContext) {
+    // TODO: Use auth.user for player validation
     const { uuid } = params
 
     const game = await this.gameRepository.findByUuid(uuid)
@@ -160,7 +160,7 @@ export default class GamesController {
       isFailure: false,
       value: {
         message: 'Sample action performed successfully',
-        gameState: game.serialize(),
+        gameState: game.toJSON(),
       },
     }
   }
@@ -177,7 +177,7 @@ export default class GamesController {
       isFailure: false,
       value: {
         message: 'Turn ended successfully',
-        gameState: game.serialize(),
+        gameState: game.toJSON(),
       },
     }
   }

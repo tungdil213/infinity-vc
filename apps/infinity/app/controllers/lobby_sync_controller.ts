@@ -260,13 +260,9 @@ export default class LobbySyncController {
     }
   }
 
-  /**
-   * Vérifier l'accès d'un utilisateur à un lobby (méthode privée)
-   * TODO: Implémenter la logique métier réelle
-   */
-  private async checkLobbyAccess(_userUuid: string, _lobbyUuid: string): Promise<boolean> {
-    // Pour l'instant, autoriser l'accès à tous les lobbies
-    // Dans une implémentation réelle, vérifier si l'utilisateur est membre du lobby
-    return true
-  }
+  // TODO: Implement lobby access check
+  // private async checkLobbyAccess(userUuid: string, lobbyUuid: string): Promise<boolean> {
+  //   // Dans une implémentation réelle, vérifier si l'utilisateur est membre du lobby
+  //   return true
+  // }
 }

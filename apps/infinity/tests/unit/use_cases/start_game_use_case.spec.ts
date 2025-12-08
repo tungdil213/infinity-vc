@@ -1,6 +1,13 @@
 import { test } from '@japa/runner'
 import { StartGameUseCase } from '../../../app/application/use_cases/start_game_use_case.js'
 
+// Mock notification service
+const mockNotificationService = {
+  notifyPlayerLeft: async () => Promise.resolve(),
+  notifyPlayerJoined: async () => Promise.resolve(),
+  notifyGameStarted: async () => Promise.resolve(),
+}
+
 // Mock repositories
 const mockLobbyRepository = {
   save: async (_lobby: any) => Promise.resolve(),
@@ -42,7 +49,11 @@ test.group('StartGameUseCase', (group) => {
   let startGameUseCase: StartGameUseCase
 
   group.setup(() => {
-    startGameUseCase = new StartGameUseCase(mockLobbyRepository as any, mockGameRepository as any)
+    startGameUseCase = new StartGameUseCase(
+      mockLobbyRepository as any,
+      mockGameRepository as any,
+      mockNotificationService as any
+    )
   })
 
   test('should successfully start a game', async ({ assert }) => {
@@ -118,7 +129,8 @@ test.group('StartGameUseCase', (group) => {
 
     const useCase = new StartGameUseCase(
       mockLobbyWithDifferentCreator as any,
-      mockGameRepository as any
+      mockGameRepository as any,
+      mockNotificationService as any
     )
 
     const request = {
@@ -154,7 +166,11 @@ test.group('StartGameUseCase', (group) => {
       }),
     }
 
-    const useCase = new StartGameUseCase(mockLobbyWithOnePlayer as any, mockGameRepository as any)
+    const useCase = new StartGameUseCase(
+      mockLobbyWithOnePlayer as any,
+      mockGameRepository as any,
+      mockNotificationService as any
+    )
 
     const request = {
       userUuid: 'user-123',
@@ -194,7 +210,8 @@ test.group('StartGameUseCase', (group) => {
 
     const useCase = new StartGameUseCase(
       mockLobbyWithoutRequestingPlayer as any,
-      mockGameRepository as any
+      mockGameRepository as any,
+      mockNotificationService as any
     )
 
     const request = {
@@ -221,7 +238,8 @@ test.group('StartGameUseCase', (group) => {
 
     const useCase = new StartGameUseCase(
       mockLobbyRepositoryNotFound as any,
-      mockGameRepository as any
+      mockGameRepository as any,
+      mockNotificationService as any
     )
 
     const request = {

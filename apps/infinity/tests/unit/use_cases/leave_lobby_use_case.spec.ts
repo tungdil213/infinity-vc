@@ -2,6 +2,19 @@ import { test } from '@japa/runner'
 import { LeaveLobbyUseCase } from '../../../app/application/use_cases/leave_lobby_use_case.js'
 import { LobbyFactory } from '../../factories/lobby_factory.js'
 
+// Mock notification service
+const mockNotificationService = {
+  notifyPlayerLeft: async () => Promise.resolve(),
+  notifyPlayerJoined: async () => Promise.resolve(),
+  notifyGameStarted: async () => Promise.resolve(),
+}
+
+// Mock event service
+const mockEventService = {
+  emitLobbyDeleted: async () => Promise.resolve(),
+  emitLobbyUpdated: async () => Promise.resolve(),
+}
+
 // Mock repositories
 const mockLobbyRepository = {
   save: async (_lobby: any) => Promise.resolve(),
@@ -41,7 +54,7 @@ test.group('LeaveLobbyUseCase', (group) => {
   let leaveLobbyUseCase: LeaveLobbyUseCase
 
   group.setup(() => {
-    leaveLobbyUseCase = new LeaveLobbyUseCase(mockLobbyRepository as any)
+    leaveLobbyUseCase = new LeaveLobbyUseCase(mockLobbyRepository as any, mockNotificationService as any, mockEventService as any)
   })
 
   test('should successfully leave a lobby', async ({ assert }) => {
@@ -112,7 +125,7 @@ test.group('LeaveLobbyUseCase', (group) => {
       }),
     }
 
-    const useCase = new LeaveLobbyUseCase(mockLobbyWithoutPlayer as any)
+    const useCase = new LeaveLobbyUseCase(mockLobbyWithoutPlayer as any, mockNotificationService as any, mockEventService as any)
 
     const request = {
       userUuid: 'user-123',
@@ -149,7 +162,7 @@ test.group('LeaveLobbyUseCase', (group) => {
       }),
     }
 
-    const useCase = new LeaveLobbyUseCase(mockLobbyWithOnePlayer as any)
+    const useCase = new LeaveLobbyUseCase(mockLobbyWithOnePlayer as any, mockNotificationService as any, mockEventService as any)
 
     const request = {
       userUuid: 'user-123',
@@ -187,7 +200,7 @@ test.group('LeaveLobbyUseCase', (group) => {
       }),
     }
 
-    const useCase = new LeaveLobbyUseCase(mockLobbyWithRemoveFailure as any)
+    const useCase = new LeaveLobbyUseCase(mockLobbyWithRemoveFailure as any, mockNotificationService as any, mockEventService as any)
 
     const request = {
       userUuid: 'user-123',
@@ -211,7 +224,7 @@ test.group('LeaveLobbyUseCase', (group) => {
       },
     }
 
-    const useCase = new LeaveLobbyUseCase(mockLobbyRepositoryNotFound as any)
+    const useCase = new LeaveLobbyUseCase(mockLobbyRepositoryNotFound as any, mockNotificationService as any, mockEventService as any)
 
     const request = {
       userUuid: 'user-123',

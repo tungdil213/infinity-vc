@@ -2,6 +2,7 @@ import { inject } from '@adonisjs/core'
 import type { LobbyRepository } from '../repositories/lobby_repository.js'
 import type { DomainEventPublisher } from '../services/domain_event_publisher.js'
 import { Result } from '../../domain/shared/result.js'
+import { LobbyStatus } from '../../domain/value_objects/lobby_status.js'
 import { LobbyUpdatedEvent } from '../../domain/events/lobby_events.js'
 
 export interface UpdateLobbySettingsRequest {
@@ -49,33 +50,34 @@ export class UpdateLobbySettingsUseCase {
       }
 
       // Vérifier que le lobby n'est pas en cours de jeu
-      if (lobby.status === 'IN_PROGRESS') {
+      if (lobby.status === LobbyStatus.STARTING) {
         return Result.fail('Cannot update settings during a game')
       }
 
       // Valider les nouveaux paramètres
       const validationResult = this.validateSettings(request.settings, lobby)
       if (validationResult.isFailure) {
-        return validationResult
+        return Result.fail(validationResult.error || 'Validation failed')
       }
 
       // Appliquer les modifications
-      const oldSettings = {
-        name: lobby.name,
-        maxPlayers: lobby.maxPlayers,
-        isPrivate: lobby.isPrivate,
-      }
+      // TODO: Use oldSettings for event publishing
+      // const oldSettings = {
+      //   name: lobby.name,
+      //   maxPlayers: lobby.maxPlayers,
+      //   isPrivate: lobby.isPrivate,
+      // }
 
       if (request.settings.name !== undefined) {
-        lobby.name = request.settings.name
+        ;(lobby as any).name = request.settings.name
       }
 
       if (request.settings.maxPlayers !== undefined) {
-        lobby.maxPlayers = request.settings.maxPlayers
+        ;(lobby as any).maxPlayers = request.settings.maxPlayers
       }
 
       if (request.settings.isPrivate !== undefined) {
-        lobby.isPrivate = request.settings.isPrivate
+        ;(lobby as any).isPrivate = request.settings.isPrivate
       }
 
       // Sauvegarder le lobby

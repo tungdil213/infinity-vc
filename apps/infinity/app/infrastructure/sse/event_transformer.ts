@@ -4,9 +4,6 @@ import {
   PlayerJoinedLobbyEvent,
   PlayerLeftLobbyEvent,
   GameStartedEvent,
-  LobbyCreatedEvent,
-  LobbyUpdatedEvent,
-  LobbyDeletedEvent,
 } from '../../domain/events/lobby_events.js'
 import crypto from 'node:crypto'
 
@@ -34,17 +31,20 @@ export class LobbyEventTransformer implements EventTransformer {
   getTargetChannels(domainEvent: DomainEvent): string[] {
     switch (domainEvent.eventType) {
       case 'PlayerJoinedLobby':
-      case 'PlayerLeftLobby':
-      case 'GameStarted':
-        const lobbyEvent = domainEvent as
-          | PlayerJoinedLobbyEvent
-          | PlayerLeftLobbyEvent
-          | GameStartedEvent
+      case 'PlayerLeftLobby': {
+        const playerEvent = domainEvent as PlayerJoinedLobbyEvent | PlayerLeftLobbyEvent
         return [
-          ChannelPatterns.lobby(lobbyEvent.lobbyUuid),
-          ChannelPatterns.user(lobbyEvent.player?.uuid || (lobbyEvent as any).players?.[0]?.uuid),
+          ChannelPatterns.lobby(playerEvent.lobbyUuid),
+          ChannelPatterns.user(playerEvent.player?.uuid),
+        ].filter(Boolean) as string[]
+      }
+      case 'GameStarted': {
+        const gameEvent = domainEvent as GameStartedEvent
+        return [
+          ChannelPatterns.lobby(gameEvent.lobbyUuid),
+          ...(gameEvent.players?.map((p) => ChannelPatterns.user(p.uuid)) || []),
         ].filter(Boolean)
-
+      }
       default:
         return []
     }

@@ -8,7 +8,7 @@ export default class GameController {
    * GET /games
    * List games (for a player or all)
    */
-  async index({ request, response, auth }: HttpContext) {
+  async index({ request, response }: HttpContext) {
     try {
       // TODO: Get user UUID from auth
       // const userUuid = auth.user?.uuid
@@ -47,7 +47,7 @@ export default class GameController {
    * GET /games/:gameId
    * Get game details
    */
-  async show({ params, response, auth }: HttpContext) {
+  async show({ params, response }: HttpContext) {
     try {
       const game = await this.gameRepository.findByUuidOrFail(params.gameId)
 
@@ -80,7 +80,7 @@ export default class GameController {
    * POST /games/:gameId/actions
    * Perform a game action
    */
-  async action({ params, request, response, auth }: HttpContext) {
+  async action({ params, request, response }: HttpContext) {
     try {
       // TODO: Get user UUID from auth
       // const userUuid = auth.user!.uuid
@@ -96,7 +96,8 @@ export default class GameController {
         })
       }
 
-      const { action, ...actionData } = request.all()
+      const { action } = request.all()
+      // const actionData = request.except(['action']) // TODO: Use action data
 
       // TODO: Implement game action logic
       // This would involve game rules, card playing, etc.
@@ -128,7 +129,7 @@ export default class GameController {
    * GET /games/:gameId/hand
    * Get player's hand
    */
-  async hand({ params, request, response, auth }: HttpContext) {
+  async hand({ params, request, response }: HttpContext) {
     try {
       // TODO: Get user UUID from auth
       // const userUuid = auth.user!.uuid
@@ -172,7 +173,7 @@ export default class GameController {
    * POST /games/:gameId/pause
    * Pause a game
    */
-  async pause({ params, request, response, auth }: HttpContext) {
+  async pause({ params, response }: HttpContext) {
     try {
       // TODO: Get user UUID from auth and check permissions
       const game = await this.gameRepository.findByUuidOrFail(params.gameId)
@@ -201,7 +202,7 @@ export default class GameController {
    * POST /games/:gameId/resume
    * Resume a paused game
    */
-  async resume({ params, request, response, auth }: HttpContext) {
+  async resume({ params, response }: HttpContext) {
     try {
       // TODO: Get user UUID from auth and check permissions
       const game = await this.gameRepository.findByUuidOrFail(params.gameId)

@@ -31,6 +31,19 @@ test.group('Lobby Use Cases Integration', (group) => {
   let startGameUseCase: StartGameUseCase
   let listLobbiesUseCase: ListLobbiesUseCase
 
+  // Mock notification service
+  const mockNotificationService = {
+    notifyPlayerLeft: async () => Promise.resolve(),
+    notifyPlayerJoined: async () => Promise.resolve(),
+    notifyGameStarted: async () => Promise.resolve(),
+  }
+
+  // Mock event service
+  const mockEventService = {
+    emitLobbyDeleted: async () => Promise.resolve(),
+    emitLobbyUpdated: async () => Promise.resolve(),
+  }
+
   group.setup(() => {
     lobbyRepository = new InMemoryLobbyRepository()
     playerRepository = new InMemoryPlayerRepository()
@@ -38,8 +51,16 @@ test.group('Lobby Use Cases Integration', (group) => {
 
     createLobbyUseCase = new CreateLobbyUseCase(playerRepository, lobbyRepository, null as any)
     joinLobbyUseCase = new JoinLobbyUseCase(playerRepository, lobbyRepository, null as any)
-    leaveLobbyUseCase = new LeaveLobbyUseCase(lobbyRepository)
-    startGameUseCase = new StartGameUseCase(lobbyRepository, gameRepository)
+    leaveLobbyUseCase = new LeaveLobbyUseCase(
+      lobbyRepository,
+      mockNotificationService as any,
+      mockEventService as any
+    )
+    startGameUseCase = new StartGameUseCase(
+      lobbyRepository,
+      gameRepository,
+      mockNotificationService as any
+    )
     listLobbiesUseCase = new ListLobbiesUseCase(lobbyRepository)
   })
 

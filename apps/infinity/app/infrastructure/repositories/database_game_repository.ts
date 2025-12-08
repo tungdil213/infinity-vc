@@ -1,5 +1,6 @@
 import { inject } from '@adonisjs/core'
 import { GameRepository } from '../../application/repositories/game_repository.js'
+import { EntityNotFoundError } from '../../application/repositories/base_repository.js'
 import Game from '../../domain/entities/game.js'
 import { GameStatus } from '../../domain/value_objects/game_status.js'
 import GameModel from '../../models/game_model.js'
@@ -7,6 +8,14 @@ import { DateTime } from 'luxon'
 
 @inject()
 export class DatabaseGameRepository implements GameRepository {
+  async findByUuidOrFail(uuid: string): Promise<Game> {
+    const game = await this.findByUuid(uuid)
+    if (!game) {
+      throw new EntityNotFoundError('Game', uuid)
+    }
+    return game
+  }
+
   async save(game: Game): Promise<void> {
     const serialized = game.toJSON()
 
@@ -72,6 +81,51 @@ export class DatabaseGameRepository implements GameRepository {
 
   async delete(uuid: string): Promise<void> {
     await GameModel.query().where('uuid', uuid).update({ deleted_at: true })
+  }
+
+  async findActiveGames(): Promise<Game[]> {
+    const models = await GameModel.query()
+      .whereIn('status', [GameStatus.IN_PROGRESS, GameStatus.PAUSED])
+      .where('deleted_at', false)
+      .orderBy('started_at', 'desc')
+
+    return models.map((model) => this.toDomainEntity(model))
+  }
+
+  async findFinishedGames(): Promise<Game[]> {
+    const models = await GameModel.query()
+      .where('status', GameStatus.FINISHED)
+      .where('deleted_at', false)
+      .orderBy('started_at', 'desc')
+
+    return models.map((model) => this.toDomainEntity(model))
+  }
+
+  async findRecentGames(limit: number = 10): Promise<Game[]> {
+    const models = await GameModel.query()
+      .where('deleted_at', false)
+      .orderBy('started_at', 'desc')
+      .limit(limit)
+
+    return models.map((model) => this.toDomainEntity(model))
+  }
+
+  async countGamesByPlayer(playerUuid: string): Promise<number> {
+    const result = await GameModel.query()
+      .whereJsonSuperset('players', [{ uuid: playerUuid }])
+      .where('deleted_at', false)
+      .count('* as total')
+
+    return Number((result[0] as any)?.total ?? 0)
+  }
+
+  async countWinsByPlayer(playerUuid: string): Promise<number> {
+    const result = await GameModel.query()
+      .where('winner_uuid', playerUuid)
+      .where('deleted_at', false)
+      .count('* as total')
+
+    return Number((result[0] as any)?.total ?? 0)
   }
 
   private toDomainEntity(model: GameModel): Game {

@@ -59,4 +59,14 @@ export default class User extends BaseModel {
   get isDeleted(): boolean {
     return this.deletedAt !== null
   }
+
+  // Alias for userUuid for backwards compatibility
+  get uuid(): string {
+    return this.userUuid
+  }
+
+  // Alias for fullName for backwards compatibility with Player interface
+  get nickName(): string | null {
+    return this.fullName
+  }
 }
