@@ -18,7 +18,6 @@ import { KickPlayerUseCase } from '#application/use_cases/kick_player_use_case'
 import { UpdateLobbySettingsUseCase } from '#application/use_cases/update_lobby_settings_use_case'
 import { SetPlayerReadyUseCase } from '#application/use_cases/set_player_ready_use_case'
 import { LobbyEventService } from '#application/services/lobby_event_service'
-import LobbyController from '#controllers/lobby_controller'
 
 export default class AppProvider {
   constructor(protected app: ApplicationService) {}
@@ -131,24 +130,6 @@ export default class AppProvider {
       const hybridLobbyService = await resolver.make(HybridLobbyService)
       const playerRepository = await resolver.make(DatabasePlayerRepository)
       return new SetPlayerReadyUseCase(hybridLobbyService, playerRepository, null as any)
-    })
-
-    // Register controllers
-    this.app.container.singleton(LobbyController, async (resolver) => {
-      const createLobbyUseCase = await resolver.make(CreateLobbyUseCase)
-      const joinLobbyUseCase = await resolver.make(JoinLobbyUseCase)
-      const leaveLobbyUseCase = await resolver.make(LeaveLobbyUseCase)
-      const listLobbiesUseCase = await resolver.make(ListLobbiesUseCase)
-      const startGameUseCase = await resolver.make(StartGameUseCase)
-      const hybridLobbyService = await resolver.make(HybridLobbyService)
-      return new LobbyController(
-        createLobbyUseCase,
-        joinLobbyUseCase,
-        leaveLobbyUseCase,
-        listLobbiesUseCase,
-        startGameUseCase,
-        hybridLobbyService
-      )
     })
   }
 }

@@ -1,10 +1,16 @@
-import { eventBus } from '../events/event_bus.js'
+import { eventBus, type IEvent } from '../events/event_bus.js'
 import { sseConnectionManager } from './connection_manager.js'
 import { channelManager } from './channel_manager.js'
 import { eventTransformer } from './event_transformer.js'
-import { DomainEvent } from '../../domain/events/domain_event.js'
 import { SSEEvent, ChannelPatterns } from './types.js'
 import crypto from 'node:crypto'
+
+/**
+ * Event with eventType for backward compatibility
+ */
+interface CompatibleEvent extends IEvent {
+  eventType?: string
+}
 
 export class SSEService {
   private isInitialized = false
@@ -21,30 +27,28 @@ export class SSEService {
 
   private subscribeToAllDomainEvents(): void {
     // Subscribe to lobby events
-    eventBus.subscribe('PlayerJoinedLobby', this.handleDomainEvent.bind(this))
-    eventBus.subscribe('PlayerLeftLobby', this.handleDomainEvent.bind(this))
-    eventBus.subscribe('GameStarted', this.handleDomainEvent.bind(this))
+    eventBus.subscribe('PlayerJoinedLobby', (event) => this.handleDomainEvent(event as CompatibleEvent))
+    eventBus.subscribe('PlayerLeftLobby', (event) => this.handleDomainEvent(event as CompatibleEvent))
+    eventBus.subscribe('GameStarted', (event) => this.handleDomainEvent(event as CompatibleEvent))
 
     // Add more event subscriptions as needed
-    // eventBus.subscribe('UserRegistered', this.handleDomainEvent.bind(this))
-    // eventBus.subscribe('GameStateChanged', this.handleDomainEvent.bind(this))
   }
 
-  private async handleDomainEvent(domainEvent: DomainEvent): Promise<void> {
+  private async handleDomainEvent(event: CompatibleEvent): Promise<void> {
     try {
       // Check if we can transform this event
-      if (!eventTransformer.canTransform(domainEvent)) {
+      if (!eventTransformer.canTransform(event)) {
         return
       }
 
       // Transform domain event to SSE events
-      const sseEvents = eventTransformer.transform(domainEvent)
+      const sseEvents = eventTransformer.transform(event)
       if (sseEvents.length === 0) {
         return
       }
 
       // Get target channels
-      const targetChannels = eventTransformer.getTargetChannels(domainEvent)
+      const targetChannels = eventTransformer.getTargetChannels(event)
 
       // Broadcast to each target channel
       for (const channelName of targetChannels) {
@@ -53,8 +57,9 @@ export class SSEService {
         }
       }
 
+      const eventType = event.eventType ?? event.type
       console.log(
-        `Broadcasted ${sseEvents.length} SSE events to ${targetChannels.length} channels for domain event: ${domainEvent.eventType}`
+        `Broadcasted ${sseEvents.length} SSE events to ${targetChannels.length} channels for domain event: ${eventType}`
       )
     } catch (error) {
       console.error('Error handling domain event for SSE:', error)

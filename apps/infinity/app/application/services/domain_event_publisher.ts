@@ -1,23 +1,31 @@
-import { eventBus } from '../../infrastructure/events/event_bus.js'
-import { DomainEvent } from '../../domain/events/domain_event.js'
+import { eventBus, type IEvent } from '../../infrastructure/events/event_bus.js'
+
+/**
+ * Event type that supports both old and new event formats
+ */
+interface PublishableEvent extends IEvent {
+  eventType?: string
+}
 
 export interface DomainEventPublisher {
-  publishEvents(events: DomainEvent[]): Promise<void>
-  publishEvent(event: DomainEvent): Promise<void>
+  publishEvents(events: PublishableEvent[]): Promise<void>
+  publishEvent(event: PublishableEvent): Promise<void>
 }
 
 export class EventBusDomainEventPublisher implements DomainEventPublisher {
-  async publishEvents(events: DomainEvent[]): Promise<void> {
+  async publishEvents(events: PublishableEvent[]): Promise<void> {
     const promises = events.map((event) => this.publishEvent(event))
     await Promise.all(promises)
   }
 
-  async publishEvent(event: DomainEvent): Promise<void> {
+  async publishEvent(event: PublishableEvent): Promise<void> {
     try {
       await eventBus.publish(event)
-      console.log(`Published domain event: ${event.eventType}`)
+      const eventType = event.eventType ?? event.type
+      console.log(`Published domain event: ${eventType}`)
     } catch (error) {
-      console.error(`Failed to publish domain event ${event.eventType}:`, error)
+      const eventType = event.eventType ?? event.type
+      console.error(`Failed to publish domain event ${eventType}:`, error)
       // Don't throw - we don't want event publishing failures to break business logic
     }
   }

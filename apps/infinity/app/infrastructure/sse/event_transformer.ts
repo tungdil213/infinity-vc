@@ -1,5 +1,4 @@
 import { EventTransformer, SSEEvent, ChannelPatterns, SSEEventTypes } from './types.js'
-import { DomainEvent } from '../../domain/events/domain_event.js'
 import {
   PlayerJoinedLobbyEvent,
   PlayerLeftLobbyEvent,
@@ -7,39 +6,49 @@ import {
 } from '../../domain/events/lobby_events.js'
 import crypto from 'node:crypto'
 
-export class LobbyEventTransformer implements EventTransformer {
-  transform(domainEvent: DomainEvent): SSEEvent[] {
-    const events: SSEEvent[] = []
+/**
+ * Get event type from either eventType (legacy) or type (new)
+ */
+function getEventType(event: any): string {
+  return event.eventType ?? event.type
+}
 
-    switch (domainEvent.eventType) {
+export class LobbyEventTransformer implements EventTransformer {
+  transform(event: any): SSEEvent[] {
+    const events: SSEEvent[] = []
+    const eventType = getEventType(event)
+
+    switch (eventType) {
       case 'PlayerJoinedLobby':
-        events.push(...this.transformPlayerJoinedLobby(domainEvent as PlayerJoinedLobbyEvent))
+        events.push(...this.transformPlayerJoinedLobby(event as PlayerJoinedLobbyEvent))
         break
 
       case 'PlayerLeftLobby':
-        events.push(...this.transformPlayerLeftLobby(domainEvent as PlayerLeftLobbyEvent))
+        events.push(...this.transformPlayerLeftLobby(event as PlayerLeftLobbyEvent))
         break
 
       case 'GameStarted':
-        events.push(...this.transformGameStarted(domainEvent as GameStartedEvent))
+        events.push(...this.transformGameStarted(event as GameStartedEvent))
         break
     }
 
     return events
   }
 
-  getTargetChannels(domainEvent: DomainEvent): string[] {
-    switch (domainEvent.eventType) {
+  getTargetChannels(event: any): string[] {
+    const eventType = getEventType(event)
+
+    switch (eventType) {
       case 'PlayerJoinedLobby':
       case 'PlayerLeftLobby': {
-        const playerEvent = domainEvent as PlayerJoinedLobbyEvent | PlayerLeftLobbyEvent
+        const playerEvent = event as PlayerJoinedLobbyEvent | PlayerLeftLobbyEvent
         return [
           ChannelPatterns.lobby(playerEvent.lobbyUuid),
           ChannelPatterns.user(playerEvent.player?.uuid),
         ].filter(Boolean) as string[]
       }
       case 'GameStarted': {
-        const gameEvent = domainEvent as GameStartedEvent
+        const gameEvent = event as GameStartedEvent
         return [
           ChannelPatterns.lobby(gameEvent.lobbyUuid),
           ...(gameEvent.players?.map((p) => ChannelPatterns.user(p.uuid)) || []),
@@ -50,8 +59,9 @@ export class LobbyEventTransformer implements EventTransformer {
     }
   }
 
-  canTransform(domainEvent: DomainEvent): boolean {
-    return ['PlayerJoinedLobby', 'PlayerLeftLobby', 'GameStarted'].includes(domainEvent.eventType)
+  canTransform(event: any): boolean {
+    const eventType = getEventType(event)
+    return ['PlayerJoinedLobby', 'PlayerLeftLobby', 'GameStarted'].includes(eventType)
   }
 
   private transformPlayerJoinedLobby(event: PlayerJoinedLobbyEvent): SSEEvent[] {
@@ -151,24 +161,24 @@ export class CompositeEventTransformer implements EventTransformer {
     this.transformers.push(transformer)
   }
 
-  transform(domainEvent: DomainEvent): SSEEvent[] {
+  transform(event: any): SSEEvent[] {
     const allEvents: SSEEvent[] = []
 
     for (const transformer of this.transformers) {
-      if (transformer.canTransform(domainEvent)) {
-        allEvents.push(...transformer.transform(domainEvent))
+      if (transformer.canTransform(event)) {
+        allEvents.push(...transformer.transform(event))
       }
     }
 
     return allEvents
   }
 
-  getTargetChannels(domainEvent: DomainEvent): string[] {
+  getTargetChannels(event: any): string[] {
     const allChannels: string[] = []
 
     for (const transformer of this.transformers) {
-      if (transformer.canTransform(domainEvent)) {
-        allChannels.push(...transformer.getTargetChannels(domainEvent))
+      if (transformer.canTransform(event)) {
+        allChannels.push(...transformer.getTargetChannels(event))
       }
     }
 
@@ -176,8 +186,8 @@ export class CompositeEventTransformer implements EventTransformer {
     return Array.from(new Set(allChannels))
   }
 
-  canTransform(domainEvent: DomainEvent): boolean {
-    return this.transformers.some((transformer) => transformer.canTransform(domainEvent))
+  canTransform(event: any): boolean {
+    return this.transformers.some((transformer) => transformer.canTransform(event))
   }
 }
 
