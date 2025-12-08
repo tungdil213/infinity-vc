@@ -1,12 +1,18 @@
+/**
+ * Love Letter Game Engine
+ *
+ * Implementation of the Love Letter card game using the generic @tyfo.dev/game-engine.
+ * This demonstrates how to extend BaseGameEngine to create a complete game.
+ */
 import type { Result } from '@tyfo.dev/events'
-import { BaseGameEngine } from '../../core/engine.js'
+import { BaseGameEngine } from '@tyfo.dev/game-engine/core'
 import type {
   IGameConfig,
   IPlayer,
   IActionResult,
   IGameMetadata,
   IGameEvent,
-} from '../../core/types.js'
+} from '@tyfo.dev/game-engine/core'
 import type {
   ILoveLetterState,
   ILoveLetterAction,
@@ -17,7 +23,7 @@ import type {
 import { CardTypes, Cards, LoveLetterActionTypes } from './types.js'
 
 /**
- * Love Letter game engine
+ * Love Letter game engine - extends the generic BaseGameEngine
  */
 export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLetterAction> {
   readonly metadata: IGameMetadata = {
@@ -30,7 +36,7 @@ export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLett
     complexity: 'simple',
   }
 
-  initialize(players: IPlayer[], config?: Partial<IGameConfig>): Result<ILoveLetterState, Error> {
+  initialize(players: IPlayer[], _config?: Partial<IGameConfig>): Result<ILoveLetterState, Error> {
     if (players.length < 2 || players.length > 4) {
       return {
         isSuccess: false,
@@ -334,11 +340,6 @@ export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLett
     const { cardType, targetPlayerId, guessedCard } = payload
     let newState = { ...state }
 
-    // Find valid target (not protected, not eliminated, not self for most cards)
-    const validTargets = state.players.filter(
-      (p) => !p.isEliminated && !p.isProtected && p.id !== playerId
-    )
-
     switch (cardType) {
       case CardTypes.GUARD:
         if (targetPlayerId && guessedCard && guessedCard !== CardTypes.GUARD) {
@@ -370,7 +371,7 @@ export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLett
         }
         break
 
-      case CardTypes.HANDMAID:
+      case CardTypes.HANDMAID: {
         const playerIndex = newState.players.findIndex((p) => p.id === playerId)
         const newPlayers = [...newState.players]
         newPlayers[playerIndex] = {
@@ -379,11 +380,13 @@ export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLett
         }
         newState = { ...newState, players: newPlayers }
         break
+      }
 
-      case CardTypes.PRINCE:
+      case CardTypes.PRINCE: {
         const targetId = targetPlayerId || playerId
         newState = this.resolvePrince(newState, targetId, events)
         break
+      }
 
       case CardTypes.KING:
         if (targetPlayerId) {
@@ -637,7 +640,7 @@ export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLett
 }
 
 /**
- * Create a new Love Letter game engine
+ * Create a new Love Letter game engine instance
  */
 export function createLoveLetterEngine(): LoveLetterEngine {
   return new LoveLetterEngine()

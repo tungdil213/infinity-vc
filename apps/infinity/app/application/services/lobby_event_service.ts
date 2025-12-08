@@ -1,5 +1,4 @@
 import { eventBus } from '#infrastructure/events/event_bus'
-import { sseService } from '#infrastructure/sse/sse_service'
 import { HybridLobbyService } from './hybrid_lobby_service.js'
 import {
   LobbyCreatedEvent,
@@ -9,7 +8,10 @@ import {
 import Lobby from '#domain/entities/lobby'
 
 /**
- * Service pour gérer les événements liés aux lobbies et leur diffusion SSE
+ * Service pour gérer les événements liés aux lobbies
+ *
+ * Ce service publie des événements domain dans l'event bus.
+ * L'EventBridge s'occupe automatiquement de la diffusion vers Transmit.
  */
 export class LobbyEventService {
   constructor(private hybridLobbyService: HybridLobbyService) {}
@@ -19,29 +21,8 @@ export class LobbyEventService {
    */
   async emitLobbyCreated(lobby: Lobby): Promise<void> {
     const event = new LobbyCreatedEvent(lobby.uuid, lobby.name, lobby.createdBy, lobby.maxPlayers)
-
-    // Émettre l'événement domain
     await eventBus.publish(event)
-
-    // Diffuser via SSE pour mise à jour temps réel des listes
-    await sseService.broadcastGlobal({
-      type: 'lobby.created',
-      data: {
-        lobby: {
-          uuid: lobby.uuid,
-          name: lobby.name,
-          status: lobby.status,
-          currentPlayers: lobby.playerCount,
-          maxPlayers: lobby.maxPlayers,
-          isPrivate: lobby.isPrivate,
-          hasAvailableSlots: lobby.hasAvailableSlots,
-          canStart: lobby.canStart,
-          createdBy: lobby.createdBy,
-          players: lobby.players,
-          createdAt: lobby.createdAt,
-        },
-      },
-    })
+    console.log(`[LobbyEventService] Published LobbyCreated for ${lobby.uuid}`)
   }
 
   /**
@@ -56,50 +37,8 @@ export class LobbyEventService {
       lobby.status,
       lobby.players
     )
-
-    // Émettre l'événement domain
     await eventBus.publish(event)
-
-    // Diffuser via SSE
-    await sseService.broadcastToLobby(lobby.uuid, {
-      type: 'lobby.updated',
-      data: {
-        lobby: {
-          uuid: lobby.uuid,
-          name: lobby.name,
-          status: lobby.status,
-          currentPlayers: lobby.playerCount,
-          maxPlayers: lobby.maxPlayers,
-          isPrivate: lobby.isPrivate,
-          hasAvailableSlots: lobby.hasAvailableSlots,
-          canStart: lobby.canStart,
-          createdBy: lobby.createdBy,
-          players: lobby.players,
-          createdAt: lobby.createdAt,
-        },
-      },
-    })
-
-    // Diffuser globalement pour les listes de lobbies
-    await sseService.broadcastGlobal({
-      type: 'lobby.list.updated',
-      data: {
-        lobbyUuid: lobby.uuid,
-        lobby: {
-          uuid: lobby.uuid,
-          name: lobby.name,
-          status: lobby.status,
-          currentPlayers: lobby.playerCount,
-          maxPlayers: lobby.maxPlayers,
-          isPrivate: lobby.isPrivate,
-          hasAvailableSlots: lobby.hasAvailableSlots,
-          canStart: lobby.canStart,
-          createdBy: lobby.createdBy,
-          players: lobby.players,
-          createdAt: lobby.createdAt,
-        },
-      },
-    })
+    console.log(`[LobbyEventService] Published LobbyUpdated for ${lobby.uuid}`)
   }
 
   /**
@@ -107,73 +46,21 @@ export class LobbyEventService {
    */
   async emitLobbyDeleted(lobbyUuid: string, reason: string = 'deleted'): Promise<void> {
     const event = new LobbyDeletedEvent(lobbyUuid, reason)
-
-    // Émettre l'événement domain
     await eventBus.publish(event)
-
-    // Diffuser via SSE
-    await sseService.broadcastToLobby(lobbyUuid, {
-      type: 'lobby.deleted',
-      data: {
-        lobbyUuid,
-        reason,
-      },
-    })
-
-    // Diffuser globalement pour les listes de lobbies
-    await sseService.broadcastGlobal({
-      type: 'lobby.list.removed',
-      data: {
-        lobbyUuid,
-        reason,
-      },
-    })
+    console.log(`[LobbyEventService] Published LobbyDeleted for ${lobbyUuid}`)
   }
 
   /**
-   * Diffuse l'état actuel de tous les lobbies actifs
+   * Récupère et retourne la liste des lobbies disponibles
    */
-  async broadcastLobbyList(): Promise<void> {
-    try {
-      const lobbies = await this.hybridLobbyService.findAvailableLobbies()
-
-      await sseService.broadcastGlobal({
-        type: 'lobby.list.full',
-        data: {
-          lobbies: lobbies.map((lobby) => ({
-            uuid: lobby.uuid,
-            name: lobby.name,
-            status: lobby.status,
-            currentPlayers: lobby.playerCount,
-            maxPlayers: lobby.maxPlayers,
-            isPrivate: lobby.isPrivate,
-            hasAvailableSlots: lobby.hasAvailableSlots,
-            canStart: lobby.canStart,
-            createdBy: lobby.createdBy,
-            players: lobby.players,
-            createdAt: lobby.createdAt,
-          })),
-          total: lobbies.length,
-        },
-      })
-    } catch (error) {
-      console.error('Error broadcasting lobby list:', error)
-    }
+  async getLobbyList(): Promise<Lobby[]> {
+    return this.hybridLobbyService.findAvailableLobbies()
   }
 
   /**
-   * Diffuse les statistiques des lobbies
+   * Récupère et retourne les statistiques des lobbies
    */
-  async broadcastLobbyStats(): Promise<void> {
-    try {
-      const stats = await this.hybridLobbyService.getStats()
-
-      await sseService.broadcastGlobal({
-        type: 'lobby.stats',
-        data: stats,
-      })
-    } catch (error) {
-      console.error('Error broadcasting lobby stats:', error)
-    }
+  async getLobbyStats(): Promise<any> {
+    return this.hybridLobbyService.getStats()
   }
 }

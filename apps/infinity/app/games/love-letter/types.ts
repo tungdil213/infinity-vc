@@ -1,4 +1,10 @@
-import type { IGameState, IAction, IPlayer } from '../../core/types.js'
+/**
+ * Love Letter Game Types
+ * 
+ * This module defines all types specific to the Love Letter card game.
+ * It extends the generic game engine types from @tyfo.dev/game-engine.
+ */
+import type { IGameState, IAction, IPlayer } from '@tyfo.dev/game-engine/core'
 
 /**
  * Love Letter card types
@@ -28,7 +34,7 @@ export interface ICard {
 }
 
 /**
- * Card database
+ * Card database - All 16 cards in the Love Letter deck
  */
 export const Cards: Record<CardType, ICard> = {
   [CardTypes.GUARD]: {
@@ -42,7 +48,7 @@ export const Cards: Record<CardType, ICard> = {
     type: CardTypes.PRIEST,
     value: 2,
     name: 'Priest',
-    description: 'Look at another player\'s hand.',
+    description: "Look at another player's hand.",
     count: 2,
   },
   [CardTypes.BARON]: {
@@ -56,7 +62,7 @@ export const Cards: Record<CardType, ICard> = {
     type: CardTypes.HANDMAID,
     value: 4,
     name: 'Handmaid',
-    description: 'Until your next turn, ignore all effects from other players\' cards.',
+    description: "Until your next turn, ignore all effects from other players' cards.",
     count: 2,
   },
   [CardTypes.PRINCE]: {

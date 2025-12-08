@@ -18,9 +18,27 @@ import { KickPlayerUseCase } from '#application/use_cases/kick_player_use_case'
 import { UpdateLobbySettingsUseCase } from '#application/use_cases/update_lobby_settings_use_case'
 import { SetPlayerReadyUseCase } from '#application/use_cases/set_player_ready_use_case'
 import { LobbyEventService } from '#application/services/lobby_event_service'
+import { eventBridgeService } from '#infrastructure/transcript/index'
 
 export default class AppProvider {
   constructor(protected app: ApplicationService) {}
+
+  /**
+   * Called when the application is ready to accept HTTP requests
+   */
+  async ready() {
+    // Initialize EventBridge to connect domain events to Transmit
+    await eventBridgeService.initialize()
+    console.log('[AppProvider] EventBridge initialized')
+  }
+
+  /**
+   * Called when the application is shutting down
+   */
+  async shutdown() {
+    eventBridgeService.stop()
+    console.log('[AppProvider] EventBridge stopped')
+  }
 
   async register() {
     // Register repositories as singletons using class constructors (recommended approach)
