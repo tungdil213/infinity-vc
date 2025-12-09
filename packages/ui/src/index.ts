@@ -47,16 +47,18 @@ export * from './components/primitives/toggle-group'
 export * from './components/primitives/tooltip'
 
 // Specific components (project-specific composed components)
-export { Header } from './components/header'
-export { Footer } from './components/footer'
+export * from './components/header'
+export * from './components/footer'
 
 // Lobby components
+export * from './components/connection-status-indicator'
 export * from './components/lobby-card'
-export * from './components/lobby-list'
-export * from './components/player-avatar'
-export * from './components/lobby-status-badge'
-export * from './components/lobby-players-panel'
 export * from './components/lobby-header-panel'
+export * from './components/lobby-list'
+export * from './components/lobby-players-panel'
+export * from './components/lobby-status-badge'
+export * from './components/player-avatar'
+
 
 // Utilities
 export * from './utils'

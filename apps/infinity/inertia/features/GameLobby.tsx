@@ -6,8 +6,9 @@ import { useLobbyLeaveGuard } from '../hooks/use_lobby_leave_guard'
 import { Button } from '@tyfo.dev/ui/primitives/button'
 import { Badge } from '@tyfo.dev/ui/primitives/badge'
 import { Users } from 'lucide-react'
-import { LobbyPlayersPanel } from '../../../../packages/ui/src/components/lobby-players-panel'
-import { LobbyHeaderPanel } from '../../../../packages/ui/src/components/lobby-header-panel'
+import { LobbyPlayersPanel } from '@tyfo.dev/ui/components/lobby-players-panel'
+import { LobbyHeaderPanel } from '@tyfo.dev/ui/components/lobby-header-panel'
+import { ConnectionStatusIndicator } from '@tyfo.dev/ui/components/connection-status-indicator'
 import { useTransmit } from '../contexts/TransmitContext'
 
 interface Player {
@@ -172,11 +173,8 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
   return (
     <div className="max-w-4xl mx-auto p-6">
       {/* Connection Status */}
-      <div className="mb-4 flex items-center gap-2">
-        <div className={`w-3 h-3 rounded-full ${isServiceReady ? 'bg-green-500' : 'bg-red-500'}`} />
-        <span className="text-sm text-gray-600">
-          {isServiceReady ? 'Connected' : 'Disconnected'}
-        </span>
+      <div className="mb-4">
+        <ConnectionStatusIndicator isConnected={!!isServiceReady} />
       </div>
 
       {/* Lobby Header */}

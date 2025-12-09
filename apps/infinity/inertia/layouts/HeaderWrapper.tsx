@@ -1,6 +1,6 @@
 import React from 'react'
 import { router } from '@inertiajs/react'
-import { Header } from '../../../../packages/ui/src/components/header'
+import { Header } from '@tyfo.dev/ui/components/header'
 import { useTransmit } from '../contexts/TransmitContext'
 import { useLobbyService } from '../hooks/use_lobby_service'
 

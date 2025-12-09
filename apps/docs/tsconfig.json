@@ -1,5 +1,12 @@
 {
 	"extends": "@tyfo.dev/typescript-config/react-app.json",
+	"compilerOptions": {
+		"baseUrl": ".",
+		"paths": {
+			"@tyfo.dev/ui": ["../../packages/ui/src"],
+			"@tyfo.dev/ui/*": ["../../packages/ui/src/*"]
+		}
+	},
 	"include": ["."],
 	"exclude": ["dist", "build", "node_modules"]
 }

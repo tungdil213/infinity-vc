@@ -2,7 +2,12 @@
   "extends": "@adonisjs/tsconfig/tsconfig.app.json",
   "compilerOptions": {
     "rootDir": "./",
-    "outDir": "./build"
+    "outDir": "./build",
+    "baseUrl": ".",
+    "paths": {
+      "@tyfo.dev/ui": ["../../packages/ui/src"],
+      "@tyfo.dev/ui/*": ["../../packages/ui/src/*"]
+    }
   },
   "exclude": ["./inertia/**/*", "./resources/**/*", "./database/samples/**/*", "./app/tests/**/*", "node_modules", "build"]
 }

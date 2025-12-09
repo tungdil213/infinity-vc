@@ -6,7 +6,7 @@
   "packageManager": "pnpm@10.4.0",
   "license": "UNLICENSED",
   "scripts": {
-    "build": "turbo run build && cp -r apps/tyfo.dev/.env apps/tyfo.dev/build/",
+    "build": "turbo run build && cp -r apps/infinity/.env apps/infinity/build/",
     "clean": "turbo run clean && rm -rf node_modules",
     "dev": "turbo run dev",
     "docker:up": "docker compose up -d",

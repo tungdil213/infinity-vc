@@ -1,7 +1,7 @@
 import React from 'react'
 import { Head, Link } from '@inertiajs/react'
 import { Button } from '@tyfo.dev/ui/primitives/button'
-import { Footer } from '../../../../packages/ui/src/components/footer'
+import { Footer } from '@tyfo.dev/ui/components/footer'
 import Layout from '../layouts/layout'
 import { HeaderWrapper } from '../layouts/HeaderWrapper'
 
