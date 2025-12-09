@@ -4,6 +4,7 @@ import { LobbyStatus } from '../../domain/value_objects/lobby_status.js'
 import { LobbyRepository } from '../repositories/lobby_repository.js'
 import { InMemoryLobbyRepository } from '../../infrastructure/repositories/in_memory_lobby_repository.js'
 import { DatabaseLobbyRepository } from '../../infrastructure/repositories/database_lobby_repository.js'
+import console from 'node:console'
 
 /**
  * Service hybride pour la gestion des lobbies
@@ -146,6 +147,7 @@ export class HybridLobbyService implements LobbyRepository {
     //
     // If we later want historical lobby data, we can relax this
     // condition (for example, to persist STARTING / IN_PROGRESS).
+    console.log(lobby)
     return false
   }
 
