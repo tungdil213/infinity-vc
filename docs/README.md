@@ -4,6 +4,8 @@
 
 Ce projet implémente une version en ligne du jeu de cartes **Love Letter** avec un thème Marvel **Infinity Gauntlet**. Il s'agit d'une application web multijoueur permettant aux joueurs de créer et rejoindre des lobbies pour jouer ensemble.
 
+> **Avertissement** : Il s'agit d'un projet fan‑made non officiel, sans aucune affiliation avec Marvel, les ayants droit du jeu Love Letter ou tout autre détenteur de licence associée.
+
 ## Structure de la Documentation
 
 - [Architecture Technique](./architecture.md) - Structure du code et patterns utilisés

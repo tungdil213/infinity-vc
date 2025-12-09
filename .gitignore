@@ -40,3 +40,5 @@ yarn-error.log
 .stryker/
 .stryker-tmp/
 reports/stryker/
+cookies.txt
+docs/Infinity-Gauntlet-Rulebook.pdf

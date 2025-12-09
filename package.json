@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "private": true,
   "packageManager": "pnpm@10.4.0",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "scripts": {
     "build": "turbo run build && cp -r apps/infinity/.env apps/infinity/build/",
     "clean": "turbo run clean && rm -rf node_modules",
@@ -12,7 +12,7 @@
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:build": "docker build . -t site",
-    "docker:run": "docker run --rm --name site_tyfo.dev --env-file ./apps/tyfo.dev/.env -e NODE_ENV=production -e HOST=0.0.0.0 -e DB_HOST=host.docker.internal -it -p 3333:3333 --add-host=host.docker.internal:host-gateway site",
+    "docker:run": "docker run --rm --name site_tyfo.dev --env-file ./apps/infinity/.env -e NODE_ENV=production -e HOST=0.0.0.0 -e DB_HOST=host.docker.internal -it -p 3333:3333 --add-host=host.docker.internal:host-gateway site",
     "lint": "eslint .",
     "preview-storybook": "turbo run preview-storybook",
     "format": "prettier .",

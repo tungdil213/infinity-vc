@@ -82,9 +82,7 @@ function LobbiesPage({ lobbies: initialLobbies, user, currentLobby }: LobbiesPro
   useEffect(() => {
     if (!lobbyService) return
 
-    console.log('Lobbies page - abonnement au service lobby')
     const unsubscribe = lobbyService.subscribeLobbyList((state) => {
-      console.log('Lobbies page - callback reçu, nouvel état:', state)
       setLobbyListState(state)
     })
 
@@ -92,7 +90,6 @@ function LobbiesPage({ lobbies: initialLobbies, user, currentLobby }: LobbiesPro
     lobbyService.fetchLobbies()
 
     return () => {
-      console.log('Lobbies page - désabonnement du service lobby')
       unsubscribe()
     }
   }, [lobbyService])

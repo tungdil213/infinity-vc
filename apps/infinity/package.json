@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "description": "Infinity Gauntlet Love Letter - Multiplayer Game Backend",
   "scripts": {
     "start": "NODE_ENV=production node bin/server.js",

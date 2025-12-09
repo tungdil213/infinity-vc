@@ -15,8 +15,8 @@ Le fichier `package.json` est le fichier central pour gérer les dépendances, l
   - Empêche la publication accidentelle de ce monorepo sur npm.
 
 - **`license`** :
-  - Valeur : `"UNLICENSED"`
-  - Spécifie que le projet n'est pas sous licence publique.
+  - Valeur : `"MIT"`
+  - Indique que le code du monorepo est publié sous licence open source MIT.
 
 ### 2. **Scripts définis**
 
@@ -40,7 +40,7 @@ Le fichier `package.json` inclut plusieurs scripts pour faciliter le développem
 
   - `docker:run` : Lance le conteneur Docker configuré avec les variables d'environnement nécessaires.
     ```bash
-    docker run --env-file ./apps/tyfo.dev/.env -e NODE_ENV=production -e HOST=0.0.0.0 -e DB_HOST=host.docker.internal -it -p 3333:3333 --add-host=host.docker.internal:host-gateway site
+    docker run --env-file ./apps/infinity/.env -e NODE_ENV=production -e HOST=0.0.0.0 -e DB_HOST=host.docker.internal -it -p 3333:3333 --add-host=host.docker.internal:host-gateway site
     ```
 
 - **Lint et formatage** :
@@ -64,7 +64,7 @@ Le fichier `package.json` inclut plusieurs scripts pour faciliter le développem
 
 ### 3. **Workspaces**
 
-Le projet utilise la fonctionnalité **npm workspaces** pour organiser les packages et applications :
+Le projet utilise la fonctionnalité **pnpm workspaces** pour organiser les packages et applications :
 
 - **`apps/*`** : Contient les applications principales.
 - **`packages/*`** : Contient les bibliothèques partagées comme le système de design.
@@ -83,14 +83,14 @@ Cette configuration permet :
 
 Les dépendances utilisées sont installées et gérées selon les besoins de chaque workspace. La commande suivante installe toutes les dépendances dans un environnement reproductible :
 ```bash
-npm install
+pnpm install
 ```
 
 ### 6. **Scripts personnalisés**
 
 Le monorepo peut contenir des scripts supplémentaires définis par les workspaces individuels. Pour exécuter un script spécifique à un workspace :
 ```bash
-npm run <script_name> --workspace=<workspace_name>
+pnpm run <script_name> --filter <workspace_name>
 ```
 
 ---

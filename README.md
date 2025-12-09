@@ -2,17 +2,19 @@
 
 ## Description du projet
 
+**Avertissement** : Ce projet est un prototype open source non officiel, sans aucune affiliation avec Marvel, les ayants droit du jeu Love Letter ou tout autre détenteur de licence associée.
+
 ## Structure du projet
 
 
-- `apps/` : Contient les applications principales.
-- `packages/` : Contient les bibliothèques partagées, comme le `design-system`.
+- `apps/` : Contient les applications principales (notamment `apps/infinity`).
+- `packages/` : Contient les bibliothèques partagées, dont le design system UI dans `packages/ui`.
 - `docs/` : Contient toute la documentation liée au projet.
 
 ## Prérequis
 - **Node.js** : Version LTS recommandée (Bookworm Slim utilisée dans le Dockerfile).
 - **Docker** : Dernière version stable.
-- **npm** : Corepack activé pour la gestion des paquets.
+- **pnpm** : Gestionnaire de paquets recommandé (via Corepack).
 
 ## Installation
 1. Clonez ce dépôt :
@@ -22,7 +24,7 @@
    ```
 2. Installez les dépendances :
    ```bash
-   npm install
+   pnpm install
    ```
 
 ## Commandes principales
@@ -81,4 +83,4 @@ Les contributions sont les bienvenues. Veuillez suivre les étapes suivantes :
 3. Poussez vos changements et créez une pull request.
 
 ## License
-Ce projet est sous la licence **UNLICENSED**.
+Ce projet est sous la licence **MIT**. Voir le fichier `LICENSE` à la racine pour plus de détails.

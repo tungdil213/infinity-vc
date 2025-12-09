@@ -10,8 +10,11 @@ RUN npm install -g pnpm
 
 # Copier uniquement les fichiers nécessaires pour l'installation des dépendances
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/tyfo.dev/package.json ./apps/tyfo.dev/
+COPY apps/infinity/package.json ./apps/infinity/
 COPY packages/ui/package.json ./packages/ui/
+COPY packages/events/package.json ./packages/events/
+COPY packages/game-engine/package.json ./packages/game-engine/
+COPY packages/transcript/package.json ./packages/transcript/
 
 # Installer toutes les dépendances pour le monorepo
 RUN pnpm install --frozen-lockfile --strict-peer-dependencies=false
@@ -20,12 +23,14 @@ FROM deps AS build
 WORKDIR /app
 COPY . .
 
-# 🔥 Build du package UI (si nécessaire) puis de l’application principale
-RUN pnpm --filter @tyfo.dev/ui run build
-RUN pnpm --filter @tyfo.dev/site run build
+# 🔥 Build des packages partagés puis de l’application principale Infinity
+RUN pnpm --filter @tyfo.dev/ui run build \
+  && pnpm --filter @tyfo.dev/events run build \
+  && pnpm --filter @tyfo.dev/game-engine run build \
+  && pnpm --filter @tyfo.dev/transcript run build
 
-# 🔥 Générer les assets front avec Vite (indispensable pour Inertia.js)
-WORKDIR /app/apps/tyfo.dev
+# 🔥 Générer le build de l'application Infinity (AdonisJS + Vite)
+WORKDIR /app/apps/infinity
 RUN pnpm run build
 
 # Étape 4 : Image finale pour l'exécution
@@ -37,19 +42,19 @@ RUN npm install -g pnpm
 
 # Copier les fichiers essentiels
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/tyfo.dev/package.json ./apps/tyfo.dev/
+COPY apps/infinity/package.json ./apps/infinity/
 
 # Copier le build et les assets
-COPY --from=build /app/apps/tyfo.dev/build ./apps/tyfo.dev/build
-COPY --from=build /app/apps/tyfo.dev/public/assets ./apps/tyfo.dev/public/assets
+COPY --from=build /app/apps/infinity/build ./apps/infinity/build
+COPY --from=build /app/apps/infinity/public/assets ./apps/infinity/public/assets
 
-# Installation des dépendances en mode production
-WORKDIR /app/apps/tyfo.dev
-RUN pnpm install --prod --no-optional --no-frozen-lockfile --filter @tyfo.dev/site
+# Installation des dépendances en mode production pour l'application Infinity
+WORKDIR /app/apps/infinity
+RUN pnpm install --prod --no-optional --no-frozen-lockfile --filter @infinity/app
 
 # Vérification que les assets sont bien présents
-RUN ls -l /app/apps/tyfo.dev/public/assets || echo "Assets NOT FOUND"
+RUN ls -l /app/apps/infinity/public/assets || echo "Assets NOT FOUND"
 
-# Lancer le serveur
+# Lancer le serveur Infinity
 EXPOSE 3333
 CMD ["node", "build/bin/server.js"]
