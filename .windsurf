@@ -245,7 +245,7 @@ apps/infinity/
     "HOST": "localhost",
     "LOG_LEVEL": "info",
     "APP_KEY": "random_32_char_string",
-    "DB_CONNECTION": "sqlite|postgres",
+    "DB_CONNECTION": "sqlite|postgres|mysql",
     "DB_HOST": "localhost",
     "DB_PORT": "5432",
     "DB_USER": "username",
