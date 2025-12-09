@@ -22,7 +22,10 @@ router.get('/dev/routes', '#controllers/dev_routes_controller.index').as('dev.ro
 router
   .group(() => {
     router.get('/login', '#controllers/enhanced_auth_controller.showLogin').as('auth.login.show')
-    router.post('/login', '#controllers/enhanced_auth_controller.login').as('auth.login')
+    router
+      .post('/login', '#controllers/enhanced_auth_controller.login')
+      .use(middleware.loginThrottle())
+      .as('auth.login')
     router
       .get('/register', '#controllers/enhanced_auth_controller.showRegister')
       .as('auth.register.show')

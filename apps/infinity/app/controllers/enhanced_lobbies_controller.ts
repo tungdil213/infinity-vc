@@ -15,8 +15,8 @@ import {
   // LobbyNotFoundException, // TODO: Use these exceptions
   // LobbyFullException,
   // InvalidLobbyPasswordException,
-  InvalidLobbyNameException,
 } from '../exceptions/lobby_exceptions.js'
+import { lobbyStoreValidator } from '#validators/lobby_store_validator'
 
 @inject()
 export default class EnhancedLobbiesController {
@@ -146,37 +146,16 @@ export default class EnhancedLobbiesController {
    */
   async store({ request, response, auth, session }: HttpContext) {
     const user = auth.user!
-    const {
-      name,
-      description,
-      maxPlayers = 4,
-      isPrivate = false,
-      hasPassword = false,
-      password,
-      gameType = 'love-letter',
-    } = request.only([
-      'name',
-      'description',
-      'maxPlayers',
-      'isPrivate',
-      'hasPassword',
-      'password',
-      'gameType',
-    ])
-
     try {
-      // Validate required fields
-      if (!name || name.trim().length === 0) {
-        throw new InvalidLobbyNameException('', 'Lobby name is required')
-      }
-
-      if (name.trim().length < 3) {
-        throw new InvalidLobbyNameException(name, 'Lobby name must be at least 3 characters long')
-      }
-
-      if (name.trim().length > 50) {
-        throw new InvalidLobbyNameException(name, 'Lobby name must be less than 50 characters')
-      }
+      const {
+        name,
+        description,
+        maxPlayers,
+        isPrivate = false,
+        hasPassword = false,
+        password,
+        gameType = 'love-letter',
+      } = await request.validateUsing(lobbyStoreValidator)
 
       if (hasPassword && (!password || password.trim().length === 0)) {
         throw new InvalidLobbyConfigurationException(
@@ -186,25 +165,10 @@ export default class EnhancedLobbiesController {
         )
       }
 
-      const maxPlayersNum = Number.parseInt(maxPlayers)
-      if (Number.isNaN(maxPlayersNum) || maxPlayersNum < 2 || maxPlayersNum > 8) {
-        throw new InvalidLobbyConfigurationException(
-          'maxPlayers',
-          maxPlayers,
-          'Maximum players must be between 2 and 8'
-        )
-      }
-
-      // La vérification de lobby existant est maintenant gérée dans le use case
-      // qui fait automatiquement quitter l'utilisateur de son lobby actuel
-
-      // TODO: Generate invitation code for private lobbies
-      // const invitationCode = crypto.randomUUID()
-
       const result = await this.createLobbyUseCase.execute({
         userUuid: user.userUuid,
         name: name.trim(),
-        maxPlayers: maxPlayersNum,
+        maxPlayers,
         isPrivate: Boolean(isPrivate),
       })
 
@@ -215,6 +179,11 @@ export default class EnhancedLobbiesController {
       session.flash('success', 'Lobby created successfully!')
       return response.redirect(`/lobbies/${result.value.uuid}`)
     } catch (error) {
+      // Let validation errors bubble to the global handler
+      if ((error as any)?.code === 'E_VALIDATION_ERROR') {
+        throw error
+      }
+
       // If it's already a BusinessException, let it handle itself
       if (error instanceof BusinessException) {
         throw error
@@ -222,12 +191,12 @@ export default class EnhancedLobbiesController {
 
       // Wrap unexpected errors
       throw new LobbyCreationInternalException(error as Error, user.userUuid, {
-        name,
-        description,
-        maxPlayers,
-        isPrivate,
-        hasPassword,
-        gameType,
+        name: request.input('name'),
+        description: request.input('description'),
+        maxPlayers: request.input('maxPlayers'),
+        isPrivate: request.input('isPrivate'),
+        hasPassword: request.input('hasPassword'),
+        gameType: request.input('gameType'),
       })
     }
   }
