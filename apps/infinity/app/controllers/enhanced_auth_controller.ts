@@ -6,6 +6,9 @@ import { RegisterUserUseCase } from '#application/use_cases/register_user_use_ca
 import User from '#models/user'
 import hash from '@adonisjs/core/services/hash'
 import app from '@adonisjs/core/services/app'
+import logger from '@adonisjs/core/services/logger'
+import { authRegisterValidator } from '#validators/auth_register_validator'
+import { authLoginValidator } from '#validators/auth_login_validator'
 
 @inject()
 export default class EnhancedAuthController {
@@ -46,36 +49,10 @@ export default class EnhancedAuthController {
    * Register new user
    */
   async register({ request, response, auth, session }: HttpContext) {
-    const {
-      fullName,
-      email,
-      password,
-      password_confirmation: passwordConfirmation,
-    } = request.only(['fullName', 'email', 'password', 'password_confirmation'])
-
     const redirect = request.input('redirect', '/lobbies')
 
     try {
-      // Validation
-      if (!fullName || fullName.trim().length === 0) {
-        session.flash('error', 'Full name is required')
-        return response.redirect().back()
-      }
-
-      if (!email || email.trim().length === 0) {
-        session.flash('error', 'Email is required')
-        return response.redirect().back()
-      }
-
-      if (!password || password.length < 8) {
-        session.flash('error', 'Password must be at least 8 characters long')
-        return response.redirect().back()
-      }
-
-      if (password !== passwordConfirmation) {
-        session.flash('error', 'Passwords do not match')
-        return response.redirect().back()
-      }
+      const { fullName, email, password } = await request.validateUsing(authRegisterValidator)
 
       // Get use case from container
       const registerUserUseCase = await app.container.make(RegisterUserUseCase)
@@ -92,8 +69,6 @@ export default class EnhancedAuthController {
         email: email.trim().toLowerCase(),
         password: password, // Pass plain password, will be hashed by User model
       })
-
-      console.log(result)
 
       if (result.isFailure) {
         session.flash('error', result.error || 'Failed to create account')
@@ -113,7 +88,7 @@ export default class EnhancedAuthController {
       }
       return response.redirect(redirect)
     } catch (error) {
-      console.error('Registration error:', error)
+      logger.error({ error }, 'Registration error')
       session.flash('error', 'Failed to create account. Please try again.')
       return response.redirect().back()
     }
@@ -123,56 +98,32 @@ export default class EnhancedAuthController {
    * Authenticate user
    */
   async login({ request, response, auth, session }: HttpContext) {
-    const { email, password } = request.only(['email', 'password'])
     const redirect = request.input('redirect', '/lobbies')
 
-    console.log('🔐 Login attempt:', { email, redirect })
-
     try {
-      // Validation
-      if (!email || email.trim().length === 0) {
-        console.log('❌ Login failed: Email is required')
-        session.flash('error', 'Email is required')
-        return response.redirect().back()
-      }
-
-      if (!password || password.length === 0) {
-        console.log('❌ Login failed: Password is required')
-        session.flash('error', 'Password is required')
-        return response.redirect().back()
-      }
-
-      console.log('✅ Validation passed, searching for user...')
+      const { email, password } = await request.validateUsing(authLoginValidator)
 
       // Find user using Lucid model directly for auth
       const user = await User.query().where('email', email.trim().toLowerCase()).first()
       if (!user) {
-        console.log('❌ Login failed: User not found for email:', email.trim().toLowerCase())
         session.flash('error', 'Invalid email or password')
         return response.redirect().back()
       }
-
-      console.log('✅ User found:', { userUuid: user.userUuid, fullName: user.fullName })
 
       // Verify password
       const isValidPassword = await hash.verify(user.password, password)
       if (!isValidPassword) {
-        console.log('❌ Login failed: Invalid password for user:', user.userUuid)
         session.flash('error', 'Invalid email or password')
         return response.redirect().back()
       }
 
-      console.log('✅ Password verified, logging in user...')
-
       // Log the user in
       await auth.use('web').login(user)
-
-      console.log('✅ User logged in successfully, redirecting to:', redirect)
 
       session.flash('success', `Welcome back, ${user.fullName}!`)
       return response.redirect(redirect)
     } catch (error) {
-      console.error('❌ Login error:', error)
+      logger.error({ error }, 'Login error')
       session.flash('error', 'Login failed. Please try again.')
       return response.redirect().back()
     }
@@ -219,7 +170,7 @@ export default class EnhancedAuthController {
         },
       })
     } catch (error) {
-      console.error('Profile error:', error)
+      logger.error({ error }, 'Profile error')
       return response.status(200).json({
         authenticated: false,
         user: null,
@@ -247,7 +198,7 @@ export default class EnhancedAuthController {
           : null,
       })
     } catch (error) {
-      console.error('Auth check error:', error)
+      logger.error({ error }, 'Auth check error')
       return response.status(200).json({
         authenticated: false,
         user: null,
