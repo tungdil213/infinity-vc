@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@tyfo.dev/ui/primitive
 import { Badge } from '@tyfo.dev/ui/primitives/badge'
 import { Users, LogOut, Play } from 'lucide-react'
 import { toast } from 'sonner'
-import { useLobbyDetail } from '../hooks/use_lobby_detail'
 import { useLobbyService } from '../hooks/use_lobby_service'
 
 interface LobbyStatusSidebarProps {

@@ -1,7 +1,7 @@
 import React from 'react'
 import { Head, Link } from '@inertiajs/react'
 import { Button } from '@tyfo.dev/ui/primitives/button'
-import Layout from '../../components/layout'
+import Layout from '../../layouts/layout'
 
 interface Route {
   method: string

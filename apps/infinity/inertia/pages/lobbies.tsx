@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Head, router } from '@inertiajs/react'
 import { LobbyList } from '../../../../packages/ui/src/components/lobby-list'
 import { LobbyData } from '../../../../packages/ui/src/components/lobby-card'
-import { HeaderWrapper } from '../components/HeaderWrapper'
+import { HeaderWrapper } from '../layouts/HeaderWrapper'
 import { Footer } from '../../../../packages/ui/src/components/footer'
 import { toast } from 'sonner'
 import { useLobbyService } from '../hooks/use_lobby_service'
@@ -241,7 +241,7 @@ function LobbiesPage({ lobbies: initialLobbies, user, currentLobby }: LobbiesPro
 }
 
 // Appliquer le layout global (avec TransmitProvider) autour de la page
-import Layout from '../components/layout'
+import Layout from '../layouts/layout'
 ;(LobbiesPage as any).layout = (page: React.ReactNode) => <Layout>{page}</Layout>
 
 export default LobbiesPage

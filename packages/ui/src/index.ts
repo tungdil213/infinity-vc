@@ -55,6 +55,8 @@ export * from './components/lobby-card'
 export * from './components/lobby-list'
 export * from './components/player-avatar'
 export * from './components/lobby-status-badge'
+export * from './components/lobby-players-panel'
+export * from './components/lobby-header-panel'
 
 // Utilities
 export * from './utils'

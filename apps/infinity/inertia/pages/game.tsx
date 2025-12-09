@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { Head } from '@inertiajs/react'
 import { Button } from '@tyfo.dev/ui/primitives/button'
 import { useTransmit } from '../contexts/TransmitContext'
-import Layout from '../components/layout'
+import Layout from '../layouts/layout'
 
 const CARD_INFO: Record<string, { name: string; value: number; description: string; color: string }> = {
   guard: { name: 'Guard', value: 1, description: 'Guess a card. If correct, target eliminated.', color: 'bg-red-500' },

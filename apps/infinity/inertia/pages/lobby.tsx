@@ -1,7 +1,7 @@
 import React from 'react'
 import { Head, router } from '@inertiajs/react'
-import GameLobby from '../components/GameLobby'
-import Layout from '../components/layout'
+import GameLobby from '../features/GameLobby'
+import Layout from '../layouts/layout'
 
 interface Player {
   uuid: string

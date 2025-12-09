@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Head, Link, router } from '@inertiajs/react'
 import { Button } from '@tyfo.dev/ui/primitives/button'
-import Layout from '../../components/layout'
+import Layout from '../../layouts/layout'
 
 interface LoginProps {
   redirect?: string
