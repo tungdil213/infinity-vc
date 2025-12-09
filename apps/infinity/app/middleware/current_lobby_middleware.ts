@@ -1,11 +1,11 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 import { inject } from '@adonisjs/core'
-import { DatabaseLobbyRepository } from '../infrastructure/repositories/database_lobby_repository.js'
+import { HybridLobbyService } from '../application/services/hybrid_lobby_service.js'
 
 @inject()
 export default class CurrentLobbyMiddleware {
-  constructor(private lobbyRepository: DatabaseLobbyRepository) {}
+  constructor(private lobbyRepository: HybridLobbyService) {}
 
   async handle({ auth, inertia }: HttpContext, next: NextFn) {
     // Only run for authenticated users

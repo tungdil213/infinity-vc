@@ -14,6 +14,7 @@ export interface TransmitContextType {
   subscribeToLobbies: (callback: (event: LobbyTransmitEvent) => void) => Promise<() => void>
   subscribeToLobby: (lobbyUuid: string, callback: (event: LobbyTransmitEvent) => void) => Promise<() => void>
   subscribeToUserNotifications: (userUuid: string, callback: (event: any) => void) => Promise<() => void>
+  subscribeToGame: (gameId: string, callback: (event: any) => void) => Promise<() => void>
   unsubscribeFrom: (channelName: string) => Promise<void>
   unsubscribeAll: () => Promise<void>
   addEventListener: (type: string, handler: (event: TransmitEvent) => void) => void
@@ -27,6 +28,7 @@ const defaultTransmitContext: TransmitContextType = {
   subscribeToLobbies: async () => () => {},
   subscribeToLobby: async () => () => {},
   subscribeToUserNotifications: async () => () => {},
+  subscribeToGame: async () => () => {},
   unsubscribeFrom: async () => {},
   unsubscribeAll: async () => {},
   addEventListener: () => {},
@@ -78,6 +80,22 @@ export function TransmitProvider({ children }: TransmitProviderProps) {
       console.error('TransmitProvider: Erreur subscribeToLobbies:', errorMessage)
       setError(errorMessage)
       // Retourner une fonction vide au lieu de throw pour éviter les crashes
+      return () => {}
+    }
+  }
+
+  const subscribeToGame = async (gameId: string, callback: (event: any) => void) => {
+    try {
+      if (!isConnected) {
+        console.warn('TransmitProvider: Tentative de souscription game avant connexion')
+        return () => {}
+      }
+      const unsubscribe = await transmitLobbyClient.subscribeToGame(gameId, callback)
+      return unsubscribe
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erreur de souscription au jeu'
+      console.error('TransmitProvider: Erreur subscribeToGame:', errorMessage)
+      setError(errorMessage)
       return () => {}
     }
   }
@@ -159,6 +177,7 @@ export function TransmitProvider({ children }: TransmitProviderProps) {
     subscribeToLobbies,
     subscribeToLobby,
     subscribeToUserNotifications,
+    subscribeToGame,
     unsubscribeFrom,
     unsubscribeAll,
     addEventListener,

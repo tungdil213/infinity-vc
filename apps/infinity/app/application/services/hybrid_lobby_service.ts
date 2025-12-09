@@ -140,7 +140,13 @@ export class HybridLobbyService implements LobbyRepository {
    * Détermine si un lobby doit être persisté en base
    */
   private shouldPersist(lobby: Lobby): boolean {
-    return lobby.status === LobbyStatus.STARTING
+    // For now, lobbies are ephemeral and only live in memory.
+    // We rely on the persisted Game entity once a match starts,
+    // so we never persist Lobby instances to the database.
+    //
+    // If we later want historical lobby data, we can relax this
+    // condition (for example, to persist STARTING / IN_PROGRESS).
+    return false
   }
 
   /**

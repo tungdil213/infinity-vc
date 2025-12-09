@@ -14,21 +14,18 @@ export function useLobbyService() {
 
   // Créer ou récupérer le service
   const service = useMemo(() => {
-    if (!transmitContext.isConnected) {
-      console.log('useLobbyService: En attente de la connexion Transmit')
-      return globalLobbyService // Retourner l'instance existante même si non connecté
-    }
-
-    // Réutiliser l'instance globale si elle existe
+    // Réutiliser l'instance globale si elle existe déjà
     if (globalLobbyService) {
       console.log("useLobbyService: Réutilisation de l'instance globale")
       return globalLobbyService
     }
 
+    // Créer une nouvelle instance une seule fois, même si la connexion Transmit
+    // n'est pas encore établie. Le contexte sera synchronisé ensuite via updateContext.
     console.log("useLobbyService: Création d'une nouvelle instance LobbyService")
     globalLobbyService = new LobbyService(transmitContext)
     return globalLobbyService
-  }, [transmitContext.isConnected])
+  }, [transmitContext])
 
   // Mettre à jour le contexte quand la connexion change
   useEffect(() => {

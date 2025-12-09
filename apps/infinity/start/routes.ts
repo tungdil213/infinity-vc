@@ -105,6 +105,9 @@ router
     router
       .post('/lobbies/leave-on-close', '#controllers/enhanced_lobbies_controller.leaveOnClose')
       .as('api.lobbies.leave.close')
+    router
+      .post('/lobbies/:uuid/start', '#controllers/enhanced_lobbies_controller.start')
+      .as('api.lobbies.start')
 
     // Games API
     router.get('/games/:uuid', '#controllers/games_controller.apiShow').as('api.games.show')

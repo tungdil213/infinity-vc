@@ -190,8 +190,20 @@ class EventBridgeService {
    * Stop the event bridge
    */
   stop(): void {
-    if (this.bridge) {
+    if (!this.bridge) {
+      return
+    }
+
+    try {
       this.bridge.stop()
+    } catch (error) {
+      // During short‑lived CLI commands (migrations, etc.) we do not want
+      // a shutdown error to crash the whole process. We swallow the
+      // original error and only emit a concise log message.
+      console.warn('[EventBridgeService] stop() failed, ignoring during shutdown')
+    } finally {
+      this.bridge = null
+      this.isInitialized = false
       console.log('[EventBridgeService] Stopped')
     }
   }

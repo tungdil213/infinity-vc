@@ -36,7 +36,7 @@ export class DatabaseGameRepository implements GameRepository {
   }
 
   async findByUuid(uuid: string): Promise<Game | null> {
-    const model = await GameModel.query().where('uuid', uuid).where('deleted_at', false).first()
+    const model = await GameModel.query().where('uuid', uuid).where('is_archived', false).first()
 
     if (!model) {
       return null
@@ -46,7 +46,7 @@ export class DatabaseGameRepository implements GameRepository {
   }
 
   async findAll(): Promise<Game[]> {
-    const models = await GameModel.query().where('deleted_at', false).orderBy('started_at', 'desc')
+    const models = await GameModel.query().where('is_archived', false).orderBy('started_at', 'desc')
 
     return models.map((model) => this.toDomainEntity(model))
   }
@@ -54,7 +54,7 @@ export class DatabaseGameRepository implements GameRepository {
   async findByStatus(status: GameStatus): Promise<Game[]> {
     const models = await GameModel.query()
       .where('status', status)
-      .where('deleted_at', false)
+      .where('is_archived', false)
       .orderBy('started_at', 'desc')
 
     return models.map((model) => this.toDomainEntity(model))
@@ -63,7 +63,7 @@ export class DatabaseGameRepository implements GameRepository {
   async findByPlayer(playerUuid: string): Promise<Game[]> {
     const models = await GameModel.query()
       .whereJsonSuperset('players', [{ uuid: playerUuid }])
-      .where('deleted_at', false)
+      .where('is_archived', false)
       .orderBy('started_at', 'desc')
 
     return models.map((model) => this.toDomainEntity(model))
@@ -73,20 +73,20 @@ export class DatabaseGameRepository implements GameRepository {
     const models = await GameModel.query()
       .whereJsonSuperset('players', [{ uuid: playerUuid }])
       .whereIn('status', [GameStatus.IN_PROGRESS, GameStatus.PAUSED])
-      .where('deleted_at', false)
+      .where('is_archived', false)
       .orderBy('started_at', 'desc')
 
     return models.map((model) => this.toDomainEntity(model))
   }
 
   async delete(uuid: string): Promise<void> {
-    await GameModel.query().where('uuid', uuid).update({ deleted_at: true })
+    await GameModel.query().where('uuid', uuid).update({ is_archived: true })
   }
 
   async findActiveGames(): Promise<Game[]> {
     const models = await GameModel.query()
       .whereIn('status', [GameStatus.IN_PROGRESS, GameStatus.PAUSED])
-      .where('deleted_at', false)
+      .where('is_archived', false)
       .orderBy('started_at', 'desc')
 
     return models.map((model) => this.toDomainEntity(model))
@@ -95,7 +95,7 @@ export class DatabaseGameRepository implements GameRepository {
   async findFinishedGames(): Promise<Game[]> {
     const models = await GameModel.query()
       .where('status', GameStatus.FINISHED)
-      .where('deleted_at', false)
+      .where('is_archived', false)
       .orderBy('started_at', 'desc')
 
     return models.map((model) => this.toDomainEntity(model))
@@ -103,7 +103,7 @@ export class DatabaseGameRepository implements GameRepository {
 
   async findRecentGames(limit: number = 10): Promise<Game[]> {
     const models = await GameModel.query()
-      .where('deleted_at', false)
+      .where('is_archived', false)
       .orderBy('started_at', 'desc')
       .limit(limit)
 
@@ -113,7 +113,7 @@ export class DatabaseGameRepository implements GameRepository {
   async countGamesByPlayer(playerUuid: string): Promise<number> {
     const result = await GameModel.query()
       .whereJsonSuperset('players', [{ uuid: playerUuid }])
-      .where('deleted_at', false)
+      .where('is_archived', false)
       .count('* as total')
 
     return Number((result[0] as any)?.total ?? 0)
@@ -122,18 +122,39 @@ export class DatabaseGameRepository implements GameRepository {
   async countWinsByPlayer(playerUuid: string): Promise<number> {
     const result = await GameModel.query()
       .where('winner_uuid', playerUuid)
-      .where('deleted_at', false)
+      .where('is_archived', false)
       .count('* as total')
 
     return Number((result[0] as any)?.total ?? 0)
   }
 
   private toDomainEntity(model: GameModel): Game {
+    // Ensure players and gameData are proper objects/arrays (they are stored as JSON strings)
+    let players: any = model.players as any
+    let gameData: any = model.gameData as any
+
+    if (typeof players === 'string') {
+      try {
+        const parsed = JSON.parse(players)
+        players = Array.isArray(parsed) ? parsed : Object.values(parsed)
+      } catch {
+        players = []
+      }
+    }
+
+    if (typeof gameData === 'string') {
+      try {
+        gameData = JSON.parse(gameData)
+      } catch {
+        gameData = {}
+      }
+    }
+
     return Game.reconstitute(
       model.uuid,
       model.status as GameStatus,
-      model.players,
-      model.gameData,
+      players,
+      gameData,
       model.startedAt.toJSDate(),
       model.finishedAt?.toJSDate()
     )

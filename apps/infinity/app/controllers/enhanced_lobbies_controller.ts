@@ -473,7 +473,8 @@ export default class EnhancedLobbiesController {
         })
       }
 
-      const gameUuid = result.value
+      const gameResponse = result.value
+      const gameUuid = gameResponse.game.uuid
 
       if (request.accepts(['html'])) {
         return response.redirect(`/games/${gameUuid}`)
@@ -482,6 +483,7 @@ export default class EnhancedLobbiesController {
       return response.json({
         success: true,
         gameUuid,
+        game: gameResponse.game,
       })
     } catch (error) {
       console.error('Failed to start game:', error)

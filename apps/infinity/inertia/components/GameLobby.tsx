@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { router } from '@inertiajs/react'
 import { toast } from 'sonner'
 import { useLobbyDetail } from '../hooks/use_lobby_detail'
@@ -8,6 +8,7 @@ import { Button } from '@tyfo.dev/ui/primitives/button'
 import { Badge } from '@tyfo.dev/ui/primitives/badge'
 import { Avatar, AvatarFallback } from '@tyfo.dev/ui/primitives/avatar'
 import { Users, Crown, Play, UserMinus, Settings, Share2, LogOut, UserPlus } from 'lucide-react'
+import { useTransmit } from '../contexts/TransmitContext'
 
 interface Player {
   uuid: string
@@ -27,6 +28,7 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
   const [isStartingGame, setIsStartingGame] = useState(false)
   const [isLeavingLobby, setIsLeavingLobby] = useState(false)
   const [isJoiningLobby, setIsJoiningLobby] = useState(false)
+  const { subscribeToLobby, isConnected } = useTransmit()
 
   // Détecter si l'utilisateur est dans le lobby
   const isUserInLobby = lobby?.players?.some(player => player.uuid === currentUser.uuid) || false
@@ -49,7 +51,7 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
         toast.success('Game is starting!')
         // Redirect to game page after a short delay
         setTimeout(() => {
-          router.visit(`/game/${result.gameUuid}`)
+          router.visit(`/games/${result.gameUuid}`)
         }, 2000)
       }
     } catch (error) {
@@ -58,6 +60,33 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
       setIsStartingGame(false)
     }
   }
+
+  // Écouter les événements temps réel du lobby pour détecter le démarrage de la partie
+  useEffect(() => {
+    if (!isConnected) return
+
+    let unsubscribe: (() => void) | null = null
+
+    const subscribe = async () => {
+      unsubscribe = await subscribeToLobby(lobbyUuid, (event) => {
+        if (event.type === 'lobby.game.started' && event.lobbyUuid === lobbyUuid && event.gameUuid) {
+          setIsStartingGame(true)
+          toast.success('Game is starting!')
+          router.visit(`/games/${event.gameUuid}`)
+        }
+      })
+    }
+
+    subscribe().catch((err) => {
+      console.error('Failed to subscribe to lobby game events:', err)
+    })
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe()
+      }
+    }
+  }, [lobbyUuid, subscribeToLobby, isConnected])
 
   const handleLeaveLobby = async () => {
     if (!isServiceReady) return

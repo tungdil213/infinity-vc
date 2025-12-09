@@ -1,12 +1,12 @@
 import { HttpContext } from '@adonisjs/core/http'
 import { inject } from '@adonisjs/core'
-import * as GameRepo from '../application/repositories/game_repository.js'
+import { DatabaseGameRepository } from '../infrastructure/repositories/database_game_repository.js'
 import { gameEngineService } from '../application/services/game_engine_service.js'
 import { Cards } from '../games/love-letter/types.js'
 
 @inject()
 export default class GamesController {
-  constructor(private gameRepository: GameRepo.GameRepository) {}
+  constructor(private gameRepository: DatabaseGameRepository) {}
 
   /**
    * Display specific game (Inertia page)
@@ -28,13 +28,13 @@ export default class GamesController {
 
       return inertia.render('game', {
         game: game.toJSON(),
-        user: { uuid: user.uuid, nickName: user.fullName },
+        user: { uuid: user.userUuid, nickName: user.fullName },
         isFinished: true,
       })
     }
 
     // Check if user is part of this game
-    const isPlayerInGame = session.state.players.some((p) => p.id === user.uuid)
+    const isPlayerInGame = session.state.players.some((p) => p.id === user.userUuid)
     if (!isPlayerInGame) {
       return inertia.render('errors/not_found', {
         error: { message: 'You are not part of this game' },
@@ -42,13 +42,13 @@ export default class GamesController {
     }
 
     // Get player-specific view (hides other players' hands)
-    const playerView = gameEngineService.getPlayerView(uuid, user.uuid)
+    const playerView = gameEngineService.getPlayerView(uuid, user.userUuid)
 
     return inertia.render('game', {
       gameId: session.gameId,
       playerView,
-      availableActions: gameEngineService.getAvailableActions(uuid, user.uuid),
-      user: { uuid: user.uuid, nickName: user.fullName },
+      availableActions: gameEngineService.getAvailableActions(uuid, user.userUuid),
+      user: { uuid: user.userUuid, nickName: user.fullName },
       isFinished: session.state.isFinished,
     })
   }
@@ -94,8 +94,8 @@ export default class GamesController {
       return response.status(404).json({ error: 'Game not found' })
     }
 
-    const availableActions = gameEngineService.getAvailableActions(uuid, user.uuid)
-    const isMyTurn = session.state.currentPlayerId === user.uuid
+    const availableActions = gameEngineService.getAvailableActions(uuid, user.userUuid)
+    const isMyTurn = session.state.currentPlayerId === user.userUuid
 
     return response.json({
       availableActions,
@@ -127,7 +127,7 @@ export default class GamesController {
 
     switch (body.action) {
       case 'draw':
-        result = gameEngineService.drawCard(uuid, user.uuid)
+        result = gameEngineService.drawCard(uuid, user.userUuid)
         break
 
       case 'play':
@@ -136,7 +136,7 @@ export default class GamesController {
         }
         result = gameEngineService.playCard(
           uuid,
-          user.uuid,
+          user.userUuid,
           body.cardType,
           body.targetPlayerId,
           body.guessedCard
@@ -157,7 +157,7 @@ export default class GamesController {
     return response.json({
       success: true,
       playerView,
-      availableActions: gameEngineService.getAvailableActions(uuid, user.uuid),
+      availableActions: gameEngineService.getAvailableActions(uuid, user.userUuid),
       events: result.events,
       isFinished: result.newState?.isFinished ?? false,
       winnerId: result.newState?.winnerId,
@@ -191,7 +191,7 @@ export default class GamesController {
       })),
       tokensOfAffection: p.tokensOfAffection,
       isCurrentPlayer: p.id === session.state.currentPlayerId,
-      isMe: p.id === user.uuid,
+      isMe: p.id === user.userUuid,
     }))
 
     return response.json({

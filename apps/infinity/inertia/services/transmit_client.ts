@@ -110,6 +110,26 @@ export class TransmitLobbyClient {
   }
 
   /**
+   * S'abonner aux événements d'une partie spécifique
+   */
+  async subscribeToGame(gameId: string, callback: (event: any) => void): Promise<() => void> {
+    const channelName = `games/${gameId}`
+    const subscription = transmitClient.subscription(channelName)
+
+    subscription.onMessage((data: any) => {
+      callback(data)
+    })
+
+    await subscription.create()
+    this.subscriptions.set(channelName, subscription)
+
+    return () => {
+      subscription.delete()
+      this.subscriptions.delete(channelName)
+    }
+  }
+
+  /**
    * S'abonner aux notifications d'un utilisateur
    */
   async subscribeToUserNotifications(

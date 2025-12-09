@@ -76,15 +76,8 @@ export class JoinLobbyUseCase {
       await this.lobbyRepository.save(lobby)
 
       // Notifier les autres joueurs qu'un nouveau joueur a rejoint
-      this.notificationService.notifyPlayerJoined(lobby.uuid, player, {
-        uuid: lobby.uuid,
-        name: lobby.name,
-        status: lobby.status,
-        currentPlayers: lobby.players.length,
-        maxPlayers: lobby.maxPlayers,
-        players: lobby.players,
-        creator: lobby.creator,
-      })
+      // Utiliser la sérialisation complète pour inclure hasAvailableSlots, canStart, etc.
+      this.notificationService.notifyPlayerJoined(lobby.uuid, player, lobby.serialize())
 
       return Result.ok({
         lobby: lobby.serialize(),

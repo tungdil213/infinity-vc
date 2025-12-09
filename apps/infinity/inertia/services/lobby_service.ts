@@ -301,6 +301,34 @@ export class LobbyService {
     this.updateLobbyDetail(updatedLobby.uuid, () => updatedLobby)
   }
 
+  private handleLobbyGameStarted(event: any) {
+    const { lobbyUuid, gameUuid, lobby } = event.data
+    console.log('handleLobbyGameStarted - données:', { lobbyUuid, gameUuid, lobby })
+
+    if (!lobbyUuid) return
+
+    // Mettre à jour la liste globale pour refléter que la partie a démarré
+    this.updateLobbyInList(lobbyUuid, {
+      status: 'IN_GAME',
+      hasAvailableSlots: false,
+      canStart: false,
+    })
+
+    // Mettre à jour les détails du lobby si des abonnés sont présents
+    this.updateLobbyDetail(lobbyUuid, (currentLobby) => {
+      if (!currentLobby && lobby) {
+        return { ...lobby, status: 'IN_GAME', hasAvailableSlots: false, canStart: false }
+      }
+      if (!currentLobby) return currentLobby
+      return {
+        ...currentLobby,
+        status: 'IN_GAME',
+        hasAvailableSlots: false,
+        canStart: false,
+      }
+    })
+  }
+
   private handleLobbyDeleted(event: any) {
     console.log('handleLobbyDeleted - event reçu:', event)
     const lobbyUuid = event.data.lobbyUuid
@@ -320,6 +348,10 @@ export class LobbyService {
 
   // Méthodes utilitaires
   private updateLobbyInList(lobbyUuid: string, updates: Partial<LobbyData>) {
+    // S'assurer que la liste est toujours un tableau
+    if (!Array.isArray(this.lobbyListState.lobbies)) {
+      this.lobbyListState.lobbies = []
+    }
     const index = this.lobbyListState.lobbies.findIndex((l) => l.uuid === lobbyUuid)
     if (index !== -1) {
       this.lobbyListState.lobbies[index] = { ...this.lobbyListState.lobbies[index], ...updates }
@@ -388,12 +420,27 @@ export class LobbyService {
       }
 
       const data = await response.json()
-      this.lobbyListState.lobbies = data.data
-      this.lobbyListState.total = data.meta.total
+
+      // Compatibilité avec différents formats de réponse
+      // Nouveau contrôleur EnhancedLobbiesController.apiIndex -> { lobbies: [...] }
+      // Ancien format paginé -> { data: [...], meta: { total } }
+      const rawLobbies = Array.isArray(data.lobbies)
+        ? data.lobbies
+        : Array.isArray(data.data)
+          ? data.data
+          : []
+
+      this.lobbyListState.lobbies = rawLobbies
+      this.lobbyListState.total =
+        typeof data.meta?.total === 'number' ? data.meta.total : rawLobbies.length
       this.lobbyListState.loading = false
       this.notifyLobbyListSubscribers()
     } catch (error) {
       this.lobbyListState.error = error instanceof Error ? error.message : 'Unknown error'
+      // En cas d'erreur, garantir que lobbies reste un tableau
+      if (!Array.isArray(this.lobbyListState.lobbies)) {
+        this.lobbyListState.lobbies = []
+      }
       this.lobbyListState.loading = false
       this.notifyLobbyListSubscribers()
     }
@@ -531,11 +578,18 @@ export class LobbyService {
 
   async startGame(lobbyUuid: string, userUuid: string) {
     try {
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      }
+      if (csrfToken) {
+        headers['X-CSRF-TOKEN'] = csrfToken
+      }
+
       const response = await fetch(`/api/v1/lobbies/${lobbyUuid}/start`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         credentials: 'include',
         body: JSON.stringify({ userUuid }),
       })
@@ -544,7 +598,17 @@ export class LobbyService {
         throw new Error(`Failed to start game: ${response.statusText}`)
       }
 
-      return await response.json()
+      const contentType = response.headers.get('content-type') || ''
+      if (contentType.includes('application/json')) {
+        return await response.json()
+      }
+
+      // Fallback: non‑JSON response (e.g. HTML redirect). We return minimal info.
+      return {
+        success: response.ok,
+        redirected: response.redirected,
+        url: response.url,
+      }
     } catch (error) {
       console.error('Error starting game:', error)
       throw error
@@ -606,6 +670,10 @@ export class LobbyService {
           case 'lobby.deleted':
             console.log('Traitement événement lobby.deleted pour détails')
             this.handleLobbyDeleted(transmitEvent)
+            break
+          case 'lobby.game.started':
+            console.log('Traitement événement lobby.game.started pour détails')
+            this.handleLobbyGameStarted(transmitEvent)
             break
           default:
             console.log(`Événement non géré: ${event.type}`)

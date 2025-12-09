@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { Head, router } from '@inertiajs/react'
 import { LobbyList } from '../../../../packages/ui/src/components/lobby-list'
 import { LobbyData } from '../../../../packages/ui/src/components/lobby-card'
-import Layout from '../components/layout'
 import { HeaderWrapper } from '../components/HeaderWrapper'
 import { Footer } from '../../../../packages/ui/src/components/footer'
 import { toast } from 'sonner'
@@ -69,7 +68,7 @@ const transformLobbyData = (lobby: Lobby): LobbyData => ({
   })),
 })
 
-export default function Lobbies({ lobbies: initialLobbies, user, currentLobby }: LobbiesProps) {
+function LobbiesPage({ lobbies: initialLobbies, user, currentLobby }: LobbiesProps) {
   const [loading, setLoading] = useState(false)
   const { service: lobbyService, isConnected } = useLobbyService()
   const [lobbyListState, setLobbyListState] = useState<LobbyListState>({
@@ -98,8 +97,8 @@ export default function Lobbies({ lobbies: initialLobbies, user, currentLobby }:
     }
   }, [lobbyService])
 
-  // Utiliser les données temps réel ou les données initiales
-  const lobbies = isConnected ? lobbyListState.lobbies : initialLobbies
+  // Utiliser toujours l'état géré par le LobbyService (initialisé avec les données serveur)
+  const lobbies = lobbyListState.lobbies
 
   const handleCreateLobby = () => {
     router.get('/lobbies/create')
@@ -208,22 +207,22 @@ export default function Lobbies({ lobbies: initialLobbies, user, currentLobby }:
   } : undefined
 
   const transformedLobbies = lobbies.map((lobby) => transformLobbyData(lobby as Lobby))
-  const isRealTimeLoading = lobbyListState.loading && isConnected
+  const isRealTimeLoading = lobbyListState.loading
 
   return (
-    <Layout>
+    <>
       <Head title="Game Lobbies" />
-      
+
       <div className="min-h-screen bg-gray-50">
         <HeaderWrapper user={headerUser} currentLobby={currentLobby} />
-        
+
         <div className="container mx-auto px-4 py-8">
           <LobbyList
             lobbies={transformedLobbies}
             currentUser={user}
             loading={loading || isRealTimeLoading}
-            total={isConnected ? lobbyListState.total : lobbies.length}
-            error={isConnected ? lobbyListState.error || undefined : undefined}
+            total={lobbyListState.total}
+            error={lobbyListState.error || undefined}
             onJoin={handleJoinLobby}
             onLeave={handleLeaveLobby}
             onView={handleViewLobby}
@@ -234,9 +233,15 @@ export default function Lobbies({ lobbies: initialLobbies, user, currentLobby }:
             onRefresh={handleRefresh}
           />
         </div>
-        
+
         <Footer />
       </div>
-    </Layout>
+    </>
   )
 }
+
+// Appliquer le layout global (avec TransmitProvider) autour de la page
+import Layout from '../components/layout'
+;(LobbiesPage as any).layout = (page: React.ReactNode) => <Layout>{page}</Layout>
+
+export default LobbiesPage
