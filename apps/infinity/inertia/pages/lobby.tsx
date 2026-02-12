@@ -41,12 +41,9 @@ export default function Lobby({ lobby, user }: LobbyProps) {
   return (
     <Layout>
       <Head title={`Lobby - ${lobby.name}`} />
-      
-      <div className="min-h-screen bg-gray-50">
-        <GameLobby
-          lobbyUuid={lobby.uuid}
-          currentUser={user}
-        />
+
+      <div className="min-h-screen bg-secondary-background">
+        <GameLobby lobbyUuid={lobby.uuid} currentUser={user} />
       </div>
     </Layout>
   )

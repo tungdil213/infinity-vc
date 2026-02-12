@@ -1,18 +1,64 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { Head } from '@inertiajs/react'
 import { Button } from '@tyfo.dev/ui/primitives/button'
+import { Card as UICard, CardContent, CardHeader, CardTitle } from '@tyfo.dev/ui/primitives/card'
+import { Badge } from '@tyfo.dev/ui/primitives/badge'
+import { Alert, AlertDescription } from '@tyfo.dev/ui/primitives/alert'
 import { useTransmit } from '../contexts/TransmitContext'
 import Layout from '../layouts/layout'
 
-const CARD_INFO: Record<string, { name: string; value: number; description: string; color: string }> = {
-  guard: { name: 'Guard', value: 1, description: 'Guess a card. If correct, target eliminated.', color: 'bg-red-500' },
-  priest: { name: 'Priest', value: 2, description: "Look at another player's hand.", color: 'bg-blue-500' },
-  baron: { name: 'Baron', value: 3, description: 'Compare hands. Lower value eliminated.', color: 'bg-green-500' },
-  handmaid: { name: 'Handmaid', value: 4, description: 'Protected until your next turn.', color: 'bg-yellow-500' },
-  prince: { name: 'Prince', value: 5, description: 'Target discards and draws new card.', color: 'bg-purple-500' },
-  king: { name: 'King', value: 6, description: 'Trade hands with another player.', color: 'bg-orange-500' },
-  countess: { name: 'Countess', value: 7, description: 'Must discard if you have King/Prince.', color: 'bg-pink-500' },
-  princess: { name: 'Princess', value: 8, description: 'If discarded, you are eliminated.', color: 'bg-indigo-500' },
+const CARD_INFO: Record<
+  string,
+  { name: string; value: number; description: string; color: string }
+> = {
+  guard: {
+    name: 'Guard',
+    value: 1,
+    description: 'Guess a card. If correct, target eliminated.',
+    color: 'bg-red-500',
+  },
+  priest: {
+    name: 'Priest',
+    value: 2,
+    description: "Look at another player's hand.",
+    color: 'bg-blue-500',
+  },
+  baron: {
+    name: 'Baron',
+    value: 3,
+    description: 'Compare hands. Lower value eliminated.',
+    color: 'bg-green-500',
+  },
+  handmaid: {
+    name: 'Handmaid',
+    value: 4,
+    description: 'Protected until your next turn.',
+    color: 'bg-yellow-500',
+  },
+  prince: {
+    name: 'Prince',
+    value: 5,
+    description: 'Target discards and draws new card.',
+    color: 'bg-purple-500',
+  },
+  king: {
+    name: 'King',
+    value: 6,
+    description: 'Trade hands with another player.',
+    color: 'bg-orange-500',
+  },
+  countess: {
+    name: 'Countess',
+    value: 7,
+    description: 'Must discard if you have King/Prince.',
+    color: 'bg-pink-500',
+  },
+  princess: {
+    name: 'Princess',
+    value: 8,
+    description: 'If discarded, you are eliminated.',
+    color: 'bg-indigo-500',
+  },
 }
 
 const GUESSABLE_CARDS = ['priest', 'baron', 'handmaid', 'prince', 'king', 'countess', 'princess']
@@ -57,7 +103,13 @@ interface GameProps {
   game?: unknown
 }
 
-function Card({ cardType, onClick, selected, disabled, size = 'normal' }: {
+function Card({
+  cardType,
+  onClick,
+  selected,
+  disabled,
+  size = 'normal',
+}: {
   cardType: string
   onClick?: () => void
   selected?: boolean
@@ -81,7 +133,12 @@ function Card({ cardType, onClick, selected, disabled, size = 'normal' }: {
   )
 }
 
-function PlayerCard({ player, isTarget, onSelect, canTarget }: {
+function PlayerCard({
+  player,
+  isTarget,
+  onSelect,
+  canTarget,
+}: {
   player: LoveLetterPlayer
   isTarget: boolean
   onSelect: () => void
@@ -100,16 +157,24 @@ function PlayerCard({ player, isTarget, onSelect, canTarget }: {
     >
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${player.isEliminated ? 'bg-gray-400' : 'bg-gradient-to-br from-purple-500 to-pink-500'}`}>
+          <div
+            className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${player.isEliminated ? 'bg-gray-400' : 'bg-gradient-to-br from-purple-500 to-pink-500'}`}
+          >
             {player.name.charAt(0).toUpperCase()}
           </div>
           <div>
             <h3 className="font-semibold">{player.name}</h3>
             <div className="flex gap-1 text-xs">
               {player.isMe && <span className="px-1 bg-blue-100 text-blue-700 rounded">You</span>}
-              {player.isCurrentPlayer && <span className="px-1 bg-green-100 text-green-700 rounded">Turn</span>}
-              {player.isProtected && <span className="px-1 bg-yellow-100 text-yellow-700 rounded">Protected</span>}
-              {player.isEliminated && <span className="px-1 bg-red-100 text-red-700 rounded">Out</span>}
+              {player.isCurrentPlayer && (
+                <span className="px-1 bg-green-100 text-green-700 rounded">Turn</span>
+              )}
+              {player.isProtected && (
+                <span className="px-1 bg-yellow-100 text-yellow-700 rounded">Protected</span>
+              )}
+              {player.isEliminated && (
+                <span className="px-1 bg-red-100 text-red-700 rounded">Out</span>
+              )}
             </div>
           </div>
         </div>
@@ -122,7 +187,9 @@ function PlayerCard({ player, isTarget, onSelect, canTarget }: {
         <div className="mt-2 pt-2 border-t border-gray-200">
           <div className="text-xs text-gray-500 mb-1">Discarded:</div>
           <div className="flex gap-1 flex-wrap">
-            {player.discardPile.map((c, i) => <Card key={i} cardType={c.type} size="small" />)}
+            {player.discardPile.map((c, i) => (
+              <Card key={i} cardType={c.type} size="small" />
+            ))}
           </div>
         </div>
       )}
@@ -130,7 +197,13 @@ function PlayerCard({ player, isTarget, onSelect, canTarget }: {
   )
 }
 
-export default function Game({ gameId, playerView, availableActions: initialActions, user, isFinished }: GameProps) {
+export default function Game({
+  gameId,
+  playerView,
+  availableActions: initialActions,
+  user,
+  isFinished,
+}: GameProps) {
   const [gameState, setGameState] = useState<PlayerViewState | null>(playerView)
   const [availableActions, setAvailableActions] = useState<string[]>(initialActions || [])
   const [myHand, setMyHand] = useState<string[]>([])
@@ -143,8 +216,8 @@ export default function Game({ gameId, playerView, availableActions: initialActi
   const { isConnected, subscribeToGame } = useTransmit()
 
   const addNotification = useCallback((msg: string) => {
-    setNotifications(prev => [...prev, msg])
-    setTimeout(() => setNotifications(prev => prev.slice(1)), 5000)
+    setNotifications((prev) => [...prev, msg])
+    setTimeout(() => setNotifications((prev) => prev.slice(1)), 5000)
   }, [])
 
   const refreshGameState = useCallback(async () => {
@@ -180,18 +253,29 @@ export default function Game({ gameId, playerView, availableActions: initialActi
         body: JSON.stringify({ action: 'draw' }),
       })
       const result = await res.json()
-      if (result.success) { addNotification('Card drawn!'); await refreshGameState() }
-      else addNotification(`Error: ${result.error}`)
-    } catch { addNotification('Failed to draw') }
-    finally { setIsLoading(false) }
+      if (result.success) {
+        addNotification('Card drawn!')
+        await refreshGameState()
+      } else addNotification(`Error: ${result.error}`)
+    } catch {
+      addNotification('Failed to draw')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handlePlayCard = async () => {
     if (!selectedCard || isLoading) return
     const needsTarget = TARGET_CARDS.includes(selectedCard) && selectedCard !== 'prince'
     const needsGuess = selectedCard === 'guard'
-    if (needsTarget && !selectedTarget) { addNotification('Select a target'); return }
-    if (needsGuess && !selectedGuess) { addNotification('Select card to guess'); return }
+    if (needsTarget && !selectedTarget) {
+      addNotification('Select a target')
+      return
+    }
+    if (needsGuess && !selectedGuess) {
+      addNotification('Select card to guess')
+      return
+    }
     setIsLoading(true)
     try {
       const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
@@ -216,11 +300,16 @@ export default function Game({ gameId, playerView, availableActions: initialActi
       const result = await res.json()
       if (result.success) {
         addNotification(`Played ${CARD_INFO[selectedCard]?.name}!`)
-        setSelectedCard(null); setSelectedTarget(null); setSelectedGuess(null)
+        setSelectedCard(null)
+        setSelectedTarget(null)
+        setSelectedGuess(null)
         await refreshGameState()
       } else addNotification(`Error: ${result.error}`)
-    } catch { addNotification('Failed to play') }
-    finally { setIsLoading(false) }
+    } catch {
+      addNotification('Failed to play')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   // Souscription temps réel aux événements de jeu via Transmit
@@ -246,19 +335,30 @@ export default function Game({ gameId, playerView, availableActions: initialActi
     }
   }, [gameId, isConnected, subscribeToGame, refreshGameState])
 
-  useEffect(() => { refreshGameState() }, [refreshGameState])
+  useEffect(() => {
+    refreshGameState()
+  }, [refreshGameState])
 
   if (isFinished || gameState?.state?.isFinished) {
-    const winner = gameState?.state?.players?.find(p => !p.isEliminated)
+    const winner = gameState?.state?.players?.find((p) => !p.isEliminated)
     return (
       <Layout>
         <Head title="Game Over" />
-        <div className="min-h-screen bg-gradient-to-br from-purple-900 to-pink-900 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
-            <div className="text-6xl mb-4">Game Over</div>
-            <h1 className="text-3xl font-bold mb-2">{winner?.isMe ? 'You won!' : `${winner?.name} wins!`}</h1>
-            <Button onClick={() => window.location.href = '/lobbies'} className="w-full mt-4">Back to Lobbies</Button>
-          </div>
+        <div className="min-h-screen bg-main flex items-center justify-center p-4">
+          <UICard className="max-w-md w-full text-center">
+            <CardHeader>
+              <div className="text-6xl mb-4">🎮</div>
+              <CardTitle className="text-3xl">Game Over</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xl mb-6">
+                {winner?.isMe ? '🏆 You won!' : `🏆 ${winner?.name} wins!`}
+              </p>
+              <Button onClick={() => (window.location.href = '/lobbies')} className="w-full">
+                Back to Lobbies
+              </Button>
+            </CardContent>
+          </UICard>
         </div>
       </Layout>
     )
@@ -273,85 +373,152 @@ export default function Game({ gameId, playerView, availableActions: initialActi
   return (
     <Layout>
       <Head title={`Love Letter - Round ${gameState?.state?.round || 1}`} />
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 to-pink-900 p-4">
+      <div className="min-h-screen bg-main p-4">
         <div className="max-w-6xl mx-auto mb-4">
-          <div className="bg-white/10 backdrop-blur rounded-lg p-4 flex items-center justify-between text-white">
-            <div>
-              <h1 className="text-2xl font-bold">Love Letter</h1>
-              <p className="text-purple-200">Round {gameState?.state?.round || 1} | Deck: {gameState?.state?.deckCount || 0}</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'}`} />
-              <Button variant="neutral" onClick={() => window.location.href = '/lobbies'}>Leave</Button>
-            </div>
-          </div>
+          <UICard>
+            <CardContent className="p-4 flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-heading">Love Letter</h1>
+                <div className="flex gap-2 mt-1">
+                  <Badge variant="secondary">Round {gameState?.state?.round || 1}</Badge>
+                  <Badge variant="secondary">Deck: {gameState?.state?.deckCount || 0}</Badge>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <Badge variant={isConnected ? 'default' : 'destructive'}>
+                  {isConnected ? 'Connected' : 'Disconnected'}
+                </Badge>
+                <Button variant="neutral" onClick={() => (window.location.href = '/lobbies')}>
+                  Leave
+                </Button>
+              </div>
+            </CardContent>
+          </UICard>
         </div>
 
         {notifications.length > 0 && (
           <div className="max-w-6xl mx-auto mb-4 space-y-2">
-            {notifications.map((n, i) => <div key={i} className="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-lg">{n}</div>)}
+            {notifications.map((n, i) => (
+              <Alert key={i}>
+                <AlertDescription>{n}</AlertDescription>
+              </Alert>
+            ))}
           </div>
         )}
 
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 space-y-4">
-            <div className="bg-white rounded-xl shadow-xl p-4">
-              <h2 className="text-lg font-semibold mb-4">Players</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {players.map(p => (
-                  <PlayerCard key={p.id} player={p} isTarget={selectedTarget === p.id}
-                    onSelect={() => setSelectedTarget(p.id)}
-                    canTarget={canPlay && selectedCard !== null && TARGET_CARDS.includes(selectedCard) && !p.isMe} />
-                ))}
-              </div>
-            </div>
+            <UICard>
+              <CardHeader>
+                <CardTitle>Players</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {players.map((p) => (
+                    <PlayerCard
+                      key={p.id}
+                      player={p}
+                      isTarget={selectedTarget === p.id}
+                      onSelect={() => setSelectedTarget(p.id)}
+                      canTarget={
+                        canPlay &&
+                        selectedCard !== null &&
+                        TARGET_CARDS.includes(selectedCard) &&
+                        !p.isMe
+                      }
+                    />
+                  ))}
+                </div>
+              </CardContent>
+            </UICard>
             {isMyTurn && (
-              <div className="bg-green-500 text-white rounded-xl p-4 text-center animate-pulse">
-                <span className="text-xl font-bold">Your turn!</span>
-                <span className="ml-2">{phase === 'draw' ? 'Draw a card' : phase === 'play' ? 'Play a card' : ''}</span>
-              </div>
+              <Alert className="bg-main border-2 border-border">
+                <AlertDescription className="text-center text-main-foreground">
+                  <span className="text-xl font-heading">🎮 Your turn!</span>
+                  <span className="ml-2">
+                    {phase === 'draw' ? 'Draw a card' : phase === 'play' ? 'Play a card' : ''}
+                  </span>
+                </AlertDescription>
+              </Alert>
             )}
           </div>
 
           <div className="space-y-4">
-            <div className="bg-white rounded-xl shadow-xl p-4">
-              <h2 className="text-lg font-semibold mb-4">Your Hand</h2>
-              <div className="flex gap-2 justify-center flex-wrap">
-                {myHand.length > 0 ? myHand.map((c, i) => (
-                  <Card key={i} cardType={c} selected={selectedCard === c}
-                    onClick={() => setSelectedCard(selectedCard === c ? null : c)} disabled={!canPlay} />
-                )) : <p className="text-gray-500 py-8">No cards</p>}
-              </div>
-              {selectedCard && (
-                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                  <p className="font-semibold">{CARD_INFO[selectedCard]?.name}</p>
-                  <p className="text-sm text-gray-600">{CARD_INFO[selectedCard]?.description}</p>
+            <UICard>
+              <CardHeader>
+                <CardTitle>Your Hand</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-2 justify-center flex-wrap">
+                  {myHand.length > 0 ? (
+                    myHand.map((c, i) => (
+                      <Card
+                        key={i}
+                        cardType={c}
+                        selected={selectedCard === c}
+                        onClick={() => setSelectedCard(selectedCard === c ? null : c)}
+                        disabled={!canPlay}
+                      />
+                    ))
+                  ) : (
+                    <p className="text-muted-foreground py-8">No cards</p>
+                  )}
                 </div>
-              )}
-            </div>
+                {selectedCard && (
+                  <div className="mt-4 p-3 bg-secondary-background rounded-base border-2 border-border">
+                    <p className="font-heading">{CARD_INFO[selectedCard]?.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {CARD_INFO[selectedCard]?.description}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </UICard>
 
             {selectedCard === 'guard' && (
-              <div className="bg-white rounded-xl shadow-xl p-4">
-                <h2 className="text-lg font-semibold mb-4">Guess a Card</h2>
-                <div className="grid grid-cols-2 gap-2">
-                  {GUESSABLE_CARDS.map(c => (
-                    <button key={c} onClick={() => setSelectedGuess(c)}
-                      className={`p-2 rounded-lg border-2 text-left ${selectedGuess === c ? 'border-red-500 bg-red-50' : 'border-gray-200'}`}>
-                      <span className="font-semibold">{CARD_INFO[c]?.name}</span> ({CARD_INFO[c]?.value})
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <UICard>
+                <CardHeader>
+                  <CardTitle>Guess a Card</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-2">
+                    {GUESSABLE_CARDS.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => setSelectedGuess(c)}
+                        className={`p-2 rounded-base border-2 text-left transition-all ${selectedGuess === c ? 'border-main bg-main/10' : 'border-border hover:border-main'}`}
+                      >
+                        <span className="font-heading">{CARD_INFO[c]?.name}</span> (
+                        {CARD_INFO[c]?.value})
+                      </button>
+                    ))}
+                  </div>
+                </CardContent>
+              </UICard>
             )}
 
-            <div className="bg-white rounded-xl shadow-xl p-4">
-              <h2 className="text-lg font-semibold mb-4">Actions</h2>
-              <div className="space-y-2">
-                {canDraw && <Button onClick={handleDraw} disabled={isLoading} className="w-full bg-blue-600">{isLoading ? 'Drawing...' : 'Draw Card'}</Button>}
-                {canPlay && selectedCard && <Button onClick={handlePlayCard} disabled={isLoading} className="w-full bg-green-600">{isLoading ? 'Playing...' : `Play ${CARD_INFO[selectedCard]?.name}`}</Button>}
-                {!isMyTurn && <p className="text-center text-gray-500 py-4">Waiting...</p>}
-              </div>
-            </div>
+            <UICard>
+              <CardHeader>
+                <CardTitle>Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {canDraw && (
+                  <Button onClick={handleDraw} disabled={isLoading} className="w-full">
+                    {isLoading ? 'Drawing...' : '🃏 Draw Card'}
+                  </Button>
+                )}
+                {canPlay && selectedCard && (
+                  <Button onClick={handlePlayCard} disabled={isLoading} className="w-full">
+                    {isLoading ? 'Playing...' : `▶️ Play ${CARD_INFO[selectedCard]?.name}`}
+                  </Button>
+                )}
+                {!isMyTurn && (
+                  <p className="text-center text-muted-foreground py-4">
+                    Waiting for other players...
+                  </p>
+                )}
+              </CardContent>
+            </UICard>
           </div>
         </div>
       </div>
