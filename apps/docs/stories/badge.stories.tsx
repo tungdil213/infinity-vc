@@ -20,7 +20,7 @@ const meta: Meta<typeof Badge> = {
   argTypes: {
     variant: {
       control: "select",
-      options: ["default", "secondary", "destructive", "outline"],
+      options: ["default", "secondary", "destructive", "neutral"],
       description: "The visual style of the badge",
     },
     asChild: {
@@ -40,7 +40,7 @@ export const Default: Story = {
       <Badge>Default</Badge>
       <Badge variant="secondary">Secondary</Badge>
       <Badge variant="destructive">Destructive</Badge>
-      <Badge variant="outline">Outline</Badge>
+      <Badge variant="neutral">Neutral</Badge>
     </div>
   ),
 };
@@ -61,7 +61,7 @@ export const Status: Story = {
         <Trash2 className="h-3 w-3" />
         Deleted
       </Badge>
-      <Badge variant="outline" className="text-blue-500">
+      <Badge variant="neutral" className="text-blue-500">
         <Globe className="h-3 w-3" />
         Public
       </Badge>
@@ -81,7 +81,7 @@ export const UserRoles: Story = {
         <ShieldCheck className="h-3 w-3" />
         Moderator
       </Badge>
-      <Badge variant="outline">
+      <Badge variant="neutral">
         <User className="h-3 w-3" />
         User
       </Badge>
@@ -101,7 +101,7 @@ export const Features: Story = {
         <Star className="h-3 w-3" />
         New
       </Badge>
-      <Badge variant="outline" className="border-2">
+      <Badge variant="neutral">
         <Timer className="h-3 w-3" />
         Limited Time
       </Badge>
@@ -116,7 +116,7 @@ export const AsLinks: Story = {
       {[
         { href: "#profile", label: "Profile", variant: "default" as const },
         { href: "#settings", label: "Settings", variant: "secondary" as const },
-        { href: "#help", label: "Help", variant: "outline" as const },
+        { href: "#help", label: "Help", variant: "neutral" as const },
       ].map((link) => (
         <Badge
           key={link.href}
@@ -151,7 +151,7 @@ export const Notifications: Story = {
       </div>
       <div className="relative inline-flex">
         <Badge
-          variant="outline"
+          variant="neutral"
           className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0"
         >
           9

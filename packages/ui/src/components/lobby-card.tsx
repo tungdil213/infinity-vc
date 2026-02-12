@@ -243,7 +243,7 @@ export function LobbyCard({
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-sm font-medium">Joueurs</span>
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="neutral" className="text-xs">
                   {lobby.players.length}
                 </Badge>
               </div>

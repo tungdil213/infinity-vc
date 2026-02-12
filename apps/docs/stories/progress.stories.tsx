@@ -204,7 +204,7 @@ export const ProgressWithSteps: Story = {
         </div>
         <div className="flex justify-between">
           <Button
-            variant="outline"
+            variant="neutral"
             onClick={() => setCurrentStep((prev) => Math.max(prev - 1, 0))}
             disabled={currentStep === 0}
           >

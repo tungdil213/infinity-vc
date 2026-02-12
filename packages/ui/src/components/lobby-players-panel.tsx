@@ -52,7 +52,7 @@ export function LobbyPlayersPanel({
                   <h3 className="font-medium text-gray-900">{player.nickName}</h3>
                   <div className="flex items-center gap-2 mt-1">
                     {player.uuid === creatorUuid && (
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="neutral" className="text-xs">
                         Creator
                       </Badge>
                     )}

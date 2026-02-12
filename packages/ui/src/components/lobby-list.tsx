@@ -363,10 +363,10 @@ export function LobbyList({
             Affichage de {sortedLobbies.length} lobby{sortedLobbies.length > 1 ? 's' : ''}
           </span>
           <div className="flex items-center gap-2">
-            <Badge variant="outline">
+            <Badge variant="neutral">
               {sortedLobbies.filter(l => l.hasAvailableSlots).length} avec places libres
             </Badge>
-            <Badge variant="outline">
+            <Badge variant="neutral">
               {sortedLobbies.filter(l => l.status === 'READY').length} prêts à jouer
             </Badge>
           </div>

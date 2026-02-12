@@ -86,7 +86,7 @@ export function PlayerAvatar({
   const badges = (
     <div className="flex items-center gap-1 mt-1">
       {showCreatorBadge && isCreator && (
-        <Badge variant="outline" className="text-xs px-1 py-0">
+        <Badge variant="neutral" className="text-xs px-1 py-0">
           <Crown className="h-2 w-2 mr-1 text-yellow-500" />
           Créateur
         </Badge>
