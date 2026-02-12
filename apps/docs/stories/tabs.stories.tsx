@@ -97,7 +97,7 @@ export const WithIcons: Story = {
                     Receive emails about your account activity.
                   </p>
                 </div>
-                <Button variant="outline" size="sm">
+                <Button variant="neutral" size="sm">
                   Configure
                 </Button>
               </div>
@@ -111,7 +111,7 @@ export const WithIcons: Story = {
                     Receive notifications about your messages.
                   </p>
                 </div>
-                <Button variant="outline" size="sm">
+                <Button variant="neutral" size="sm">
                   Configure
                 </Button>
               </div>
@@ -125,13 +125,13 @@ export const WithIcons: Story = {
             <div className="space-y-2">
               <Label>Theme</Label>
               <div className="flex space-x-2">
-                <Button variant="outline" size="sm">
+                <Button variant="neutral" size="sm">
                   Light
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button variant="neutral" size="sm">
                   Dark
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button variant="neutral" size="sm">
                   System
                 </Button>
               </div>
@@ -139,13 +139,13 @@ export const WithIcons: Story = {
             <div className="space-y-2">
               <Label>Language</Label>
               <div className="flex space-x-2">
-                <Button variant="outline" size="sm">
+                <Button variant="neutral" size="sm">
                   English
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button variant="neutral" size="sm">
                   Spanish
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button variant="neutral" size="sm">
                   French
                 </Button>
               </div>
@@ -200,7 +200,7 @@ export const PaymentMethods: Story = {
                       </p>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm">
+                  <Button variant="neutral" size="sm">
                     Edit
                   </Button>
                 </div>

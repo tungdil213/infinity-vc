@@ -49,12 +49,12 @@ export default function Welcome({ user, currentLobby }: WelcomeProps) {
                 {user ? (
                   <>
                     <Link href="/lobbies">
-                      <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-4">
+                      <Button size="lg">
                         🎮 Browse Lobbies
                       </Button>
                     </Link>
                     <Link href="/lobbies/create">
-                      <Button size="lg" variant="outline" className="border-border text-foreground hover:bg-accent text-lg px-8 py-4">
+                      <Button size="lg" variant="reverse">
                         ➕ Create Lobby
                       </Button>
                     </Link>
@@ -62,12 +62,12 @@ export default function Welcome({ user, currentLobby }: WelcomeProps) {
                 ) : (
                   <>
                     <Link href="/auth/register">
-                      <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-4">
+                      <Button size="lg">
                         🚀 Get Started Free
                       </Button>
                     </Link>
                     <Link href="#features">
-                      <Button size="lg" variant="outline" className="border-border text-foreground hover:bg-accent text-lg px-8 py-4">
+                      <Button size="lg">
                         📖 Learn More
                       </Button>
                     </Link>
@@ -203,7 +203,7 @@ export default function Welcome({ user, currentLobby }: WelcomeProps) {
               </Link>
             ) : (
               <Link href="/auth/register">
-                <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-4">
+                <Button size="lg" variant="reverse">
                   🚀 Sign Up Now - It's Free!
                 </Button>
               </Link>

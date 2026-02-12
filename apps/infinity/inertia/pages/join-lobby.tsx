@@ -105,7 +105,7 @@ export default function JoinLobby({ lobby, user, invitationCode, errors = {}, fl
                   </Link>
                   
                   <Link href={`/auth/register?redirect=/lobbies/join/${invitationCode}`}>
-                    <Button variant="outline" className="w-full">
+                    <Button variant="neutral" className="w-full">
                       Create Account & Join
                     </Button>
                   </Link>
@@ -241,7 +241,7 @@ export default function JoinLobby({ lobby, user, invitationCode, errors = {}, fl
 
             <div className="mt-6 text-center">
               <Link href="/lobbies">
-                <Button variant="outline" className="w-full">
+                <Button variant="neutral" className="w-full">
                   Browse Other Lobbies
                 </Button>
               </Link>

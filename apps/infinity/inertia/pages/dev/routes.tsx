@@ -55,7 +55,7 @@ export default function DevRoutes({ routes }: DevRoutesProps) {
                 </p>
               </div>
               <Link href="/">
-                <Button variant="outline">
+                <Button variant="neutral">
                   ← Retour à l'accueil
                 </Button>
               </Link>
@@ -133,16 +133,16 @@ export default function DevRoutes({ routes }: DevRoutesProps) {
               <h3 className="text-lg font-medium text-gray-900 mb-4">Actions rapides</h3>
               <div className="flex flex-wrap justify-center gap-4">
                 <Link href="/auth/login">
-                  <Button variant="outline">🔑 Connexion</Button>
+                  <Button variant="neutral">🔑 Connexion</Button>
                 </Link>
                 <Link href="/auth/register">
-                  <Button variant="outline">📝 Inscription</Button>
+                  <Button variant="neutral">📝 Inscription</Button>
                 </Link>
                 <Link href="/lobbies">
-                  <Button variant="outline">🎮 Lobbies</Button>
+                  <Button variant="neutral">🎮 Lobbies</Button>
                 </Link>
                 <Link href="/api/v1/auth/check">
-                  <Button variant="outline">🔍 Check API</Button>
+                  <Button variant="neutral">🔍 Check API</Button>
                 </Link>
               </div>
             </div>

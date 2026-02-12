@@ -90,7 +90,7 @@ export const WithAction: Story = {
       <AlertTitle>Update Available</AlertTitle>
       <AlertDescription className="flex flex-col gap-3">
         <p>A new software update is available for installation.</p>
-        <Button variant="outline" size="sm" className="w-fit">
+        <Button variant="neutral" size="sm" className="w-fit">
           Install Update
         </Button>
       </AlertDescription>

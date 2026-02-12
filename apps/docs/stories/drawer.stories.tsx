@@ -59,7 +59,7 @@ export const Default: Story = {
   render: ({ direction }) => (
     <Drawer direction={direction}>
       <DrawerTrigger asChild>
-        <Button variant="outline">Open Drawer</Button>
+        <Button variant="neutral">Open Drawer</Button>
       </DrawerTrigger>
       <DrawerContent>
         <DrawerHeader>
@@ -85,7 +85,7 @@ export const Default: Story = {
         <DrawerFooter>
           <Button>Save changes</Button>
           <DrawerClose asChild>
-            <Button variant="outline">Cancel</Button>
+            <Button variant="neutral">Cancel</Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>
@@ -101,7 +101,7 @@ export const CartDrawer: Story = {
   render: ({ direction }) => (
     <Drawer direction={direction}>
       <DrawerTrigger asChild>
-        <Button variant="outline">
+        <Button variant="neutral">
           <ShoppingCart className="mr-2 h-4 w-4" />
           Cart (3)
         </Button>
@@ -133,7 +133,7 @@ export const CartDrawer: Story = {
               </div>
               <div className="flex items-center space-x-4">
                 <p className="text-sm font-medium">{item.price}</p>
-                <Button variant="ghost" size="icon">
+                <Button variant="noShadow" size="icon">
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -150,7 +150,7 @@ export const CartDrawer: Story = {
           </div>
           <Button className="w-full">Checkout</Button>
           <DrawerClose asChild>
-            <Button variant="outline" className="w-full">Continue Shopping</Button>
+            <Button variant="neutral" className="w-full">Continue Shopping</Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>
@@ -166,7 +166,7 @@ export const FilterDrawer: Story = {
   render: ({ direction }) => (
     <Drawer direction={direction}>
       <DrawerTrigger asChild>
-        <Button variant="outline">
+        <Button variant="neutral">
           <Filter className="mr-2 h-4 w-4" />
           Filters
         </Button>
@@ -176,7 +176,7 @@ export const FilterDrawer: Story = {
           <div className="flex items-center justify-between">
             <DrawerTitle>Filters</DrawerTitle>
             <DrawerClose asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="noShadow" size="icon">
                 <X className="h-4 w-4" />
               </Button>
             </DrawerClose>
@@ -204,7 +204,7 @@ export const FilterDrawer: Story = {
         </ScrollArea>
         <DrawerFooter>
           <Button className="w-full">Apply Filters</Button>
-          <Button variant="outline" className="w-full">Reset</Button>
+          <Button variant="neutral" className="w-full">Reset</Button>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
@@ -219,7 +219,7 @@ export const ShareDrawer: Story = {
   render: ({ direction }) => (
     <Drawer direction={direction}>
       <DrawerTrigger asChild>
-        <Button variant="outline">
+        <Button variant="neutral">
           <Share2 className="mr-2 h-4 w-4" />
           Share
         </Button>
@@ -249,7 +249,7 @@ export const ShareDrawer: Story = {
             ].map((item) => (
               <Button
                 key={item.label}
-                variant="outline"
+                variant="neutral"
                 className="flex h-24 flex-col items-center justify-center gap-2"
               >
                 <item.icon className="h-8 w-8" />

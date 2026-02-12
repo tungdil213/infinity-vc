@@ -23,7 +23,7 @@ export const Default: Story = {
   render: () => (
     <HoverCard>
       <HoverCardTrigger asChild>
-        <Button variant="link">@nextjs</Button>
+        <Button variant="noShadow">@nextjs</Button>
       </HoverCardTrigger>
       <HoverCardContent className="w-80">
         <div className="flex justify-between space-x-4">
@@ -54,7 +54,7 @@ export const UserProfile: Story = {
   render: () => (
     <HoverCard>
       <HoverCardTrigger asChild>
-        <Button variant="ghost" className="w-[240px] justify-start">
+        <Button variant="noShadow" className="w-[240px] justify-start">
           <Avatar className="h-6 w-6 mr-2">
             <AvatarImage src="https://github.com/shadcn.png" />
             <AvatarFallback>SC</AvatarFallback>
@@ -150,7 +150,7 @@ export const Positions: Story = {
       ].map((item) => (
         <HoverCard key={item.side}>
           <HoverCardTrigger asChild>
-            <Button variant="outline" className="m-4">
+            <Button variant="neutral" className="m-4">
               {item.label}
             </Button>
           </HoverCardTrigger>
@@ -168,7 +168,7 @@ export const CustomStyles: Story = {
   render: () => (
     <HoverCard>
       <HoverCardTrigger asChild>
-        <Button variant="outline">Hover for gradient</Button>
+        <Button variant="neutral">Hover for gradient</Button>
       </HoverCardTrigger>
       <HoverCardContent className="w-80 bg-gradient-to-br from-purple-500 to-pink-500 border-none">
         <div className="text-white">

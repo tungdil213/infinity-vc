@@ -214,7 +214,7 @@ export default function Register({ errors = {}, flash = {} }: RegisterProps) {
             {/* Sign In Link */}
             <div className="mt-6 text-center">
               <Link href="/auth/login">
-                <Button variant="outline" className="w-full py-3 text-lg">
+                <Button variant="neutral" className="w-full py-3 text-lg">
                   Sign In Instead
                 </Button>
               </Link>

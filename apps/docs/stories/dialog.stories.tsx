@@ -37,7 +37,7 @@ export const Default: Story = {
   render: () => (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline">Open Dialog</Button>
+        <Button variant="neutral">Open Dialog</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -128,7 +128,7 @@ export const DestructiveDialog: Story = {
           <Input placeholder="delete my account" />
         </div>
         <DialogFooter>
-          <Button variant="outline">Cancel</Button>
+          <Button variant="neutral">Cancel</Button>
           <Button variant="destructive">Delete Account</Button>
         </DialogFooter>
       </DialogContent>
@@ -180,7 +180,7 @@ export const LongContentDialog: Story = {
   render: () => (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline">Terms of Service</Button>
+        <Button variant="neutral">Terms of Service</Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -214,7 +214,7 @@ export const LongContentDialog: Story = {
           ))}
         </div>
         <DialogFooter>
-          <Button variant="outline">Decline</Button>
+          <Button variant="neutral">Decline</Button>
           <Button>Accept Terms</Button>
         </DialogFooter>
       </DialogContent>

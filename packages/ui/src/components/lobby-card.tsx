@@ -105,7 +105,7 @@ export function LobbyCard({
                 </Button>
               )}
               <Button
-                variant="outline"
+                variant="neutral"
                 size="sm"
                 onClick={() => onView?.(lobby.uuid)}
               >
@@ -151,7 +151,7 @@ export function LobbyCard({
                 </Button>
               )}
               {userInLobby && !isCreator && (
-                <Button variant="outline" onClick={() => onLeave?.(lobby.uuid)}>
+                <Button variant="neutral" onClick={() => onLeave?.(lobby.uuid)}>
                   Quitter
                 </Button>
               )}
@@ -207,12 +207,12 @@ export function LobbyCard({
           </div>
           <div className="flex gap-1">
             {onShare && (
-              <Button variant="ghost" size="sm" onClick={() => onShare(lobby.uuid)}>
+              <Button variant="noShadow" size="sm" onClick={() => onShare(lobby.uuid)}>
                 <Share2 className="h-4 w-4" />
               </Button>
             )}
             {isCreator && onSettings && (
-              <Button variant="ghost" size="sm" onClick={() => onSettings(lobby.uuid)}>
+              <Button variant="noShadow" size="sm" onClick={() => onSettings(lobby.uuid)}>
                 <Settings className="h-4 w-4" />
               </Button>
             )}
@@ -279,11 +279,11 @@ export function LobbyCard({
               </Button>
             )}
             {userInLobby && !isCreator && (
-              <Button variant="outline" onClick={() => onLeave?.(lobby.uuid)}>
+              <Button variant="neutral" onClick={() => onLeave?.(lobby.uuid)}>
                 Quitter
               </Button>
             )}
-            <Button variant="outline" onClick={() => onView?.(lobby.uuid)}>
+            <Button variant="neutral" onClick={() => onView?.(lobby.uuid)}>
               <Eye className="h-4 w-4 mr-2" />
               Voir détails
             </Button>

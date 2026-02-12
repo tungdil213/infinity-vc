@@ -50,7 +50,7 @@ export const Default: Story = {
   render: () => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline">Open Menu</Button>
+        <Button variant="neutral">Open Menu</Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56">
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
@@ -87,7 +87,7 @@ export const WithCheckboxes: Story = {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline">View Options</Button>
+          <Button variant="neutral">View Options</Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56">
           <DropdownMenuLabel>Appearance</DropdownMenuLabel>
@@ -124,7 +124,7 @@ export const WithRadioSelection: Story = {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline">Panel Position</Button>
+          <Button variant="neutral">Panel Position</Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56">
           <DropdownMenuLabel>Panel Position</DropdownMenuLabel>
@@ -145,7 +145,7 @@ export const WithSubmenus: Story = {
   render: () => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline">More Actions</Button>
+        <Button variant="neutral">More Actions</Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56">
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
@@ -245,7 +245,7 @@ export const ApplicationMenu: Story = {
           <DropdownMenuShortcut>⌘K</DropdownMenuShortcut>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem variant="destructive">
+        <DropdownMenuItem className="text-destructive focus:text-destructive">
           <LogOut className="mr-2 h-4 w-4" />
           Log out
           <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>

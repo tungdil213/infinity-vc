@@ -140,7 +140,7 @@ export function Header({
                   {currentLobby && (
                     <Button
                       onClick={onGoToCurrentLobby}
-                      variant="outline"
+                      variant="neutral"
                       size="sm"
                       className="flex items-center gap-2"
                     >
@@ -166,7 +166,7 @@ export function Header({
                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                       <DialogTrigger asChild>
                         <Button
-                          variant="outline"
+                          variant="neutral"
                           size="sm"
                           className="flex items-center gap-2"
                         >
@@ -207,20 +207,20 @@ export function Header({
                   </div>
 
                   {/* Browse Lobbies */}
-                  <Button onClick={onGoToLobbies} variant="outline" className="flex items-center gap-2">
+                  <Button onClick={onGoToLobbies} variant="neutral" className="flex items-center gap-2">
                     <Gamepad2 className="w-4 h-4" />
                     <span className="hidden sm:inline">Lobbies</span>
                   </Button>
 
                   {/* Notifications */}
-                  <Button variant="ghost" size="sm" className="relative">
+                  <Button variant="noShadow" size="sm" className="relative">
                     <Bell className="w-4 h-4" />
                   </Button>
 
                   {/* User Menu */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                      <Button variant="noShadow" size="sm" className="flex items-center gap-2">
                         <User className="w-4 h-4" />
                         <span className="hidden md:inline">{user.fullName}</span>
                       </Button>
@@ -250,13 +250,13 @@ export function Header({
               ) : (
                 <>
                   {/* Public Lobbies Preview */}
-                  <Button onClick={onGoToLobbies} variant="ghost" className="flex items-center gap-2">
+                  <Button onClick={onGoToLobbies} variant="noShadow" className="flex items-center gap-2">
                     <Users className="w-4 h-4" />
                     Voir les lobbies
                   </Button>
 
                   {/* Auth Buttons */}
-                  <Button onClick={onLogin} variant="outline">
+                  <Button onClick={onLogin} variant="neutral">
                     Connexion
                   </Button>
                   <Button onClick={onRegister}>

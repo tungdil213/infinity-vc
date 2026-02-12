@@ -91,7 +91,7 @@ export default function CreateLobby({ user, errors = {}, flash = {} }: CreateLob
               <div className="flex items-center space-x-4">
                 <span className="text-gray-700">Welcome, {user.fullName}!</span>
                 <Link href="/lobbies">
-                  <Button variant="outline">Back to Lobbies</Button>
+                  <Button variant="neutral">Back to Lobbies</Button>
                 </Link>
               </div>
             </div>
@@ -297,7 +297,7 @@ export default function CreateLobby({ user, errors = {}, flash = {} }: CreateLob
                 </Button>
                 
                 <Link href="/lobbies">
-                  <Button variant="outline" className="flex-1 py-3 text-lg">
+                  <Button variant="neutral" className="flex-1 py-3 text-lg">
                     Cancel
                   </Button>
                 </Link>

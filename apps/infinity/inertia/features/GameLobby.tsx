@@ -155,7 +155,7 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
               <h3 className="text-sm font-medium text-red-800">Error loading lobby</h3>
               <div className="mt-2 text-sm text-red-700">{error || 'Lobby not found'}</div>
               <div className="mt-4">
-                <Button onClick={() => router.visit('/lobbies')} variant="outline" size="sm">
+                <Button onClick={() => router.visit('/lobbies')} variant="neutral" size="sm">
                   Back to Lobbies
                 </Button>
               </div>

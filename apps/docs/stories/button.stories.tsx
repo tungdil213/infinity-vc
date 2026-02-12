@@ -9,7 +9,7 @@ const meta: Meta<typeof Button> = {
   argTypes: {
     variant: {
       control: "select",
-      options: ["default", "destructive", "outline", "secondary", "ghost", "link"],
+      options: ["default", "neutral", "noShadow", "reverse", "secondary", "destructive"],
       description: "The visual style of the button",
     },
     size: {
@@ -61,24 +61,24 @@ export const Destructive: Story = {
   },
 };
 
-export const Outline: Story = {
-  render: (args) => <Button {...args}>Outline</Button>,
+export const Neutral: Story = {
+  render: (args) => <Button {...args}>Neutral</Button>,
   args: {
-    variant: "outline",
+    variant: "neutral",
   },
 };
 
-export const Ghost: Story = {
-  render: (args) => <Button {...args}>Ghost</Button>,
+export const NoShadow: Story = {
+  render: (args) => <Button {...args}>No Shadow</Button>,
   args: {
-    variant: "ghost",
+    variant: "noShadow",
   },
 };
 
-export const Link: Story = {
-  render: (args) => <Button {...args}>Link</Button>,
+export const Reverse: Story = {
+  render: (args) => <Button {...args}>Reverse</Button>,
   args: {
-    variant: "link",
+    variant: "reverse",
   },
 };
 
@@ -135,7 +135,7 @@ export const Disabled: Story = {
 // Common use cases
 export const WithGithub: Story = {
   render: (args) => (
-    <Button {...args} variant="outline">
+    <Button {...args} variant="neutral">
       <Github className="mr-2" />
       Login with Github
     </Button>
@@ -147,7 +147,7 @@ export const ButtonGroup: Story = {
   render: (args) => (
     <div className="flex items-center space-x-2">
       <Button variant="default">Save</Button>
-      <Button variant="outline">Cancel</Button>
+      <Button variant="neutral">Cancel</Button>
       <Button variant="destructive">Delete</Button>
     </div>
   ),

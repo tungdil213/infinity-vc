@@ -35,7 +35,7 @@ export const Default: Story = {
   render: () => (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline">Open Popover</Button>
+        <Button variant="neutral">Open Popover</Button>
       </PopoverTrigger>
       <PopoverContent className="w-80">
         <div className="grid gap-4">
@@ -74,7 +74,7 @@ export const SettingsPopover: Story = {
   render: () => (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="icon">
+        <Button variant="neutral" size="icon">
           <Settings className="h-4 w-4" />
         </Button>
       </PopoverTrigger>
@@ -108,7 +108,7 @@ export const SettingsPopover: Story = {
                 Update payment details.
               </p>
             </div>
-            <Button variant="outline" size="sm">Update</Button>
+            <Button variant="neutral" size="sm">Update</Button>
           </div>
         </div>
       </PopoverContent>
@@ -148,7 +148,7 @@ export const SharePopover: Story = {
                 <Download className="h-4 w-4" />
               </Button>
             </div>
-            <Button variant="outline" className="w-full">
+            <Button variant="neutral" className="w-full">
               <Mail className="mr-2 h-4 w-4" />
               Share via Email
             </Button>
@@ -164,7 +164,7 @@ export const ProfilePopover: Story = {
   render: () => (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" className="w-8 h-8 rounded-full p-0">
+        <Button variant="noShadow" className="w-8 h-8 rounded-full p-0">
           <img
             src="https://github.com/shadcn.png"
             alt="@shadcn"
@@ -186,15 +186,15 @@ export const ProfilePopover: Story = {
             </div>
           </div>
           <div className="grid gap-2">
-            <Button variant="ghost" className="w-full justify-start">
+            <Button variant="noShadow" className="w-full justify-start">
               <User className="mr-2 h-4 w-4" />
               View Profile
             </Button>
-            <Button variant="ghost" className="w-full justify-start">
+            <Button variant="noShadow" className="w-full justify-start">
               <MessageSquare className="mr-2 h-4 w-4" />
               Messages
             </Button>
-            <Button variant="ghost" className="w-full justify-start">
+            <Button variant="noShadow" className="w-full justify-start">
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </Button>

@@ -118,10 +118,10 @@ export const ProductCarousel: Story = {
                     ))}
                   </div>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon">
+                    <Button variant="noShadow" size="icon">
                       <Heart className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon">
+                    <Button variant="noShadow" size="icon">
                       <Share2 className="h-4 w-4" />
                     </Button>
                   </div>

@@ -157,7 +157,7 @@ export default function Login({ errors = {}, flash = {}, redirect = '/lobbies' }
             {/* Sign Up Link */}
             <div className="mt-6 text-center">
               <Link href="/auth/register">
-                <Button variant="outline" className="w-full py-3 text-lg">
+                <Button variant="neutral" className="w-full py-3 text-lg">
                   Create New Account
                 </Button>
               </Link>

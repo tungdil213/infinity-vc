@@ -30,7 +30,7 @@ export const Default: Story = {
   render: () => (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="outline">Show Dialog</Button>
+        <Button variant="neutral">Show Dialog</Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -92,7 +92,7 @@ export const LogoutConfirmation: Story = {
   render: () => (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="outline">
+        <Button variant="neutral">
           <LogOut className="mr-2 h-4 w-4" />
           Sign Out
         </Button>
@@ -118,7 +118,7 @@ export const ArchiveConfirmation: Story = {
   render: () => (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="outline">
+        <Button variant="neutral">
           <Archive className="mr-2 h-4 w-4" />
           Archive Project
         </Button>

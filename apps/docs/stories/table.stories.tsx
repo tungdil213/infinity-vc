@@ -169,7 +169,7 @@ export const WithSelection: Story = {
               </Badge>
             </TableCell>
             <TableCell className="text-right">
-              <Button variant="ghost" size="icon">
+              <Button variant="noShadow" size="icon">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </TableCell>
@@ -187,19 +187,19 @@ export const SortableColumns: Story = {
       <TableHeader>
         <TableRow>
           <TableHead>
-            <Button variant="ghost" className="p-0 h-8">
+            <Button variant="noShadow" className="p-0 h-8">
               Transaction
               <ArrowUpDown className="ml-2 h-4 w-4" />
             </Button>
           </TableHead>
           <TableHead>
-            <Button variant="ghost" className="p-0 h-8">
+            <Button variant="noShadow" className="p-0 h-8">
               Amount
               <ArrowUpDown className="ml-2 h-4 w-4" />
             </Button>
           </TableHead>
           <TableHead>
-            <Button variant="ghost" className="p-0 h-8">
+            <Button variant="noShadow" className="p-0 h-8">
               Status
               <ArrowUpDown className="ml-2 h-4 w-4" />
             </Button>
@@ -242,7 +242,7 @@ export const SortableColumns: Story = {
               </Badge>
             </TableCell>
             <TableCell className="text-right">
-              <Button variant="ghost" size="icon">
+              <Button variant="noShadow" size="icon">
                 <Download className="h-4 w-4" />
               </Button>
             </TableCell>
@@ -302,7 +302,7 @@ export const PaymentMethods: Story = {
                     Default
                   </Badge>
                 )}
-                <Button variant="ghost" size="icon">
+                <Button variant="noShadow" size="icon">
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </div>

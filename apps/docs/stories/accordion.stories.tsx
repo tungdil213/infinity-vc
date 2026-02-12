@@ -230,7 +230,7 @@ export const NestedContent: Story = {
                   <p className="text-sm text-muted-foreground">Expires 04/24</p>
                 </div>
               </div>
-              <Button variant="outline" size="sm">
+              <Button variant="neutral" size="sm">
                 <Plus className="mr-2 h-4 w-4" />
                 Add new
               </Button>

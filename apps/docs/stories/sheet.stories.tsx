@@ -39,7 +39,7 @@ export const Default: Story = {
   render: () => (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="outline">Open Sheet</Button>
+        <Button variant="neutral">Open Sheet</Button>
       </SheetTrigger>
       <SheetContent>
         <SheetHeader>
@@ -77,7 +77,7 @@ export const SideVariations: Story = {
       {["top", "right", "bottom", "left"].map((side) => (
         <Sheet key={side}>
           <SheetTrigger asChild>
-            <Button variant="outline">Open {side}</Button>
+            <Button variant="neutral">Open {side}</Button>
           </SheetTrigger>
           <SheetContent side={side as "top" | "right" | "bottom" | "left"}>
             <SheetHeader>
@@ -98,7 +98,7 @@ export const NavigationMenu: Story = {
   render: () => (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="outline" size="icon">
+        <Button variant="neutral" size="icon">
           <Menu className="h-4 w-4" />
         </Button>
       </SheetTrigger>
@@ -114,13 +114,13 @@ export const NavigationMenu: Story = {
             { label: "Notifications", icon: Bell },
             { label: "Billing", icon: CreditCard },
           ].map((item) => (
-            <Button key={item.label} variant="ghost" className="w-full justify-start">
+            <Button key={item.label} variant="noShadow" className="w-full justify-start">
               <item.icon className="mr-2 h-4 w-4" />
               {item.label}
             </Button>
           ))}
           <Separator />
-          <Button variant="ghost" className="w-full justify-start">
+          <Button variant="noShadow" className="w-full justify-start">
             <Github className="mr-2 h-4 w-4" />
             GitHub
           </Button>
@@ -183,7 +183,7 @@ export const SettingsPanel: Story = {
                   Marketing emails
                 </Label>
                 <div className="col-span-3 flex items-center space-x-4">
-                  <Button variant="outline" size="sm">
+                  <Button variant="neutral" size="sm">
                     Unsubscribe
                   </Button>
                   <span className="text-sm text-muted-foreground">

@@ -44,7 +44,7 @@ export const Default: Story = {
             Notifications
           </h4>
           <CollapsibleTrigger asChild>
-            <Button variant="ghost" size="sm">
+            <Button variant="noShadow" size="sm">
               <ChevronsUpDown className="h-4 w-4" />
               <span className="sr-only">Toggle</span>
             </Button>
@@ -76,7 +76,7 @@ export const WithAnimation: Story = {
       >
         <CollapsibleTrigger asChild>
           <Button
-            variant="outline"
+            variant="neutral"
             className="w-full justify-between"
           >
             <span>Toggle Content</span>
@@ -112,7 +112,7 @@ export const SettingsPanel: Story = {
       >
         <CollapsibleTrigger asChild>
           <Button
-            variant="ghost"
+            variant="noShadow"
             className="w-full justify-between p-4"
           >
             <div className="flex items-center gap-2">
@@ -139,7 +139,7 @@ export const SettingsPanel: Story = {
               <Mail className="h-4 w-4" />
               <span className="text-sm">Email Preferences</span>
             </div>
-            <Button variant="ghost" size="sm">Configure</Button>
+            <Button variant="noShadow" size="sm">Configure</Button>
           </div>
         </CollapsibleContent>
       </Collapsible>
@@ -189,7 +189,7 @@ export const MultipleSections: Story = {
           >
             <CollapsibleTrigger asChild>
               <Button
-                variant="outline"
+                variant="neutral"
                 className="w-full justify-between p-4"
               >
                 <div className="flex items-center gap-2">
@@ -230,7 +230,7 @@ export const NestedCollapsibles: Story = {
         className="w-[350px] space-y-2"
       >
         <CollapsibleTrigger asChild>
-          <Button variant="outline" className="w-full justify-between">
+          <Button variant="neutral" className="w-full justify-between">
             <span>Outer Section</span>
             <ChevronRight
               className={`h-4 w-4 transition-transform duration-200 ${
@@ -250,7 +250,7 @@ export const NestedCollapsibles: Story = {
           >
             <CollapsibleTrigger asChild>
               <Button
-                variant="ghost"
+                variant="noShadow"
                 className="w-full justify-between"
                 size="sm"
               >

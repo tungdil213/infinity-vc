@@ -38,7 +38,7 @@ export const Default: Story = {
   render: () => (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button variant="outline" size="icon">
+        <Button variant="neutral" size="icon">
           <HelpCircle className="h-4 w-4" />
         </Button>
       </TooltipTrigger>
@@ -61,7 +61,7 @@ export const Positions: Story = {
       ].map((item) => (
         <Tooltip key={item.side}>
           <TooltipTrigger asChild>
-            <Button variant="outline" size="icon">
+            <Button variant="neutral" size="icon">
               <Info className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
@@ -80,7 +80,7 @@ export const WithIcons: Story = {
     <div className="flex gap-4">
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="outline" size="icon">
+          <Button variant="neutral" size="icon">
             <Settings className="h-4 w-4" />
           </Button>
         </TooltipTrigger>
@@ -91,7 +91,7 @@ export const WithIcons: Story = {
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="outline" size="icon">
+          <Button variant="neutral" size="icon">
             <Plus className="h-4 w-4" />
           </Button>
         </TooltipTrigger>
@@ -118,7 +118,7 @@ export const ActionTooltips: Story = {
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="outline" size="icon">
+          <Button variant="neutral" size="icon">
             <Copy className="h-4 w-4" />
           </Button>
         </TooltipTrigger>
@@ -126,7 +126,7 @@ export const ActionTooltips: Story = {
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="outline" size="icon">
+          <Button variant="neutral" size="icon">
             <Share2 className="h-4 w-4" />
           </Button>
         </TooltipTrigger>
@@ -141,7 +141,7 @@ export const WithDelay: Story = {
   render: () => (
     <Tooltip delayDuration={700}>
       <TooltipTrigger asChild>
-        <Button variant="outline">Hover me (delay)</Button>
+        <Button variant="neutral">Hover me (delay)</Button>
       </TooltipTrigger>
       <TooltipContent>
         Tooltip with 700ms delay
@@ -155,7 +155,7 @@ export const MultiLine: Story = {
   render: () => (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button variant="outline" size="icon">
+        <Button variant="neutral" size="icon">
           <Calendar className="h-4 w-4" />
         </Button>
       </TooltipTrigger>
@@ -172,7 +172,7 @@ export const Interactive: Story = {
   render: () => (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button variant="outline" size="icon">
+        <Button variant="neutral" size="icon">
           <Bell className="h-4 w-4" />
         </Button>
       </TooltipTrigger>
@@ -183,7 +183,7 @@ export const Interactive: Story = {
             You have 3 unread notifications.
           </p>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" size="sm">View all</Button>
+            <Button variant="neutral" size="sm">View all</Button>
             <Button size="sm">Mark as read</Button>
           </div>
         </div>
@@ -198,7 +198,7 @@ export const CustomStyling: Story = {
     <div className="flex gap-4">
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="outline">Success</Button>
+          <Button variant="neutral">Success</Button>
         </TooltipTrigger>
         <TooltipContent className="bg-green-500 text-white">
           Operation successful!
@@ -206,7 +206,7 @@ export const CustomStyling: Story = {
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="outline">Error</Button>
+          <Button variant="neutral">Error</Button>
         </TooltipTrigger>
         <TooltipContent className="bg-red-500 text-white">
           Something went wrong
@@ -214,7 +214,7 @@ export const CustomStyling: Story = {
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="outline">Custom</Button>
+          <Button variant="neutral">Custom</Button>
         </TooltipTrigger>
         <TooltipContent className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
           Gradient tooltip

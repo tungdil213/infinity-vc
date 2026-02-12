@@ -132,7 +132,7 @@ export const ProfileCard: Story = {
               <p className="text-sm text-muted-foreground">john@example.com</p>
             </div>
           </div>
-          <Button variant="outline" size="icon">
+          <Button variant="neutral" size="icon">
             <Settings className="h-4 w-4" />
           </Button>
         </div>
@@ -153,7 +153,7 @@ export const ProfileCard: Story = {
         </div>
       </CardContent>
       <CardFooter className="justify-between space-x-2">
-        <Button variant="outline">Cancel</Button>
+        <Button variant="neutral">Cancel</Button>
         <Button>Save changes</Button>
       </CardFooter>
     </Card>

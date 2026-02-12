@@ -134,7 +134,7 @@ export function LobbyList({
             <p className="text-sm">{error}</p>
           </div>
           {onRefresh && (
-            <Button onClick={onRefresh} variant="outline">
+            <Button onClick={onRefresh} variant="neutral">
               <RefreshCw className="h-4 w-4 mr-2" />
               Réessayer
             </Button>
@@ -158,13 +158,13 @@ export function LobbyList({
         </div>
         <div className="flex items-center gap-2">
           {onRefresh && (
-            <Button variant="outline" size="sm" onClick={onRefresh} disabled={loading}>
+            <Button variant="neutral" size="sm" onClick={onRefresh} disabled={loading}>
               <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
             </Button>
           )}
           <div className="flex items-center border rounded-md">
             <Button
-              variant={viewMode === 'grid' ? 'default' : 'ghost'}
+              variant={viewMode === 'grid' ? 'default' : 'noShadow'}
               size="sm"
               onClick={() => setViewMode('grid')}
               className="rounded-r-none"
@@ -172,7 +172,7 @@ export function LobbyList({
               <Grid className="h-4 w-4" />
             </Button>
             <Button
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              variant={viewMode === 'list' ? 'default' : 'noShadow'}
               size="sm"
               onClick={() => setViewMode('list')}
               className="rounded-l-none"

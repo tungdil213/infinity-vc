@@ -282,7 +282,7 @@ export default function Game({ gameId, playerView, availableActions: initialActi
             </div>
             <div className="flex items-center gap-4">
               <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'}`} />
-              <Button variant="outline" onClick={() => window.location.href = '/lobbies'}>Leave</Button>
+              <Button variant="neutral" onClick={() => window.location.href = '/lobbies'}>Leave</Button>
             </div>
           </div>
         </div>
