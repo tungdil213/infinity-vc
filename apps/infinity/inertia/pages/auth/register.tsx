@@ -1,7 +1,19 @@
 import React, { useState } from 'react'
 import { Head, Link, router } from '@inertiajs/react'
 import { Button } from '@tyfo.dev/ui/primitives/button'
+import { Input } from '@tyfo.dev/ui/primitives/input'
+import { Label } from '@tyfo.dev/ui/primitives/label'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@tyfo.dev/ui/primitives/card'
+import { Alert, AlertDescription } from '@tyfo.dev/ui/primitives/alert'
+import { Separator } from '@tyfo.dev/ui/primitives/separator'
 import Layout from '../../layouts/layout'
+import { AlertCircle, CheckCircle2 } from 'lucide-react'
 
 interface RegisterProps {
   errors?: {
@@ -39,7 +51,7 @@ export default function Register({ errors = {}, flash = {} }: RegisterProps) {
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
     }))
@@ -48,188 +60,167 @@ export default function Register({ errors = {}, flash = {} }: RegisterProps) {
   return (
     <Layout>
       <Head title="Sign Up - Infinity Game" />
-      
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+
+      <div className="min-h-screen bg-secondary-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           {/* Header */}
           <div className="text-center">
             <Link href="/">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-                ♾️ Infinity Game
-              </h1>
+              <h1 className="text-3xl font-heading text-foreground mb-2">♾️ Infinity Game</h1>
             </Link>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Create your account</h2>
-            <p className="text-gray-600">Join thousands of players and start gaming!</p>
           </div>
 
           {/* Flash Messages */}
           {flash.error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              {flash.error}
-            </div>
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{flash.error}</AlertDescription>
+            </Alert>
           )}
-          
+
           {flash.success && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
-              {flash.success}
-            </div>
+            <Alert className="border-green-500 bg-green-50">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">{flash.success}</AlertDescription>
+            </Alert>
           )}
 
           {/* Register Form */}
-          <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Full Name Field */}
-              <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name
-                </label>
-                <input
-                  id="fullName"
-                  name="fullName"
-                  type="text"
-                  required
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                    errors.fullName ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                  }`}
-                  placeholder="Enter your full name"
-                />
-                {errors.fullName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.fullName[0]}</p>
-                )}
-              </div>
-
-              {/* Email Field */}
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                    errors.email ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                  }`}
-                  placeholder="Enter your email"
-                />
-                {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">{errors.email[0]}</p>
-                )}
-              </div>
-
-              {/* Password Field */}
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                    errors.password ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                  }`}
-                  placeholder="Create a password"
-                />
-                {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">{errors.password[0]}</p>
-                )}
-                <p className="mt-1 text-xs text-gray-500">
-                  Must be at least 8 characters long
-                </p>
-              </div>
-
-              {/* Password Confirmation Field */}
-              <div>
-                <label htmlFor="password_confirmation" className="block text-sm font-medium text-gray-700 mb-2">
-                  Confirm Password
-                </label>
-                <input
-                  id="password_confirmation"
-                  name="password_confirmation"
-                  type="password"
-                  required
-                  value={formData.password_confirmation}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                    errors.password_confirmation ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                  }`}
-                  placeholder="Confirm your password"
-                />
-                {errors.password_confirmation && (
-                  <p className="mt-1 text-sm text-red-600">{errors.password_confirmation[0]}</p>
-                )}
-              </div>
-
-              {/* General Errors */}
-              {errors.general && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                  {errors.general[0]}
+          <Card>
+            <CardHeader>
+              <CardTitle>Create your account</CardTitle>
+              <CardDescription>Join thousands of players and start gaming!</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Full Name Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <Input
+                    id="fullName"
+                    name="fullName"
+                    type="text"
+                    required
+                    value={formData.fullName}
+                    onChange={handleChange}
+                    placeholder="Enter your full name"
+                    className={errors.fullName ? 'border-destructive' : ''}
+                  />
+                  {errors.fullName && (
+                    <p className="text-sm text-destructive">{errors.fullName[0]}</p>
+                  )}
                 </div>
-              )}
 
-              {/* Terms and Privacy */}
-              <div className="text-sm text-gray-600">
-                By creating an account, you agree to our{' '}
-                <a href="#" className="text-blue-600 hover:text-blue-700">Terms of Service</a>
-                {' '}and{' '}
-                <a href="#" className="text-blue-600 hover:text-blue-700">Privacy Policy</a>
-              </div>
+                {/* Email Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Enter your email"
+                    className={errors.email ? 'border-destructive' : ''}
+                  />
+                  {errors.email && <p className="text-sm text-destructive">{errors.email[0]}</p>}
+                </div>
 
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg font-medium"
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    Creating account...
-                  </div>
-                ) : (
-                  'Create Account'
+                {/* Password Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Create a password"
+                    className={errors.password ? 'border-destructive' : ''}
+                  />
+                  {errors.password && (
+                    <p className="text-sm text-destructive">{errors.password[0]}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Must be at least 8 characters long
+                  </p>
+                </div>
+
+                {/* Password Confirmation Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="password_confirmation">Confirm Password</Label>
+                  <Input
+                    id="password_confirmation"
+                    name="password_confirmation"
+                    type="password"
+                    required
+                    value={formData.password_confirmation}
+                    onChange={handleChange}
+                    placeholder="Confirm your password"
+                    className={errors.password_confirmation ? 'border-destructive' : ''}
+                  />
+                  {errors.password_confirmation && (
+                    <p className="text-sm text-destructive">{errors.password_confirmation[0]}</p>
+                  )}
+                </div>
+
+                {/* General Errors */}
+                {errors.general && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{errors.general[0]}</AlertDescription>
+                  </Alert>
                 )}
-              </Button>
-            </form>
 
-            {/* Divider */}
-            <div className="mt-6 relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Already have an account?</span>
-              </div>
-            </div>
+                {/* Terms and Privacy */}
+                <div className="text-sm text-muted-foreground">
+                  By creating an account, you agree to our{' '}
+                  <a href="#" className="text-main hover:underline">
+                    Terms of Service
+                  </a>{' '}
+                  and{' '}
+                  <a href="#" className="text-main hover:underline">
+                    Privacy Policy
+                  </a>
+                </div>
 
-            {/* Sign In Link */}
-            <div className="mt-6 text-center">
+                {/* Submit Button */}
+                <Button type="submit" disabled={isLoading} className="w-full">
+                  {isLoading ? 'Creating account...' : 'Create Account'}
+                </Button>
+              </form>
+
+              {/* Divider */}
+              <div className="my-6 flex items-center">
+                <Separator className="flex-1" />
+                <span className="px-4 text-sm text-muted-foreground">Already have an account?</span>
+                <Separator className="flex-1" />
+              </div>
+
+              {/* Sign In Link */}
               <Link href="/auth/login">
-                <Button variant="neutral" className="w-full py-3 text-lg">
+                <Button variant="neutral" className="w-full">
                   Sign In Instead
                 </Button>
               </Link>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Footer Links */}
           <div className="text-center space-y-2">
-            <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">
+            <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
               ← Back to Homepage
             </Link>
-            <div className="text-sm text-gray-500">
-              <a href="#" className="hover:text-gray-700">Need Help?</a>
+            <div className="text-sm text-muted-foreground">
+              <a href="#" className="hover:text-foreground">
+                Need Help?
+              </a>
               {' • '}
-              <a href="#" className="hover:text-gray-700">Contact Support</a>
+              <a href="#" className="hover:text-foreground">
+                Contact Support
+              </a>
             </div>
           </div>
         </div>

@@ -46,35 +46,35 @@ export function Footer({
   className = ""
 }: FooterProps) {
   return (
-    <footer className={`bg-gray-900 text-white py-12 ${className}`}>
+    <footer className={`bg-main border-t-2 border-border text-main-foreground py-12 font-base ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
             <a href={logoHref}>
-              <h3 className="text-2xl font-bold mb-4">{logoText}</h3>
+              <h3 className="text-2xl font-heading mb-4">{logoText}</h3>
             </a>
-            <p className="text-gray-400 mb-4">
+            <p className="text-main-foreground/70 mb-4">
               {description}
             </p>
           </div>
           
           {sections.map((section, index) => (
             <div key={index}>
-              <h4 className="text-lg font-semibold mb-4">{section.title}</h4>
-              <ul className="space-y-2 text-gray-400">
+              <h4 className="text-lg font-heading mb-4">{section.title}</h4>
+              <ul className="space-y-2 text-main-foreground/70">
                 {section.links.map((link, linkIndex) => (
                   <li key={linkIndex}>
                     {link.onClick ? (
                       <button 
                         onClick={link.onClick}
-                        className="hover:text-white transition-colors"
+                        className="hover:text-main-foreground transition-colors"
                       >
                         {link.label}
                       </button>
                     ) : (
                       <a 
                         href={link.href} 
-                        className="hover:text-white transition-colors"
+                        className="hover:text-main-foreground transition-colors"
                       >
                         {link.label}
                       </a>
@@ -86,7 +86,7 @@ export function Footer({
           ))}
         </div>
         
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+        <div className="border-t-2 border-border mt-8 pt-8 text-center text-main-foreground/70">
           <p>{copyright}</p>
         </div>
       </div>

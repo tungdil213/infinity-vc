@@ -1,7 +1,28 @@
 import React, { useState } from 'react'
 import { Head, Link, router } from '@inertiajs/react'
 import { Button } from '@tyfo.dev/ui/primitives/button'
+import { Input } from '@tyfo.dev/ui/primitives/input'
+import { Textarea } from '@tyfo.dev/ui/primitives/textarea'
+import { Label } from '@tyfo.dev/ui/primitives/label'
+import { Checkbox } from '@tyfo.dev/ui/primitives/checkbox'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@tyfo.dev/ui/primitives/select'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@tyfo.dev/ui/primitives/card'
+import { Alert, AlertDescription } from '@tyfo.dev/ui/primitives/alert'
+import { HeaderWrapper } from '../layouts/HeaderWrapper'
 import Layout from '../layouts/layout'
+import { AlertCircle, CheckCircle2, Lightbulb } from 'lucide-react'
 
 interface CreateLobbyProps {
   user: {
@@ -49,22 +70,24 @@ export default function CreateLobby({ user, errors = {}, flash = {} }: CreateLob
     })
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
     const { name, value, type } = e.target
-    
+
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         [name]: checked,
       }))
     } else if (type === 'number') {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         [name]: parseInt(value) || 0,
       }))
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         [name]: value,
       }))
@@ -74,247 +97,209 @@ export default function CreateLobby({ user, errors = {}, flash = {} }: CreateLob
   return (
     <Layout>
       <Head title="Create Lobby - Infinity Game" />
-      
-      <div className="min-h-screen bg-gray-50">
-        {/* Navigation */}
-        <nav className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex items-center">
-                <Link href="/">
-                  <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    ♾️ Infinity Game
-                  </h1>
-                </Link>
-              </div>
-              
-              <div className="flex items-center space-x-4">
-                <span className="text-gray-700">Welcome, {user.fullName}!</span>
-                <Link href="/lobbies">
-                  <Button variant="neutral">Back to Lobbies</Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </nav>
+
+      <div className="min-h-screen bg-secondary-background">
+        <HeaderWrapper user={{ uuid: user.uuid, fullName: user.fullName, email: '' }} />
 
         <div className="max-w-2xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Create New Lobby</h1>
-            <p className="text-gray-600">Set up your gaming session and invite friends to play</p>
-          </div>
-
           {/* Flash Messages */}
           {flash.error && (
-            <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              {flash.error}
-            </div>
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{flash.error}</AlertDescription>
+            </Alert>
           )}
-          
+
           {flash.success && (
-            <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
-              {flash.success}
-            </div>
+            <Alert className="mb-6 border-green-500 bg-green-50">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">{flash.success}</AlertDescription>
+            </Alert>
           )}
 
           {/* Create Lobby Form */}
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Lobby Name */}
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Lobby Name *
-                </label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                    errors.name ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                  }`}
-                  placeholder="Enter a catchy lobby name"
-                />
-                {errors.name && (
-                  <p className="mt-1 text-sm text-red-600">{errors.name[0]}</p>
-                )}
-              </div>
-
-              {/* Description */}
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                  Description (Optional)
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  rows={3}
-                  value={formData.description}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                  placeholder="Describe your lobby or add any special rules..."
-                />
-              </div>
-
-              {/* Game Type */}
-              <div>
-                <label htmlFor="gameType" className="block text-sm font-medium text-gray-700 mb-2">
-                  Game Type
-                </label>
-                <select
-                  id="gameType"
-                  name="gameType"
-                  value={formData.gameType}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                >
-                  <option value="love-letter">Love Letter</option>
-                  <option value="uno">Uno (Coming Soon)</option>
-                  <option value="poker">Poker (Coming Soon)</option>
-                  <option value="hearts">Hearts (Coming Soon)</option>
-                </select>
-              </div>
-
-              {/* Max Players */}
-              <div>
-                <label htmlFor="maxPlayers" className="block text-sm font-medium text-gray-700 mb-2">
-                  Maximum Players
-                </label>
-                <select
-                  id="maxPlayers"
-                  name="maxPlayers"
-                  value={formData.maxPlayers}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                    errors.maxPlayers ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                  }`}
-                >
-                  <option value={2}>2 Players</option>
-                  <option value={3}>3 Players</option>
-                  <option value={4}>4 Players</option>
-                  <option value={6}>6 Players</option>
-                  <option value={8}>8 Players</option>
-                </select>
-                {errors.maxPlayers && (
-                  <p className="mt-1 text-sm text-red-600">{errors.maxPlayers[0]}</p>
-                )}
-              </div>
-
-              {/* Privacy Settings */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium text-gray-900">Privacy Settings</h3>
-                
-                {/* Private Lobby */}
-                <div className="flex items-start">
-                  <div className="flex items-center h-5">
-                    <input
-                      id="isPrivate"
-                      name="isPrivate"
-                      type="checkbox"
-                      checked={formData.isPrivate}
-                      onChange={handleChange}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                  </div>
-                  <div className="ml-3">
-                    <label htmlFor="isPrivate" className="text-sm font-medium text-gray-700">
-                      Private Lobby
-                    </label>
-                    <p className="text-sm text-gray-500">
-                      Only people with the invitation link can join
-                    </p>
-                  </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-2xl">Create New Lobby</CardTitle>
+              <CardDescription>
+                Set up your gaming session and invite friends to play
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Lobby Name */}
+                <div className="space-y-2">
+                  <Label htmlFor="name">Lobby Name *</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Enter a catchy lobby name"
+                    className={errors.name ? 'border-destructive' : ''}
+                  />
+                  {errors.name && <p className="text-sm text-destructive">{errors.name[0]}</p>}
                 </div>
 
-                {/* Password Protection */}
-                <div className="flex items-start">
-                  <div className="flex items-center h-5">
-                    <input
-                      id="hasPassword"
-                      name="hasPassword"
-                      type="checkbox"
-                      checked={formData.hasPassword}
-                      onChange={handleChange}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                  </div>
-                  <div className="ml-3">
-                    <label htmlFor="hasPassword" className="text-sm font-medium text-gray-700">
-                      Password Protection
-                    </label>
-                    <p className="text-sm text-gray-500">
-                      Require a password to join the lobby
-                    </p>
-                  </div>
+                {/* Description */}
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description (Optional)</Label>
+                  <Textarea
+                    id="description"
+                    name="description"
+                    rows={3}
+                    value={formData.description}
+                    onChange={handleChange}
+                    placeholder="Describe your lobby or add any special rules..."
+                  />
                 </div>
 
-                {/* Password Field */}
-                {formData.hasPassword && (
-                  <div className="ml-7">
-                    <input
-                      id="password"
-                      name="password"
-                      type="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                        errors.password ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                      }`}
-                      placeholder="Enter lobby password"
-                    />
-                    {errors.password && (
-                      <p className="mt-1 text-sm text-red-600">{errors.password[0]}</p>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* General Errors */}
-              {errors.general && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                  {errors.general[0]}
+                {/* Game Type */}
+                <div className="space-y-2">
+                  <Label>Game Type</Label>
+                  <Select
+                    value={formData.gameType}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, gameType: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a game" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="love-letter">Love Letter</SelectItem>
+                      <SelectItem value="uno" disabled>
+                        Uno (Coming Soon)
+                      </SelectItem>
+                      <SelectItem value="poker" disabled>
+                        Poker (Coming Soon)
+                      </SelectItem>
+                      <SelectItem value="hearts" disabled>
+                        Hearts (Coming Soon)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
 
-              {/* Submit Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 pt-6">
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg font-medium"
-                >
-                  {isLoading ? (
-                    <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                      Creating Lobby...
-                    </div>
-                  ) : (
-                    '🎮 Create Lobby'
+                {/* Max Players */}
+                <div className="space-y-2">
+                  <Label>Maximum Players</Label>
+                  <Select
+                    value={String(formData.maxPlayers)}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({ ...prev, maxPlayers: parseInt(value) }))
+                    }
+                  >
+                    <SelectTrigger className={errors.maxPlayers ? 'border-destructive' : ''}>
+                      <SelectValue placeholder="Select max players" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="2">2 Players</SelectItem>
+                      <SelectItem value="3">3 Players</SelectItem>
+                      <SelectItem value="4">4 Players</SelectItem>
+                      <SelectItem value="6">6 Players</SelectItem>
+                      <SelectItem value="8">8 Players</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.maxPlayers && (
+                    <p className="text-sm text-destructive">{errors.maxPlayers[0]}</p>
                   )}
-                </Button>
-                
-                <Link href="/lobbies">
-                  <Button variant="neutral" className="flex-1 py-3 text-lg">
-                    Cancel
+                </div>
+
+                {/* Privacy Settings */}
+                <div className="space-y-4">
+                  <Label className="text-base font-heading">Privacy Settings</Label>
+
+                  {/* Private Lobby */}
+                  <div className="flex items-center space-x-3">
+                    <Checkbox
+                      id="isPrivate"
+                      checked={formData.isPrivate}
+                      onCheckedChange={(checked) =>
+                        setFormData((prev) => ({ ...prev, isPrivate: !!checked }))
+                      }
+                    />
+                    <div>
+                      <Label htmlFor="isPrivate" className="cursor-pointer">
+                        Private Lobby
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Only people with the invitation link can join
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Password Protection */}
+                  <div className="flex items-center space-x-3">
+                    <Checkbox
+                      id="hasPassword"
+                      checked={formData.hasPassword}
+                      onCheckedChange={(checked) =>
+                        setFormData((prev) => ({ ...prev, hasPassword: !!checked }))
+                      }
+                    />
+                    <div>
+                      <Label htmlFor="hasPassword" className="cursor-pointer">
+                        Password Protection
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Require a password to join the lobby
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Password Field */}
+                  {formData.hasPassword && (
+                    <div className="ml-7 space-y-2">
+                      <Input
+                        id="password"
+                        name="password"
+                        type="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        placeholder="Enter lobby password"
+                        className={errors.password ? 'border-destructive' : ''}
+                      />
+                      {errors.password && (
+                        <p className="text-sm text-destructive">{errors.password[0]}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* General Errors */}
+                {errors.general && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{errors.general[0]}</AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Submit Buttons */}
+                <div className="flex flex-col sm:flex-row gap-4 pt-6">
+                  <Button type="submit" disabled={isLoading} className="flex-1">
+                    {isLoading ? 'Creating Lobby...' : '🎮 Create Lobby'}
                   </Button>
-                </Link>
-              </div>
-            </form>
-          </div>
+
+                  <Link href="/lobbies" className="flex-1">
+                    <Button variant="neutral" className="w-full">
+                      Cancel
+                    </Button>
+                  </Link>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
 
           {/* Tips */}
-          <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-blue-900 mb-3">💡 Pro Tips</h3>
-            <ul className="space-y-2 text-sm text-blue-800">
-              <li>• Choose a descriptive name to attract the right players</li>
-              <li>• Private lobbies are great for playing with friends</li>
-              <li>• Password protection adds an extra layer of security</li>
-              <li>• You'll get a shareable invitation link after creating the lobby</li>
-            </ul>
-          </div>
+          <Alert className="mt-8">
+            <Lightbulb className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Pro Tips:</strong> Choose a descriptive name to attract the right players.
+              Private lobbies are great for playing with friends. You'll get a shareable invitation
+              link after creating the lobby.
+            </AlertDescription>
+          </Alert>
         </div>
       </div>
     </Layout>
