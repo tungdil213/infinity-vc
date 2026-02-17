@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { Head } from '@inertiajs/react'
-import { Button } from '@tyfo.dev/ui/primitives/button'
-import { Card as UICard, CardContent, CardHeader, CardTitle } from '@tyfo.dev/ui/primitives/card'
-import { Badge } from '@tyfo.dev/ui/primitives/badge'
-import { Alert, AlertDescription } from '@tyfo.dev/ui/primitives/alert'
+import { Button } from '@infinity.dev/ui/primitives/button'
+import {
+  Card as UICard,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@infinity.dev/ui/primitives/card'
+import { Badge } from '@infinity.dev/ui/primitives/badge'
+import { Alert, AlertDescription } from '@infinity.dev/ui/primitives/alert'
 import { useTransmit } from '../contexts/TransmitContext'
 import Layout from '../layouts/layout'
 

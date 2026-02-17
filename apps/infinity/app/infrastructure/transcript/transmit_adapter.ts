@@ -2,11 +2,11 @@
  * Transmit Adapter
  *
  * Implements the ITranscriptService interface using AdonisJS Transmit.
- * This allows us to use the @tyfo.dev/transcript EventBridge with Transmit.
+ * This allows us to use the @infinity.dev/transcript EventBridge with Transmit.
  */
 import transmit from '@adonisjs/transmit/services/main'
-import type { ITranscriptService, TranscriptServiceStats } from '@tyfo.dev/transcript/server'
-import type { IChannel } from '@tyfo.dev/transcript'
+import type { ITranscriptService, TranscriptServiceStats } from '@infinity.dev/transcript/server'
+import type { IChannel } from '@infinity.dev/transcript'
 
 /**
  * Transmit adapter implementing ITranscriptService

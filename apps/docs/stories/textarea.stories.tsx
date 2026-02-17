@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Textarea } from "@tyfo.dev/ui/primitives/textarea";
-import { Label } from "@tyfo.dev/ui/primitives/label";
+import { Textarea } from "@infinity.dev/ui/primitives/textarea";
+import { Label } from "@infinity.dev/ui/primitives/label";
 
 const meta: Meta<typeof Textarea> = {
   title: "Primitives/Textarea",

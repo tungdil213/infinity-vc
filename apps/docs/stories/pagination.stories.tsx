@@ -8,7 +8,7 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@tyfo.dev/ui/primitives/pagination"
+} from "@infinity.dev/ui/primitives/pagination"
 
 const meta = {
   title: "Primitives/Pagination",

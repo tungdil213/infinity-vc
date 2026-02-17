@@ -10,7 +10,7 @@ import {
   CommandList,
   CommandSeparator,
   CommandShortcut,
-} from "@tyfo.dev/ui/primitives/command";
+} from "@infinity.dev/ui/primitives/command";
 import {
   Calculator,
   Calendar,

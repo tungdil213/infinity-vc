@@ -3,8 +3,8 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@tyfo.dev/ui/primitives/tooltip";
-import { Button } from "@tyfo.dev/ui/primitives/button";
+} from "@infinity.dev/ui/primitives/tooltip";
+import { Button } from "@infinity.dev/ui/primitives/button";
 import {
   HelpCircle,
   Info,

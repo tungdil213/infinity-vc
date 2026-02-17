@@ -1,5 +1,5 @@
 /**
- * @tyfo.dev/game-engine
+ * @infinity.dev/game-engine
  * 
  * Generic game engine framework for building turn-based games.
  * This package provides core abstractions that can be extended
@@ -7,7 +7,7 @@
  * 
  * @example
  * ```typescript
- * import { BaseGameEngine, StateMachine } from '@tyfo.dev/game-engine'
+ * import { BaseGameEngine, StateMachine } from '@infinity.dev/game-engine'
  * 
  * class MyGameEngine extends BaseGameEngine<MyState, MyAction> {
  *   // Implement your game logic

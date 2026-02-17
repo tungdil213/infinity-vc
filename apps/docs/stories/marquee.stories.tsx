@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import Marquee from "@tyfo.dev/ui/primitives/marquee";
+import Marquee from "@infinity.dev/ui/primitives/marquee";
 
 const meta: Meta<typeof Marquee> = {
   title: "Primitives/Marquee",

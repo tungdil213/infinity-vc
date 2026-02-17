@@ -1,7 +1,7 @@
 import React from "react"
 import type { Meta, StoryObj } from "@storybook/react-vite"
-import { Toaster } from "@tyfo.dev/ui/primitives/sonner"
-import { Button } from "@tyfo.dev/ui/primitives/button"
+import { Toaster } from "@infinity.dev/ui/primitives/sonner"
+import { Button } from "@infinity.dev/ui/primitives/button"
 import { toast, type ToasterProps } from "sonner"
 import { CheckCircle2, AlertCircle, Info, AlertTriangle } from "lucide-react"
 

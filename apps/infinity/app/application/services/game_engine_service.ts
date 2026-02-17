@@ -12,7 +12,7 @@ import {
   type LoveLetterActionType,
   LoveLetterActionTypes,
 } from '../../games/love-letter/index.js'
-import type { IPlayer, IPlayerView } from '@tyfo.dev/game-engine/core'
+import type { IPlayer, IPlayerView } from '@infinity.dev/game-engine/core'
 import type { PlayerInterface } from '../../domain/interfaces/player_interface.js'
 import { eventBus } from '../../infrastructure/events/event_bus.js'
 

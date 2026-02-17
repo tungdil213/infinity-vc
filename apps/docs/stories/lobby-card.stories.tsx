@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { LobbyCard, LobbyData } from '@tyfo.dev/ui'
+import { LobbyCard, LobbyData } from '@infinity.dev/ui'
 
 const meta: Meta<typeof LobbyCard> = {
   title: 'Lobby/LobbyCard',

@@ -2,7 +2,7 @@
 
 ## OVERVIEW GÉNÉRAL
 
-**Nom du projet**: Infinity Gauntlet Love Letter  
+**Nom du projet**: infinity Gauntlet Love Letter  
 **Type**: Jeu multijoueur en temps réel basé sur Love Letter  
 **Architecture**: Full-stack TypeScript avec Domain-Driven Design  
 **Status**: En développement actif - Backend production-ready, Frontend intégré
@@ -41,7 +41,7 @@
   "bridge": "@inertiajs/react v2.0.3",
   "styling": "TailwindCSS v4.0.8",
   "bundler": "Vite v6.1.1",
-  "ui_library": "@tyfo.dev/ui (shadcn/ui based)",
+  "ui_library": "@infinity.dev/ui (shadcn/ui based)",
   "real_time": "Server-Sent Events (SSE)"
 }
 ```
@@ -252,7 +252,7 @@ apps/infinity/
     "DB_PASSWORD": "password",
     "DB_DATABASE": "infinity_game",
     "SESSION_DRIVER": "cookie",
-    "VITE_APP_NAME": "Infinity Game"
+    "VITE_APP_NAME": "infinity Game"
   }
 }
 ```
@@ -328,7 +328,7 @@ development:
     - Liens cliquables pour les routes GET sans paramètres
     - Codes couleur par méthode HTTP
     - Actions rapides vers les pages principales
-    - Accessible via le titre "Infinity Game" sur la page d'accueil  
+    - Accessible via le titre "infinity Game" sur la page d'accueil  
 
 ## FRONTEND ARCHITECTURE
 
@@ -362,7 +362,7 @@ development:
 ```json
 {
   "library": "Sonner (@sonner/react)",
-  "implementation": "Integrated in @tyfo.dev/ui package",
+  "implementation": "Integrated in @infinity.dev/ui package",
   "components": {
     "Toaster": "packages/ui/src/components/primitives/sonner.tsx",
     "FlashMessages": "apps/infinity/inertia/components/layout.tsx"
@@ -513,7 +513,7 @@ development:
 ```json
 {
   "ui_consistency": {
-    "shadcn_migration": "Migration vers @tyfo.dev/ui",
+    "shadcn_migration": "Migration vers @infinity.dev/ui",
     "storybook_integration": "Documentation composants",
     "design_system": "Cohérence visuelle"
   },

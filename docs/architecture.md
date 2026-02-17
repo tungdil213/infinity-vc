@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-L'application **Infinity Gauntlet Love Letter** suit une architecture **Clean Architecture** avec **Domain-Driven Design**, implémentée sur **AdonisJS v6** avec **React/Inertia.js**.
+L'application **infinity Gauntlet Love Letter** suit une architecture **Clean Architecture** avec **Domain-Driven Design**, implémentée sur **AdonisJS v6** avec **React/Inertia.js**.
 
 ## Stack Technique
 

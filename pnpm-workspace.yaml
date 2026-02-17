@@ -1,5 +1,5 @@
 packages:
   - "apps/**"
   - "packages/**"
-  - "!apps/tyfo.dev/build"
+  - "!apps/infinity.dev/build"
   - "!apps/infinity/build"

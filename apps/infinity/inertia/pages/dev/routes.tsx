@@ -1,6 +1,6 @@
 import React from 'react'
 import { Head, Link } from '@inertiajs/react'
-import { Button } from '@tyfo.dev/ui/primitives/button'
+import { Button } from '@infinity.dev/ui/primitives/button'
 import Layout from '../../layouts/layout'
 
 interface Route {
@@ -41,7 +41,7 @@ export default function DevRoutes({ routes }: DevRoutesProps) {
 
   return (
     <Layout>
-      <Head title="Routes de développement - Infinity Game" />
+      <Head title="Routes de développement - infinity Game" />
       
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -51,7 +51,7 @@ export default function DevRoutes({ routes }: DevRoutesProps) {
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">🛠️ Routes de développement</h1>
                 <p className="text-gray-600 mt-2">
-                  Liste complète des routes disponibles dans l'application Infinity Game
+                  Liste complète des routes disponibles dans l'application infinity Game
                 </p>
               </div>
               <Link href="/">

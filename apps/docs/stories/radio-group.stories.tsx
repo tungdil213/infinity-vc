@@ -3,10 +3,10 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import {
   RadioGroup,
   RadioGroupItem,
-} from "@tyfo.dev/ui/primitives/radio-group";
-import { Label } from "@tyfo.dev/ui/primitives/label";
-import { Card } from "@tyfo.dev/ui/primitives/card";
-import { Badge } from "@tyfo.dev/ui/primitives/badge";
+} from "@infinity.dev/ui/primitives/radio-group";
+import { Label } from "@infinity.dev/ui/primitives/label";
+import { Card } from "@infinity.dev/ui/primitives/card";
+import { Badge } from "@infinity.dev/ui/primitives/badge";
 import {
   Laptop,
   Moon,

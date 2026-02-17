@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Separator } from "@tyfo.dev/ui/primitives/separator";
-import { Button } from "@tyfo.dev/ui/primitives/button";
+import { Separator } from "@infinity.dev/ui/primitives/separator";
+import { Button } from "@infinity.dev/ui/primitives/button";
 import { Mail, Home, Settings, CreditCard, User } from "lucide-react";
 
 const meta: Meta<typeof Separator> = {

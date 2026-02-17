@@ -5,7 +5,7 @@ import {
   LobbyCapacityBadge, 
   LobbyBadgeGroup,
   LobbyStatus 
-} from '@tyfo.dev/ui/components/lobby-status-badge'
+} from '@infinity.dev/ui/components/lobby-status-badge'
 
 const meta: Meta<typeof LobbyStatusBadge> = {
   title: 'Lobby/LobbyStatusBadge',

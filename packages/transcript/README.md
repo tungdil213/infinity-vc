@@ -1,4 +1,4 @@
-# @tyfo.dev/transcript
+# @infinity.dev/transcript
 
 Real-time communication abstraction for SSE and WebSocket, with server and client implementations.
 
@@ -13,7 +13,7 @@ Real-time communication abstraction for SSE and WebSocket, with server and clien
 ## Installation
 
 ```bash
-pnpm add @tyfo.dev/transcript
+pnpm add @infinity.dev/transcript
 ```
 
 ## Server Usage
@@ -25,8 +25,8 @@ import {
   createConnectionManager,
   createEventBridge,
   CommonMappings,
-} from '@tyfo.dev/transcript/server'
-import { createEventBus } from '@tyfo.dev/events'
+} from '@infinity.dev/transcript/server'
+import { createEventBus } from '@infinity.dev/events'
 
 // Create services
 const eventBus = createEventBus()
@@ -58,7 +58,7 @@ bridge.start()
 ### Connection Management
 
 ```typescript
-import { createConnectionManager } from '@tyfo.dev/transcript/server'
+import { createConnectionManager } from '@infinity.dev/transcript/server'
 
 const manager = createConnectionManager()
 
@@ -83,7 +83,7 @@ const lobbyConnections = manager.getByChannel('lobby:abc')
 ### Channel Registry
 
 ```typescript
-import { createChannelRegistry, defineChannel, CommonChannels } from '@tyfo.dev/transcript/channels'
+import { createChannelRegistry, defineChannel, CommonChannels } from '@infinity.dev/transcript/channels'
 
 const registry = createChannelRegistry()
 
@@ -111,7 +111,7 @@ const canAccess = await registry.canAccess('user-123', 'lobby:abc')
 ### Basic Client
 
 ```typescript
-import { createTranscriptClient } from '@tyfo.dev/transcript/client'
+import { createTranscriptClient } from '@infinity.dev/transcript/client'
 
 const client = createTranscriptClient({
   url: '/api/sse/connect',
@@ -146,7 +146,7 @@ client.disconnect()
 
 ```typescript
 import React from 'react'
-import { createTranscriptHooks, createTranscriptClient } from '@tyfo.dev/transcript/client'
+import { createTranscriptHooks, createTranscriptClient } from '@infinity.dev/transcript/client'
 
 // Create hooks (once, at app level)
 const {
@@ -206,7 +206,7 @@ const subscription = client.subscribe('game:abc', handleMessage, {
 ## Channel Patterns
 
 ```typescript
-import { ChannelPatterns } from '@tyfo.dev/transcript'
+import { ChannelPatterns } from '@infinity.dev/transcript'
 
 // Create channel names
 const userChannel = ChannelPatterns.user('user-123')     // 'user:user-123'
@@ -222,7 +222,7 @@ console.log(parsed) // { type: 'lobby', id: 'abc' }
 
 ```typescript
 // providers/TranscriptProvider.ts
-import { BaseTranscriptService, createConnectionManager } from '@tyfo.dev/transcript/server'
+import { BaseTranscriptService, createConnectionManager } from '@infinity.dev/transcript/server'
 import transmit from '@adonisjs/transmit/services/main'
 
 class AdonisTranscriptService extends BaseTranscriptService {

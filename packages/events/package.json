@@ -1,5 +1,5 @@
 {
-  "name": "@tyfo.dev/events",
+  "name": "@infinity.dev/events",
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
@@ -35,7 +35,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@tyfo.dev/typescript-config": "workspace:*",
+    "@infinity.dev/typescript-config": "workspace:*",
     "typescript": "~5.7.3"
   },
   "publishConfig": {

@@ -4,9 +4,9 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@tyfo.dev/ui/primitives/accordion";
-import { Button } from "@tyfo.dev/ui/primitives/button";
-import { Badge } from "@tyfo.dev/ui/primitives/badge";
+} from "@infinity.dev/ui/primitives/accordion";
+import { Button } from "@infinity.dev/ui/primitives/button";
+import { Badge } from "@infinity.dev/ui/primitives/badge";
 import {
   Settings,
   User,

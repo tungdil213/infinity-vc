@@ -16,8 +16,8 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuRadioGroup,
-} from "@tyfo.dev/ui/primitives/dropdown-menu"
-import { Button } from "@tyfo.dev/ui/primitives/button"
+} from "@infinity.dev/ui/primitives/dropdown-menu"
+import { Button } from "@infinity.dev/ui/primitives/button"
 import {
   Cloud,
   CreditCard,

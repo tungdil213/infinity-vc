@@ -1,5 +1,5 @@
 {
-  "name": "@tyfo.dev/game-engine",
+  "name": "@infinity.dev/game-engine",
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
@@ -30,10 +30,10 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@tyfo.dev/events": "workspace:*"
+    "@infinity.dev/events": "workspace:*"
   },
   "devDependencies": {
-    "@tyfo.dev/typescript-config": "workspace:*",
+    "@infinity.dev/typescript-config": "workspace:*",
     "typescript": "~5.7.3",
     "vitest": "^2.1.0"
   },

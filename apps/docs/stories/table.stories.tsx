@@ -9,11 +9,11 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@tyfo.dev/ui/primitives/table";
-import { Badge } from "@tyfo.dev/ui/primitives/badge";
-import { Button } from "@tyfo.dev/ui/primitives/button";
-import { Checkbox } from "@tyfo.dev/ui/primitives/checkbox";
-import { Avatar, AvatarFallback, AvatarImage } from "@tyfo.dev/ui/primitives/avatar";
+} from "@infinity.dev/ui/primitives/table";
+import { Badge } from "@infinity.dev/ui/primitives/badge";
+import { Button } from "@infinity.dev/ui/primitives/button";
+import { Checkbox } from "@infinity.dev/ui/primitives/checkbox";
+import { Avatar, AvatarFallback, AvatarImage } from "@infinity.dev/ui/primitives/avatar";
 import {
   MoreHorizontal,
   ArrowUpDown,

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { PlayerAvatar, PlayerAvatarGroup, PlayerList } from '@tyfo.dev/ui/components/player-avatar'
+import { PlayerAvatar, PlayerAvatarGroup, PlayerList } from '@infinity.dev/ui/components/player-avatar'
 
 const meta: Meta<typeof PlayerAvatar> = {
   title: 'Lobby/PlayerAvatar',

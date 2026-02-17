@@ -3,9 +3,9 @@ import {
   Avatar,
   AvatarImage,
   AvatarFallback,
-} from "@tyfo.dev/ui/primitives/avatar";
-import { Badge } from "@tyfo.dev/ui/primitives/badge";
-import { cn } from "@tyfo.dev/ui/utils";
+} from "@infinity.dev/ui/primitives/avatar";
+import { Badge } from "@infinity.dev/ui/primitives/badge";
+import { cn } from "@infinity.dev/ui/utils";
 
 const meta: Meta<typeof Avatar> = {
   title: "Primitives/Avatar",

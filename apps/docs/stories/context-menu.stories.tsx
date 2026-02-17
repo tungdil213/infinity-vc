@@ -14,8 +14,8 @@ import {
   ContextMenuSubContent,
   ContextMenuSubTrigger,
   ContextMenuTrigger,
-} from "@tyfo.dev/ui/primitives/context-menu";
-import { Card } from "@tyfo.dev/ui/primitives/card";
+} from "@infinity.dev/ui/primitives/context-menu";
+import { Card } from "@infinity.dev/ui/primitives/card";
 import {
   Copy,
   Edit,

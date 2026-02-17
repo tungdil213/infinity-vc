@@ -3,7 +3,7 @@
  *
  * A game of risk, deduction, and luck for 2-4 players.
  * This module provides the complete Love Letter implementation
- * built on top of @tyfo.dev/game-engine.
+ * built on top of @infinity.dev/game-engine.
  */
 
 export {

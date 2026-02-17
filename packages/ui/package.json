@@ -1,5 +1,5 @@
 {
-	"name": "@tyfo.dev/ui",
+	"name": "@infinity.dev/ui",
 	"type": "module",
 	"version": "1.0.0",
 	"license": "MIT",
@@ -95,8 +95,8 @@
 	"devDependencies": {
 		"@rollup/plugin-typescript": "^12.1.2",
 		"@tailwindcss/cli": "^4.0.8",
-		"@tyfo.dev/eslint-config": "workspace:*",
-		"@tyfo.dev/typescript-config": "workspace:*",
+		"@infinity.dev/eslint-config": "workspace:*",
+		"@infinity.dev/typescript-config": "workspace:*",
 		"@types/node": "22.13.5",
 		"@types/react": "^19.0.10",
 		"@types/react-dom": "^19.0.4",

@@ -1,4 +1,4 @@
-# @tyfo.dev/ui
+# @infinity.dev/ui
 
 A modern, accessible, and customizable React component library built with shadcn/ui, Radix UI primitives, and Tailwind CSS.
 
@@ -23,7 +23,7 @@ A modern, accessible, and customizable React component library built with shadcn
 ## Installation
 
 ```bash
-pnpm add @tyfo.dev/ui
+pnpm add @infinity.dev/ui
 ```
 
 ## Directory Structure
@@ -50,7 +50,7 @@ Components are organized by type and exported individually:
 
 ```json
 {
-  "name": "@tyfo.dev/ui",
+  "name": "@infinity.dev/ui",
   "type": "module",
   "exports": {
     "./primitives/*": {
@@ -86,9 +86,9 @@ Base components built on shadcn/ui and Radix UI primitives. These are the founda
 
 ```tsx
 // Import primitive components
-import { Button } from "@tyfo.dev/ui/primitives/button"
-import { Input } from "@tyfo.dev/ui/primitives/input"
-import { Dialog } from "@tyfo.dev/ui/primitives/dialog"
+import { Button } from "@infinity.dev/ui/primitives/button"
+import { Input } from "@infinity.dev/ui/primitives/input"
+import { Dialog } from "@infinity.dev/ui/primitives/dialog"
 ```
 
 ### 2. Composed Components
@@ -96,9 +96,9 @@ Higher-order components that combine multiple primitives for common use cases.
 
 ```tsx
 // Import composed components
-import { SearchInput } from "@tyfo.dev/ui/composed/search-input"
-import { FormField } from "@tyfo.dev/ui/composed/form-field"
-import { DataTable } from "@tyfo.dev/ui/composed/data-table"
+import { SearchInput } from "@infinity.dev/ui/composed/search-input"
+import { FormField } from "@infinity.dev/ui/composed/form-field"
+import { DataTable } from "@infinity.dev/ui/composed/data-table"
 ```
 
 ### 3. UI Patterns
@@ -106,17 +106,17 @@ Full-featured layout patterns and templates for common UI scenarios.
 
 ```tsx
 // Import UI patterns
-import { AuthForm } from "@tyfo.dev/ui/patterns/auth-form"
-import { DashboardLayout } from "@tyfo.dev/ui/patterns/dashboard-layout"
-import { SettingsPage } from "@tyfo.dev/ui/patterns/settings-page"
+import { AuthForm } from "@infinity.dev/ui/patterns/auth-form"
+import { DashboardLayout } from "@infinity.dev/ui/patterns/dashboard-layout"
+import { SettingsPage } from "@infinity.dev/ui/patterns/settings-page"
 ```
 
 ### Hooks and Utilities
 
 ```tsx
 // Import hooks and utilities
-import { useMediaQuery } from "@tyfo.dev/ui/hooks/use-media-query"
-import { cn } from "@tyfo.dev/ui/utils"
+import { useMediaQuery } from "@infinity.dev/ui/hooks/use-media-query"
+import { cn } from "@infinity.dev/ui/utils"
 ```
 
 ## Development Guidelines

@@ -11,7 +11,7 @@ export default julr(
 		},
 	},
 	{
-		ignores: ['apps/tyfo.dev/.adonisjs/*', 'apps/tyfo.dev/types/db.ts'],
+		ignores: ['apps/infinity.dev/.adonisjs/*', 'apps/infinity.dev/types/db.ts'],
 	},
 	{
 		rules: {

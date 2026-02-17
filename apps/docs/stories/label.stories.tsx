@@ -1,10 +1,10 @@
 import * as React from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Label } from "@tyfo.dev/ui/primitives/label";
-import { Input } from "@tyfo.dev/ui/primitives/input";
-import { Checkbox } from "@tyfo.dev/ui/primitives/checkbox";
-import { Switch } from "@tyfo.dev/ui/primitives/switch";
-import { RadioGroup, RadioGroupItem } from "@tyfo.dev/ui/primitives/radio-group";
+import { Label } from "@infinity.dev/ui/primitives/label";
+import { Input } from "@infinity.dev/ui/primitives/input";
+import { Checkbox } from "@infinity.dev/ui/primitives/checkbox";
+import { Switch } from "@infinity.dev/ui/primitives/switch";
+import { RadioGroup, RadioGroupItem } from "@infinity.dev/ui/primitives/radio-group";
 
 const meta: Meta<typeof Label> = {
   title: "Primitives/Label",

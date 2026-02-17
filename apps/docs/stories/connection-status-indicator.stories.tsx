@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { ConnectionStatusIndicator, type ConnectionStatusIndicatorProps } from '@tyfo.dev/ui/components/connection-status-indicator'
+import { ConnectionStatusIndicator, type ConnectionStatusIndicatorProps } from '@infinity.dev/ui/components/connection-status-indicator'
 
 const meta: Meta<typeof ConnectionStatusIndicator> = {
   title: 'Status/ConnectionStatusIndicator',

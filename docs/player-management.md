@@ -288,7 +288,7 @@ export default class WelcomeNotification extends BaseMail {
   prepare() {
     this.message
       .to(this.user.email)
-      .subject('Bienvenue sur Infinity Gauntlet Love Letter!')
+      .subject('Bienvenue sur infinity Gauntlet Love Letter!')
       .htmlView('emails/welcome', { user: this.user })
   }
 }

@@ -21,9 +21,9 @@ import {
   SidebarProvider,
   SidebarSeparator,
   SidebarTrigger,
-} from "@tyfo.dev/ui/primitives/sidebar";
-import { Button } from "@tyfo.dev/ui/primitives/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@tyfo.dev/ui/primitives/avatar";
+} from "@infinity.dev/ui/primitives/sidebar";
+import { Button } from "@infinity.dev/ui/primitives/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@infinity.dev/ui/primitives/avatar";
 import {
   LayoutDashboard,
   Users,

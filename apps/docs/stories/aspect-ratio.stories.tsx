@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { AspectRatio } from "@tyfo.dev/ui/primitives/aspect-ratio";
-import { Card } from "@tyfo.dev/ui/primitives/card";
+import { AspectRatio } from "@infinity.dev/ui/primitives/aspect-ratio";
+import { Card } from "@infinity.dev/ui/primitives/card";
 
 const meta: Meta<typeof AspectRatio> = {
   title: "Primitives/AspectRatio",

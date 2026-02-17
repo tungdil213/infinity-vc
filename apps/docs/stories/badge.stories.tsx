@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Badge } from "@tyfo.dev/ui/primitives/badge";
+import { Badge } from "@infinity.dev/ui/primitives/badge";
 import {
   CheckCircle2,
   Clock,

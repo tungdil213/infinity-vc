@@ -1,9 +1,9 @@
 import React from 'react'
 import { Head, useForm, usePage } from '@inertiajs/react'
-import { Button } from '@tyfo.dev/ui/primitives/button'
-import { Input } from '@tyfo.dev/ui/primitives/input'
-import { Label } from '@tyfo.dev/ui/primitives/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@tyfo.dev/ui/primitives/card'
+import { Button } from '@infinity.dev/ui/primitives/button'
+import { Input } from '@infinity.dev/ui/primitives/input'
+import { Label } from '@infinity.dev/ui/primitives/label'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@infinity.dev/ui/primitives/card'
 
 interface RegisterProps {
   redirect?: string
@@ -58,7 +58,7 @@ export default function Register({ redirect = '/lobbies' }: RegisterProps) {
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold text-center">Create Account</CardTitle>
             <CardDescription className="text-center">
-              Join the Infinity Game community
+              Join the infinity Game community
             </CardDescription>
           </CardHeader>
           <CardContent>

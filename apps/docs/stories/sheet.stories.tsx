@@ -8,11 +8,11 @@ import {
   SheetTitle,
   SheetTrigger,
   SheetFooter,
-} from "@tyfo.dev/ui/primitives/sheet";
-import { Button } from "@tyfo.dev/ui/primitives/button";
-import { Input } from "@tyfo.dev/ui/primitives/input";
-import { Label } from "@tyfo.dev/ui/primitives/label";
-import { Separator } from "@tyfo.dev/ui/primitives/separator";
+} from "@infinity.dev/ui/primitives/sheet";
+import { Button } from "@infinity.dev/ui/primitives/button";
+import { Input } from "@infinity.dev/ui/primitives/input";
+import { Label } from "@infinity.dev/ui/primitives/label";
+import { Separator } from "@infinity.dev/ui/primitives/separator";
 import {
   Menu,
   Settings,

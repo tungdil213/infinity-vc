@@ -1,17 +1,17 @@
 import React, { useState } from 'react'
 import { Head, Link, router } from '@inertiajs/react'
-import { Button } from '@tyfo.dev/ui/primitives/button'
-import { Input } from '@tyfo.dev/ui/primitives/input'
-import { Label } from '@tyfo.dev/ui/primitives/label'
+import { Button } from '@infinity.dev/ui/primitives/button'
+import { Input } from '@infinity.dev/ui/primitives/input'
+import { Label } from '@infinity.dev/ui/primitives/label'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@tyfo.dev/ui/primitives/card'
-import { Alert, AlertDescription } from '@tyfo.dev/ui/primitives/alert'
-import { Badge } from '@tyfo.dev/ui/primitives/badge'
+} from '@infinity.dev/ui/primitives/card'
+import { Alert, AlertDescription } from '@infinity.dev/ui/primitives/alert'
+import { Badge } from '@infinity.dev/ui/primitives/badge'
 import { AlertCircle, CheckCircle2, Lock, Key, Users } from 'lucide-react'
 
 interface JoinLobbyProps {
@@ -72,13 +72,13 @@ export default function JoinLobby({
   if (!user) {
     return (
       <>
-        <Head title={`Join ${lobby.name} - Infinity Game`} />
+        <Head title={`Join ${lobby.name} - infinity Game`} />
 
         <div className="min-h-screen bg-secondary-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
           <div className="max-w-md w-full space-y-8">
             <div className="text-center">
               <Link href="/">
-                <h1 className="text-3xl font-heading text-foreground mb-4">♾️ Infinity Game</h1>
+                <h1 className="text-3xl font-heading text-foreground mb-4">♾️ infinity Game</h1>
               </Link>
             </div>
 
@@ -146,14 +146,14 @@ export default function JoinLobby({
 
   return (
     <>
-      <Head title={`Join ${lobby.name} - Infinity Game`} />
+      <Head title={`Join ${lobby.name} - infinity Game`} />
 
       <div className="min-h-screen bg-secondary-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           {/* Header */}
           <div className="text-center">
             <Link href="/">
-              <h1 className="text-3xl font-heading text-foreground mb-4">♾️ Infinity Game</h1>
+              <h1 className="text-3xl font-heading text-foreground mb-4">♾️ infinity Game</h1>
             </Link>
           </div>
 

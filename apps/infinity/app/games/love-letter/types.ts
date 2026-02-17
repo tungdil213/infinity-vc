@@ -1,10 +1,11 @@
 /**
  * Love Letter Game Types
- * 
+ *
  * This module defines all types specific to the Love Letter card game.
- * It extends the generic game engine types from @tyfo.dev/game-engine.
+ * It extends the generic game engine types from @Infinity.dev/game-engine.
  */
-import type { IGameState, IAction, IPlayer } from '@tyfo.dev/game-engine/core'
+import type { IGameState, IAction, IPlayer } from '@infinity.dev/game-engine/core'
+import { PlayCardPayload } from './index.js'
 
 /**
  * Love Letter card types
@@ -109,13 +110,7 @@ export interface ILoveLetterPlayer extends IPlayer {
 /**
  * Love Letter game phase
  */
-export type LoveLetterPhase =
-  | 'setup'
-  | 'draw'
-  | 'play'
-  | 'resolve'
-  | 'round_end'
-  | 'game_over'
+export type LoveLetterPhase = 'setup' | 'draw' | 'play' | 'resolve' | 'round_end' | 'game_over'
 
 /**
  * Love Letter game state
@@ -141,13 +136,7 @@ export const LoveLetterActionTypes = {
   ACKNOWLEDGE: 'acknowledge',
 } as const
 
-export type LoveLetterActionType = (typeof LoveLetterActionTypes)[keyof typeof LoveLetterActionTypes]
-
-/**
- * Play card action payload
- */
-export interface PlayCardPayload {
-  cardType: CardType
+export type LoveLetterActionType = {
   targetPlayerId?: string
   guessedCard?: CardType // For Guard
 }

@@ -1,6 +1,6 @@
 import React from 'react'
 import { router } from '@inertiajs/react'
-import { Header } from '@tyfo.dev/ui/components/header'
+import { Header } from '@infinity.dev/ui/components/header'
 import { useTransmit } from '../contexts/TransmitContext'
 import { useLobbyService } from '../hooks/use_lobby_service'
 
@@ -34,7 +34,7 @@ export function HeaderWrapper({ user, currentLobby, className }: HeaderWrapperPr
 
   const handleJoinByCode = async (code: string) => {
     if (!user || !lobbyService) throw new Error('User or lobby service not available')
-    
+
     await lobbyService.joinLobby(code, user.uuid)
     router.visit(`/lobbies/${code}`)
   }

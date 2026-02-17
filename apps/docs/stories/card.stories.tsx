@@ -6,11 +6,11 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@tyfo.dev/ui/primitives/card";
-import { Button } from "@tyfo.dev/ui/primitives/button";
-import { Input } from "@tyfo.dev/ui/primitives/input";
-import { Label } from "@tyfo.dev/ui/primitives/label";
-import { Switch } from "@tyfo.dev/ui/primitives/switch";
+} from "@infinity.dev/ui/primitives/card";
+import { Button } from "@infinity.dev/ui/primitives/button";
+import { Input } from "@infinity.dev/ui/primitives/input";
+import { Label } from "@infinity.dev/ui/primitives/label";
+import { Switch } from "@infinity.dev/ui/primitives/switch";
 import { BellRing, Check, CreditCard, Settings, User } from "lucide-react";
 
 const meta: Meta<typeof Card> = {

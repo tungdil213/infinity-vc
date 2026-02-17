@@ -1,7 +1,7 @@
 import * as React from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Skeleton } from "@tyfo.dev/ui/primitives/skeleton";
-import { Card } from "@tyfo.dev/ui/primitives/card";
+import { Skeleton } from "@infinity.dev/ui/primitives/skeleton";
+import { Card } from "@infinity.dev/ui/primitives/card";
 
 const meta: Meta<typeof Skeleton> = {
   title: "Primitives/Skeleton",

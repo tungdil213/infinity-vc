@@ -1,4 +1,4 @@
-# @tyfo.dev/game-engine
+# @infinity.dev/game-engine
 
 Abstract game engine with state machine, rules, and actions for building board games.
 
@@ -12,7 +12,7 @@ Abstract game engine with state machine, rules, and actions for building board g
 ## Installation
 
 ```bash
-pnpm add @tyfo.dev/game-engine
+pnpm add @infinity.dev/game-engine
 ```
 
 ## Usage
@@ -20,7 +20,7 @@ pnpm add @tyfo.dev/game-engine
 ### Creating a Game
 
 ```typescript
-import { createLoveLetterEngine } from '@tyfo.dev/game-engine/love-letter'
+import { createLoveLetterEngine } from '@infinity.dev/game-engine/love-letter'
 
 const engine = createLoveLetterEngine()
 
@@ -72,7 +72,7 @@ console.log('Is my turn:', playerView.isMyTurn)
 ### State Machine
 
 ```typescript
-import { createStateMachine, GamePhases } from '@tyfo.dev/game-engine/state-machine'
+import { createStateMachine, GamePhases } from '@infinity.dev/game-engine/state-machine'
 
 interface GameContext {
   round: number
@@ -106,7 +106,7 @@ console.log(machine.currentState) // 'player_turn'
 ### Custom Rules
 
 ```typescript
-import { BaseRule, createRuleEngine } from '@tyfo.dev/game-engine/core'
+import { BaseRule, createRuleEngine } from '@infinity.dev/game-engine/core'
 
 class MaxHandSizeRule extends BaseRule {
   id = 'max-hand-size'
@@ -138,8 +138,8 @@ if (result.isFailure) {
 ### Implementing a Custom Game
 
 ```typescript
-import { BaseGameEngine } from '@tyfo.dev/game-engine/core'
-import type { IGameState, IAction, IGameMetadata } from '@tyfo.dev/game-engine/core'
+import { BaseGameEngine } from '@infinity.dev/game-engine/core'
+import type { IGameState, IAction, IGameMetadata } from '@infinity.dev/game-engine/core'
 
 interface MyGameState extends IGameState {
   // Custom state

@@ -5,9 +5,9 @@ import {
   InputOTPGroup,
   InputOTPSlot,
   InputOTPSeparator,
-} from "@tyfo.dev/ui/primitives/input-otp"
-import { Button } from "@tyfo.dev/ui/primitives/button"
-import { Card } from "@tyfo.dev/ui/primitives/card"
+} from "@infinity.dev/ui/primitives/input-otp"
+import { Button } from "@infinity.dev/ui/primitives/button"
+import { Card } from "@infinity.dev/ui/primitives/card"
 
 const meta = {
   title: "Primitives/InputOTP",

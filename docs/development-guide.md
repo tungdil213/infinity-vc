@@ -721,4 +721,4 @@ export default defineConfig({
 }
 ```
 
-Ce guide couvre tous les aspects essentiels pour développer efficacement sur le projet Infinity Gauntlet Love Letter avec une approche Clean Architecture et des bonnes pratiques de développement.
+Ce guide couvre tous les aspects essentiels pour développer efficacement sur le projet infinity Gauntlet Love Letter avec une approche Clean Architecture et des bonnes pratiques de développement.

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { LobbyHeaderPanel, type LobbyHeaderPanelProps } from '@tyfo.dev/ui/components/lobby-header-panel'
+import { LobbyHeaderPanel, type LobbyHeaderPanelProps } from '@infinity.dev/ui/components/lobby-header-panel'
 
 const meta: Meta<typeof LobbyHeaderPanel> = {
   title: 'Lobby/LobbyHeaderPanel',

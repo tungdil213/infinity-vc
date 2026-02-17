@@ -7,11 +7,11 @@ import {
   CarouselNext,
   CarouselPrevious,
   type CarouselApi,
-} from "@tyfo.dev/ui/primitives/carousel"
-import { Card } from "@tyfo.dev/ui/primitives/card"
-import { AspectRatio } from "@tyfo.dev/ui/primitives/aspect-ratio"
-import { Button } from "@tyfo.dev/ui/primitives/button"
-import { Badge } from "@tyfo.dev/ui/primitives/badge"
+} from "@infinity.dev/ui/primitives/carousel"
+import { Card } from "@infinity.dev/ui/primitives/card"
+import { AspectRatio } from "@infinity.dev/ui/primitives/aspect-ratio"
+import { Button } from "@infinity.dev/ui/primitives/button"
+import { Badge } from "@infinity.dev/ui/primitives/badge"
 import { Heart, Share2, Star } from "lucide-react"
 
 const meta = {

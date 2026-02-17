@@ -1,4 +1,4 @@
-import type { IEvent, IEventBus } from '@tyfo.dev/events'
+import type { IEvent, IEventBus } from '@infinity.dev/events'
 import type { ITranscriptService } from './transcript-service.js'
 
 /**

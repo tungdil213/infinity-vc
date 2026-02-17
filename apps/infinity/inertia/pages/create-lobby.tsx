@@ -1,25 +1,25 @@
 import React, { useState } from 'react'
 import { Head, Link, router } from '@inertiajs/react'
-import { Button } from '@tyfo.dev/ui/primitives/button'
-import { Input } from '@tyfo.dev/ui/primitives/input'
-import { Textarea } from '@tyfo.dev/ui/primitives/textarea'
-import { Label } from '@tyfo.dev/ui/primitives/label'
-import { Checkbox } from '@tyfo.dev/ui/primitives/checkbox'
+import { Button } from '@infinity.dev/ui/primitives/button'
+import { Input } from '@infinity.dev/ui/primitives/input'
+import { Textarea } from '@infinity.dev/ui/primitives/textarea'
+import { Label } from '@infinity.dev/ui/primitives/label'
+import { Checkbox } from '@infinity.dev/ui/primitives/checkbox'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@tyfo.dev/ui/primitives/select'
+} from '@infinity.dev/ui/primitives/select'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@tyfo.dev/ui/primitives/card'
-import { Alert, AlertDescription } from '@tyfo.dev/ui/primitives/alert'
+} from '@infinity.dev/ui/primitives/card'
+import { Alert, AlertDescription } from '@infinity.dev/ui/primitives/alert'
 import { HeaderWrapper } from '../layouts/HeaderWrapper'
 import Layout from '../layouts/layout'
 import { AlertCircle, CheckCircle2, Lightbulb } from 'lucide-react'
@@ -96,7 +96,7 @@ export default function CreateLobby({ user, errors = {}, flash = {} }: CreateLob
 
   return (
     <Layout>
-      <Head title="Create Lobby - Infinity Game" />
+      <Head title="Create Lobby - infinity Game" />
 
       <div className="min-h-screen bg-secondary-background">
         <HeaderWrapper user={{ uuid: user.uuid, fullName: user.fullName, email: '' }} />

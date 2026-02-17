@@ -1,5 +1,5 @@
 /**
- * Event Bus - Re-exports from @tyfo.dev/events for backward compatibility
+ * Event Bus - Re-exports from @infinity.dev/events for backward compatibility
  * This file bridges the new package with existing code
  */
 import {
@@ -7,7 +7,7 @@ import {
   type IEventBus,
   type SubscriberCallback,
   createEventBus,
-} from '@tyfo.dev/events'
+} from '@infinity.dev/events'
 
 // Re-export types for backward compatibility
 export type EventHandler<T = unknown> = SubscriberCallback<IEvent<T>>

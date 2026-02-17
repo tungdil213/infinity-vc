@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import ImageCard from "@tyfo.dev/ui/primitives/image-card";
+import ImageCard from "@infinity.dev/ui/primitives/image-card";
 
 const meta: Meta<typeof ImageCard> = {
   title: "Primitives/ImageCard",

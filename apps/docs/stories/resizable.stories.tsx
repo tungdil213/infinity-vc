@@ -4,9 +4,9 @@ import {
   ResizablePanelGroup,
   ResizablePanel,
   ResizableHandle,
-} from "@tyfo.dev/ui/primitives/resizable"
-import { Card } from "@tyfo.dev/ui/primitives/card"
-import { ScrollArea } from "@tyfo.dev/ui/primitives/scroll-area"
+} from "@infinity.dev/ui/primitives/resizable"
+import { Card } from "@infinity.dev/ui/primitives/card"
+import { ScrollArea } from "@infinity.dev/ui/primitives/scroll-area"
 
 const meta = {
   title: "Primitives/Resizable",

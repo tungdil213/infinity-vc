@@ -11,12 +11,12 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@tyfo.dev/ui/primitives/form"
-import { Input } from "@tyfo.dev/ui/primitives/input"
-import { Button } from "@tyfo.dev/ui/primitives/button"
-import { Checkbox } from "@tyfo.dev/ui/primitives/checkbox"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tyfo.dev/ui/primitives/select"
-import { Card } from "@tyfo.dev/ui/primitives/card"
+} from "@infinity.dev/ui/primitives/form"
+import { Input } from "@infinity.dev/ui/primitives/input"
+import { Button } from "@infinity.dev/ui/primitives/button"
+import { Checkbox } from "@infinity.dev/ui/primitives/checkbox"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@infinity.dev/ui/primitives/select"
+import { Card } from "@infinity.dev/ui/primitives/card"
 
 const meta = {
   title: "Primitives/Form",

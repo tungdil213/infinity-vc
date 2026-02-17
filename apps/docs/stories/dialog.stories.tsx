@@ -7,10 +7,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@tyfo.dev/ui/primitives/dialog";
-import { Button } from "@tyfo.dev/ui/primitives/button";
-import { Input } from "@tyfo.dev/ui/primitives/input";
-import { Label } from "@tyfo.dev/ui/primitives/label";
+} from "@infinity.dev/ui/primitives/dialog";
+import { Button } from "@infinity.dev/ui/primitives/button";
+import { Input } from "@infinity.dev/ui/primitives/input";
+import { Label } from "@infinity.dev/ui/primitives/label";
 import { AlertTriangle, Trash2 } from "lucide-react";
 
 const meta: Meta<typeof Dialog> = {

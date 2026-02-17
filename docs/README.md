@@ -1,8 +1,8 @@
-# Documentation - Infinity Gauntlet: A Love Letter Game
+# Documentation - infinity Gauntlet: A Love Letter Game
 
 ## Vue d'ensemble
 
-Ce projet implémente une version en ligne du jeu de cartes **Love Letter** avec un thème Marvel **Infinity Gauntlet**. Il s'agit d'une application web multijoueur permettant aux joueurs de créer et rejoindre des lobbies pour jouer ensemble.
+Ce projet implémente une version en ligne du jeu de cartes **Love Letter** avec un thème Marvel **infinity Gauntlet**. Il s'agit d'une application web multijoueur permettant aux joueurs de créer et rejoindre des lobbies pour jouer ensemble.
 
 > **Avertissement** : Il s'agit d'un projet fan‑made non officiel, sans aucune affiliation avec Marvel, les ayants droit du jeu Love Letter ou tout autre détenteur de licence associée.
 
@@ -11,7 +11,7 @@ Ce projet implémente une version en ligne du jeu de cartes **Love Letter** avec
 - [Architecture Technique](./architecture.md) - Structure du code et patterns utilisés
 - [Système de Lobbies](./lobby-system.md) - Fonctionnement des salles de jeu
 - [Gestion des Joueurs](./player-management.md) - Système d'authentification et profils
-- [Règles du Jeu](./game-rules.md) - Règles spécifiques à Infinity Gauntlet Love Letter
+- [Règles du Jeu](./game-rules.md) - Règles spécifiques à infinity Gauntlet Love Letter
 - [API Reference](./api-reference.md) - Documentation des endpoints
 - [Guide de Développement](./development-guide.md) - Instructions pour les développeurs
 
@@ -57,7 +57,7 @@ Ce projet implémente une version en ligne du jeu de cartes **Love Letter** avec
 - Profils joueurs avec pseudonymes
 - Système de sessions multijoueur
 
-### 🃏 Jeu Love Letter Infinity Gauntlet
+### 🃏 Jeu Love Letter infinity Gauntlet
 - Adaptation du jeu Love Letter classique
 - Thème Marvel avec les Pierres d'Infinité
 - Mécaniques de jeu spécifiques (voir règles détaillées)

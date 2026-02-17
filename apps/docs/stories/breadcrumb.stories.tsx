@@ -8,8 +8,8 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
   BreadcrumbEllipsis,
-} from "@tyfo.dev/ui/primitives/breadcrumb"
-import { Card } from "@tyfo.dev/ui/primitives/card"
+} from "@infinity.dev/ui/primitives/breadcrumb"
+import { Card } from "@infinity.dev/ui/primitives/card"
 import { ChevronRight, Home, File, Folder, Settings } from "lucide-react"
 
 const meta = {

@@ -1,10 +1,10 @@
 import * as React from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { ScrollArea } from "@tyfo.dev/ui/primitives/scroll-area";
-import { Separator } from "@tyfo.dev/ui/primitives/separator";
-import { Badge } from "@tyfo.dev/ui/primitives/badge";
-import { Avatar, AvatarImage, AvatarFallback } from "@tyfo.dev/ui/primitives/avatar";
-import { Card } from "@tyfo.dev/ui/primitives/card";
+import { ScrollArea } from "@infinity.dev/ui/primitives/scroll-area";
+import { Separator } from "@infinity.dev/ui/primitives/separator";
+import { Badge } from "@infinity.dev/ui/primitives/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@infinity.dev/ui/primitives/avatar";
+import { Card } from "@infinity.dev/ui/primitives/card";
 
 const meta: Meta<typeof ScrollArea> = {
   title: "Primitives/ScrollArea",

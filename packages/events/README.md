@@ -1,6 +1,6 @@
-# @tyfo.dev/events
+# @infinity.dev/events
 
-Event-driven architecture foundation for the Infinity game platform.
+Event-driven architecture foundation for the infinity game platform.
 
 ## Features
 
@@ -13,7 +13,7 @@ Event-driven architecture foundation for the Infinity game platform.
 ## Installation
 
 ```bash
-pnpm add @tyfo.dev/events
+pnpm add @infinity.dev/events
 ```
 
 ## Usage
@@ -21,7 +21,7 @@ pnpm add @tyfo.dev/events
 ### Event Bus
 
 ```typescript
-import { createEventBus, LobbyCreatedEvent } from '@tyfo.dev/events'
+import { createEventBus, LobbyCreatedEvent } from '@infinity.dev/events'
 
 const eventBus = createEventBus()
 
@@ -48,7 +48,7 @@ subscription.unsubscribe()
 ### Typed Event Bus
 
 ```typescript
-import { TypedEventBus, InMemoryEventBus, type LobbyEventMap } from '@tyfo.dev/events'
+import { TypedEventBus, InMemoryEventBus, type LobbyEventMap } from '@infinity.dev/events'
 
 const typedBus = new TypedEventBus<LobbyEventMap>(new InMemoryEventBus())
 
@@ -62,7 +62,7 @@ typedBus.subscribe('lobby.player_joined', (event) => {
 ### Result Pattern
 
 ```typescript
-import { Result, ValidationError } from '@tyfo.dev/events'
+import { Result, ValidationError } from '@infinity.dev/events'
 
 function validateName(name: string): Result<string, ValidationError> {
   if (name.length < 3) {
@@ -81,7 +81,7 @@ result.match({
 ### Event Store
 
 ```typescript
-import { createEventStore, LobbyCreatedEvent } from '@tyfo.dev/events'
+import { createEventStore, LobbyCreatedEvent } from '@infinity.dev/events'
 
 const store = createEventStore()
 
@@ -97,7 +97,7 @@ console.log('Events:', stream.value.events)
 ### Custom Domain Events
 
 ```typescript
-import { DomainEvent, type EventMetadata } from '@tyfo.dev/events/core'
+import { DomainEvent, type EventMetadata } from '@infinity.dev/events/core'
 
 interface MyPayload {
   orderId: string

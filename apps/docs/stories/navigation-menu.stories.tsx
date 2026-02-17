@@ -8,8 +8,8 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
-} from "@tyfo.dev/ui/primitives/navigation-menu";
-import { cn } from "@tyfo.dev/ui/utils";
+} from "@infinity.dev/ui/primitives/navigation-menu";
+import { cn } from "@infinity.dev/ui/utils";
 import {
   BarChart,
   Book,

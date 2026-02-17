@@ -4,7 +4,7 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@tyfo.dev/ui/primitives/chart"
+} from "@infinity.dev/ui/primitives/chart"
 import {
   Area,
   AreaChart,
@@ -20,7 +20,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
-import { Card } from "@tyfo.dev/ui/primitives/card"
+import { Card } from "@infinity.dev/ui/primitives/card"
 
 const meta = {
   title: "Primitives/Chart",

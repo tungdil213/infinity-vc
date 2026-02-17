@@ -1,4 +1,4 @@
-import type { Result } from '@tyfo.dev/events'
+import type { Result } from '@infinity.dev/events'
 import type { IGameState, IAction } from './types.js'
 
 /**

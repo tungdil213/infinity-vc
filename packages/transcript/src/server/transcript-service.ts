@@ -1,4 +1,4 @@
-import type { IEvent } from '@tyfo.dev/events'
+import type { IEvent } from '@infinity.dev/events'
 import type { ITranscriptMessage, IChannel, SubscriptionOptions } from '../core/types.js'
 
 /**

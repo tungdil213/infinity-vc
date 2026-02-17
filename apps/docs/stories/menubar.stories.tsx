@@ -15,7 +15,7 @@ import {
   MenubarSubContent,
   MenubarSubTrigger,
   MenubarLabel,
-} from "@tyfo.dev/ui/primitives/menubar";
+} from "@infinity.dev/ui/primitives/menubar";
 import {
   Cloud,
   CreditCard,

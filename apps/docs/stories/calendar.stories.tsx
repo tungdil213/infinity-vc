@@ -1,7 +1,7 @@
 import React from "react"
 import type { Meta, StoryObj } from "@storybook/react-vite"
-import { Calendar } from "@tyfo.dev/ui/primitives/calendar"
-import { Card } from "@tyfo.dev/ui/primitives/card"
+import { Calendar } from "@infinity.dev/ui/primitives/calendar"
+import { Card } from "@infinity.dev/ui/primitives/card"
 import { addDays, format } from "date-fns"
 import type { DateRange } from "react-day-picker"
 

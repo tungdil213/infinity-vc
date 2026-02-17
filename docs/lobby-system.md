@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-Le système de lobbies permet aux joueurs de créer et rejoindre des salles de jeu **en mémoire** pour des parties multijoueurs d'Infinity Gauntlet Love Letter. Les lobbies ne sont **PAS persistés** en base de données - seules les parties effectivement démarrées le sont.
+Le système de lobbies permet aux joueurs de créer et rejoindre des salles de jeu **en mémoire** pour des parties multijoueurs d'infinity Gauntlet Love Letter. Les lobbies ne sont **PAS persistés** en base de données - seules les parties effectivement démarrées le sont.
 
 **Principe clé** : Lobbies = En mémoire | Parties = Base de données
 

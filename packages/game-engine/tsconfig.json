@@ -1,5 +1,5 @@
 {
-  "extends": "@tyfo.dev/typescript-config/base.json",
+  "extends": "@infinity.dev/typescript-config/base.json",
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",

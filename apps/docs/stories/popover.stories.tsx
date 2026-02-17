@@ -4,11 +4,11 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@tyfo.dev/ui/primitives/popover";
-import { Button } from "@tyfo.dev/ui/primitives/button";
-import { Input } from "@tyfo.dev/ui/primitives/input";
-import { Label } from "@tyfo.dev/ui/primitives/label";
-import { Switch } from "@tyfo.dev/ui/primitives/switch";
+} from "@infinity.dev/ui/primitives/popover";
+import { Button } from "@infinity.dev/ui/primitives/button";
+import { Input } from "@infinity.dev/ui/primitives/input";
+import { Label } from "@infinity.dev/ui/primitives/label";
+import { Switch } from "@infinity.dev/ui/primitives/switch";
 import {
   Settings,
   Bell,

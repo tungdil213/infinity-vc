@@ -4,9 +4,9 @@ import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@tyfo.dev/ui/primitives/hover-card";
-import { Button } from "@tyfo.dev/ui/primitives/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@tyfo.dev/ui/primitives/avatar";
+} from "@infinity.dev/ui/primitives/hover-card";
+import { Button } from "@infinity.dev/ui/primitives/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@infinity.dev/ui/primitives/avatar";
 import { CalendarDays, Mail, MessageCircle, Github, Twitter, ExternalLink } from "lucide-react";
 
 const meta: Meta<typeof HoverCard> = {

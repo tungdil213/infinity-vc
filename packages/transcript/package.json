@@ -1,5 +1,5 @@
 {
-  "name": "@tyfo.dev/transcript",
+  "name": "@infinity.dev/transcript",
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
@@ -31,10 +31,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@tyfo.dev/events": "workspace:*"
+    "@infinity.dev/events": "workspace:*"
   },
   "devDependencies": {
-    "@tyfo.dev/typescript-config": "workspace:*",
+    "@infinity.dev/typescript-config": "workspace:*",
     "typescript": "~5.7.3"
   },
   "peerDependencies": {

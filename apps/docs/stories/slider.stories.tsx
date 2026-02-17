@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Slider } from "@tyfo.dev/ui/primitives/slider";
+import { Slider } from "@infinity.dev/ui/primitives/slider";
 import { useState } from "react";
 import { Volume2, VolumeX, Sun, Moon } from "lucide-react";
 

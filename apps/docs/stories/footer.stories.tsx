@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Footer } from "@tyfo.dev/ui/components/footer";
+import { Footer } from "@infinity.dev/ui/components/footer";
 
 const meta: Meta<typeof Footer> = {
   title: "Layout/Footer",

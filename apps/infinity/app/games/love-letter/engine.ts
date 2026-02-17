@@ -1,18 +1,18 @@
 /**
  * Love Letter Game Engine
  *
- * Implementation of the Love Letter card game using the generic @tyfo.dev/game-engine.
+ * Implementation of the Love Letter card game using the generic @infinity.dev/game-engine.
  * This demonstrates how to extend BaseGameEngine to create a complete game.
  */
-import type { Result } from '@tyfo.dev/events'
-import { BaseGameEngine } from '@tyfo.dev/game-engine/core'
+import type { Result } from '@infinity.dev/events'
+import { BaseGameEngine } from '@infinity.dev/game-engine/core'
 import type {
   IGameConfig,
   IPlayer,
   IActionResult,
   IGameMetadata,
   IGameEvent,
-} from '@tyfo.dev/game-engine/core'
+} from '@infinity.dev/game-engine/core'
 import type {
   ILoveLetterState,
   ILoveLetterAction,

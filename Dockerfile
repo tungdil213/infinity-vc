@@ -23,13 +23,13 @@ FROM deps AS build
 WORKDIR /app
 COPY . .
 
-# 🔥 Build des packages partagés puis de l’application principale Infinity
-RUN pnpm --filter @tyfo.dev/ui run build \
-  && pnpm --filter @tyfo.dev/events run build \
-  && pnpm --filter @tyfo.dev/game-engine run build \
-  && pnpm --filter @tyfo.dev/transcript run build
+# 🔥 Build des packages partagés puis de l’application principale infinity
+RUN pnpm --filter @infinity.dev/ui run build \
+  && pnpm --filter @infinity.dev/events run build \
+  && pnpm --filter @infinity.dev/game-engine run build \
+  && pnpm --filter @infinity.dev/transcript run build
 
-# 🔥 Générer le build de l'application Infinity (AdonisJS + Vite)
+# 🔥 Générer le build de l'application infinity (AdonisJS + Vite)
 WORKDIR /app/apps/infinity
 RUN pnpm run build
 
@@ -48,13 +48,13 @@ COPY apps/infinity/package.json ./apps/infinity/
 COPY --from=build /app/apps/infinity/build ./apps/infinity/build
 COPY --from=build /app/apps/infinity/public/assets ./apps/infinity/public/assets
 
-# Installation des dépendances en mode production pour l'application Infinity
+# Installation des dépendances en mode production pour l'application infinity
 WORKDIR /app/apps/infinity
 RUN pnpm install --prod --no-optional --no-frozen-lockfile --filter @infinity/app
 
 # Vérification que les assets sont bien présents
 RUN ls -l /app/apps/infinity/public/assets || echo "Assets NOT FOUND"
 
-# Lancer le serveur Infinity
+# Lancer le serveur infinity
 EXPOSE 3333
 CMD ["node", "build/bin/server.js"]

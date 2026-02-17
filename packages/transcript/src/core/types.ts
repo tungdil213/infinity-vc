@@ -1,4 +1,4 @@
-import type { IEvent } from '@tyfo.dev/events'
+import type { IEvent } from '@infinity.dev/events'
 
 /**
  * Transport type - underlying protocol

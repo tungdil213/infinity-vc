@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-Cette documentation décrit l'API REST de l'application **Infinity Gauntlet Love Letter**. L'API suit les conventions RESTful et utilise JSON pour les échanges de données.
+Cette documentation décrit l'API REST de l'application **infinity Gauntlet Love Letter**. L'API suit les conventions RESTful et utilise JSON pour les échanges de données.
 
 ## Configuration de Base
 

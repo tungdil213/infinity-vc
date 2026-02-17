@@ -3,10 +3,10 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@tyfo.dev/ui/primitives/collapsible";
-import { Button } from "@tyfo.dev/ui/primitives/button";
-import { Badge } from "@tyfo.dev/ui/primitives/badge";
-import { Card } from "@tyfo.dev/ui/primitives/card";
+} from "@infinity.dev/ui/primitives/collapsible";
+import { Button } from "@infinity.dev/ui/primitives/button";
+import { Badge } from "@infinity.dev/ui/primitives/badge";
+import { Card } from "@infinity.dev/ui/primitives/card";
 import {
   ChevronsUpDown,
   Plus,

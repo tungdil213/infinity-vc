@@ -3,8 +3,8 @@ import {
   Alert,
   AlertDescription,
   AlertTitle,
-} from "@tyfo.dev/ui/primitives/alert";
-import { Button } from "@tyfo.dev/ui/primitives/button";
+} from "@infinity.dev/ui/primitives/alert";
+import { Button } from "@infinity.dev/ui/primitives/button";
 import {
   AlertCircle,
   AlertTriangle,
@@ -106,7 +106,7 @@ export const CodeSnippet: Story = {
       <AlertTitle>Installation Command</AlertTitle>
       <AlertDescription>
         <pre className="mt-2 w-full rounded-md bg-slate-950 p-4">
-          <code className="text-white">npm install @tyfo.dev/ui</code>
+          <code className="text-white">npm install @infinity.dev/ui</code>
         </pre>
       </AlertDescription>
     </Alert>

@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import {
   ToggleGroup,
   ToggleGroupItem,
-} from "@tyfo.dev/ui/primitives/toggle-group";
+} from "@infinity.dev/ui/primitives/toggle-group";
 import {
   AlignLeft,
   AlignCenter,

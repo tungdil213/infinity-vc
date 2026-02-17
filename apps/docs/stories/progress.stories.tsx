@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Progress } from "@tyfo.dev/ui/primitives/progress";
-import { Button } from "@tyfo.dev/ui/primitives/button";
+import { Progress } from "@infinity.dev/ui/primitives/progress";
+import { Button } from "@infinity.dev/ui/primitives/button";
 import { useState, useEffect } from "react";
 import { CheckCircle2, Download, Upload } from "lucide-react";
 

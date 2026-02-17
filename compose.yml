@@ -2,11 +2,11 @@ version: "3.8"
 
 services:
   site:
-    container_name: tyfo.dev
+    container_name: infinity.dev
     build:
       context: .
       dockerfile: Dockerfile
-    image: tyfo.dev:latest
+    image: infinity.dev:latest
     env_file:
       - ./apps/infinity/.env
     ports:

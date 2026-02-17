@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-Le système de gestion d'erreur avancée d'Infinity implémente une approche sécurisée et structurée pour la gestion des erreurs avec classification de sécurité, toasts automatiques et préparation pour l'intégration Sentry.
+Le système de gestion d'erreur avancée d'infinity implémente une approche sécurisée et structurée pour la gestion des erreurs avec classification de sécurité, toasts automatiques et préparation pour l'intégration Sentry.
 
 ## Architecture
 

@@ -9,11 +9,11 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
-} from "@tyfo.dev/ui/primitives/drawer"
-import { Button } from "@tyfo.dev/ui/primitives/button"
-import { Input } from "@tyfo.dev/ui/primitives/input"
-import { Label } from "@tyfo.dev/ui/primitives/label"
-import { ScrollArea } from "@tyfo.dev/ui/primitives/scroll-area"
+} from "@infinity.dev/ui/primitives/drawer"
+import { Button } from "@infinity.dev/ui/primitives/button"
+import { Input } from "@infinity.dev/ui/primitives/input"
+import { Label } from "@infinity.dev/ui/primitives/label"
+import { ScrollArea } from "@infinity.dev/ui/primitives/scroll-area"
 import {
   Settings,
   User,

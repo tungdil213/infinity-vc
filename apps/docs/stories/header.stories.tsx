@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Header } from "@tyfo.dev/ui/components/header";
+import { Header } from "@infinity.dev/ui/components/header";
 
 const meta: Meta<typeof Header> = {
   title: "Layout/Header",

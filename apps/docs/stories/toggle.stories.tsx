@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Toggle } from "@tyfo.dev/ui/primitives/toggle";
+import { Toggle } from "@infinity.dev/ui/primitives/toggle";
 import {
   Bold,
   Italic,

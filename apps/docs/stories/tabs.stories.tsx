@@ -4,11 +4,11 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@tyfo.dev/ui/primitives/tabs";
-import { Button } from "@tyfo.dev/ui/primitives/button";
-import { Input } from "@tyfo.dev/ui/primitives/input";
-import { Label } from "@tyfo.dev/ui/primitives/label";
-import { Card, CardContent } from "@tyfo.dev/ui/primitives/card";
+} from "@infinity.dev/ui/primitives/tabs";
+import { Button } from "@infinity.dev/ui/primitives/button";
+import { Input } from "@infinity.dev/ui/primitives/input";
+import { Label } from "@infinity.dev/ui/primitives/label";
+import { Card, CardContent } from "@infinity.dev/ui/primitives/card";
 import {
   CreditCard,
   Settings,

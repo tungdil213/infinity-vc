@@ -17,7 +17,7 @@ cd <nom_du_dépôt>
 pnpm install
 ```
 
-## 3. Démarrer l’application Infinity
+## 3. Démarrer l’application infinity
 
 ```bash
 cd apps/infinity
@@ -42,7 +42,7 @@ Depuis la racine du monorepo :
 # Lancer le dev (workspaces)
 pnpm dev
 
-# Lancer les tests de l’app Infinity
+# Lancer les tests de l’app infinity
 cd apps/infinity
 pnpm test
 

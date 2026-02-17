@@ -8,7 +8,7 @@ import {
   SelectSeparator,
   SelectTrigger,
   SelectValue,
-} from "@tyfo.dev/ui/primitives/select";
+} from "@infinity.dev/ui/primitives/select";
 
 const meta: Meta<typeof Select> = {
   title: "Primitives/Select",
