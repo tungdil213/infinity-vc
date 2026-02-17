@@ -1,6 +1,5 @@
-# infinity.dev Project Windsurf Rules (generated)
-# Source of truth: package.json, apps/infinity/package.json, turbo.json, pnpm-workspace.yaml
-# Generated for local use in temp folder.
+# Snapshot complet de /.windsurfrules
+# Objectif: garantir zéro perte d'information pendant la réorganisation.
 
 project:
   name: infinity.dev
@@ -190,8 +189,6 @@ workflowSystem:
   commandStyle: "/workflow-name"
   preferredLocation: .windsurf/workflows
   fallbackLocation: tmp-wind/workflows
-  rulesDocsLocation: .windsurf/rules
-  noLossSnapshot: .windsurf/rules/00-rules-snapshot.yaml
   available:
     - /_index
     - /bootstrap-dev
@@ -206,18 +203,6 @@ workflowSystem:
     - /docs-sync
     - /release-prep
     - /incident-hotfix
-
-governance:
-  structure:
-    - "Invariants in /.windsurfrules"
-    - "Operational procedures in /.windsurf/workflows/*.md"
-    - "Human-readable rules in /.windsurf/rules/*.md"
-  conflictResolution:
-    - "If conflict exists, /.windsurfrules is the source of truth"
-    - "Then align workflows and rules docs"
-  noLossPolicy:
-    - "Do not delete rules without migration note"
-    - "Keep snapshot file updated before major refactor"
 
 assistantBehavior:
   priorities:
