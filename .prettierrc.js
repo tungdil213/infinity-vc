@@ -1,6 +1,6 @@
 /** @type {import("prettier").Config} */
 const config = {
-	plugins: ['prettier-edgejs'],
+	plugins: ['prettier-plugin-edgejs'],
 	arrowParens: 'always',
 	printWidth: 120,
 	quoteProps: 'consistent',

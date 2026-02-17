@@ -50,7 +50,8 @@ export class UpdateLobbySettingsUseCase {
       }
 
       // Vérifier que le lobby n'est pas en cours de jeu
-      if (lobby.status === LobbyStatus.STARTING) {
+      const currentStatus = String(lobby.status)
+      if (currentStatus === LobbyStatus.STARTING || currentStatus === 'IN_PROGRESS') {
         return Result.fail('Cannot update settings during a game')
       }
 

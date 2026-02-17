@@ -17,14 +17,14 @@
     "preview-storybook": "turbo run preview-storybook",
     "format": "prettier .",
     "taze": "yarn dlx taze -r -I",
-    "typecheck": "npm run typecheck --workspaces"
+    "typecheck": "pnpm -r run typecheck"
   },
   "devDependencies": {
     "@julr/tooling-configs": "^4.0.0",
     "@types/sinon": "^17.0.4",
     "eslint": "^9.39.2",
     "prettier": "^3.8.1",
-    "prettier-edgejs": "^0.2.36",
+    "prettier-plugin-edgejs": "^1.0.6",
     "turbo": "^2.8.7"
   },
   "pnpm": {

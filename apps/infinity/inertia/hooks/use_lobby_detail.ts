@@ -15,7 +15,10 @@ export function useLobbyDetail(lobbyUuid: string) {
 
   useEffect(() => {
     if (!lobbyService || !lobbyUuid) {
-      console.log('useLobbyDetail: Service ou UUID manquant', { lobbyService: !!lobbyService, lobbyUuid })
+      console.log('useLobbyDetail: Service ou UUID manquant', {
+        lobbyService: !!lobbyService,
+        lobbyUuid,
+      })
       return
     }
 

@@ -8,10 +8,10 @@
 
 export {
   type CardType,
-  type ICard,
-  type ILoveLetterPlayer,
-  type ILoveLetterState,
-  type ILoveLetterAction,
+  type CardDefinition,
+  type LoveLetterPlayer,
+  type LoveLetterState,
+  type LoveLetterAction,
   type LoveLetterPhase,
   type LoveLetterActionType,
   type LoveLetterActionResultType,

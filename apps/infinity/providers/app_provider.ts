@@ -18,6 +18,7 @@ import { KickPlayerUseCase } from '#application/use_cases/kick_player_use_case'
 import { UpdateLobbySettingsUseCase } from '#application/use_cases/update_lobby_settings_use_case'
 import { SetPlayerReadyUseCase } from '#application/use_cases/set_player_ready_use_case'
 import { LobbyEventService } from '#application/services/lobby_event_service'
+import { EventBusDomainEventPublisher } from '#application/services/domain_event_publisher'
 import { eventBridgeService } from '#infrastructure/transcript/index'
 
 export default class AppProvider {
@@ -69,6 +70,9 @@ export default class AppProvider {
     })
 
     // Register services as singletons
+    this.app.container.singleton(EventBusDomainEventPublisher, () => {
+      return new EventBusDomainEventPublisher()
+    })
 
     // Register Transmit-based lobby service
     this.app.container.singleton(TransmitLobbyService, () => {
@@ -136,18 +140,21 @@ export default class AppProvider {
     this.app.container.singleton(KickPlayerUseCase, async (resolver) => {
       const hybridLobbyService = await resolver.make(HybridLobbyService)
       const playerRepository = await resolver.make(DatabasePlayerRepository)
-      return new KickPlayerUseCase(hybridLobbyService, playerRepository, null as any)
+      const domainEventPublisher = await resolver.make(EventBusDomainEventPublisher)
+      return new KickPlayerUseCase(hybridLobbyService, playerRepository, domainEventPublisher)
     })
 
     this.app.container.singleton(UpdateLobbySettingsUseCase, async (resolver) => {
       const hybridLobbyService = await resolver.make(HybridLobbyService)
-      return new UpdateLobbySettingsUseCase(hybridLobbyService, null as any)
+      const domainEventPublisher = await resolver.make(EventBusDomainEventPublisher)
+      return new UpdateLobbySettingsUseCase(hybridLobbyService, domainEventPublisher)
     })
 
     this.app.container.singleton(SetPlayerReadyUseCase, async (resolver) => {
       const hybridLobbyService = await resolver.make(HybridLobbyService)
       const playerRepository = await resolver.make(DatabasePlayerRepository)
-      return new SetPlayerReadyUseCase(hybridLobbyService, playerRepository, null as any)
+      const domainEventPublisher = await resolver.make(EventBusDomainEventPublisher)
+      return new SetPlayerReadyUseCase(hybridLobbyService, playerRepository, domainEventPublisher)
     })
   }
 }

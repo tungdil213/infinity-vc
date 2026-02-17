@@ -68,7 +68,7 @@ test.group('StartGameUseCase', (group) => {
 
     // Assert
     assert.isTrue(result.isSuccess)
-    assert.equal(result.value.game.status, 'IN_PROGRESS')
+    assert.equal(result.value.game.status, 'in_progress')
     assert.equal(result.value.game.players.length, 2)
     assert.isTrue(result.value.lobbyDeleted)
     assert.exists(result.value.game.startedAt)

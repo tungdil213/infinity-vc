@@ -42,9 +42,9 @@ const mockLobbyRepository = {
       hasPlayer: (playerUuid: string) => playerUuid === 'user-123' || playerUuid === 'user-456',
       removePlayer: (playerUuid: string) => {
         if (playerUuid === 'user-123' || playerUuid === 'user-456') {
-          return { success: true }
+          return { isFailure: false }
         }
-        return { success: false, error: 'Player not found in lobby' }
+        return { isFailure: true, error: 'Player not found in lobby' }
       },
     }
   },
@@ -54,7 +54,11 @@ test.group('LeaveLobbyUseCase', (group) => {
   let leaveLobbyUseCase: LeaveLobbyUseCase
 
   group.setup(() => {
-    leaveLobbyUseCase = new LeaveLobbyUseCase(mockLobbyRepository as any, mockNotificationService as any, mockEventService as any)
+    leaveLobbyUseCase = new LeaveLobbyUseCase(
+      mockLobbyRepository as any,
+      mockNotificationService as any,
+      mockEventService as any
+    )
   })
 
   test('should successfully leave a lobby', async ({ assert }) => {
@@ -125,7 +129,11 @@ test.group('LeaveLobbyUseCase', (group) => {
       }),
     }
 
-    const useCase = new LeaveLobbyUseCase(mockLobbyWithoutPlayer as any, mockNotificationService as any, mockEventService as any)
+    const useCase = new LeaveLobbyUseCase(
+      mockLobbyWithoutPlayer as any,
+      mockNotificationService as any,
+      mockEventService as any
+    )
 
     const request = {
       userUuid: 'user-123',
@@ -142,6 +150,7 @@ test.group('LeaveLobbyUseCase', (group) => {
 
   test('should delete lobby when last player leaves', async ({ assert }) => {
     // Arrange
+    const players = [{ uuid: 'user-123', nickName: 'Last Player' }]
     const mockLobbyWithOnePlayer = {
       ...mockLobbyRepository,
       findByUuidOrFail: async (_uuid: string) => ({
@@ -151,18 +160,27 @@ test.group('LeaveLobbyUseCase', (group) => {
         maxPlayers: 4,
         isPrivate: false,
         createdBy: 'user-123',
-        players: [{ uuid: 'user-123', nickName: 'Last Player' }],
-        playerCount: 0, // After removal
+        players,
+        get playerCount() {
+          return players.length
+        },
         hasAvailableSlots: true,
         canStart: false,
         availableActions: [],
         createdAt: new Date(),
         hasPlayer: (playerUuid: string) => playerUuid === 'user-123',
-        removePlayer: (_playerUuid: string) => ({ success: true }),
+        removePlayer: (_playerUuid: string) => {
+          players.splice(0, players.length)
+          return { isFailure: false }
+        },
       }),
     }
 
-    const useCase = new LeaveLobbyUseCase(mockLobbyWithOnePlayer as any, mockNotificationService as any, mockEventService as any)
+    const useCase = new LeaveLobbyUseCase(
+      mockLobbyWithOnePlayer as any,
+      mockNotificationService as any,
+      mockEventService as any
+    )
 
     const request = {
       userUuid: 'user-123',
@@ -196,11 +214,18 @@ test.group('LeaveLobbyUseCase', (group) => {
         availableActions: ['leave'],
         createdAt: new Date(),
         hasPlayer: (_playerUuid: string) => true,
-        removePlayer: (_playerUuid: string) => ({ success: false, error: 'Cannot remove player' }),
+        removePlayer: (_playerUuid: string) => ({
+          isFailure: true,
+          error: 'Cannot remove player',
+        }),
       }),
     }
 
-    const useCase = new LeaveLobbyUseCase(mockLobbyWithRemoveFailure as any, mockNotificationService as any, mockEventService as any)
+    const useCase = new LeaveLobbyUseCase(
+      mockLobbyWithRemoveFailure as any,
+      mockNotificationService as any,
+      mockEventService as any
+    )
 
     const request = {
       userUuid: 'user-123',
@@ -224,7 +249,11 @@ test.group('LeaveLobbyUseCase', (group) => {
       },
     }
 
-    const useCase = new LeaveLobbyUseCase(mockLobbyRepositoryNotFound as any, mockNotificationService as any, mockEventService as any)
+    const useCase = new LeaveLobbyUseCase(
+      mockLobbyRepositoryNotFound as any,
+      mockNotificationService as any,
+      mockEventService as any
+    )
 
     const request = {
       userUuid: 'user-123',

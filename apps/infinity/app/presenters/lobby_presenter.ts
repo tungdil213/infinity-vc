@@ -85,7 +85,7 @@ export function toLobbyDetail(lobby: LobbyEntity): LobbyDetailDTO {
 export function toUserSummary(user: User, options?: { includeEmail?: boolean }): UserSummaryDTO {
   const dto: UserSummaryDTO = {
     uuid: user.userUuid,
-    fullName: user.fullName,
+    fullName: user.fullName ?? 'Unknown User',
   }
 
   if (options?.includeEmail) {

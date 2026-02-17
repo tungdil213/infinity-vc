@@ -82,7 +82,12 @@ export class StartGameUseCase {
       await this.lobbyRepository.save(lobby)
 
       // Créer la session de jeu avec le LoveLetterEngine
-      const gameSession = gameEngineService.createGame(lobby.uuid, lobby.players)
+      const gameSessionResult = gameEngineService.createGame(lobby.uuid, lobby.players)
+      if (gameSessionResult.isFailure) {
+        return Result.fail(gameSessionResult.error)
+      }
+
+      const gameSession = gameSessionResult.value
       const gameState = gameSession.state
 
       // Créer l'entité Game pour la persistance
