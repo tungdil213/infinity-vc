@@ -2,12 +2,39 @@
 
 Abstract game engine with state machine, rules, and actions for building board games.
 
+## Launcher MVP (multi-games)
+
+Le package inclut maintenant un socle launcher type BGA pour orchestrer plusieurs jeux.
+
+- Contrats: `GameModule`, `GameDefinition`, `GameSettingsDefinition`
+- Orchestration launcher: `idle -> game_selected -> configured -> running -> finished`
+- Module built-in de référence: `rock-paper-scissors`
+- Launcher prêt à l'emploi: `createDefaultLauncher()`
+
+Documentation détaillée: `docs/launcher-mvp.md`
+
+## Commandes utiles (monorepo)
+
+```bash
+# Qualité package game-engine
+pnpm --filter @infinity.dev/game-engine run typecheck
+pnpm --filter @infinity.dev/game-engine run lint
+pnpm --filter @infinity.dev/game-engine run test
+
+# Démo launcher via Ace (app Adonis)
+pnpm --filter @infinity/app run game:demo:rps
+
+# Raccourci depuis la racine
+pnpm run demo:rps
+```
+
 ## Features
 
 - **Game Engine Interface**: Base abstraction for any turn-based game
 - **State Machine**: Flexible phase/state management
 - **Rule Engine**: Composable validation rules
-- **Love Letter**: Complete implementation as reference
+- **Game Launcher**: Standardized multi-game module orchestration
+- **Rock Paper Scissors**: Complete implementation as reference module
 
 ## Installation
 

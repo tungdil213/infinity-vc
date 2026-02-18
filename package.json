@@ -9,6 +9,7 @@
 		"build": "turbo run build && cp -r apps/infinity/.env apps/infinity/build/",
 		"clean": "turbo run clean && rm -rf node_modules",
 		"dev": "turbo run dev",
+		"demo:rps": "pnpm --filter @infinity/app run game:demo:rps",
 		"docker:up": "docker compose up -d",
 		"docker:down": "docker compose down",
 		"docker:build": "docker build . -t site",

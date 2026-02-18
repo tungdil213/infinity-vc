@@ -10,6 +10,7 @@
     "build": "node ace build",
     "clean": "rm -rf .turbo node_modules build",
     "dev": "node ace serve --hmr",
+    "game:demo:rps": "node ace game:demo:rps",
     "test": "node ace test",
     "test:watch": "node ace test --watch",
     "test:coverage": "c8 --include=app/** --exclude=app/**/*.spec.ts node ace test",

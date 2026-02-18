@@ -21,6 +21,14 @@
 			"types": "./dist/core/index.d.ts",
 			"import": "./dist/core/index.js"
 		},
+		"./platform": {
+			"types": "./dist/platform/index.d.ts",
+			"import": "./dist/platform/index.js"
+		},
+		"./games": {
+			"types": "./dist/games/index.d.ts",
+			"import": "./dist/games/index.js"
+		},
 		"./state-machine": {
 			"types": "./dist/state-machine/index.d.ts",
 			"import": "./dist/state-machine/index.js"

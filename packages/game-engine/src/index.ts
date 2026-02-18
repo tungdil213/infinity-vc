@@ -20,3 +20,9 @@ export * from './core/index.js';
 
 // State machine - Generic state management
 export * from './state-machine/index.js';
+
+// Platform - launcher and module contracts
+export * from './platform/index.js';
+
+// Built-in games
+export * from './games/index.js';
