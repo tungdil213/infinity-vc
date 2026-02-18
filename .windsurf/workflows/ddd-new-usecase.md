@@ -3,33 +3,42 @@ description: Créer un nouveau use case DDD Adonis (Result + BusinessException +
 ---
 
 ## 1) Intent
+
 Implémenter un use case métier complet dans `apps/infinity` en respectant DDD, DI, Result pattern et gestion d’erreurs BusinessException.
 
 ## 2) Motivation
+
 Les features ajoutées rapidement finissent souvent avec logique dans le controller, erreurs non normalisées et persistance couplée. Ce workflow impose une architecture cohérente et testable.
 
 ## 3) Applicability
+
 Utiliser pour toute nouvelle capacité métier (création, mutation, orchestration).
 Ne pas utiliser pour un simple changement cosmétique UI sans logique métier.
 
 ## 4) Structure
+
 inputs -> bounded context + use case + route + payload
 steps -> domain -> application -> infrastructure -> presentation -> tests
 outputs -> feature DDD complète + tests + docs minimales
 
 ## 5) Participants
+
 Dev, Cascade, Domain Layer, Application Layer, Infrastructure Layer, Presentation Layer, CLI (`pnpm`, `node ace`), PostgreSQL.
 
 ## 6) Collaboration
+
 Peut s’enchaîner avec:
+
 - `Call /quality-gate` pour validation finale.
 - `Call /docs-sync` pour aligner la doc.
 
 ## 7) Consequences
+
 Bénéfices: séparation claire des responsabilités, meilleure maintenabilité, erreurs métier cohérentes.
 Tradeoffs: plus de fichiers à créer qu’une implémentation rapide.
 
 ## 8) Implementation
+
 1. Collecter les inputs.
    - `boundedContext` (ex: lobby, game, auth)
    - `useCaseName` (ex: TransferLobbyOwnership)
@@ -64,15 +73,19 @@ Tradeoffs: plus de fichiers à créer qu’une implémentation rapide.
 9. Routes.
    - Déclarer la route dans `start/routes.ts` et brancher le controller.
 10. Tests.
-   - Priorité repo actuel: Japa (`node ace test`).
-   - Unit use case: `apps/infinity/tests/unit/**`.
-   - Functional/intégration: `apps/infinity/tests/functional/**` ou `tests/integration/**`.
-   - Couvrir succès + échec (`Result.ok` et `Result.fail`) + mapping BusinessException.
-   - Ajouter au moins un test qui vérifie que le controller ne lit pas `result.value` sans garde `isFailure`.
+
+- Priorité repo actuel: Japa (`node ace test`).
+- Unit use case: `apps/infinity/tests/unit/**`.
+- Functional/intégration: `apps/infinity/tests/functional/**` ou `tests/integration/**`.
+- Couvrir succès + échec (`Result.ok` et `Result.fail`) + mapping BusinessException.
+- Ajouter au moins un test qui vérifie que le controller ne lit pas `result.value` sans garde `isFailure`.
+
 11. Validation finale.
-   - `Call /quality-gate`
+
+- `Call /quality-gate`
 
 Checklist de complétion (DoD):
+
 - [ ] UseCase retourne `Result<T>`.
 - [ ] Port repository défini et implémentation Lucid branchée.
 - [ ] Controller mappe `Result` vers HTTP/flash sans logique métier lourde.
@@ -81,6 +94,7 @@ Checklist de complétion (DoD):
 - [ ] Tests unit + functional verts.
 
 ### Inputs à fournir
+
 - boundedContext:
 - useCaseName:
 - route:
@@ -89,7 +103,9 @@ Checklist de complétion (DoD):
 - errorScenarios:
 
 ## 9) Example
+
 `/ddd-new-usecase boundedContext=lobby useCase=TransferLobbyOwnership route="POST /lobbies/:uuid/transfer" payload="{ lobbyUuid, currentOwnerUuid, newOwnerUuid }"`
 
 ## 10) Related Workflows
+
 `/quality-gate`, `/ddd-refactor-safe`, `/pr-review-ddd`, `/docs-sync`

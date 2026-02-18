@@ -3,31 +3,39 @@ description: Mise à jour des dépendances (taze) par lots patch/minor/major ave
 ---
 
 ## 1) Intent
+
 Mettre à jour les dépendances de façon contrôlée, par niveau de risque, puis valider la stabilité.
 
 ## 2) Motivation
+
 Les upgrades massifs non segmentés cassent vite lint/build/tests. Ce workflow segmente patch/minor/major et impose une validation après chaque lot.
 
 ## 3) Applicability
+
 Utiliser pour maintenance régulière ou préparation release.
 Ne pas utiliser pendant un incident critique (préférer `/incident-hotfix`).
 
 ## 4) Structure
+
 inputs -> stratégie upgrade + scopes
 steps -> patch -> minor -> major -> quality gate -> changelog
 outputs -> lockfile à jour + risques connus
 
 ## 5) Participants
+
 Dev, Cascade, CLI (`pnpm`, `taze`, `turbo`), Repo, CI.
 
 ## 6) Collaboration
+
 Après chaque lot significatif, déclencher `Call /quality-gate`.
 
 ## 7) Consequences
+
 Bénéfices: upgrades traçables, rollback simplifié.
 Tradeoffs: plus de runs CI/local.
 
 ## 8) Implementation
+
 1. Vérifier l’outillage.
    - Script repo existant: `pnpm taze`
    - Le script actuel exécute `yarn dlx taze -r -I` via `pnpm taze`.
@@ -54,11 +62,14 @@ Tradeoffs: plus de runs CI/local.
 6. Si une commande n’existe pas côté scripts repo, documenter l’ajout suggéré dans `package.json` racine.
 
 Notes projet:
+
 - Conserver la séparation patch/minor/major en commits distincts pour rollback simple.
 - Après chaque lot, vérifier en priorité `@infinity/app` et `@infinity.dev/ui`.
 
 ## 9) Example
+
 `/deps-update strategy=patch-minor-major includeMajors=false`
 
 ## 10) Related Workflows
+
 `/quality-gate`, `/docs-sync`, `/release-prep`, `/turbo-optimize`

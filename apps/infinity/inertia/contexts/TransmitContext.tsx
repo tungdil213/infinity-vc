@@ -12,8 +12,14 @@ export interface TransmitContextType {
   isConnected: boolean
   error: string | null
   subscribeToLobbies: (callback: (event: LobbyTransmitEvent) => void) => Promise<() => void>
-  subscribeToLobby: (lobbyUuid: string, callback: (event: LobbyTransmitEvent) => void) => Promise<() => void>
-  subscribeToUserNotifications: (userUuid: string, callback: (event: any) => void) => Promise<() => void>
+  subscribeToLobby: (
+    lobbyUuid: string,
+    callback: (event: LobbyTransmitEvent) => void
+  ) => Promise<() => void>
+  subscribeToUserNotifications: (
+    userUuid: string,
+    callback: (event: any) => void
+  ) => Promise<() => void>
   subscribeToGame: (gameId: string, callback: (event: any) => void) => Promise<() => void>
   unsubscribeFrom: (channelName: string) => Promise<void>
   unsubscribeAll: () => Promise<void>
@@ -48,7 +54,7 @@ export function TransmitProvider({ children }: TransmitProviderProps) {
 
   useEffect(() => {
     let mounted = true
-    
+
     // Délai pour permettre l'initialisation complète
     const initTimer = setTimeout(() => {
       if (mounted) {
@@ -100,7 +106,10 @@ export function TransmitProvider({ children }: TransmitProviderProps) {
     }
   }
 
-  const subscribeToLobby = async (lobbyUuid: string, callback: (event: LobbyTransmitEvent) => void) => {
+  const subscribeToLobby = async (
+    lobbyUuid: string,
+    callback: (event: LobbyTransmitEvent) => void
+  ) => {
     try {
       if (!isConnected) {
         console.warn('TransmitProvider: Tentative de souscription lobby avant connexion')
@@ -126,7 +135,8 @@ export function TransmitProvider({ children }: TransmitProviderProps) {
       const unsubscribe = await transmitLobbyClient.subscribeToUserNotifications(userUuid, callback)
       return unsubscribe
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur de souscription aux notifications'
+      const errorMessage =
+        err instanceof Error ? err.message : 'Erreur de souscription aux notifications'
       console.error('TransmitProvider: Erreur subscribeToUserNotifications:', errorMessage)
       setError(errorMessage)
       // Retourner une fonction vide au lieu de throw pour éviter les crashes
@@ -190,7 +200,9 @@ export function TransmitProvider({ children }: TransmitProviderProps) {
 export function useTransmit(): TransmitContextType {
   const context = useContext(TransmitContext)
   if (!context || context === defaultTransmitContext) {
-    console.warn('useTransmit: Utilisation du contexte par défaut, TransmitProvider peut-être manquant')
+    console.warn(
+      'useTransmit: Utilisation du contexte par défaut, TransmitProvider peut-être manquant'
+    )
     return defaultTransmitContext
   }
   return context

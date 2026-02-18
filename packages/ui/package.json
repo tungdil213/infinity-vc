@@ -42,7 +42,7 @@
 		"dev": "pnpm run \"/^dev:.*/\"",
 		"dev:rollup": "rollup -c -w",
 		"dev:css": "pnpx @tailwindcss/cli -i ./src/styles/globals.css -o ./dist/styles/globals.css -w",
-		"lint": "eslint . --max-warnings 0",
+		"lint": "pnpm --dir ../.. exec eslint packages/ui --max-warnings 0",
 		"clean": "rm -rf .turbo node_modules dist"
 	},
 	"dependencies": {

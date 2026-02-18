@@ -21,61 +21,61 @@ pnpm add @infinity.dev/events
 ### Event Bus
 
 ```typescript
-import { createEventBus, LobbyCreatedEvent } from '@infinity.dev/events'
+import { createEventBus, LobbyCreatedEvent } from '@infinity.dev/events';
 
-const eventBus = createEventBus()
+const eventBus = createEventBus();
 
 // Subscribe to events
 const subscription = eventBus.subscribe('lobby.created', (event) => {
-  console.log('Lobby created:', event.payload.name)
-})
+	console.log('Lobby created:', event.payload.name);
+});
 
 // Publish events
 await eventBus.publish(
-  new LobbyCreatedEvent({
-    lobbyId: '123',
-    name: 'My Lobby',
-    creatorId: 'user-1',
-    maxPlayers: 4,
-    isPrivate: false,
-  })
-)
+	new LobbyCreatedEvent({
+		lobbyId: '123',
+		name: 'My Lobby',
+		creatorId: 'user-1',
+		maxPlayers: 4,
+		isPrivate: false,
+	})
+);
 
 // Cleanup
-subscription.unsubscribe()
+subscription.unsubscribe();
 ```
 
 ### Typed Event Bus
 
 ```typescript
-import { TypedEventBus, InMemoryEventBus, type LobbyEventMap } from '@infinity.dev/events'
+import { TypedEventBus, InMemoryEventBus, type LobbyEventMap } from '@infinity.dev/events';
 
-const typedBus = new TypedEventBus<LobbyEventMap>(new InMemoryEventBus())
+const typedBus = new TypedEventBus<LobbyEventMap>(new InMemoryEventBus());
 
 // Type-safe subscription
 typedBus.subscribe('lobby.player_joined', (event) => {
-  // event is typed as PlayerJoinedLobbyEvent
-  console.log(`${event.payload.playerName} joined!`)
-})
+	// event is typed as PlayerJoinedLobbyEvent
+	console.log(`${event.payload.playerName} joined!`);
+});
 ```
 
 ### Result Pattern
 
 ```typescript
-import { Result, ValidationError } from '@infinity.dev/events'
+import { Result, ValidationError } from '@infinity.dev/events';
 
 function validateName(name: string): Result<string, ValidationError> {
-  if (name.length < 3) {
-    return Result.fail(new ValidationError('Name too short', 'name'))
-  }
-  return Result.ok(name.trim())
+	if (name.length < 3) {
+		return Result.fail(new ValidationError('Name too short', 'name'));
+	}
+	return Result.ok(name.trim());
 }
 
-const result = validateName('Hi')
+const result = validateName('Hi');
 result.match({
-  success: (name) => console.log('Valid:', name),
-  failure: (error) => console.log('Error:', error.message),
-})
+	success: (name) => console.log('Valid:', name),
+	failure: (error) => console.log('Error:', error.message),
+});
 ```
 
 ### Event Store
@@ -97,31 +97,31 @@ console.log('Events:', stream.value.events)
 ### Custom Domain Events
 
 ```typescript
-import { DomainEvent, type EventMetadata } from '@infinity.dev/events/core'
+import { DomainEvent, type EventMetadata } from '@infinity.dev/events/core';
 
 interface MyPayload {
-  orderId: string
-  amount: number
+	orderId: string;
+	amount: number;
 }
 
 class OrderCreatedEvent extends DomainEvent<MyPayload> {
-  readonly type = 'order.created'
-  readonly aggregateType = 'Order'
+	readonly type = 'order.created';
+	readonly aggregateType = 'Order';
 
-  constructor(
-    public readonly payload: MyPayload,
-    metadata?: EventMetadata
-  ) {
-    super(undefined, metadata)
-  }
+	constructor(
+		public readonly payload: MyPayload,
+		metadata?: EventMetadata
+	) {
+		super(undefined, metadata);
+	}
 
-  get aggregateId(): string {
-    return this.payload.orderId
-  }
+	get aggregateId(): string {
+		return this.payload.orderId;
+	}
 
-  get aggregateVersion(): number {
-    return 1
-  }
+	get aggregateVersion(): number {
+		return 1;
+	}
 }
 ```
 

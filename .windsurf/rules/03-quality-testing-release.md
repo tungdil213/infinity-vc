@@ -1,6 +1,7 @@
 # Scripts, Quality Gate, Testing & Release
 
 ## Scripts prioritaires
+
 - Root:
   - `pnpm build`
   - `pnpm dev`
@@ -14,22 +15,26 @@
   - `pnpm --filter @infinity/app exec node ace migration:run`
 
 ## Fallbacks monorepo
+
 - Test: `pnpm turbo run test`
 - Lint: `pnpm turbo run lint`
 - Typecheck: `pnpm turbo run typecheck`
 - Build: `pnpm turbo run build`
 
 ## Quality gate minimum
+
 1. `pnpm exec prettier . --check`
 2. `pnpm lint`
 3. `pnpm typecheck`
 4. `pnpm turbo run test`
 
 Politique si rouge:
+
 - patch minimal cause racine
 - relancer jusqu'au vert
 
 ## Testing
+
 - Runner principal app: Adonis/Japa (`node ace test`)
 - Dossiers:
   - `apps/infinity/tests/unit`
@@ -40,6 +45,7 @@ Politique si rouge:
   - couvrir mapping BusinessException/handler
 
 ## Release safety
+
 - Pas de push/tag automatique
 - Prérequis:
   - quality gate vert
@@ -48,6 +54,7 @@ Politique si rouge:
   - plan rollback documenté
 
 ## Workflow linkage
+
 - Onboarding: `/bootstrap-dev`
 - QA: `/quality-gate` + `/run-tests-and-fix`
 - Release: `/release-prep`

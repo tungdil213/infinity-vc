@@ -18,10 +18,10 @@ workspace:
     - apps/infinity/build
     - apps/infinity.dev/build
   primaryApp:
-    name: "@infinity/app"
+    name: '@infinity/app'
     path: apps/infinity
   uiPackage:
-    name: "@infinity.dev/ui"
+    name: '@infinity.dev/ui'
     path: packages/ui
   docsApp:
     path: apps/docs
@@ -71,20 +71,20 @@ quality:
     - typecheck
     - tests
   preferredFlow:
-    - "pnpm exec prettier . --check"
-    - "pnpm lint"
-    - "pnpm typecheck"
-    - "pnpm turbo run test"
+    - 'pnpm exec prettier . --check'
+    - 'pnpm lint'
+    - 'pnpm typecheck'
+    - 'pnpm turbo run test'
   ifBroken:
     policy: fix_until_green
     strategy: minimal_root_cause_patch
 
 dddRules:
   layering:
-    domain: "No framework/ORM dependency"
-    application: "Use cases orchestrate, no direct Lucid model access"
-    infrastructure: "Adapters + repository implementations"
-    presentation: "Controllers/Screens map HTTP/Inertia and delegate to use cases"
+    domain: 'No framework/ORM dependency'
+    application: 'Use cases orchestrate, no direct Lucid model access'
+    infrastructure: 'Adapters + repository implementations'
+    presentation: 'Controllers/Screens map HTTP/Inertia and delegate to use cases'
   dependencyRule:
     - controllers_must_call_usecases_not_repositories
     - usecases_depend_on_ports_interfaces
@@ -94,10 +94,10 @@ resultPattern:
   required: true
   classPath: apps/infinity/app/domain/shared/result.ts
   rules:
-    - "Use cases return Promise<Result<T>>"
-    - "Never read result.value without isSuccess/isFailure guard"
-    - "Use Result.ok / Result.fail for explicit flow"
-    - "Avoid throw for business flow in application/domain"
+    - 'Use cases return Promise<Result<T>>'
+    - 'Never read result.value without isSuccess/isFailure guard'
+    - 'Use Result.ok / Result.fail for explicit flow'
+    - 'Avoid throw for business flow in application/domain'
 
 businessExceptionPattern:
   required: true
@@ -124,14 +124,14 @@ businessExceptionPattern:
     - warning
     - info
   forbidden:
-    - "throw new Error() in domain/application/infrastructure business paths"
+    - 'throw new Error() in domain/application/infrastructure business paths'
 
 presentationRules:
   inertiaScreens: true
   mapping:
-    - "Controller checks Result"
-    - "Failure -> throw BusinessException (or mapped safe response)"
-    - "Success -> render/redirect/json"
+    - 'Controller checks Result'
+    - 'Failure -> throw BusinessException (or mapped safe response)'
+    - 'Success -> render/redirect/json'
   flashToast:
     requiredForMutations: true
     successKey: success
@@ -141,7 +141,7 @@ frontendRules:
   httpClientPreference: fetch
   avoidAxios: true
   uiPackageBoundary:
-    - "packages/ui must not import from apps/**"
+    - 'packages/ui must not import from apps/**'
   storybook:
     docsAppPath: apps/docs
 
@@ -157,9 +157,9 @@ testing:
     integration: apps/infinity/tests/integration
     functional: apps/infinity/tests/functional
   expectations:
-    - "Test Result.ok and Result.fail paths"
-    - "Test BusinessException mapping in controllers/handlers"
-    - "Use characterization tests before refactor"
+    - 'Test Result.ok and Result.fail paths'
+    - 'Test BusinessException mapping in controllers/handlers'
+    - 'Use characterization tests before refactor'
 
 turboRules:
   file: turbo.json
@@ -173,20 +173,20 @@ turboRules:
     - dev
     - preview-storybook
   checks:
-    - "outputs must match real artifacts (apps/infinity/build, packages/ui/dist)"
-    - "dependsOn should be minimal but correct"
-    - "cache correctness must be verified with repeated runs"
+    - 'outputs must match real artifacts (apps/infinity/build, packages/ui/dist)'
+    - 'dependsOn should be minimal but correct'
+    - 'cache correctness must be verified with repeated runs'
 
 dockerRules:
   imageTag: site
   appPort: 3333
   envFile: apps/infinity/.env
   notes:
-    - "docker:run already sets NODE_ENV=production and HOST=0.0.0.0"
-    - "On macOS, DB_HOST=host.docker.internal is expected for host DB"
+    - 'docker:run already sets NODE_ENV=production and HOST=0.0.0.0'
+    - 'On macOS, DB_HOST=host.docker.internal is expected for host DB'
 
 workflowSystem:
-  commandStyle: "/workflow-name"
+  commandStyle: '/workflow-name'
   preferredLocation: .windsurf/workflows
   fallbackLocation: tmp-wind/workflows
   available:
@@ -211,12 +211,12 @@ assistantBehavior:
     - maintainability
     - delivery_speed
   coding:
-    - "Prefer minimal diffs"
-    - "Do not introduce architectural drift"
-    - "Do not add new dependencies without clear justification"
+    - 'Prefer minimal diffs'
+    - 'Do not introduce architectural drift'
+    - 'Do not add new dependencies without clear justification'
   commandPolicy:
-    - "Use existing scripts first"
-    - "If script missing, use turbo/pnpm fallback and suggest script addition"
+    - 'Use existing scripts first'
+    - 'If script missing, use turbo/pnpm fallback and suggest script addition'
 
 releasePolicy:
   noAutoPushOrTag: true

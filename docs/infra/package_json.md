@@ -24,16 +24,19 @@ Le fichier `package.json` inclut plusieurs scripts pour faciliter le développem
 
 - **Docker** :
   - `docker:up` : Démarre les services Docker en arrière-plan.
+
     ```bash
     docker compose up -d
     ```
 
   - `docker:down` : Stoppe les services Docker.
+
     ```bash
     docker compose down
     ```
 
   - `docker:build` : Construit une image Docker à partir du Dockerfile à la racine.
+
     ```bash
     docker build . -t site
     ```
@@ -70,6 +73,7 @@ Le projet utilise la fonctionnalité **pnpm workspaces** pour organiser les pack
 - **`packages/*`** : Contient les bibliothèques partagées comme le système de design.
 
 Cette configuration permet :
+
 - Une gestion centralisée des dépendances.
 - Le partage des bibliothèques entre les différentes parties du projet.
 
@@ -82,6 +86,7 @@ Cette configuration permet :
 ### 5. **Dépendances spécifiques au projet**
 
 Les dépendances utilisées sont installées et gérées selon les besoins de chaque workspace. La commande suivante installe toutes les dépendances dans un environnement reproductible :
+
 ```bash
 pnpm install
 ```
@@ -89,6 +94,7 @@ pnpm install
 ### 6. **Scripts personnalisés**
 
 Le monorepo peut contenir des scripts supplémentaires définis par les workspaces individuels. Pour exécuter un script spécifique à un workspace :
+
 ```bash
 pnpm run <script_name> --filter <workspace_name>
 ```
@@ -96,6 +102,7 @@ pnpm run <script_name> --filter <workspace_name>
 ---
 
 ## Notes complémentaires
+
 - Les scripts de ce fichier sont conçus pour être utilisés dans un environnement Dockerisé.
 - Les workspaces facilitent la gestion des dépendances communes et des outils de développement.
 - La documentation pour chaque workspace est disponible dans le dossier `docs/`.

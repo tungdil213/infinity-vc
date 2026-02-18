@@ -10,9 +10,9 @@ Le système de gestion d'erreur avancée d'infinity implémente une approche sé
 
 ```typescript
 enum ErrorClassification {
-  USER_SAFE = 'user_safe',    // Messages affichables à l'utilisateur
-  INTERNAL = 'internal',      // Erreurs techniques (logs uniquement)
-  SECURITY = 'security',      // Erreurs sensibles (logs sécurisés)
+  USER_SAFE = 'user_safe', // Messages affichables à l'utilisateur
+  INTERNAL = 'internal', // Erreurs techniques (logs uniquement)
+  SECURITY = 'security', // Erreurs sensibles (logs sécurisés)
 }
 ```
 
@@ -29,7 +29,11 @@ enum ErrorClassification {
 
 ```typescript
 import BusinessException from '#exceptions/business_exception'
-import { ErrorClassification, ErrorSeverity, ToastType } from '#exceptions/types/error_classification'
+import {
+  ErrorClassification,
+  ErrorSeverity,
+  ToastType,
+} from '#exceptions/types/error_classification'
 
 export class CustomException extends BusinessException {
   constructor(technicalMessage: string, context?: Record<string, any>) {
@@ -68,7 +72,7 @@ throw new EmailAlreadyExistsException(email)
 async store({ request, response }: HttpContext) {
   const data = request.all()
   await this.registerUserUseCase.execute(data)
-  
+
   // Si exception : toast automatique + redirection
   // Si succès : continuer normalement
   return response.redirect('/dashboard')

@@ -9,5 +9,12 @@
       "@infinity.dev/ui/*": ["../../packages/ui/src/*"]
     }
   },
-  "exclude": ["./inertia/**/*", "./resources/**/*", "./database/samples/**/*", "./app/tests/**/*", "node_modules", "build"]
+  "exclude": [
+    "./inertia/**/*",
+    "./resources/**/*",
+    "./database/samples/**/*",
+    "./app/tests/**/*",
+    "node_modules",
+    "build"
+  ]
 }

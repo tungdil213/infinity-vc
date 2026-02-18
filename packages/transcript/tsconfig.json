@@ -1,18 +1,18 @@
 {
-  "extends": "@infinity.dev/typescript-config/base.json",
-  "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "declaration": true,
-    "declarationMap": true,
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "moduleResolution": "NodeNext",
-    "module": "NodeNext",
-    "target": "ES2022",
-    "jsx": "react-jsx"
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+	"extends": "@infinity.dev/typescript-config/base.json",
+	"compilerOptions": {
+		"outDir": "./dist",
+		"rootDir": "./src",
+		"declaration": true,
+		"declarationMap": true,
+		"strict": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"moduleResolution": "NodeNext",
+		"module": "NodeNext",
+		"target": "ES2022",
+		"jsx": "react-jsx"
+	},
+	"include": ["src/**/*"],
+	"exclude": ["node_modules", "dist"]
 }

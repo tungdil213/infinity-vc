@@ -25,17 +25,20 @@ Ce projet implémente une version en ligne du jeu de cartes **Love Letter** avec
 ## Démarrage Rapide
 
 1. **Installation des dépendances**
+
    ```bash
    pnpm install
    ```
 
 2. **Configuration de l'environnement**
+
    ```bash
    cp .env.example .env
    # Configurer les variables d'environnement
    ```
 
 3. **Migration de la base de données**
+
    ```bash
    node ace migration:run
    ```
@@ -48,21 +51,25 @@ Ce projet implémente une version en ligne du jeu de cartes **Love Letter** avec
 ## Fonctionnalités Principales
 
 ### 🎮 Système de Lobbies
+
 - Création et gestion de salles de jeu
 - Rejoindre/quitter des lobbies
 - États des sessions (OPEN, LOBBY, PARTY, FINISHED, etc.)
 
 ### 👥 Gestion des Joueurs
+
 - Authentification utilisateur
 - Profils joueurs avec pseudonymes
 - Système de sessions multijoueur
 
 ### 🃏 Jeu Love Letter infinity Gauntlet
+
 - Adaptation du jeu Love Letter classique
 - Thème Marvel avec les Pierres d'Infinité
 - Mécaniques de jeu spécifiques (voir règles détaillées)
 
 ### 📊 Interface Utilisateur
+
 - Dashboard utilisateur
 - Interface de lobby moderne
 - Gestion administrative (backoffice)
@@ -84,6 +91,7 @@ src/
 ```
 
 Chaque feature suit le pattern **Clean Architecture** :
+
 - **Controllers** : Gestion des requêtes HTTP
 - **Use Cases** : Logique métier applicative
 - **Domain Services** : Logique métier pure

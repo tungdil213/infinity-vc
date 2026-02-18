@@ -3,33 +3,42 @@ description: Hotfix incident avec reproduction, patch minimal, test ciblé et po
 ---
 
 ## 1) Intent
+
 Résoudre un incident rapidement avec un patch minimal, validé par test ciblé, et traçabilité de la cause.
 
 ## 2) Motivation
+
 En incident, la pression pousse aux correctifs risqués. Ce workflow protège la prod: reproduire, corriger la racine, valider vite.
 
 ## 3) Applicability
+
 Utiliser pour bug bloquant prod ou régression critique.
 Ne pas utiliser pour refactor de confort (préférer `/ddd-refactor-safe`).
 
 ## 4) Structure
+
 inputs -> symptôme + impact + zone suspecte
 steps -> reproduce -> isolate -> minimal patch -> targeted test -> sanity
 outputs -> incident atténué + note post-mortem
 
 ## 5) Participants
+
 On-call Dev, Cascade, CLI (`pnpm`, `node ace test`, `docker`), Repo, observabilité.
 
 ## 6) Collaboration
+
 Après stabilisation, enchaîner vers:
+
 - `Call /run-tests-and-fix`
 - `Call /quality-gate`
 
 ## 7) Consequences
+
 Bénéfices: MTTR réduit, blast radius limité.
 Tradeoffs: dette potentielle si suivi post-incident oublié.
 
 ## 8) Implementation
+
 1. Capturer le contexte incident.
    - symptôme utilisateur
    - impact métier
@@ -55,7 +64,9 @@ Tradeoffs: dette potentielle si suivi post-incident oublié.
    - action de suivi
 
 ## 9) Example
+
 `/incident-hotfix incident="500 on POST /lobbies/:uuid/kick" severity=high`
 
 ## 10) Related Workflows
+
 `/run-tests-and-fix`, `/quality-gate`, `/release-prep`, `/ddd-refactor-safe`

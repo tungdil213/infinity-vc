@@ -57,16 +57,16 @@ export function SSEProvider({ children }: SSEProviderProps) {
       eventSource.onmessage = (event) => {
         try {
           const sseEvent: SSEEvent = JSON.parse(event.data)
-          
+
           // Handle connection established event
           if (sseEvent.type === 'connection.established') {
             setConnectionId(sseEvent.data.connectionId)
           }
-          
+
           // Dispatch to registered listeners
           const listeners = eventListenersRef.current.get(sseEvent.type)
           if (listeners) {
-            listeners.forEach(handler => handler(sseEvent))
+            listeners.forEach((handler) => handler(sseEvent))
           }
         } catch (err) {
           console.error('Failed to parse SSE message:', err)
@@ -97,15 +97,15 @@ export function SSEProvider({ children }: SSEProviderProps) {
       // Listen for specific event types
       const eventTypes = [
         'lobby.player.joined',
-        'lobby.player.left', 
+        'lobby.player.left',
         'lobby.status.changed',
         'lobby.game.started',
         'lobby.created',
         'lobby.updated',
-        'lobby.deleted'
+        'lobby.deleted',
       ]
 
-      eventTypes.forEach(eventType => {
+      eventTypes.forEach((eventType) => {
         eventSource.addEventListener(eventType, (event) => {
           const customEvent = event as MessageEvent
           try {
@@ -115,11 +115,11 @@ export function SSEProvider({ children }: SSEProviderProps) {
               data: JSON.parse(customEvent.data),
               timestamp: new Date().toISOString(),
             }
-            
+
             // Dispatch to registered listeners
             const listeners = eventListenersRef.current.get(eventType)
             if (listeners) {
-              listeners.forEach(handler => handler(sseEvent))
+              listeners.forEach((handler) => handler(sseEvent))
             }
           } catch (err) {
             console.error(`Failed to parse ${eventType} event:`, err)
@@ -242,11 +242,7 @@ export function SSEProvider({ children }: SSEProviderProps) {
     removeEventListener,
   }
 
-  return (
-    <SSEContext.Provider value={contextValue}>
-      {children}
-    </SSEContext.Provider>
-  )
+  return <SSEContext.Provider value={contextValue}>{children}</SSEContext.Provider>
 }
 
 export function useSSEContext() {

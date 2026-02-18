@@ -3,31 +3,39 @@ description: Synchroniser la documentation avec scripts et structure réelle du 
 ---
 
 ## 1) Intent
+
 Maintenir une documentation exacte, alignée sur les scripts réellement exécutables et la structure actuelle du monorepo.
 
 ## 2) Motivation
+
 Une doc obsolète coûte du temps, casse l’onboarding et provoque de faux diagnostics. Ce workflow évite les commandes fantômes.
 
 ## 3) Applicability
+
 Utiliser après ajout/modification de scripts, workflows, packages, ou conventions d’architecture.
 Ne pas utiliser pour corriger un bug runtime.
 
 ## 4) Structure
+
 inputs -> docs ciblées + état repo
 steps -> inventorier -> vérifier -> corriger -> valider
 outputs -> docs à jour et vérifiables
 
 ## 5) Participants
+
 Dev, Cascade, Repo, CLI (`pnpm`, `turbo`, `docker`), lecteurs docs.
 
 ## 6) Collaboration
+
 Après mise à jour docs technique, lancer `Call /quality-gate` si du code a été modifié en parallèle.
 
 ## 7) Consequences
+
 Bénéfices: onboarding fiable, moins d’ambiguïté en PR.
 Tradeoffs: discipline continue requise.
 
 ## 8) Implementation
+
 1. Lister les scripts réels à partir de:
    - `package.json` racine
    - `apps/infinity/package.json`
@@ -50,11 +58,14 @@ Tradeoffs: discipline continue requise.
    - éventuels scripts à créer
 
 Notes projet:
+
 - Éviter de documenter `pnpm test` à la racine (script absent actuellement).
 - Préférer `pnpm turbo run test` en commande monorepo de référence.
 
 ## 9) Example
+
 `/docs-sync targets="README.md,docs/development-guide.md"`
 
 ## 10) Related Workflows
+
 `/bootstrap-dev`, `/quality-gate`, `/turbo-optimize`, `/release-prep`

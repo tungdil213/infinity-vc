@@ -13,6 +13,7 @@ Le fichier `.eslint.config.js` configure les règles et les comportements d'ESLi
 ### Options spécifiques
 
 #### **TypeScript**
+
 La configuration TypeScript est personnalisée avec les options suivantes :
 
 - **`forceDecorators: true`** : Active l'utilisation obligatoire des décorateurs.
@@ -23,6 +24,7 @@ La configuration TypeScript est personnalisée avec les options suivantes :
     - `./inertia/tsconfig.json` : Configuration pour les modules spécifiques dans `inertia`.
 
 #### **Fichiers ignorés**
+
 Les chemins suivants sont exclus de l'analyse ESLint :
 
 - `apps/tyfo.dev/.adonisjs/*` : Fichiers générés automatiquement par AdonisJS.
@@ -45,6 +47,7 @@ Des règles spécifiques sont définies pour répondre aux besoins du projet :
     - Ordre : Ascendant et alphabétique.
 
 ## Exemple du fichier
+
 ```javascript
 import { julr } from '@julr/tooling-configs/eslint';
 
@@ -80,10 +83,13 @@ export default julr(
 ```
 
 ## Notes complémentaires
+
 - Ce fichier est basé sur une configuration centralisée pour assurer une cohérence à travers tout le projet.
 - Les exclusions sont spécifiquement conçues pour éviter d'analyser des fichiers générés ou externes non pertinents.
 - La règle de tri des imports (`perfectionist/sort-imports`) permet de maintenir un ordre logique et lisible dans les fichiers source.
 
 Pour toute modification, assurez-vous de tester la configuration avec la commande suivante :
+
 ```bash
 npm run lint
+```

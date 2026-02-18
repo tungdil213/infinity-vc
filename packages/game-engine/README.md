@@ -20,43 +20,43 @@ pnpm add @infinity.dev/game-engine
 ### Creating a Game
 
 ```typescript
-import { createLoveLetterEngine } from '@infinity.dev/game-engine/love-letter'
+import { createLoveLetterEngine } from '@infinity.dev/game-engine/love-letter';
 
-const engine = createLoveLetterEngine()
+const engine = createLoveLetterEngine();
 
 // Initialize game
 const result = engine.initialize([
-  { id: 'p1', name: 'Alice', isActive: true },
-  { id: 'p2', name: 'Bob', isActive: true },
-])
+	{ id: 'p1', name: 'Alice', isActive: true },
+	{ id: 'p2', name: 'Bob', isActive: true },
+]);
 
 if (result.isSuccess) {
-  const state = result.value
-  console.log('Game started:', state.gameId)
+	const state = result.value;
+	console.log('Game started:', state.gameId);
 }
 ```
 
 ### Executing Actions
 
 ```typescript
-const state = result.value
+const state = result.value;
 
 // Get available actions
-const actions = engine.getAvailableActions(state, 'p1')
-console.log('Available:', actions) // ['draw_card']
+const actions = engine.getAvailableActions(state, 'p1');
+console.log('Available:', actions); // ['draw_card']
 
 // Execute action
 const actionResult = engine.executeAction(state, {
-  type: 'draw_card',
-  playerId: 'p1',
-  payload: {},
-  timestamp: new Date(),
-})
+	type: 'draw_card',
+	playerId: 'p1',
+	payload: {},
+	timestamp: new Date(),
+});
 
 if (actionResult.isSuccess) {
-  const newState = actionResult.value.newState
-  const events = actionResult.value.events
-  // Process events for SSE/notifications
+	const newState = actionResult.value.newState;
+	const events = actionResult.value.events;
+	// Process events for SSE/notifications
 }
 ```
 
@@ -64,121 +64,121 @@ if (actionResult.isSuccess) {
 
 ```typescript
 // Get what a specific player can see
-const playerView = engine.getPlayerView(state, 'p1')
-console.log('My hand:', playerView.state.players.find(p => p.id === 'p1').hand)
-console.log('Is my turn:', playerView.isMyTurn)
+const playerView = engine.getPlayerView(state, 'p1');
+console.log('My hand:', playerView.state.players.find((p) => p.id === 'p1').hand);
+console.log('Is my turn:', playerView.isMyTurn);
 ```
 
 ### State Machine
 
 ```typescript
-import { createStateMachine, GamePhases } from '@infinity.dev/game-engine/state-machine'
+import { createStateMachine, GamePhases } from '@infinity.dev/game-engine/state-machine';
 
 interface GameContext {
-  round: number
-  currentPlayer: string
+	round: number;
+	currentPlayer: string;
 }
 
 const machine = createStateMachine<GameContext, { playerId: string }>()
-  .initial(GamePhases.WAITING_FOR_PLAYERS)
-  .state(GamePhases.WAITING_FOR_PLAYERS)
-  .state(GamePhases.PLAYER_TURN, {
-    onEnter: (ctx) => console.log(`${ctx.currentPlayer}'s turn`),
-  })
-  .state(GamePhases.ACTION_RESOLUTION)
-  .finalState(GamePhases.GAME_OVER)
-  .transition(GamePhases.WAITING_FOR_PLAYERS, GamePhases.PLAYER_TURN, 'start')
-  .transition(GamePhases.PLAYER_TURN, GamePhases.ACTION_RESOLUTION, 'action')
-  .transition(GamePhases.ACTION_RESOLUTION, GamePhases.PLAYER_TURN, 'next_turn')
-  .transition(GamePhases.ACTION_RESOLUTION, GamePhases.GAME_OVER, 'game_end')
-  .build({ round: 1, currentPlayer: 'p1' })
+	.initial(GamePhases.WAITING_FOR_PLAYERS)
+	.state(GamePhases.WAITING_FOR_PLAYERS)
+	.state(GamePhases.PLAYER_TURN, {
+		onEnter: (ctx) => console.log(`${ctx.currentPlayer}'s turn`),
+	})
+	.state(GamePhases.ACTION_RESOLUTION)
+	.finalState(GamePhases.GAME_OVER)
+	.transition(GamePhases.WAITING_FOR_PLAYERS, GamePhases.PLAYER_TURN, 'start')
+	.transition(GamePhases.PLAYER_TURN, GamePhases.ACTION_RESOLUTION, 'action')
+	.transition(GamePhases.ACTION_RESOLUTION, GamePhases.PLAYER_TURN, 'next_turn')
+	.transition(GamePhases.ACTION_RESOLUTION, GamePhases.GAME_OVER, 'game_end')
+	.build({ round: 1, currentPlayer: 'p1' });
 
 // Subscribe to state changes
 machine.subscribe((from, to, event, ctx) => {
-  console.log(`Transition: ${from} -> ${to} via ${event}`)
-})
+	console.log(`Transition: ${from} -> ${to} via ${event}`);
+});
 
 // Send events
-await machine.send('start')
-console.log(machine.currentState) // 'player_turn'
+await machine.send('start');
+console.log(machine.currentState); // 'player_turn'
 ```
 
 ### Custom Rules
 
 ```typescript
-import { BaseRule, createRuleEngine } from '@infinity.dev/game-engine/core'
+import { BaseRule, createRuleEngine } from '@infinity.dev/game-engine/core';
 
 class MaxHandSizeRule extends BaseRule {
-  id = 'max-hand-size'
-  description = 'Players cannot have more than 7 cards'
-  priority = 10
+	id = 'max-hand-size';
+	description = 'Players cannot have more than 7 cards';
+	priority = 10;
 
-  appliesTo(action) {
-    return action.type === 'draw_card'
-  }
+	appliesTo(action) {
+		return action.type === 'draw_card';
+	}
 
-  validate(state, action) {
-    const player = state.players.find(p => p.id === action.playerId)
-    if (player.hand.length >= 7) {
-      return this.fail('Hand is full')
-    }
-    return this.success()
-  }
+	validate(state, action) {
+		const player = state.players.find((p) => p.id === action.playerId);
+		if (player.hand.length >= 7) {
+			return this.fail('Hand is full');
+		}
+		return this.success();
+	}
 }
 
-const ruleEngine = createRuleEngine()
-ruleEngine.addRule(new MaxHandSizeRule())
+const ruleEngine = createRuleEngine();
+ruleEngine.addRule(new MaxHandSizeRule());
 
-const result = ruleEngine.validate(state, action)
+const result = ruleEngine.validate(state, action);
 if (result.isFailure) {
-  console.log('Rule violations:', result.error)
+	console.log('Rule violations:', result.error);
 }
 ```
 
 ### Implementing a Custom Game
 
 ```typescript
-import { BaseGameEngine } from '@infinity.dev/game-engine/core'
-import type { IGameState, IAction, IGameMetadata } from '@infinity.dev/game-engine/core'
+import { BaseGameEngine } from '@infinity.dev/game-engine/core';
+import type { IGameState, IAction, IGameMetadata } from '@infinity.dev/game-engine/core';
 
 interface MyGameState extends IGameState {
-  // Custom state
+	// Custom state
 }
 
 interface MyAction extends IAction {
-  // Custom actions
+	// Custom actions
 }
 
 class MyGameEngine extends BaseGameEngine<MyGameState, MyAction> {
-  readonly metadata: IGameMetadata = {
-    gameType: 'my-game',
-    version: '1.0.0',
-    description: 'My custom game',
-    minPlayers: 2,
-    maxPlayers: 6,
-    estimatedDuration: '30 minutes',
-    complexity: 'medium',
-  }
+	readonly metadata: IGameMetadata = {
+		gameType: 'my-game',
+		version: '1.0.0',
+		description: 'My custom game',
+		minPlayers: 2,
+		maxPlayers: 6,
+		estimatedDuration: '30 minutes',
+		complexity: 'medium',
+	};
 
-  initialize(players, config) {
-    // Create initial state
-  }
+	initialize(players, config) {
+		// Create initial state
+	}
 
-  protected validateActionSpecific(state, action) {
-    // Game-specific validation
-  }
+	protected validateActionSpecific(state, action) {
+		// Game-specific validation
+	}
 
-  executeAction(state, action) {
-    // Execute and return new state + events
-  }
+	executeAction(state, action) {
+		// Execute and return new state + events
+	}
 
-  getAvailableActions(state, playerId) {
-    // Return available action types
-  }
+	getAvailableActions(state, playerId) {
+		// Return available action types
+	}
 
-  protected filterStateForPlayer(state, playerId) {
-    // Hide information from other players
-  }
+	protected filterStateForPlayer(state, playerId) {
+		// Hide information from other players
+	}
 }
 ```
 
