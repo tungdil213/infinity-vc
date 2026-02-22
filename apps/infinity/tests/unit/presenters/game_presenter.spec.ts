@@ -3,6 +3,7 @@ import { CardTypes } from '../../../app/games/love-letter/types.js'
 import {
   toActionResponsePayload,
   toGameActionsPayload,
+  toGamePagePayload,
   toPublicPlayersPayload,
 } from '../../../app/presenters/game_presenter.js'
 import type { GameSession } from '../../../app/application/services/game_engine_service.js'
@@ -11,8 +12,10 @@ function makeSession(): GameSession {
   return {
     gameId: 'game-1',
     lobbyId: 'lobby-1',
+    gameType: 'love-letter',
     engine: {} as any,
     createdAt: new Date(),
+    players: [{ id: 'user-1', name: 'User 1', isActive: true }],
     state: {
       currentPlayerId: 'user-1',
       players: [
@@ -37,6 +40,19 @@ function makeSession(): GameSession {
 }
 
 test.group('game_presenter', () => {
+  test('toGamePagePayload should expose gameType for frontend routing', ({ assert }) => {
+    const session = makeSession()
+
+    const payload = toGamePagePayload({
+      session,
+      playerView: { foo: 'bar' },
+      availableActions: ['draw_card'],
+      user: { uuid: 'user-1', nickName: 'User 1' },
+    })
+
+    assert.equal(payload.gameType, 'love-letter')
+  })
+
   test('toGameActionsPayload should expose turn state', ({ assert }) => {
     const session = makeSession()
 
@@ -78,7 +94,7 @@ test.group('game_presenter', () => {
     const payload = toPublicPlayersPayload({ session, currentUserUuid: 'user-1' })
 
     assert.equal(payload.players[0].discardPile[0].type, CardTypes.GUARD)
-    assert.equal(payload.players[0].discardPile[0].name, 'Guard')
+    assert.equal(payload.players[0].discardPile[0].name, CardTypes.GUARD)
     assert.equal(payload.players[0].isMe, true)
     assert.equal(payload.deckCount, 1)
   })

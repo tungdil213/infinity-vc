@@ -6,6 +6,7 @@ export interface LobbyDto {
   readonly uuid: string
   readonly name: string
   readonly createdBy: string
+  readonly gameType: string
   readonly maxPlayers: number
   readonly isPrivate: boolean
   readonly status: string
@@ -33,6 +34,7 @@ export interface CreateLobbyRequestDto {
   readonly name: string
   readonly maxPlayers?: number
   readonly isPrivate?: boolean
+  readonly gameType: string
 }
 
 /**
@@ -41,6 +43,7 @@ export interface CreateLobbyRequestDto {
 export interface CreateLobbyResponseDto {
   readonly uuid: string
   readonly name: string
+  readonly gameType: string
   readonly status: string
   readonly currentPlayers: number
   readonly maxPlayers: number

@@ -14,6 +14,7 @@ export class LobbySerializer {
       uuid: lobby.uuid,
       name: lobby.name,
       createdBy: lobby.createdBy,
+      gameType: lobby.gameType,
       maxPlayers: lobby.maxPlayers,
       isPrivate: lobby.isPrivate,
       status: lobby.status,
@@ -36,6 +37,7 @@ export class LobbySerializer {
     return {
       uuid: lobby.uuid,
       name: lobby.name,
+      gameType: lobby.gameType,
       status: lobby.status,
       currentPlayers: lobby.playerCount,
       maxPlayers: lobby.maxPlayers,

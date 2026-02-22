@@ -19,6 +19,20 @@ import { toUserSummary } from '#presenters/lobby_presenter'
 import type { Request } from '@adonisjs/core/http'
 import type { Response } from '@adonisjs/core/http'
 import type { Session } from '@adonisjs/session'
+import { createDefaultLauncher } from '@infinity.dev/game-engine'
+
+type AvailableGameViewModel = {
+  id: string
+  displayName: string
+  description: string
+  minPlayers: number
+  maxPlayers: number
+}
+
+type CreateLobbySettingsInput = {
+  roundsToWin?: number
+  allowDrawReplay?: boolean
+}
 
 @inject()
 export default class EnhancedLobbiesController {
@@ -42,6 +56,41 @@ export default class EnhancedLobbiesController {
       user: user ? toUserSummary(user, { includeEmail: true }) : null,
       currentLobby: null,
     })
+  }
+
+  private sanitizeGameSettings(gameType: string, gameSettings?: CreateLobbySettingsInput) {
+    if (gameType !== 'rock-paper-scissors') {
+      return {}
+    }
+
+    const roundsToWinRaw = gameSettings?.roundsToWin
+    const roundsToWin = Number.isFinite(roundsToWinRaw) ? Number(roundsToWinRaw) : 3
+    const allowDrawReplay = gameSettings?.allowDrawReplay ?? true
+
+    if (!Number.isInteger(roundsToWin) || roundsToWin < 1 || roundsToWin > 10) {
+      throw new InvalidLobbyConfigurationException(
+        'gameSettings.roundsToWin',
+        roundsToWinRaw,
+        'roundsToWin must be an integer between 1 and 10'
+      )
+    }
+
+    return {
+      roundsToWin,
+      allowDrawReplay,
+    }
+  }
+
+  private getAvailableGames(): AvailableGameViewModel[] {
+    const launcher = createDefaultLauncher()
+
+    return launcher.listGames().map((game) => ({
+      id: game.id,
+      displayName: game.displayName,
+      description: game.description,
+      minPlayers: game.metadata.minPlayers,
+      maxPlayers: game.metadata.maxPlayers,
+    }))
   }
 
   /**
@@ -82,10 +131,12 @@ export default class EnhancedLobbiesController {
    */
   async create({ inertia, auth }: HttpContext) {
     const user = auth.user!
+    const availableGames = this.getAvailableGames()
 
     return inertia.render('create-lobby', {
       user: toUserSummary(user),
       currentLobby: null,
+      availableGames,
     })
   }
 
@@ -101,7 +152,26 @@ export default class EnhancedLobbiesController {
         isPrivate = false,
         hasPassword = false,
         password,
+        gameType,
+        gameSettings,
       } = await request.validateUsing(lobbyStoreValidator)
+
+      const selectedGame = this.getAvailableGames().find((game) => game.id === gameType)
+      if (!selectedGame) {
+        throw new InvalidLobbyConfigurationException(
+          'gameType',
+          gameType,
+          `Selected game '${gameType}' is not available`
+        )
+      }
+
+      if (maxPlayers < selectedGame.minPlayers || maxPlayers > selectedGame.maxPlayers) {
+        throw new InvalidLobbyConfigurationException(
+          'maxPlayers',
+          maxPlayers,
+          `For ${selectedGame.displayName}, maxPlayers must be between ${selectedGame.minPlayers} and ${selectedGame.maxPlayers}`
+        )
+      }
 
       if (hasPassword && (!password || password.trim().length === 0)) {
         throw new InvalidLobbyConfigurationException(
@@ -111,11 +181,15 @@ export default class EnhancedLobbiesController {
         )
       }
 
+      const sanitizedGameSettings = this.sanitizeGameSettings(gameType, gameSettings)
+
       const result = await this.createLobbyUseCase.execute({
         userUuid: user.userUuid,
         name: name.trim(),
         maxPlayers,
         isPrivate: Boolean(isPrivate),
+        gameType,
+        gameSettings: sanitizedGameSettings,
       })
 
       if (result.isFailure) {

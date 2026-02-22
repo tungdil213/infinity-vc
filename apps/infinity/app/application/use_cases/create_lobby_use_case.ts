@@ -9,11 +9,14 @@ export interface CreateLobbyRequest {
   name: string
   maxPlayers?: number
   isPrivate?: boolean
+  gameType: string
+  gameSettings?: Record<string, unknown>
 }
 
 export interface CreateLobbyResponse {
   uuid: string
   name: string
+  gameType: string
   status: string
   currentPlayers: number
   maxPlayers: number
@@ -73,6 +76,8 @@ export class CreateLobbyUseCase {
         creator: player,
         maxPlayers: request.maxPlayers || 4,
         isPrivate: request.isPrivate || false,
+        gameType: request.gameType,
+        gameSettings: request.gameSettings,
       })
 
       // Sauvegarder le lobby
@@ -115,6 +120,9 @@ export class CreateLobbyUseCase {
     }
     if (request.maxPlayers !== undefined && (request.maxPlayers < 2 || request.maxPlayers > 8)) {
       return Result.fail('maxPlayers must be between 2 and 8')
+    }
+    if (!request.gameType || !request.gameType.trim()) {
+      return Result.fail('gameType is required')
     }
     return Result.ok(undefined)
   }

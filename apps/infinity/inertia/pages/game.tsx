@@ -88,6 +88,7 @@ interface GameState {
   round: number
   turn: number
   isFinished: boolean
+  winnerId?: string | null
   deckCount: number
   players: LoveLetterPlayer[]
 }
@@ -101,6 +102,7 @@ interface PlayerViewState {
 
 interface GameProps {
   gameId: string
+  gameType: string
   playerView: PlayerViewState | null
   availableActions: string[]
   user: { uuid: string; nickName: string }
@@ -163,7 +165,7 @@ function PlayerCard({
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${player.isEliminated ? 'bg-gray-400' : 'bg-gradient-to-br from-purple-500 to-pink-500'}`}
+            className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${player.isEliminated ? 'bg-gray-400' : 'bg-linear-to-br from-purple-500 to-pink-500'}`}
           >
             {player.name.charAt(0).toUpperCase()}
           </div>
@@ -204,6 +206,7 @@ function PlayerCard({
 
 export default function Game({
   gameId,
+  gameType,
   playerView,
   availableActions: initialActions,
   user,
@@ -211,6 +214,7 @@ export default function Game({
 }: GameProps) {
   const [gameState, setGameState] = useState<PlayerViewState | null>(playerView)
   const [availableActions, setAvailableActions] = useState<string[]>(initialActions || [])
+  const [lastSubmittedMove, setLastSubmittedMove] = useState<string | null>(null)
   const [myHand, setMyHand] = useState<string[]>([])
   const [selectedCard, setSelectedCard] = useState<string | null>(null)
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null)
@@ -231,8 +235,14 @@ export default function Game({
       if (res.ok) {
         const data = await res.json()
         setGameState(data.playerView)
-        setAvailableActions(data.availableActions || [])
-        if (data.playerView?.state?.myHand) setMyHand(data.playerView.state.myHand)
+        const nextAvailableActions = data.availableActions || []
+        setAvailableActions(nextAvailableActions)
+        if (nextAvailableActions.includes('submit_move')) {
+          setLastSubmittedMove(null)
+        }
+        if (Array.isArray(data.playerView?.state?.myHand)) {
+          setMyHand(data.playerView.state.myHand)
+        }
       }
     } catch (e) {
       console.error('Failed to refresh:', e)
@@ -264,6 +274,41 @@ export default function Game({
       } else addNotification(`Error: ${result.error}`)
     } catch {
       addNotification('Failed to draw')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSubmitMove = async (move: 'rock' | 'paper' | 'scissors') => {
+    if (isLoading) return
+
+    setIsLoading(true)
+    try {
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+      if (csrfToken) {
+        headers['X-CSRF-TOKEN'] = csrfToken
+      }
+
+      const res = await fetch(`/api/v1/games/${gameId}/action`, {
+        method: 'POST',
+        headers,
+        credentials: 'include',
+        body: JSON.stringify({ actionType: 'submit_move', move }),
+      })
+
+      const result = await res.json()
+      if (result.success) {
+        setLastSubmittedMove(move)
+        addNotification(`Move submitted: ${move}`)
+        await refreshGameState()
+      } else {
+        addNotification(`Error: ${result.error}`)
+      }
+    } catch {
+      addNotification('Failed to submit move')
     } finally {
       setIsLoading(false)
     }
@@ -341,24 +386,117 @@ export default function Game({
   }, [gameId, isConnected, subscribeToGame, refreshGameState])
 
   useEffect(() => {
+    if (!isConnected) return
+
+    refreshGameState().catch((error) => {
+      console.error('Failed to refresh after reconnect:', error)
+    })
+  }, [isConnected, refreshGameState])
+
+  useEffect(() => {
+    const onFocus = () => {
+      refreshGameState().catch((error) => {
+        console.error('Failed to refresh on focus:', error)
+      })
+    }
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshGameState().catch((error) => {
+          console.error('Failed to refresh on visibility change:', error)
+        })
+      }
+    }
+
+    const pollingIntervalMs = gameType === 'rock-paper-scissors' ? 3000 : 5000
+    const intervalId = window.setInterval(() => {
+      refreshGameState().catch((error) => {
+        console.error('Polling refresh failed:', error)
+      })
+    }, pollingIntervalMs)
+
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisibilityChange)
+
+    return () => {
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [gameType, refreshGameState])
+
+  useEffect(() => {
     refreshGameState()
   }, [refreshGameState])
 
   if (isFinished || gameState?.state?.isFinished) {
-    const winner = gameState?.state?.players?.find((p) => !p.isEliminated)
+    const finalStateRecord = (gameState?.state ?? {}) as Record<string, unknown>
+    const isRpsFinished = gameType === 'rock-paper-scissors'
+    const rpsFinalScores = (finalStateRecord.scores as Record<string, number>) ?? {}
+    const rpsFinalRounds = (
+      Array.isArray(finalStateRecord.rounds) ? finalStateRecord.rounds : []
+    ) as Array<{
+      round: number
+      winnerId: string | null
+      choices: Record<string, string>
+    }>
+    const winner = gameState?.state?.players?.find((p) =>
+      gameState?.state?.winnerId ? p.id === gameState.state.winnerId : !p.isEliminated
+    )
     return (
       <Layout>
         <Head title="Game Over" />
         <div className="min-h-screen bg-main flex items-center justify-center p-4">
-          <UICard className="max-w-md w-full text-center">
+          <UICard className="max-w-2xl w-full text-center">
             <CardHeader>
               <div className="text-6xl mb-4">🎮</div>
               <CardTitle className="text-3xl">Game Over</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <p className="text-xl mb-6">
                 {winner?.isMe ? '🏆 You won!' : `🏆 ${winner?.name} wins!`}
               </p>
+
+              {isRpsFinished && (
+                <div className="space-y-4 text-left">
+                  <div className="rounded-base border-2 border-border p-3">
+                    <p className="font-heading mb-2">Final Score</p>
+                    <div className="space-y-1 text-sm">
+                      {(gameState?.state?.players ?? []).map((player) => (
+                        <div key={player.id} className="flex items-center justify-between">
+                          <span>
+                            {player.name} {player.isMe ? '(You)' : ''}
+                          </span>
+                          <span>{rpsFinalScores[player.id] ?? 0}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-base border-2 border-border p-3">
+                    <p className="font-heading mb-2">Rounds Recap</p>
+                    <div className="space-y-1 text-sm">
+                      {rpsFinalRounds.length === 0 ? (
+                        <p className="text-muted-foreground">No rounds recorded.</p>
+                      ) : (
+                        rpsFinalRounds.map((round) => (
+                          <div key={round.round} className="flex items-center justify-between">
+                            <span>Round {round.round}</span>
+                            <span>
+                              {round.winnerId === null
+                                ? 'Draw'
+                                : round.winnerId === user.uuid
+                                  ? 'Won by you'
+                                  : 'Won by opponent'}
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <Button onClick={() => (window.location.href = '/lobbies')} className="w-full">
                 Back to Lobbies
               </Button>
@@ -370,20 +508,181 @@ export default function Game({
   }
 
   const players = gameState?.state?.players || []
+  const stateRecord = (gameState?.state ?? {}) as Record<string, unknown>
+  const isRpsGame = gameType === 'rock-paper-scissors'
+  const gameTitle = isRpsGame ? 'Rock Paper Scissors' : 'Love Letter'
   const isMyTurn = gameState?.isMyTurn || false
   const phase = gameState?.state?.phase || 'waiting'
   const canDraw = availableActions.includes('draw_card')
   const canPlay = availableActions.includes('play_card')
+  const canSubmitMove = availableActions.includes('submit_move')
+
+  if (isRpsGame) {
+    const rpsScores = (stateRecord.scores as Record<string, number>) ?? {}
+    const rpsRoundChoices = (stateRecord.roundChoices as Record<string, string>) ?? {}
+    const rpsRounds = (Array.isArray(stateRecord.rounds) ? stateRecord.rounds : []) as Array<{
+      round: number
+      winnerId: string | null
+      choices: Record<string, string>
+    }>
+    const roundsToWin = Number(stateRecord.roundsToWin ?? 3)
+    const latestRound = rpsRounds.at(-1)
+    const latestRoundLabel = latestRound
+      ? latestRound.winnerId === null
+        ? 'Draw'
+        : latestRound.winnerId === user.uuid
+          ? 'You won the round'
+          : 'You lost the round'
+      : null
+    const playersWithScores = (players as Array<{ id: string; name: string }>).map((player) => ({
+      ...player,
+      score: rpsScores[player.id] ?? 0,
+      choice: rpsRoundChoices[player.id],
+      isMe: player.id === user.uuid,
+    }))
+
+    return (
+      <Layout>
+        <Head title={`${gameTitle} - Round ${gameState?.state?.round || 1}`} />
+        <div className="min-h-screen bg-main p-4">
+          <div className="max-w-4xl mx-auto space-y-4">
+            <UICard>
+              <CardContent className="p-4 flex items-center justify-between">
+                <div>
+                  <h1 className="text-2xl font-heading">{gameTitle}</h1>
+                  <div className="flex gap-2 mt-1">
+                    <Badge variant="secondary">Round {gameState?.state?.round || 1}</Badge>
+                    <Badge variant="secondary">First to {roundsToWin}</Badge>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <Badge variant={isConnected ? 'default' : 'destructive'}>
+                    {isConnected ? 'Connected' : 'Disconnected'}
+                  </Badge>
+                  <Button variant="neutral" onClick={() => (window.location.href = '/lobbies')}>
+                    Leave
+                  </Button>
+                </div>
+              </CardContent>
+            </UICard>
+
+            {notifications.length > 0 && (
+              <div className="space-y-2">
+                {notifications.map((n, i) => (
+                  <Alert key={i}>
+                    <AlertDescription>{n}</AlertDescription>
+                  </Alert>
+                ))}
+              </div>
+            )}
+
+            {latestRoundLabel && (
+              <Alert>
+                <AlertDescription>
+                  Round {latestRound?.round}: {latestRoundLabel}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <UICard>
+              <CardHeader>
+                <CardTitle>Players & Scores</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {playersWithScores.map((player) => (
+                  <div
+                    key={player.id}
+                    className="flex items-center justify-between rounded-base border-2 border-border p-3"
+                  >
+                    <div>
+                      <p className="font-heading">
+                        {player.name} {player.isMe ? '(You)' : ''}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {player.choice ? `Choice: ${player.choice}` : 'Choice: hidden'}
+                      </p>
+                    </div>
+                    <Badge variant="secondary">Score: {player.score}</Badge>
+                  </div>
+                ))}
+              </CardContent>
+            </UICard>
+
+            <UICard>
+              <CardHeader>
+                <CardTitle>Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {canSubmitMove ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {(['rock', 'paper', 'scissors'] as const).map((move) => (
+                      <Button
+                        key={move}
+                        onClick={() => handleSubmitMove(move)}
+                        disabled={isLoading}
+                        className="w-full"
+                      >
+                        {isLoading ? 'Submitting...' : move.toUpperCase()}
+                      </Button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground py-2">
+                    {lastSubmittedMove
+                      ? `Move submitted (${lastSubmittedMove}), waiting for opponent.`
+                      : isMyTurn
+                        ? 'Move already submitted, waiting for opponent.'
+                        : 'Waiting for other player...'}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground text-center">Phase: {phase}</p>
+              </CardContent>
+            </UICard>
+
+            <UICard>
+              <CardHeader>
+                <CardTitle>Rounds History</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {rpsRounds.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No rounds completed yet.</p>
+                ) : (
+                  rpsRounds
+                    .slice()
+                    .reverse()
+                    .map((round) => (
+                      <div
+                        key={round.round}
+                        className="rounded-base border-2 border-border px-3 py-2 text-sm"
+                      >
+                        <span className="font-semibold mr-2">Round {round.round}</span>
+                        <span>
+                          {round.winnerId === null
+                            ? 'Draw'
+                            : round.winnerId === user.uuid
+                              ? 'Won by you'
+                              : 'Won by opponent'}
+                        </span>
+                      </div>
+                    ))
+                )}
+              </CardContent>
+            </UICard>
+          </div>
+        </div>
+      </Layout>
+    )
+  }
 
   return (
     <Layout>
-      <Head title={`Love Letter - Round ${gameState?.state?.round || 1}`} />
+      <Head title={`${gameTitle} - Round ${gameState?.state?.round || 1}`} />
       <div className="min-h-screen bg-main p-4">
         <div className="max-w-6xl mx-auto mb-4">
           <UICard>
             <CardContent className="p-4 flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-heading">Love Letter</h1>
+                <h1 className="text-2xl font-heading">{gameTitle}</h1>
                 <div className="flex gap-2 mt-1">
                   <Badge variant="secondary">Round {gameState?.state?.round || 1}</Badge>
                   <Badge variant="secondary">Deck: {gameState?.state?.deckCount || 0}</Badge>

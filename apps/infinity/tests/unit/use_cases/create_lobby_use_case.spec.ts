@@ -207,6 +207,7 @@ test.group('CreateLobbyUseCase', (group) => {
     const request = {
       userUuid: 'user-123',
       name: 'Test Lobby',
+      gameType: 'love-letter',
     }
 
     // Act

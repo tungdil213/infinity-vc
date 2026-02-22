@@ -5,9 +5,12 @@ import type {
 
 export interface RawGameActionInput {
   action?: string
+  actionType?: string
   cardType?: string
   targetPlayerId?: string
   guessedCard?: string
+  move?: string
+  payload?: Record<string, unknown>
 }
 
 export type ParsedGameAction =
@@ -19,6 +22,11 @@ export type ParsedGameAction =
       cardType: string
       targetPlayerId?: string
       guessedCard?: string
+    }
+  | {
+      type: 'engine'
+      actionType: string
+      payload?: Record<string, unknown>
     }
 
 export function getAuthorizedGameSession(
@@ -38,7 +46,9 @@ export function getAuthorizedGameSession(
 export function parseGameActionInput(
   input: RawGameActionInput
 ): { ok: true; value: ParsedGameAction } | { ok: false; error: string } {
-  switch (input.action) {
+  const actionType = input.actionType ?? input.action
+
+  switch (actionType) {
     case 'draw':
       return { ok: true, value: { type: 'draw' } }
     case 'play':
@@ -55,8 +65,34 @@ export function parseGameActionInput(
           guessedCard: input.guessedCard,
         },
       }
+    case 'submit_move': {
+      const move = input.move
+      if (!move) {
+        return { ok: false, error: 'move is required' }
+      }
+
+      return {
+        ok: true,
+        value: {
+          type: 'engine',
+          actionType,
+          payload: { move },
+        },
+      }
+    }
     default:
-      return { ok: false, error: `Unknown action: ${input.action}` }
+      if (!actionType) {
+        return { ok: false, error: 'action is required' }
+      }
+
+      return {
+        ok: true,
+        value: {
+          type: 'engine',
+          actionType,
+          payload: input.payload,
+        },
+      }
   }
 }
 
@@ -73,10 +109,25 @@ export function executeParsedGameAction(
       targetPlayerId?: string,
       guessedCard?: string
     ) => GameActionResponse
+    executeAction: (request: {
+      gameId: string
+      playerId: string
+      actionType: string
+      payload?: Record<string, unknown>
+    }) => GameActionResponse
   }
 ): GameActionResponse {
   if (action.type === 'draw') {
     return deps.drawCard(gameUuid, userUuid)
+  }
+
+  if (action.type === 'engine') {
+    return deps.executeAction({
+      gameId: gameUuid,
+      playerId: userUuid,
+      actionType: action.actionType,
+      payload: action.payload,
+    })
   }
 
   return deps.playCard(

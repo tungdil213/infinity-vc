@@ -17,6 +17,8 @@ export class DatabaseLobbyRepository implements LobbyRepository {
         name: lobby.name,
         maxPlayers: lobby.maxPlayers,
         isPrivate: lobby.isPrivate,
+        gameType: lobby.gameType,
+        gameSettings: lobby.gameSettings,
         status: lobby.status,
         createdBy: lobby.createdBy,
         availableActions: lobby.availableActions,
@@ -162,6 +164,8 @@ export class DatabaseLobbyRepository implements LobbyRepository {
       players,
       model.maxPlayers,
       model.isPrivate,
+      model.gameType,
+      model.gameSettings,
       model.createdAt.toJSDate()
     )
   }

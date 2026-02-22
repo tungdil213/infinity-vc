@@ -9,6 +9,8 @@ import { InMemoryPlayerRepository } from '../../app/infrastructure/repositories/
 import { InMemoryGameRepository } from '../../app/infrastructure/repositories/in_memory_game_repository.js'
 import Player from '../../app/domain/entities/player.js'
 import { LobbyStatus } from '../../app/domain/value_objects/lobby_status.js'
+import { gameEngineService } from '../../app/application/services/game_engine_service.js'
+import { RpsActionTypes } from '@infinity.dev/game-engine'
 
 // Helper function to create a player
 function createPlayer(overrides = {}) {
@@ -33,6 +35,7 @@ test.group('Lobby Use Cases Integration', (group) => {
 
   // Mock notification service
   const mockNotificationService = {
+    notifyLobbyCreated: async () => Promise.resolve(),
     notifyPlayerLeft: async () => Promise.resolve(),
     notifyPlayerJoined: async () => Promise.resolve(),
     notifyGameStarted: async () => Promise.resolve(),
@@ -44,13 +47,21 @@ test.group('Lobby Use Cases Integration', (group) => {
     emitLobbyUpdated: async () => Promise.resolve(),
   }
 
-  group.setup(() => {
+  group.each.setup(() => {
     lobbyRepository = new InMemoryLobbyRepository()
     playerRepository = new InMemoryPlayerRepository()
     gameRepository = new InMemoryGameRepository()
 
-    createLobbyUseCase = new CreateLobbyUseCase(playerRepository, lobbyRepository, null as any)
-    joinLobbyUseCase = new JoinLobbyUseCase(playerRepository, lobbyRepository, null as any)
+    createLobbyUseCase = new CreateLobbyUseCase(
+      playerRepository,
+      lobbyRepository,
+      mockNotificationService as any
+    )
+    joinLobbyUseCase = new JoinLobbyUseCase(
+      playerRepository,
+      lobbyRepository,
+      mockNotificationService as any
+    )
     leaveLobbyUseCase = new LeaveLobbyUseCase(
       lobbyRepository,
       mockNotificationService as any,
@@ -80,6 +91,7 @@ test.group('Lobby Use Cases Integration', (group) => {
       userUuid: player1.userUuid,
       maxPlayers: 2,
       isPrivate: true,
+      gameType: 'rock-paper-scissors',
     })
 
     assert.isTrue(createResult.isSuccess)
@@ -97,7 +109,7 @@ test.group('Lobby Use Cases Integration', (group) => {
 
     assert.isTrue(joinResult1.isSuccess)
     assert.lengthOf(joinResult1.value!.lobby.players, 2)
-    assert.equal(joinResult1.value!.lobby.status, LobbyStatus.FULL)
+    assert.equal(joinResult1.value!.lobby.status, LobbyStatus.READY)
 
     // 5. Tenter de joindre le lobby complet
     const joinRequest = {
@@ -128,6 +140,66 @@ test.group('Lobby Use Cases Integration', (group) => {
     assert.exists(savedGame)
   })
 
+  test('should play a full rock-paper-scissors match and resolve winner', async ({ assert }) => {
+    const player1 = createPlayer({ nickName: 'RPS_Player_1' })
+    const player2 = createPlayer({ nickName: 'RPS_Player_2' })
+
+    await playerRepository.save(player1)
+    await playerRepository.save(player2)
+
+    const createResult = await createLobbyUseCase.execute({
+      name: 'RPS Match',
+      userUuid: player1.userUuid,
+      maxPlayers: 2,
+      isPrivate: false,
+      gameType: 'rock-paper-scissors',
+      gameSettings: {
+        roundsToWin: 1,
+        allowDrawReplay: true,
+      },
+    })
+
+    assert.isTrue(createResult.isSuccess)
+    const lobbyUuid = createResult.value.uuid
+
+    const joinResult = await joinLobbyUseCase.execute({
+      lobbyUuid,
+      userUuid: player2.userUuid,
+    })
+    assert.isTrue(joinResult.isSuccess)
+
+    const startResult = await startGameUseCase.execute({
+      lobbyUuid,
+      userUuid: player1.userUuid,
+    })
+    assert.isTrue(startResult.isSuccess)
+
+    const gameUuid = startResult.value!.game.uuid
+    const session = gameEngineService.getSession(gameUuid)
+    assert.exists(session)
+
+    const firstMoveResult = gameEngineService.executeAction({
+      gameId: gameUuid,
+      playerId: player1.userUuid,
+      actionType: RpsActionTypes.SUBMIT_MOVE,
+      payload: { move: 'rock' },
+    })
+    assert.isTrue(firstMoveResult.success)
+
+    const secondMoveResult = gameEngineService.executeAction({
+      gameId: gameUuid,
+      playerId: player2.userUuid,
+      actionType: RpsActionTypes.SUBMIT_MOVE,
+      payload: { move: 'scissors' },
+    })
+
+    assert.isTrue(secondMoveResult.success)
+    assert.isTrue(secondMoveResult.newState?.isFinished ?? false)
+    assert.equal(secondMoveResult.newState?.winnerId, player1.userUuid)
+
+    gameEngineService.endGame(gameUuid)
+  })
+
   test('should handle player leaving and rejoining', async ({ assert }) => {
     // Créer des joueurs
     const player1 = createPlayer()
@@ -142,6 +214,7 @@ test.group('Lobby Use Cases Integration', (group) => {
       userUuid: player1.userUuid,
       maxPlayers: 4,
       isPrivate: false,
+      gameType: 'love-letter',
     })
 
     const lobbyUuid = createResult.value.uuid
@@ -181,6 +254,7 @@ test.group('Lobby Use Cases Integration', (group) => {
       userUuid: player1.userUuid,
       maxPlayers: 4,
       isPrivate: false,
+      gameType: 'love-letter',
     })
 
     const lobbyUuid = createResult.value.uuid
@@ -212,6 +286,7 @@ test.group('Lobby Use Cases Integration', (group) => {
       userUuid: player1.userUuid,
       maxPlayers: 4,
       isPrivate: false,
+      gameType: 'love-letter',
     })
 
     const lobbyUuid = createResult.value.uuid
@@ -246,6 +321,7 @@ test.group('Lobby Use Cases Integration', (group) => {
       userUuid: players[0].userUuid,
       maxPlayers: 4,
       isPrivate: false,
+      gameType: 'love-letter',
     })
 
     const lobbyUuid = createResult.value!.uuid

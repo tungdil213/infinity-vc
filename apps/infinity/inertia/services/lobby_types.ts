@@ -1,6 +1,7 @@
 export interface LobbyData {
   uuid: string
   name: string
+  gameType?: string
   status: string
   currentPlayers: number
   maxPlayers: number
@@ -36,6 +37,7 @@ export interface LobbyFilters {
 
 export interface CreateLobbyPayload {
   name: string
+  gameType: string
   maxPlayers?: number
   isPrivate?: boolean
   userUuid: string

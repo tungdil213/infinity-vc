@@ -1,7 +1,11 @@
 import { test } from '@japa/runner'
 import { GameEngineService } from '../../../app/application/services/game_engine_service.js'
 import { GameSessionStore } from '../../../app/application/services/game_session_store.js'
-import type { GameSession } from '../../../app/application/services/game_engine_types.js'
+import type {
+  GameActionRequest,
+  GameSession,
+} from '../../../app/application/services/game_engine_types.js'
+import { RpsActionTypes } from '@infinity.dev/game-engine'
 import { LoveLetterActionTypes } from '../../../app/games/love-letter/types.js'
 
 function makeSession(): GameSession {
@@ -24,7 +28,9 @@ function makeSession(): GameSession {
   return {
     gameId: 'game-1',
     lobbyId: 'lobby-1',
+    gameType: 'love-letter',
     createdAt: new Date(),
+    players: [],
     state: initialState,
     engine: {
       validateAction: () => ({ isFailure: false }),
@@ -93,5 +99,30 @@ test.group('GameEngineService', () => {
     assert.equal(result.newState?.isFinished, true)
     assert.deepEqual(calls, ['action', 'finished'])
     assert.equal(service.getSession('game-1')?.state.isFinished, true)
+  })
+
+  test('submitMove should delegate to executeAction with submit_move payload', ({ assert }) => {
+    const service = new GameEngineService(new GameSessionStore(), {
+      publishGameStarted: () => {},
+      publishActionEvents: () => {},
+      publishGameFinished: () => {},
+      publishSessionEnded: () => {},
+    } as any)
+
+    let capturedRequest: GameActionRequest | null = null
+    service.executeAction = ((request: GameActionRequest) => {
+      capturedRequest = request
+      return { success: true }
+    }) as any
+
+    const result = service.submitMove('game-rps', 'user-rps', 'rock')
+
+    assert.equal(result.success, true)
+    assert.deepEqual(capturedRequest, {
+      gameId: 'game-rps',
+      playerId: 'user-rps',
+      actionType: RpsActionTypes.SUBMIT_MOVE,
+      payload: { move: 'rock' },
+    })
   })
 })

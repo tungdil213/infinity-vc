@@ -98,9 +98,12 @@ export default class GamesController {
     const { uuid } = params
     const body = request.only([
       'action',
+      'actionType',
       'cardType',
       'targetPlayerId',
       'guessedCard',
+      'move',
+      'payload',
     ]) as RawGameActionInput
 
     const session = getAuthorizedGameSession(uuid, user.userUuid, (gameUuid) =>
@@ -119,6 +122,7 @@ export default class GamesController {
       drawCard: (gameUuid, userUuid) => gameEngineService.drawCard(gameUuid, userUuid),
       playCard: (gameUuid, userUuid, cardType, targetPlayerId, guessedCard) =>
         gameEngineService.playCard(gameUuid, userUuid, cardType, targetPlayerId, guessedCard),
+      executeAction: (engineAction) => gameEngineService.executeAction(engineAction),
     })
 
     if (!result.success) {

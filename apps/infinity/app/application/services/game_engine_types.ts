@@ -1,34 +1,35 @@
-import type {
-  LoveLetterActionType,
-  LoveLetterEngine,
-  LoveLetterState,
-} from '../../games/love-letter/index.js'
+import type { IAction, IGameEngine, IGameState } from '@infinity.dev/game-engine/core'
 
 export interface GameSession {
   gameId: string
   lobbyId: string
-  engine: LoveLetterEngine
-  state: LoveLetterState
+  gameType: string
+  engine: IGameEngine
+  state: IGameState
+  players: Array<{ id: string; name: string; isActive: boolean }>
   createdAt: Date
 }
 
 export interface GameActionRequest {
   gameId: string
   playerId: string
-  actionType: LoveLetterActionType
+  actionType: string
   payload?: {
     cardType?: string
     targetPlayerId?: string
     guessedCard?: string
+    move?: string
   }
 }
 
 export interface GameActionResponse {
   success: boolean
-  newState?: LoveLetterState
+  newState?: IGameState
   error?: string
   events?: Array<{
     type: string
     payload: unknown
   }>
 }
+
+export type GenericAction = IAction<Record<string, unknown>>

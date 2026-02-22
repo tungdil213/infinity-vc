@@ -6,8 +6,10 @@ function makeSession(overrides: Partial<GameSession> = {}): GameSession {
   return {
     gameId: 'game-1',
     lobbyId: 'lobby-1',
+    gameType: 'love-letter',
     engine: {} as any,
     createdAt: new Date(),
+    players: [],
     state: {
       isFinished: false,
       winnerId: null,

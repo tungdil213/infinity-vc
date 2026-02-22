@@ -144,7 +144,7 @@ export default class Player extends BaseEntity implements PlayerInterface {
   // Interface implementations
   toPlayerInterface(): PlayerInterface {
     return {
-      uuid: this._uuid,
+      uuid: this._userUuid,
       nickName: this._nickName,
     }
   }

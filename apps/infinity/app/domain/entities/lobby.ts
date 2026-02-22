@@ -15,6 +15,8 @@ export interface LobbyData {
   creator: PlayerInterface
   maxPlayers?: number
   isPrivate?: boolean
+  gameType?: string
+  gameSettings?: Record<string, unknown>
 }
 
 export default class Lobby extends BaseEntity {
@@ -27,6 +29,8 @@ export default class Lobby extends BaseEntity {
     private _createdBy: string,
     private _maxPlayers: number = 4,
     private _isPrivate: boolean = false,
+    private _gameType: string = 'love-letter',
+    private _gameSettings: Record<string, unknown> = {},
     private _createdAt: Date = new Date()
   ) {
     super()
@@ -45,7 +49,9 @@ export default class Lobby extends BaseEntity {
       data.name.trim(),
       data.creator.uuid,
       data.maxPlayers || 4,
-      data.isPrivate || false
+      data.isPrivate || false,
+      data.gameType || 'love-letter',
+      data.gameSettings || {}
     )
 
     // Ajouter le créateur comme premier joueur
@@ -69,9 +75,20 @@ export default class Lobby extends BaseEntity {
     players: PlayerInterface[],
     maxPlayers: number = 4,
     isPrivate: boolean = false,
+    gameType: string = 'love-letter',
+    gameSettings: Record<string, unknown> = {},
     createdAt?: Date
   ): Lobby {
-    const lobby = new Lobby(uuid, name, createdBy, maxPlayers, isPrivate, createdAt || new Date())
+    const lobby = new Lobby(
+      uuid,
+      name,
+      createdBy,
+      maxPlayers,
+      isPrivate,
+      gameType,
+      gameSettings,
+      createdAt || new Date()
+    )
 
     lobby._players = [...players]
 
@@ -109,6 +126,14 @@ export default class Lobby extends BaseEntity {
 
   get isPrivate(): boolean {
     return this._isPrivate
+  }
+
+  get gameType(): string {
+    return this._gameType
+  }
+
+  get gameSettings(): Record<string, unknown> {
+    return { ...this._gameSettings }
   }
 
   get status(): LobbyStatus {
@@ -307,6 +332,8 @@ export default class Lobby extends BaseEntity {
       maxPlayers: this._maxPlayers,
       currentPlayers: this._players.length,
       isPrivate: this._isPrivate,
+      gameType: this._gameType,
+      gameSettings: this._gameSettings,
       status: this.status,
       hasAvailableSlots: this.hasAvailableSlots,
       canStart: this.canStart,

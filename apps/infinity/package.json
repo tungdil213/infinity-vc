@@ -14,9 +14,9 @@
     "test": "node ace test",
     "test:watch": "node ace test --watch",
     "test:coverage": "c8 --include=app/** --exclude=app/**/*.spec.ts node ace test",
-    "test:unit": "node ace test tests/unit",
-    "test:integration": "node ace test tests/integration",
-    "test:functional": "node ace test tests/functional",
+    "test:unit": "node ace test unit",
+    "test:integration": "node ace test integration",
+    "test:functional": "node ace test functional",
     "lint": "eslint .",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit"

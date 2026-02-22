@@ -1,5 +1,7 @@
 import { defineConfig } from '@adonisjs/shield'
 
+const isDevelopment = process.env.NODE_ENV === 'development'
+
 const shieldConfig = defineConfig({
   /**
    * Configure CSP policies for your app. Refer documentation
@@ -9,10 +11,14 @@ const shieldConfig = defineConfig({
     enabled: true,
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", ...(isDevelopment ? ["'unsafe-eval'"] : [])],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.bunny.net'],
+      fontSrc: ["'self'", 'https://fonts.bunny.net', 'data:'],
       imgSrc: ["'self'", 'data:'],
-      connectSrc: ["'self'"],
+      connectSrc: [
+        "'self'",
+        ...(isDevelopment ? ['ws://localhost:24678', 'ws://127.0.0.1:24678'] : []),
+      ],
     },
     reportOnly: false,
   },

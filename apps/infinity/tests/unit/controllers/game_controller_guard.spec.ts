@@ -13,8 +13,10 @@ function makeSession(playerIds: string[]): GameSession {
   return {
     gameId: 'game-1',
     lobbyId: 'lobby-1',
+    gameType: 'love-letter',
     engine: {} as any,
     createdAt: new Date(),
+    players: playerIds.map((id) => ({ id, name: `Player-${id}`, isActive: true })),
     state: {
       currentPlayerId: playerIds[0] ?? null,
       players: playerIds.map((id) => ({
@@ -65,10 +67,24 @@ test.group('game_controller_guard', () => {
           return drawResult
         },
         playCard: () => ({ success: false }),
+        executeAction: () => ({ success: false }),
       }
     )
 
     assert.isTrue(drawCalled)
     assert.deepEqual(result, drawResult)
+  })
+
+  test('parseGameActionInput should parse submit_move action', ({ assert }) => {
+    const parsed = parseGameActionInput({ actionType: 'submit_move', move: 'rock' })
+
+    assert.deepEqual(parsed, {
+      ok: true,
+      value: {
+        type: 'engine',
+        actionType: 'submit_move',
+        payload: { move: 'rock' },
+      },
+    })
   })
 })

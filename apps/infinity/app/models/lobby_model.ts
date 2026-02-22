@@ -22,6 +22,21 @@ export default class LobbyModel extends BaseModel {
   declare isPrivate: boolean
 
   @column()
+  declare gameType: string
+
+  @column({
+    serialize: (value: string | Record<string, unknown> | null) => {
+      if (!value) return {}
+      if (typeof value === 'string') return JSON.parse(value)
+      return value
+    },
+    prepare: (value: Record<string, unknown> | null) => {
+      return JSON.stringify(value ?? {})
+    },
+  })
+  declare gameSettings: Record<string, unknown>
+
+  @column()
   declare status: string
 
   @column()

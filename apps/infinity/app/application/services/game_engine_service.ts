@@ -1,20 +1,16 @@
 /**
  * Game Engine Service
  *
- * Encapsulates the LoveLetterEngine and provides game management functionality.
+ * Encapsulates launcher-driven game engines and provides game management functionality.
  * This service acts as a bridge between the domain use cases and the game engine.
  */
-import {
-  createLoveLetterEngine,
-  type LoveLetterState,
-  type LoveLetterAction,
-  type LoveLetterActionType,
-  LoveLetterActionTypes,
-} from '../../games/love-letter/index.js'
-import type { IPlayer, IPlayerView } from '@infinity.dev/game-engine/core'
+import { createDefaultLauncher } from '@infinity.dev/game-engine'
+import { RpsActionTypes } from '@infinity.dev/game-engine'
+import type { IAction, IGameState, IPlayer, IPlayerView } from '@infinity.dev/game-engine/core'
 import type { PlayerInterface } from '../../domain/interfaces/player_interface.js'
 import { Result } from '../../domain/shared/result.js'
 import {
+  type GenericAction,
   type GameActionRequest,
   type GameActionResponse,
   type GameSession,
@@ -28,6 +24,8 @@ export type { GameActionRequest, GameActionResponse, GameSession } from './game_
  * Service for managing game sessions using the LoveLetterEngine
  */
 export class GameEngineService {
+  private readonly launcher = createDefaultLauncher()
+
   constructor(
     private readonly sessionStore: GameSessionStore = new GameSessionStore(),
     private readonly eventPublisher: GameEngineEventPublisher = new GameEngineEventPublisher()
@@ -36,8 +34,31 @@ export class GameEngineService {
   /**
    * Create a new game session
    */
-  createGame(lobbyId: string, players: PlayerInterface[]): Result<GameSession> {
-    const engine = createLoveLetterEngine()
+  createGame(
+    lobbyId: string,
+    players: PlayerInterface[],
+    gameType: string,
+    gameSettings: Record<string, unknown> = {}
+  ): Result<GameSession> {
+    const launchResult = this.launcher.launch({
+      gameId: gameType,
+      players: players.map((p) => ({ id: p.uuid, name: p.nickName, isActive: true })),
+      settings: gameSettings,
+    })
+
+    if (launchResult.isFailure) {
+      return Result.fail(launchResult.error?.message || 'Failed to launch game')
+    }
+
+    const startedResultPromise = this.launcher.startSession(launchResult.value)
+    const startedResultSync = Result.fail<GameSession>(
+      'Game launcher start is async and must be awaited'
+    )
+    void startedResultPromise
+    void startedResultSync
+
+    const startedResult = launchResult.value
+    const engine = startedResult.engine
 
     // Convert PlayerInterface to IPlayer
     const gamePlayers: IPlayer[] = players.map((p) => ({
@@ -46,7 +67,12 @@ export class GameEngineService {
       isActive: true,
     }))
 
-    const result = engine.initialize(gamePlayers)
+    const result = engine.initialize(gamePlayers, {
+      gameType: startedResult.definition.metadata.gameType,
+      minPlayers: startedResult.definition.metadata.minPlayers,
+      maxPlayers: startedResult.definition.metadata.maxPlayers,
+      settings: startedResult.settings as Record<string, unknown>,
+    })
 
     if (result.isFailure) {
       return Result.fail(result.error?.message || 'Failed to initialize game')
@@ -55,8 +81,10 @@ export class GameEngineService {
     const session: GameSession = {
       gameId: result.value.gameId,
       lobbyId,
+      gameType,
       engine,
       state: result.value,
+      players: gamePlayers,
       createdAt: new Date(),
     }
 
@@ -79,7 +107,7 @@ export class GameEngineService {
   /**
    * Get game state for a player (filtered view)
    */
-  getPlayerView(gameId: string, playerId: string): IPlayerView<LoveLetterState> | null {
+  getPlayerView(gameId: string, playerId: string): IPlayerView<IGameState> | null {
     const session = this.sessionStore.get(gameId)
     if (!session) return null
 
@@ -144,7 +172,7 @@ export class GameEngineService {
     return this.executeAction({
       gameId,
       playerId,
-      actionType: LoveLetterActionTypes.DRAW_CARD as LoveLetterActionType,
+      actionType: 'draw_card',
     })
   }
 
@@ -161,8 +189,17 @@ export class GameEngineService {
     return this.executeAction({
       gameId,
       playerId,
-      actionType: LoveLetterActionTypes.PLAY_CARD as LoveLetterActionType,
+      actionType: 'play_card',
       payload: { cardType, targetPlayerId, guessedCard },
+    })
+  }
+
+  submitMove(gameId: string, playerId: string, move: string): GameActionResponse {
+    return this.executeAction({
+      gameId,
+      playerId,
+      actionType: RpsActionTypes.SUBMIT_MOVE,
+      payload: { move },
     })
   }
 
@@ -190,17 +227,13 @@ export class GameEngineService {
     return this.sessionStore.getByLobbyId(lobbyId)
   }
 
-  private buildAction(request: GameActionRequest): LoveLetterAction {
+  private buildAction(request: GameActionRequest): GenericAction {
     return {
       type: request.actionType,
       playerId: request.playerId,
       timestamp: new Date(),
-      payload: {
-        cardType: request.payload?.cardType as any,
-        targetPlayerId: request.payload?.targetPlayerId,
-        guessedCard: request.payload?.guessedCard as any,
-      },
-    }
+      payload: (request.payload ?? {}) as IAction['payload'],
+    } as GenericAction
   }
 }
 
