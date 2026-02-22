@@ -479,8 +479,11 @@ export default function Game({
                       {rpsFinalRounds.length === 0 ? (
                         <p className="text-muted-foreground">No rounds recorded.</p>
                       ) : (
-                        rpsFinalRounds.map((round) => (
-                          <div key={round.round} className="flex items-center justify-between">
+                        rpsFinalRounds.map((round, index) => (
+                          <div
+                            key={`final-round-${round.round}-${round.winnerId ?? 'draw'}-${index}`}
+                            className="flex items-center justify-between"
+                          >
                             <span>Round {round.round}</span>
                             <span>
                               {round.winnerId === null
@@ -650,9 +653,9 @@ export default function Game({
                   rpsRounds
                     .slice()
                     .reverse()
-                    .map((round) => (
+                    .map((round, index) => (
                       <div
-                        key={round.round}
+                        key={`history-round-${round.round}-${round.winnerId ?? 'draw'}-${index}`}
                         className="rounded-base border-2 border-border px-3 py-2 text-sm"
                       >
                         <span className="font-semibold mr-2">Round {round.round}</span>
