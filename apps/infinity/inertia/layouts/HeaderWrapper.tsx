@@ -2,7 +2,7 @@ import React from 'react'
 import { router } from '@inertiajs/react'
 import { Header } from '@infinity.dev/ui/components/header'
 import { useTransmit } from '../contexts/TransmitContext'
-import { useLobbyService } from '../hooks/use_lobby_service'
+import { disposeLobbyService, useLobbyService } from '../hooks/use_lobby_service'
 
 interface User {
   uuid: string
@@ -25,7 +25,7 @@ interface HeaderWrapperProps {
 }
 
 export function HeaderWrapper({ user, currentLobby, className }: HeaderWrapperProps) {
-  const { isConnected } = useTransmit()
+  const { isConnected, unsubscribeAll } = useTransmit()
   const { service: lobbyService } = useLobbyService()
 
   const handleCreateLobby = () => {
@@ -57,8 +57,13 @@ export function HeaderWrapper({ user, currentLobby, className }: HeaderWrapperPr
     router.visit('/auth/register')
   }
 
-  const handleLogout = () => {
-    router.post('/auth/logout')
+  const handleLogout = async () => {
+    try {
+      disposeLobbyService()
+      await unsubscribeAll()
+    } finally {
+      router.post('/auth/logout')
+    }
   }
 
   const handleProfile = () => {

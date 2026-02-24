@@ -5,6 +5,15 @@ import { LobbyService } from '../services/lobby_service'
 // Instance globale pour éviter les duplications
 let globalLobbyService: LobbyService | null = null
 
+export function disposeLobbyService(): void {
+  if (!globalLobbyService) {
+    return
+  }
+
+  globalLobbyService.destroy()
+  globalLobbyService = null
+}
+
 /**
  * Hook pour utiliser le service de lobbies avec Transmit
  */
