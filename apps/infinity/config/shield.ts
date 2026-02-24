@@ -1,6 +1,7 @@
 import { defineConfig } from '@adonisjs/shield'
+import env from '#start/env'
 
-const isDevelopment = process.env.NODE_ENV === 'development'
+const isDevelopment = env.get('NODE_ENV') === 'development'
 
 const shieldConfig = defineConfig({
   /**

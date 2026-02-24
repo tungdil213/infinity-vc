@@ -41,6 +41,14 @@ export default defineConfig({
     () => import('@adonisjs/drive/drive_provider'),
     () => import('#providers/app_provider'),
     () => import('@adonisjs/transmit/transmit_provider'),
+    {
+      file: () => import('adonisjs-server-stats/provider'),
+      environment: ['web'],
+    },
+    {
+      file: () => import('adonisjs-server-stats/log-stream/provider'),
+      environment: ['web'],
+    },
   ],
 
   /*
