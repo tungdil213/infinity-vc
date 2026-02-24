@@ -161,8 +161,9 @@ test.group('Lobby Entity', () => {
 
     const result = lobby.removePlayer(lobby.creator.uuid)
 
-    assert.isFalse(result.isSuccess)
-    assert.equal(result.error, 'Creator cannot leave lobby while other players are present')
+    assert.isTrue(result.isSuccess)
+    assert.lengthOf(lobby.players, 1)
+    assert.equal(lobby.createdBy, newPlayer.uuid)
   })
 
   test('should allow creator to leave when alone', ({ assert }) => {

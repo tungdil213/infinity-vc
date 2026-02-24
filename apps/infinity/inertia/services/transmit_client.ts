@@ -1,13 +1,32 @@
 import { Transmit } from '@adonisjs/transmit-client'
 
+type BrowserLikeGlobals = {
+  location?: {
+    origin?: string
+  }
+  document?: {
+    querySelector?: (selector: string) => { getAttribute?: (name: string) => string | null } | null
+  }
+}
+
+const browserGlobals = globalThis as typeof globalThis & BrowserLikeGlobals
+
+function getCsrfToken(): string | undefined {
+  return (
+    browserGlobals.document
+      ?.querySelector?.('meta[name="csrf-token"]')
+      ?.getAttribute?.('content') ?? undefined
+  )
+}
+
 /**
  * Client Transmit configuré pour l'application
  */
 export const transmitClient = new Transmit({
-  baseUrl: window.location.origin,
+  baseUrl: browserGlobals.location?.origin ?? '',
   beforeSubscribe: (request: RequestInit) => {
     // Ajouter les headers d'authentification si nécessaire
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+    const csrfToken = getCsrfToken()
     if (csrfToken) {
       if (!request.headers) {
         request.headers = {}
@@ -17,7 +36,7 @@ export const transmitClient = new Transmit({
   },
   beforeUnsubscribe: (request: RequestInit) => {
     // Ajouter les headers d'authentification si nécessaire
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+    const csrfToken = getCsrfToken()
     if (csrfToken) {
       if (!request.headers) {
         request.headers = {}

@@ -10,6 +10,7 @@
 import router from '@adonisjs/core/services/router'
 import { middleware } from './kernel.js'
 import transmit from '@adonisjs/transmit/services/main'
+import app from '@adonisjs/core/services/app'
 import './transmit.js'
 
 // Public routes
@@ -17,6 +18,17 @@ router.get('/', '#controllers/simple_lobbies_controller.welcome').as('home')
 
 // Development routes (only in dev mode)
 router.get('/dev/routes', '#controllers/dev_routes_controller.index').as('dev.routes')
+
+if (app.inDev) {
+  router
+    .group(() => {
+      router
+        .get('/server-stats', '#controllers/admin/server_stats_controller.index')
+        .as('admin.server-stats.index')
+    })
+    .prefix('/admin/api')
+    .use(middleware.auth())
+}
 
 // Authentication routes
 router
@@ -53,7 +65,7 @@ router
       .post('/lobbies/:uuid/leave', '#controllers/enhanced_lobbies_controller.leave')
       .as('lobbies.leave')
     router
-      .post('/lobbies/leave-on-close', '#controllers/lobbies_controller.leaveOnClose')
+      .post('/lobbies/leave-on-close', '#controllers/enhanced_lobbies_controller.leaveOnClose')
       .as('lobbies.leave.close')
     router
       .post('/lobbies/:uuid/start', '#controllers/enhanced_lobbies_controller.start')

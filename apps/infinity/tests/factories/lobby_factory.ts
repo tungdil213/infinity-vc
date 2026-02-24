@@ -16,6 +16,7 @@ export class LobbyFactory {
       name: `Test Lobby ${this.counter}`,
       maxPlayers: 4,
       isPrivate: false,
+      gameType: 'love-letter',
       ...overrides,
     }
   }
@@ -31,6 +32,7 @@ export class LobbyFactory {
       uuid: `lobby-${lobbyId}`,
       name: `Test Lobby ${lobbyId}`,
       createdBy: creatorUuid,
+      gameType: 'love-letter',
       maxPlayers: 4,
       isPrivate: false,
       status: 'OPEN',

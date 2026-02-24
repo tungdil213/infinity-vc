@@ -12,11 +12,11 @@
   },
   "iconLibrary": "lucide",
   "aliases": {
-    "components": "@tyfo.dev/ui/components",
-    "utils": "@tyfo.dev/ui/lib/utils",
-    "ui": "@tyfo.dev/ui/components/ui",
-    "lib": "@tyfo.dev/ui/lib",
-    "hooks": "@tyfo.dev/ui/hooks"
+    "components": "@infinity.dev/ui/components",
+    "utils": "@infinity.dev/ui/lib/utils",
+    "ui": "@infinity.dev/ui/components/ui",
+    "lib": "@infinity.dev/ui/lib",
+    "hooks": "@infinity.dev/ui/hooks"
   },
   "registries": {}
 }

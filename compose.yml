@@ -1,29 +1,29 @@
-version: "3.8"
+version: '3.8'
 
 services:
   site:
-    container_name: tyfo.dev
+    container_name: infinity.dev
     build:
       context: .
       dockerfile: Dockerfile
-    image: tyfo.dev:latest
+    image: infinity.dev:latest
     env_file:
       - ./apps/infinity/.env
     ports:
-      - "3333:3333"
+      - '3333:3333'
     environment:
       - NODE_ENV=production
       - HOST=0.0.0.0
       - DB_HOST=host.docker.internal
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - 'host.docker.internal:host-gateway'
     depends_on:
       - database
 
   database:
     image: postgres:16-alpine3.19
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - psql-data:/var/lib/postgresql/data
     environment:
@@ -33,8 +33,8 @@ services:
   mailer:
     image: axllent/mailpit:v1.21
     ports:
-      - "1025:1025"
-      - "8025:8025"
+      - '1025:1025'
+      - '8025:8025'
 
 volumes:
   psql-data:

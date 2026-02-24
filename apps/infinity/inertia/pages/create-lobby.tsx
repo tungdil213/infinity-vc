@@ -1,25 +1,25 @@
 import React, { useState } from 'react'
 import { Head, Link, router } from '@inertiajs/react'
-import { Button } from '@tyfo.dev/ui/primitives/button'
-import { Input } from '@tyfo.dev/ui/primitives/input'
-import { Textarea } from '@tyfo.dev/ui/primitives/textarea'
-import { Label } from '@tyfo.dev/ui/primitives/label'
-import { Checkbox } from '@tyfo.dev/ui/primitives/checkbox'
+import { Button } from '@infinity.dev/ui/primitives/button'
+import { Input } from '@infinity.dev/ui/primitives/input'
+import { Textarea } from '@infinity.dev/ui/primitives/textarea'
+import { Label } from '@infinity.dev/ui/primitives/label'
+import { Checkbox } from '@infinity.dev/ui/primitives/checkbox'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@tyfo.dev/ui/primitives/select'
+} from '@infinity.dev/ui/primitives/select'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@tyfo.dev/ui/primitives/card'
-import { Alert, AlertDescription } from '@tyfo.dev/ui/primitives/alert'
+} from '@infinity.dev/ui/primitives/card'
+import { Alert, AlertDescription } from '@infinity.dev/ui/primitives/alert'
 import { HeaderWrapper } from '../layouts/HeaderWrapper'
 import Layout from '../layouts/layout'
 import { AlertCircle, CheckCircle2, Lightbulb } from 'lucide-react'
@@ -29,8 +29,16 @@ interface CreateLobbyProps {
     uuid: string
     fullName: string
   }
+  availableGames: Array<{
+    id: string
+    displayName: string
+    description: string
+    minPlayers: number
+    maxPlayers: number
+  }>
   errors?: {
     name?: string[]
+    gameType?: string[]
     maxPlayers?: string[]
     password?: string[]
     general?: string[]
@@ -41,17 +49,37 @@ interface CreateLobbyProps {
   }
 }
 
-export default function CreateLobby({ user, errors = {}, flash = {} }: CreateLobbyProps) {
+export default function CreateLobby({
+  user,
+  availableGames,
+  errors = {},
+  flash = {},
+}: CreateLobbyProps) {
+  const defaultGame = availableGames[0]
   const [formData, setFormData] = useState({
     name: '',
-    maxPlayers: 4,
+    maxPlayers: defaultGame ? Math.max(2, defaultGame.minPlayers) : 2,
     isPrivate: false,
     hasPassword: false,
     password: '',
     description: '',
-    gameType: 'love-letter',
+    gameType: defaultGame?.id ?? '',
+    gameSettings: {
+      roundsToWin: 3,
+      allowDrawReplay: true,
+    },
   })
   const [isLoading, setIsLoading] = useState(false)
+
+  const selectedGame =
+    availableGames.find((game) => game.id === formData.gameType) ?? availableGames[0] ?? null
+  const isRpsSelected = formData.gameType === 'rock-paper-scissors'
+  const playerOptions = selectedGame
+    ? Array.from(
+        { length: selectedGame.maxPlayers - selectedGame.minPlayers + 1 },
+        (_, index) => selectedGame.minPlayers + index
+      )
+    : [2, 3, 4]
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,6 +88,7 @@ export default function CreateLobby({ user, errors = {}, flash = {} }: CreateLob
     const submitData = {
       ...formData,
       password: formData.hasPassword ? formData.password : undefined,
+      gameSettings: isRpsSelected ? formData.gameSettings : undefined,
     }
 
     router.post('/lobbies', submitData, {
@@ -96,7 +125,7 @@ export default function CreateLobby({ user, errors = {}, flash = {} }: CreateLob
 
   return (
     <Layout>
-      <Head title="Create Lobby - Infinity Game" />
+      <Head title="Create Lobby - infinity Game" />
 
       <div className="min-h-screen bg-secondary-background">
         <HeaderWrapper user={{ uuid: user.uuid, fullName: user.fullName, email: '' }} />
@@ -161,24 +190,40 @@ export default function CreateLobby({ user, errors = {}, flash = {} }: CreateLob
                   <Label>Game Type</Label>
                   <Select
                     value={formData.gameType}
-                    onValueChange={(value) => setFormData((prev) => ({ ...prev, gameType: value }))}
+                    onValueChange={(value) => {
+                      const nextGame = availableGames.find((game) => game.id === value)
+                      setFormData((prev) => ({
+                        ...prev,
+                        gameType: value,
+                        maxPlayers: nextGame
+                          ? Math.min(
+                              Math.max(prev.maxPlayers, nextGame.minPlayers),
+                              nextGame.maxPlayers
+                            )
+                          : prev.maxPlayers,
+                      }))
+                    }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className={errors.gameType ? 'border-destructive' : ''}>
                       <SelectValue placeholder="Select a game" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="love-letter">Love Letter</SelectItem>
-                      <SelectItem value="uno" disabled>
-                        Uno (Coming Soon)
-                      </SelectItem>
-                      <SelectItem value="poker" disabled>
-                        Poker (Coming Soon)
-                      </SelectItem>
-                      <SelectItem value="hearts" disabled>
-                        Hearts (Coming Soon)
-                      </SelectItem>
+                      {availableGames.map((game) => (
+                        <SelectItem key={game.id} value={game.id}>
+                          {game.displayName}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
+                  {errors.gameType && (
+                    <p className="text-sm text-destructive">{errors.gameType[0]}</p>
+                  )}
+                  {selectedGame && (
+                    <p className="text-sm text-muted-foreground">
+                      {selectedGame.description} ({selectedGame.minPlayers}-
+                      {selectedGame.maxPlayers} joueurs)
+                    </p>
+                  )}
                 </div>
 
                 {/* Max Players */}
@@ -194,17 +239,74 @@ export default function CreateLobby({ user, errors = {}, flash = {} }: CreateLob
                       <SelectValue placeholder="Select max players" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="2">2 Players</SelectItem>
-                      <SelectItem value="3">3 Players</SelectItem>
-                      <SelectItem value="4">4 Players</SelectItem>
-                      <SelectItem value="6">6 Players</SelectItem>
-                      <SelectItem value="8">8 Players</SelectItem>
+                      {playerOptions.map((count) => (
+                        <SelectItem key={count} value={String(count)}>
+                          {count} Players
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   {errors.maxPlayers && (
                     <p className="text-sm text-destructive">{errors.maxPlayers[0]}</p>
                   )}
                 </div>
+
+                {isRpsSelected && (
+                  <div className="space-y-4">
+                    <Label className="text-base font-heading">Game Settings</Label>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="roundsToWin">Rounds to win</Label>
+                      <Input
+                        id="roundsToWin"
+                        name="roundsToWin"
+                        type="number"
+                        min={1}
+                        max={10}
+                        value={formData.gameSettings.roundsToWin}
+                        onChange={(event) => {
+                          const roundsToWin = Number.parseInt(event.target.value, 10)
+                          setFormData((prev) => ({
+                            ...prev,
+                            gameSettings: {
+                              ...prev.gameSettings,
+                              roundsToWin: Number.isNaN(roundsToWin)
+                                ? prev.gameSettings.roundsToWin
+                                : roundsToWin,
+                            },
+                          }))
+                        }}
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Number of won rounds needed to win the match (1-10).
+                      </p>
+                    </div>
+
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id="allowDrawReplay"
+                        checked={formData.gameSettings.allowDrawReplay}
+                        onCheckedChange={(checked) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            gameSettings: {
+                              ...prev.gameSettings,
+                              allowDrawReplay: !!checked,
+                            },
+                          }))
+                        }
+                      />
+                      <div>
+                        <Label htmlFor="allowDrawReplay" className="cursor-pointer">
+                          Replay draw rounds
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                          If disabled, draw rounds still advance the match.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Privacy Settings */}
                 <div className="space-y-4">

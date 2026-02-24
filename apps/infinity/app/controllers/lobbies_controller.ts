@@ -85,6 +85,7 @@ export default class LobbiesController {
       maxPlayers: Number.parseInt(maxPlayers),
       isPrivate,
       userUuid: user.uuid,
+      gameType: 'love-letter',
     })
 
     if (result.isFailure) {

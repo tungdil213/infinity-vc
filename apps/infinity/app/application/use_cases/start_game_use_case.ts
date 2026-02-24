@@ -4,7 +4,6 @@ import { GameRepository } from '../repositories/game_repository.js'
 import { Result } from '../../domain/shared/result.js'
 import { TransmitLobbyService } from '../services/transmit_lobby_service.js'
 import { gameEngineService } from '../services/game_engine_service.js'
-import { Cards } from '../../games/love-letter/types.js'
 
 export interface StartGameRequest {
   userUuid: string
@@ -81,20 +80,42 @@ export class StartGameUseCase {
       // Sauvegarder le lobby mis à jour
       await this.lobbyRepository.save(lobby)
 
+      const resolvedGameType = lobby.gameType || 'love-letter-infinity-gauntlet'
+
       // Créer la session de jeu avec le LoveLetterEngine
-      const gameSession = gameEngineService.createGame(lobby.uuid, lobby.players)
+      const gameSessionResult = gameEngineService.createGame(
+        lobby.uuid,
+        lobby.players,
+        resolvedGameType,
+        lobby.gameSettings
+      )
+      if (gameSessionResult.isFailure) {
+        return Result.fail(gameSessionResult.error)
+      }
+
+      const gameSession = gameSessionResult.value
       const gameState = gameSession.state
 
       // Créer l'entité Game pour la persistance
+      const gameStateAsRecord = gameState as unknown as Record<string, unknown>
+      const gameStatePlayers =
+        (gameState.players as unknown as Array<Record<string, unknown>>) ?? []
+      const discardPile = (gameStateAsRecord.publicDiscards as Array<string>) ?? []
+      const deckCount = Array.isArray(gameStateAsRecord.deck)
+        ? gameStateAsRecord.deck.length
+        : Number(gameStateAsRecord.deckCount ?? 0)
+
       const game = Game.create({
         uuid: gameSession.gameId,
         players: lobby.players,
         gameData: {
           currentRound: gameState.round,
           currentTurn: gameState.turn,
-          deck: { remaining: gameState.deck.length },
-          discardPile: gameState.publicDiscards,
-          eliminatedPlayers: gameState.players.filter((p) => p.isEliminated).map((p) => p.id),
+          deck: { remaining: deckCount },
+          discardPile,
+          eliminatedPlayers: gameStatePlayers
+            .filter((p) => p.isEliminated === true)
+            .map((p) => String(p.id)),
           playerHands: {},
         },
       })
@@ -128,18 +149,18 @@ export class StartGameUseCase {
             round: gameState.round,
             turn: gameState.turn,
             isFinished: gameState.isFinished,
-            deckCount: gameState.deck.length,
-            discardPile: gameState.publicDiscards.map((cardType) => ({
+            deckCount,
+            discardPile: discardPile.map((cardType) => ({
               type: cardType,
-              value: Cards[cardType].value,
+              value: 0,
             })),
-            players: gameState.players.map((p) => ({
-              id: p.id,
-              name: p.name,
-              isActive: p.isActive,
-              isProtected: p.isProtected,
-              isEliminated: p.isEliminated,
-              handCount: p.hand.length,
+            players: gameStatePlayers.map((p) => ({
+              id: String(p.id),
+              name: String(p.name),
+              isActive: Boolean(p.isActive),
+              isProtected: Boolean(p.isProtected),
+              isEliminated: Boolean(p.isEliminated),
+              handCount: Array.isArray(p.hand) ? p.hand.length : 0,
             })),
           },
           startedAt: gameSession.createdAt,

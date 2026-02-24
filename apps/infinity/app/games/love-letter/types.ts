@@ -1,10 +1,16 @@
 /**
  * Love Letter Game Types
- * 
+ *
  * This module defines all types specific to the Love Letter card game.
- * It extends the generic game engine types from @tyfo.dev/game-engine.
+ * It extends the generic game engine types from @Infinity.dev/game-engine.
  */
-import type { IGameState, IAction, IPlayer } from '@tyfo.dev/game-engine/core'
+import type { IGameState, IAction, IPlayer } from '@infinity.dev/game-engine/core'
+
+export interface PlayCardPayload {
+  cardType: CardType
+  targetPlayerId?: string
+  guessedCard?: CardType
+}
 
 /**
  * Love Letter card types
@@ -25,7 +31,7 @@ export type CardType = (typeof CardTypes)[keyof typeof CardTypes]
 /**
  * Card definition
  */
-export interface ICard {
+export interface CardDefinition {
   readonly type: CardType
   readonly value: number
   readonly name: string
@@ -36,7 +42,7 @@ export interface ICard {
 /**
  * Card database - All 16 cards in the Love Letter deck
  */
-export const Cards: Record<CardType, ICard> = {
+export const Cards: Record<CardType, CardDefinition> = {
   [CardTypes.GUARD]: {
     type: CardTypes.GUARD,
     value: 1,
@@ -98,7 +104,7 @@ export const Cards: Record<CardType, ICard> = {
 /**
  * Love Letter player with hand and status
  */
-export interface ILoveLetterPlayer extends IPlayer {
+export interface LoveLetterPlayer extends IPlayer {
   readonly hand: CardType[]
   readonly discardPile: CardType[]
   readonly isEliminated: boolean
@@ -109,24 +115,18 @@ export interface ILoveLetterPlayer extends IPlayer {
 /**
  * Love Letter game phase
  */
-export type LoveLetterPhase =
-  | 'setup'
-  | 'draw'
-  | 'play'
-  | 'resolve'
-  | 'round_end'
-  | 'game_over'
+export type LoveLetterPhase = 'setup' | 'draw' | 'play' | 'resolve' | 'round_end' | 'game_over'
 
 /**
  * Love Letter game state
  */
-export interface ILoveLetterState extends IGameState {
+export interface LoveLetterState extends IGameState {
   readonly phase: LoveLetterPhase
-  readonly players: ILoveLetterPlayer[]
+  readonly players: LoveLetterPlayer[]
   readonly deck: CardType[]
   readonly setAsideCard: CardType | null // Face-down card at start
   readonly publicDiscards: CardType[] // Face-up discards for 2-player
-  readonly lastAction: ILoveLetterAction | null
+  readonly lastAction: LoveLetterAction | null
   readonly tokensToWin: number
 }
 
@@ -141,21 +141,13 @@ export const LoveLetterActionTypes = {
   ACKNOWLEDGE: 'acknowledge',
 } as const
 
-export type LoveLetterActionType = (typeof LoveLetterActionTypes)[keyof typeof LoveLetterActionTypes]
-
-/**
- * Play card action payload
- */
-export interface PlayCardPayload {
-  cardType: CardType
-  targetPlayerId?: string
-  guessedCard?: CardType // For Guard
-}
+export type LoveLetterActionType =
+  (typeof LoveLetterActionTypes)[keyof typeof LoveLetterActionTypes]
 
 /**
  * Love Letter action
  */
-export interface ILoveLetterAction extends IAction<PlayCardPayload> {
+export interface LoveLetterAction extends IAction<PlayCardPayload> {
   readonly type: LoveLetterActionType
 }
 

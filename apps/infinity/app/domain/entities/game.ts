@@ -228,9 +228,6 @@ export default class Game extends BaseEntity {
     if (!players || players.length < 2) {
       throw new GameStateException('Game must have at least 2 players')
     }
-    if (players.length > 4) {
-      throw new GameStateException('Game cannot have more than 4 players')
-    }
 
     // Vérifier les doublons
     const uniqueUuids = new Set(players.map((p) => p.uuid))

@@ -61,7 +61,8 @@ test.group('Lobby Use Cases Integration', () => {
   }
 
   test.group('complete lobby lifecycle', () => {
-    test('should handle full lobby lifecycle from creation to game start', async ({ assert }) => {
+    test('should handle full lobby lifecycle from creation to game start', async (ctx: any) => {
+      const { assert } = ctx
       setupRepositories()
       // 1. Créer des joueurs
       const player1 = PlayerFactory.create({ nickName: 'Player1' })
@@ -78,6 +79,7 @@ test.group('Lobby Use Cases Integration', () => {
         userUuid: player1.userUuid,
         maxPlayers: 2,
         isPrivate: true,
+        gameType: 'love-letter',
       })
 
       if (createResult.isFailure) {
@@ -132,7 +134,8 @@ test.group('Lobby Use Cases Integration', () => {
       assert.exists(savedGame)
     })
 
-    test('should handle player leaving and rejoining', async ({ assert }) => {
+    test('should handle player leaving and rejoining', async (ctx: any) => {
+      const { assert } = ctx
       setupRepositories()
       // Créer des joueurs
       const player1 = PlayerFactory.create()
@@ -147,6 +150,7 @@ test.group('Lobby Use Cases Integration', () => {
         userUuid: player1.userUuid,
         maxPlayers: 4,
         isPrivate: false,
+        gameType: 'love-letter',
       })
 
       const lobbyUuid = createResult.value.uuid
@@ -176,7 +180,8 @@ test.group('Lobby Use Cases Integration', () => {
       assert.lengthOf(rejoinResult.value!.lobby.players, 2)
     })
 
-    test('should delete lobby when creator leaves and no other players', async ({ assert }) => {
+    test('should delete lobby when creator leaves and no other players', async (ctx: any) => {
+      const { assert } = ctx
       setupRepositories()
       const player1 = PlayerFactory.create()
       await playerRepository.save(player1)
@@ -187,6 +192,7 @@ test.group('Lobby Use Cases Integration', () => {
         userUuid: player1.userUuid,
         maxPlayers: 4,
         isPrivate: false,
+        gameType: 'love-letter',
       })
 
       const lobbyUuid = createResult.value.uuid
@@ -194,7 +200,7 @@ test.group('Lobby Use Cases Integration', () => {
       // Le créateur quitte (seul dans le lobby)
       const leaveResult = await leaveLobbyUseCase.execute({
         lobbyUuid,
-        userUuid: player1.uuid, // Utiliser l'UUID du Player
+        userUuid: player1.uuid,
       })
 
       assert.equal(leaveResult.isSuccess, true)
@@ -205,7 +211,8 @@ test.group('Lobby Use Cases Integration', () => {
       assert.lengthOf(listResult.value!.lobbies, 0)
     })
 
-    test('should prevent non-creator from starting game', async ({ assert }) => {
+    test('should prevent non-creator from starting game', async (ctx: any) => {
+      const { assert } = ctx
       setupRepositories()
       const player1 = PlayerFactory.create()
       const player2 = PlayerFactory.create()
@@ -219,6 +226,7 @@ test.group('Lobby Use Cases Integration', () => {
         userUuid: player1.userUuid,
         maxPlayers: 4,
         isPrivate: false,
+        gameType: 'love-letter',
       })
 
       const lobbyUuid = createResult.value.uuid
@@ -239,7 +247,8 @@ test.group('Lobby Use Cases Integration', () => {
       assert.equal(startResult.error, 'Only the lobby creator can start the game')
     })
 
-    test('should handle concurrent joins correctly', async ({ assert }) => {
+    test('should handle concurrent joins correctly', async (ctx: any) => {
+      const { assert } = ctx
       setupRepositories()
       const players = PlayerFactory.createMany(5)
 
@@ -254,6 +263,7 @@ test.group('Lobby Use Cases Integration', () => {
         userUuid: players[0].userUuid,
         maxPlayers: 4,
         isPrivate: false,
+        gameType: 'love-letter',
       })
 
       const lobbyUuid = createResult.value!.uuid

@@ -85,7 +85,7 @@ test.group('HybridLobbyService', (group) => {
   test('should throw error when findByUuidOrFail cannot find lobby', async ({ assert }) => {
     await assert.rejects(
       () => hybridService.findByUuidOrFail('non-existent-uuid'),
-      'Lobby not found: non-existent-uuid'
+      'Lobby with identifier non-existent-uuid not found'
     )
   })
 })

@@ -5,8 +5,9 @@ import { CreateLobbyUseCase } from '../application/use_cases/create_lobby_use_ca
 import { JoinLobbyUseCase } from '../application/use_cases/join_lobby_use_case.js'
 import { LeaveLobbyUseCase } from '../application/use_cases/leave_lobby_use_case.js'
 import { StartGameUseCase } from '../application/use_cases/start_game_use_case.js'
-import { DatabaseUserRepository } from '../infrastructure/repositories/database_user_repository.js'
-import { HybridLobbyService } from '../application/services/hybrid_lobby_service.js'
+import { ListLobbiesUseCase } from '../application/use_cases/list_lobbies_use_case.js'
+import { ShowLobbyUseCase } from '../application/use_cases/show_lobby_use_case.js'
+import { KickPlayerUseCase } from '../application/use_cases/kick_player_use_case.js'
 import BusinessException from '../exceptions/business_exception.js'
 import {
   LobbyCreationException,
@@ -14,12 +15,24 @@ import {
   LobbyCreationInternalException,
 } from '../exceptions/lobby_exceptions.js'
 import { lobbyStoreValidator } from '#validators/lobby_store_validator'
-import {
-  toLobbySummary,
-  toLobbyListItem,
-  toLobbyDetail,
-  toUserSummary,
-} from '#presenters/lobby_presenter'
+import { toUserSummary } from '#presenters/lobby_presenter'
+import type { Request } from '@adonisjs/core/http'
+import type { Response } from '@adonisjs/core/http'
+import type { Session } from '@adonisjs/session'
+import { createDefaultLauncher } from '@infinity.dev/game-engine'
+
+type AvailableGameViewModel = {
+  id: string
+  displayName: string
+  description: string
+  minPlayers: number
+  maxPlayers: number
+}
+
+type CreateLobbySettingsInput = {
+  roundsToWin?: number
+  allowDrawReplay?: boolean
+}
 
 @inject()
 export default class EnhancedLobbiesController {
@@ -28,8 +41,9 @@ export default class EnhancedLobbiesController {
     private joinLobbyUseCase: JoinLobbyUseCase,
     private leaveLobbyUseCase: LeaveLobbyUseCase,
     private startGameUseCase: StartGameUseCase,
-    private lobbyRepository: HybridLobbyService,
-    private userRepository: DatabaseUserRepository
+    private listLobbiesUseCase: ListLobbiesUseCase,
+    private showLobbyUseCase: ShowLobbyUseCase,
+    private kickPlayerUseCase: KickPlayerUseCase
   ) {}
 
   /**
@@ -37,12 +51,46 @@ export default class EnhancedLobbiesController {
    */
   async welcome({ inertia, auth }: HttpContext) {
     const user = auth.user
-    const currentLobby = user ? await this.lobbyRepository.findByPlayer(user.userUuid) : null
 
     return inertia.render('welcome', {
       user: user ? toUserSummary(user, { includeEmail: true }) : null,
-      currentLobby: currentLobby ? toLobbySummary(currentLobby) : null,
+      currentLobby: null,
     })
+  }
+
+  private sanitizeGameSettings(gameType: string, gameSettings?: CreateLobbySettingsInput) {
+    if (gameType !== 'rock-paper-scissors') {
+      return {}
+    }
+
+    const roundsToWinRaw = gameSettings?.roundsToWin
+    const roundsToWin = Number.isFinite(roundsToWinRaw) ? Number(roundsToWinRaw) : 3
+    const allowDrawReplay = gameSettings?.allowDrawReplay ?? true
+
+    if (!Number.isInteger(roundsToWin) || roundsToWin < 1 || roundsToWin > 10) {
+      throw new InvalidLobbyConfigurationException(
+        'gameSettings.roundsToWin',
+        roundsToWinRaw,
+        'roundsToWin must be an integer between 1 and 10'
+      )
+    }
+
+    return {
+      roundsToWin,
+      allowDrawReplay,
+    }
+  }
+
+  private getAvailableGames(): AvailableGameViewModel[] {
+    const launcher = createDefaultLauncher()
+
+    return launcher.listGames().map((game) => ({
+      id: game.id,
+      displayName: game.displayName,
+      description: game.description,
+      minPlayers: game.playerConstraints.minPlayers,
+      maxPlayers: game.playerConstraints.maxPlayers,
+    }))
   }
 
   /**
@@ -52,13 +100,21 @@ export default class EnhancedLobbiesController {
     const user = auth.user!
 
     try {
-      const lobbies = await this.lobbyRepository.findAll()
-      const currentLobby = await this.lobbyRepository.findByPlayer(user.userUuid)
+      const result = await this.listLobbiesUseCase.execute({ includePrivate: true })
+
+      if (result.isFailure) {
+        logger.error({ error: result.error }, 'Failed to load lobbies')
+        return inertia.render('lobbies', {
+          lobbies: [],
+          user: toUserSummary(user, { includeEmail: true }),
+          currentLobby: null,
+        })
+      }
 
       return inertia.render('lobbies', {
-        lobbies: lobbies.map(toLobbyListItem),
+        lobbies: result.value.lobbies,
         user: toUserSummary(user, { includeEmail: true }),
-        currentLobby: currentLobby ? toLobbySummary(currentLobby) : null,
+        currentLobby: null,
       })
     } catch (error) {
       logger.error({ error }, 'Failed to load lobbies')
@@ -75,11 +131,12 @@ export default class EnhancedLobbiesController {
    */
   async create({ inertia, auth }: HttpContext) {
     const user = auth.user!
-    const currentLobby = await this.lobbyRepository.findByPlayer(user.userUuid)
+    const availableGames = this.getAvailableGames()
 
     return inertia.render('create-lobby', {
       user: toUserSummary(user),
-      currentLobby: currentLobby ? toLobbySummary(currentLobby) : null,
+      currentLobby: null,
+      availableGames,
     })
   }
 
@@ -91,13 +148,30 @@ export default class EnhancedLobbiesController {
     try {
       const {
         name,
-        description,
         maxPlayers,
         isPrivate = false,
         hasPassword = false,
         password,
-        gameType = 'love-letter',
+        gameType,
+        gameSettings,
       } = await request.validateUsing(lobbyStoreValidator)
+
+      const selectedGame = this.getAvailableGames().find((game) => game.id === gameType)
+      if (!selectedGame) {
+        throw new InvalidLobbyConfigurationException(
+          'gameType',
+          gameType,
+          `Selected game '${gameType}' is not available`
+        )
+      }
+
+      if (maxPlayers < selectedGame.minPlayers || maxPlayers > selectedGame.maxPlayers) {
+        throw new InvalidLobbyConfigurationException(
+          'maxPlayers',
+          maxPlayers,
+          `For ${selectedGame.displayName}, maxPlayers must be between ${selectedGame.minPlayers} and ${selectedGame.maxPlayers}`
+        )
+      }
 
       if (hasPassword && (!password || password.trim().length === 0)) {
         throw new InvalidLobbyConfigurationException(
@@ -107,11 +181,15 @@ export default class EnhancedLobbiesController {
         )
       }
 
+      const sanitizedGameSettings = this.sanitizeGameSettings(gameType, gameSettings)
+
       const result = await this.createLobbyUseCase.execute({
         userUuid: user.userUuid,
         name: name.trim(),
         maxPlayers,
         isPrivate: Boolean(isPrivate),
+        gameType,
+        gameSettings: sanitizedGameSettings,
       })
 
       if (result.isFailure) {
@@ -151,15 +229,15 @@ export default class EnhancedLobbiesController {
     const { uuid } = params
 
     try {
-      const lobby = await this.lobbyRepository.findByUuid(uuid)
-      if (!lobby) {
+      const result = await this.showLobbyUseCase.execute({ lobbyUuid: uuid })
+      if (result.isFailure) {
         return inertia.render('errors/not_found', {
           error: { message: 'Lobby not found' },
         })
       }
 
       return inertia.render('lobby', {
-        lobby: toLobbyDetail(lobby),
+        lobby: this.toLobbyViewModel(result.value),
         user: { uuid: user.userUuid, nickName: user.fullName },
       })
     } catch (error) {
@@ -178,15 +256,15 @@ export default class EnhancedLobbiesController {
     const user = auth.user
 
     try {
-      const lobby = await this.lobbyRepository.findByUuid(invitationCode)
-      if (!lobby) {
+      const result = await this.showLobbyUseCase.execute({ lobbyUuid: invitationCode })
+      if (result.isFailure) {
         return inertia.render('errors/not_found', {
           error: { message: 'Lobby not found or invitation expired' },
         })
       }
 
       return inertia.render('join-lobby', {
-        lobby: toLobbyDetail(lobby),
+        lobby: this.toLobbyViewModel(result.value, invitationCode),
         user: user ? toUserSummary(user) : null,
         invitationCode,
       })
@@ -203,31 +281,9 @@ export default class EnhancedLobbiesController {
    */
   async joinByInvite({ params, response, auth, session }: HttpContext) {
     const { invitationCode } = params
-    // TODO: Use password for private lobbies
-    // const { password } = request.only(['password']) // request removed from destructuring
     const user = auth.user!
 
     try {
-      // For now, use invitation code as UUID
-      const lobby = await this.lobbyRepository.findByUuid(invitationCode)
-      if (!lobby) {
-        session.flash('error', 'Lobby not found or invitation expired')
-        return response.redirect('/lobbies')
-      }
-
-      // TODO: Check password if lobby has password protection
-      // if (lobby.hasPassword && lobby.password !== password) {
-      //   session.flash('error', 'Invalid password')
-      //   return response.redirect().back()
-      // }
-
-      // Get user from repository
-      const userEntity = await this.userRepository.findByUuid(user.userUuid)
-      if (!userEntity) {
-        session.flash('error', 'User not found')
-        return response.redirect('/lobbies')
-      }
-
       const result = await this.joinLobbyUseCase.execute({
         lobbyUuid: invitationCode,
         userUuid: user.userUuid,
@@ -255,27 +311,13 @@ export default class EnhancedLobbiesController {
     const { uuid } = params
 
     try {
-      // Get user from repository
-      const userEntity = await this.userRepository.findByUuid(user.userUuid)
-      if (!userEntity) {
-        return response.status(404).json({
-          error: 'User not found',
-        })
-      }
-
       const result = await this.joinLobbyUseCase.execute({
         lobbyUuid: uuid,
         userUuid: user.userUuid,
       })
 
       if (result.isFailure) {
-        if (request.accepts(['html'])) {
-          session.flash('error', result.error)
-          return response.redirect().back()
-        }
-        return response.status(400).json({
-          error: result.error,
-        })
+        return this.respondUseCaseFailure({ request, response, session, error: result.error })
       }
 
       if (request.accepts(['html'])) {
@@ -288,13 +330,14 @@ export default class EnhancedLobbiesController {
         message: 'Successfully joined lobby',
       })
     } catch (error) {
-      logger.error({ error }, 'Failed to join lobby')
-      if (request.accepts(['html'])) {
-        session.flash('error', 'Failed to join lobby. Please try again.')
-        return response.redirect().back()
-      }
-      return response.status(500).json({
-        error: 'Failed to join lobby',
+      return this.respondUnexpectedFailure({
+        request,
+        response,
+        session,
+        error,
+        logMessage: 'Failed to join lobby',
+        userMessage: 'Failed to join lobby. Please try again.',
+        apiMessage: 'Failed to join lobby',
       })
     }
   }
@@ -313,13 +356,7 @@ export default class EnhancedLobbiesController {
       })
 
       if (result.isFailure) {
-        if (request.accepts(['html'])) {
-          session.flash('error', result.error)
-          return response.redirect().back()
-        }
-        return response.status(400).json({
-          error: result.error,
-        })
+        return this.respondUseCaseFailure({ request, response, session, error: result.error })
       }
 
       if (request.accepts(['html'])) {
@@ -332,13 +369,14 @@ export default class EnhancedLobbiesController {
         message: 'Successfully left lobby',
       })
     } catch (error) {
-      logger.error({ error }, 'Failed to leave lobby')
-      if (request.accepts(['html'])) {
-        session.flash('error', 'Failed to leave lobby. Please try again.')
-        return response.redirect().back()
-      }
-      return response.status(500).json({
-        error: 'Failed to leave lobby',
+      return this.respondUnexpectedFailure({
+        request,
+        response,
+        session,
+        error,
+        logMessage: 'Failed to leave lobby',
+        userMessage: 'Failed to leave lobby. Please try again.',
+        apiMessage: 'Failed to leave lobby',
       })
     }
   }
@@ -357,13 +395,7 @@ export default class EnhancedLobbiesController {
       })
 
       if (result.isFailure) {
-        if (request.accepts(['html'])) {
-          session.flash('error', result.error)
-          return response.redirect().back()
-        }
-        return response.status(400).json({
-          error: result.error,
-        })
+        return this.respondUseCaseFailure({ request, response, session, error: result.error })
       }
 
       const gameResponse = result.value
@@ -379,13 +411,14 @@ export default class EnhancedLobbiesController {
         game: gameResponse.game,
       })
     } catch (error) {
-      logger.error({ error }, 'Failed to start game')
-      if (request.accepts(['html'])) {
-        session.flash('error', 'Failed to start game. Please try again.')
-        return response.redirect().back()
-      }
-      return response.status(500).json({
-        error: 'Failed to start game',
+      return this.respondUnexpectedFailure({
+        request,
+        response,
+        session,
+        error,
+        logMessage: 'Failed to start game',
+        userMessage: 'Failed to start game. Please try again.',
+        apiMessage: 'Failed to start game',
       })
     }
   }
@@ -399,30 +432,10 @@ export default class EnhancedLobbiesController {
     const { playerUuid } = request.only(['playerUuid'])
 
     try {
-      const lobby = await this.lobbyRepository.findByUuid(uuid)
-      if (!lobby) {
-        return response.status(404).json({
-          error: 'Lobby not found',
-        })
-      }
-
-      // Check if user is the lobby owner
-      if (lobby.createdBy !== user.uuid) {
-        return response.status(403).json({
-          error: 'Only the lobby owner can kick players',
-        })
-      }
-
-      // Cannot kick yourself
-      if (playerUuid === user.uuid) {
-        return response.status(400).json({
-          error: 'You cannot kick yourself',
-        })
-      }
-
-      const result = await this.leaveLobbyUseCase.execute({
+      const result = await this.kickPlayerUseCase.execute({
         lobbyUuid: uuid,
-        userUuid: playerUuid,
+        kickerUuid: user.userUuid,
+        targetPlayerUuid: playerUuid,
       })
 
       if (result.isFailure) {
@@ -446,48 +459,8 @@ export default class EnhancedLobbiesController {
   /**
    * Transfer lobby ownership (owner only)
    */
-  async transferOwnership({ params, request, response, auth }: HttpContext) {
-    const user = auth.user!
-    const { uuid } = params
-    const { newOwnerUuid } = request.only(['newOwnerUuid'])
-
-    try {
-      const lobby = await this.lobbyRepository.findByUuid(uuid)
-      if (!lobby) {
-        return response.status(404).json({
-          error: 'Lobby not found',
-        })
-      }
-
-      // Check if user is the lobby owner
-      if (lobby.createdBy !== user.uuid) {
-        return response.status(403).json({
-          error: 'Only the lobby owner can transfer ownership',
-        })
-      }
-
-      // Check if new owner is in the lobby
-      const isPlayerInLobby = lobby.players.some((p) => p.uuid === newOwnerUuid)
-      if (!isPlayerInLobby) {
-        return response.status(400).json({
-          error: 'New owner must be a player in the lobby',
-        })
-      }
-
-      // Update lobby ownership
-      // TODO: Implement this in the lobby entity and use case
-      // For now, we'll just return success
-
-      return response.json({
-        success: true,
-        message: 'Ownership transferred successfully',
-      })
-    } catch (error) {
-      logger.error({ error }, 'Failed to transfer ownership')
-      return response.status(500).json({
-        error: 'Failed to transfer ownership',
-      })
-    }
+  async transferOwnership({ response }: HttpContext) {
+    return response.status(501).json({ error: 'Transfer ownership use case not implemented yet' })
   }
 
   /**
@@ -497,12 +470,14 @@ export default class EnhancedLobbiesController {
     const { uuid } = params
 
     try {
-      const lobby = await this.lobbyRepository.findByUuid(uuid)
-      if (!lobby) {
+      const result = await this.showLobbyUseCase.execute({ lobbyUuid: uuid })
+      if (result.isFailure) {
         return response.status(404).json({ error: 'Lobby not found' })
       }
 
-      return response.json({ lobby: toLobbyDetail(lobby) })
+      return response.json({
+        lobby: this.toLobbyViewModel(result.value),
+      })
     } catch (error) {
       logger.error({ error }, 'Failed to get lobby')
       return response.status(500).json({ error: 'Failed to get lobby' })
@@ -514,8 +489,12 @@ export default class EnhancedLobbiesController {
    */
   async apiIndex({ response }: HttpContext) {
     try {
-      const lobbies = await this.lobbyRepository.findAll()
-      return response.json({ lobbies: lobbies.map(toLobbyDetail) })
+      const result = await this.listLobbiesUseCase.execute({ includePrivate: true })
+      if (result.isFailure) {
+        return response.status(500).json({ error: result.error })
+      }
+
+      return response.json({ lobbies: result.value.lobbies })
     } catch (error) {
       logger.error({ error }, 'Failed to get lobbies')
       return response.status(500).json({ error: 'Failed to get lobbies' })
@@ -562,5 +541,59 @@ export default class EnhancedLobbiesController {
         error: 'Failed to leave lobby on close',
       })
     }
+  }
+
+  private toLobbyViewModel<T extends { uuid: string }>(lobby: T, invitationCode?: string) {
+    return {
+      ...lobby,
+      invitationCode: invitationCode ?? lobby.uuid,
+      hasPassword: false,
+    }
+  }
+
+  private respondUseCaseFailure({
+    request,
+    response,
+    session,
+    error,
+  }: {
+    request: Request
+    response: Response
+    session: Session
+    error: string
+  }) {
+    if (request.accepts(['html'])) {
+      session.flash('error', error)
+      return response.redirect().back()
+    }
+
+    return response.status(400).json({ error })
+  }
+
+  private respondUnexpectedFailure({
+    request,
+    response,
+    session,
+    error,
+    logMessage,
+    userMessage,
+    apiMessage,
+  }: {
+    request: Request
+    response: Response
+    session: Session
+    error: unknown
+    logMessage: string
+    userMessage: string
+    apiMessage: string
+  }) {
+    logger.error({ error }, logMessage)
+
+    if (request.accepts(['html'])) {
+      session.flash('error', userMessage)
+      return response.redirect().back()
+    }
+
+    return response.status(500).json({ error: apiMessage })
   }
 }

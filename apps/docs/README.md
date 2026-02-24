@@ -38,6 +38,7 @@ pnpm preview-storybook
 Our design system includes the following components, each with its own set of stories demonstrating various use cases:
 
 ### Form Components
+
 - Button - Various button styles and states
 - Input - Text input fields with different variations
 - Checkbox - Selectable checkboxes with states
@@ -48,6 +49,7 @@ Our design system includes the following components, each with its own set of st
 - Label - Form labels with various styling options
 
 ### Navigation Components
+
 - Breadcrumb - Navigation breadcrumbs
 - Navigation Menu - Hierarchical navigation menus
 - Pagination - Page navigation controls
@@ -55,6 +57,7 @@ Our design system includes the following components, each with its own set of st
 - Tabs - Tabbed interface components
 
 ### Feedback Components
+
 - Alert - Various alert types and styles
 - Alert Dialog - Modal dialogs for important actions
 - Progress - Progress indicators
@@ -62,6 +65,7 @@ Our design system includes the following components, each with its own set of st
 - Toast (Sonner) - Notification system
 
 ### Layout Components
+
 - Accordion - Collapsible content sections
 - AspectRatio - Maintain aspect ratios
 - Card - Content containers
@@ -76,6 +80,7 @@ Our design system includes the following components, each with its own set of st
 - Separator - Visual dividers
 
 ### Interactive Components
+
 - Calendar - Date selection
 - Carousel - Image and content carousels
 - Command - Command palette interface
@@ -87,6 +92,7 @@ Our design system includes the following components, each with its own set of st
 - Tooltip - Hover tooltips
 
 ### Display Components
+
 - Avatar - User avatars
 - Badge - Status and notification badges
 
@@ -103,6 +109,7 @@ Our design system includes the following components, each with its own set of st
 ### Story Structure
 
 Each story should:
+
 - Demonstrate the basic usage
 - Show different variants
 - Include interactive examples where applicable
@@ -126,6 +133,7 @@ pnpm lint
 ## Dependencies
 
 Key dependencies include:
+
 - Storybook v8.2.6
 - React v19.0.0
 - date-fns
@@ -137,4 +145,4 @@ Key dependencies include:
 
 ## License
 
-MIT © [Arya Labs] 
+MIT © [Arya Labs]

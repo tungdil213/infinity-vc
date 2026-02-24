@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { usePage } from '@inertiajs/react'
 import { toast } from 'sonner'
-import { Toaster } from '@tyfo.dev/ui/primitives/sonner'
+import { Toaster } from '@infinity.dev/ui/primitives/sonner'
 import { ToastHandler } from './toast_handler'
 import { LobbyStatusSidebar } from './LobbyStatusSidebar'
 import { AutoLeaveLobby } from './AutoLeaveLobby'
@@ -16,7 +16,7 @@ function FlashMessages() {
     if (flash?.success) {
       toast.success(flash.success)
     }
-    
+
     if (flash?.error) {
       toast.error(flash.error)
     }

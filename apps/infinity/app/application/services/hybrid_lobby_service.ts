@@ -2,9 +2,9 @@ import { inject } from '@adonisjs/core'
 import Lobby from '../../domain/entities/lobby.js'
 import { LobbyStatus } from '../../domain/value_objects/lobby_status.js'
 import { LobbyRepository } from '../repositories/lobby_repository.js'
+import { EntityNotFoundError } from '../repositories/base_repository.js'
 import { InMemoryLobbyRepository } from '../../infrastructure/repositories/in_memory_lobby_repository.js'
 import { DatabaseLobbyRepository } from '../../infrastructure/repositories/database_lobby_repository.js'
-import console from 'node:console'
 
 /**
  * Service hybride pour la gestion des lobbies
@@ -57,7 +57,7 @@ export class HybridLobbyService implements LobbyRepository {
   async findByUuidOrFail(uuid: string): Promise<Lobby> {
     const lobby = await this.findByUuid(uuid)
     if (!lobby) {
-      throw new Error(`Lobby not found: ${uuid}`)
+      throw new EntityNotFoundError('Lobby', uuid)
     }
     return lobby
   }
@@ -130,10 +130,6 @@ export class HybridLobbyService implements LobbyRepository {
    * Persiste un lobby en base (appelé lors du démarrage de partie)
    */
   async persistLobby(lobby: Lobby): Promise<void> {
-    if (!this.shouldPersist(lobby)) {
-      throw new Error('Lobby cannot be persisted in current state')
-    }
-
     await this.databaseRepository.save(lobby)
   }
 
@@ -147,7 +143,7 @@ export class HybridLobbyService implements LobbyRepository {
     //
     // If we later want historical lobby data, we can relax this
     // condition (for example, to persist STARTING / IN_PROGRESS).
-    console.log(lobby)
+    void lobby
     return false
   }
 

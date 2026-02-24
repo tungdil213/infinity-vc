@@ -6,17 +6,18 @@
 
 ## Structure du projet
 
-
 - `apps/` : Contient les applications principales (notamment `apps/infinity`).
 - `packages/` : Contient les bibliothèques partagées, dont le design system UI dans `packages/ui`.
 - `docs/` : Contient toute la documentation liée au projet.
 
 ## Prérequis
+
 - **Node.js** : Version LTS recommandée (Bookworm Slim utilisée dans le Dockerfile).
 - **Docker** : Dernière version stable.
 - **pnpm** : Gestionnaire de paquets recommandé (via Corepack).
 
 ## Installation
+
 1. Clonez ce dépôt :
    ```bash
    git clone <url_du_dépôt>
@@ -46,6 +47,7 @@ Voici les scripts définis dans le `package.json` :
   - `npm run typecheck` : Vérifie les types dans tout le projet.
 
 ## Dockerfile
+
 Le projet est conçu pour fonctionner dans un environnement Docker multi-étapes :
 
 1. **Base** : Installation de Node.js et des outils nécessaires.
@@ -57,14 +59,17 @@ Le projet est conçu pour fonctionner dans un environnement Docker multi-étapes
 Pour une explication détaillée, consultez le fichier [docs/infra/docker.md](docs/infra/docker.md).
 
 ## Design System
+
 Le dossier `packages/design-system` contient une bibliothèque partagée pour les composants UI. Les instructions détaillées pour son utilisation se trouvent dans `docs/design-system.md`.
 
 ## Package.json
+
 Le fichier `package.json` centralise les scripts, dépendances, et la configuration des workspaces. Une documentation complète est disponible dans [docs/infra/package_json.md](docs/infra/package_json.md).
 
 ---
 
 ## Documentation
+
 La documentation complète se trouve dans le dossier `docs`. Voici les principales sections :
 
 1. **[Configuration de Docker](docs/infra/docker.md)** : Explication des étapes du Dockerfile.
@@ -73,6 +78,7 @@ La documentation complète se trouve dans le dossier `docs`. Voici les principal
 4. **[Package.json](docs/infra/package_json.md)** : Description des propriétés et scripts.
 
 ## Contributions
+
 Les contributions sont les bienvenues. Veuillez suivre les étapes suivantes :
 
 1. Forkez le dépôt.
@@ -83,4 +89,5 @@ Les contributions sont les bienvenues. Veuillez suivre les étapes suivantes :
 3. Poussez vos changements et créez une pull request.
 
 ## License
+
 Ce projet est sous la licence **MIT**. Voir le fichier `LICENSE` à la racine pour plus de détails.

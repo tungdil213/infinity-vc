@@ -9,31 +9,33 @@ Le système de gestion des joueurs gère l'authentification, les profils utilisa
 ### Modèle de Données
 
 #### User (Utilisateur)
+
 ```typescript
 interface User {
-  id: number
-  uuid: string           // Identifiant unique
-  email: string          // Email (unique)
-  firstName: string      // Prénom
-  lastName: string       // Nom
-  username: string       // Nom d'utilisateur (unique)
-  password: string       // Mot de passe hashé
-  avatarUrl?: string     // URL de l'avatar
-  emailVerifiedAt?: DateTime // Date de vérification email
-  createdAt: DateTime
-  updatedAt: DateTime
+	id: number;
+	uuid: string; // Identifiant unique
+	email: string; // Email (unique)
+	firstName: string; // Prénom
+	lastName: string; // Nom
+	username: string; // Nom d'utilisateur (unique)
+	password: string; // Mot de passe hashé
+	avatarUrl?: string; // URL de l'avatar
+	emailVerifiedAt?: DateTime; // Date de vérification email
+	createdAt: DateTime;
+	updatedAt: DateTime;
 }
 ```
 
 #### Player (Profil Joueur)
+
 ```typescript
 interface Player {
-  id: number
-  nickName: string       // Pseudonyme de jeu
-  userId: number         // Référence vers User
-  user: User            // Relation vers User
-  createdAt: DateTime
-  updatedAt: DateTime
+	id: number;
+	nickName: string; // Pseudonyme de jeu
+	userId: number; // Référence vers User
+	user: User; // Relation vers User
+	createdAt: DateTime;
+	updatedAt: DateTime;
 }
 ```
 
@@ -50,36 +52,42 @@ Configuration dans `config/auth.ts` :
 
 ```typescript
 const authConfig = defineConfig({
-  default: 'web',
-  guards: {
-    web: sessionGuard({
-      useRememberMeTokens: false,
-      provider: providers.lucid({
-        model: () => import('#models/user'),
-        uids: ['email'],
-        passwordColumnName: 'password',
-      }),
-    }),
-  },
-})
+	default: 'web',
+	guards: {
+		web: sessionGuard({
+			useRememberMeTokens: false,
+			provider: providers.lucid({
+				model: () => import('#models/user'),
+				uids: ['email'],
+				passwordColumnName: 'password',
+			}),
+		}),
+	},
+});
 ```
 
 ### Endpoints d'Authentification
 
 #### Inscription
+
 **POST** `/register`
+
 - Validation des données (email unique, mot de passe fort)
 - Création du User et du Player associé
 - Envoi d'email de bienvenue
 
 #### Connexion
+
 **POST** `/login`
+
 - Vérification des credentials
 - Création de session
 - Redirection vers dashboard
 
 #### Déconnexion
+
 **POST** `/logout`
+
 - Invalidation de la session
 - Redirection vers page d'accueil
 
@@ -89,45 +97,47 @@ const authConfig = defineConfig({
 
 ```typescript
 export interface PlayerInterface {
-  uuid: string      // UUID de l'utilisateur
-  nickName: string  // Pseudonyme de jeu
+	uuid: string; // UUID de l'utilisateur
+	nickName: string; // Pseudonyme de jeu
 }
 ```
 
 ### Repository Pattern
 
 #### PlayerRepository (Abstraction)
+
 ```typescript
 export default abstract class PlayerRepository {
-  abstract findAll(): Promise<PlayerInterface[]>
-  abstract findByUUID(playerUUID: string): Promise<PlayerInterface>
-  abstract save(player: PlayerInterface): Promise<void>
+	abstract findAll(): Promise<PlayerInterface[]>;
+	abstract findByUUID(playerUUID: string): Promise<PlayerInterface>;
+	abstract save(player: PlayerInterface): Promise<void>;
 }
 ```
 
 #### DatabasePlayerRepository (Implémentation)
+
 ```typescript
 export class DatabasePlayerRepository extends PlayerRepository {
-  async findByUUID(playerUUID: string): Promise<PlayerInterface> {
-    const player = await Player.query()
-      .preload('user', (query) => {
-        query.where('uuid', playerUUID)
-      })
-      .first()
-      
-    if (!player) {
-      throw new Error(`Player with UUID ${playerUUID} not found`)
-    }
-    
-    return this.toPlayerInterface(player)
-  }
+	async findByUUID(playerUUID: string): Promise<PlayerInterface> {
+		const player = await Player.query()
+			.preload('user', (query) => {
+				query.where('uuid', playerUUID);
+			})
+			.first();
 
-  private toPlayerInterface(playerModel: Player): PlayerInterface {
-    return {
-      uuid: playerModel.user.uuid,
-      nickName: playerModel.nickName,
-    }
-  }
+		if (!player) {
+			throw new Error(`Player with UUID ${playerUUID} not found`);
+		}
+
+		return this.toPlayerInterface(player);
+	}
+
+	private toPlayerInterface(playerModel: Player): PlayerInterface {
+		return {
+			uuid: playerModel.user.uuid,
+			nickName: playerModel.nickName,
+		};
+	}
 }
 ```
 
@@ -136,19 +146,20 @@ export class DatabasePlayerRepository extends PlayerRepository {
 ### Use Cases
 
 #### Profil Utilisateur
+
 **GET** `/player/me` - Affichage du profil
 
 ```typescript
 export default class ShowMeController {
-  async handle({ auth, inertia }: HttpContext) {
-    const user = auth.user!
-    const player = await this.playerRepository.findByUUID(user.uuid)
-    
-    return inertia.render('player/profile', {
-      user,
-      player
-    })
-  }
+	async handle({ auth, inertia }: HttpContext) {
+		const user = auth.user!;
+		const player = await this.playerRepository.findByUUID(user.uuid);
+
+		return inertia.render('player/profile', {
+			user,
+			player,
+		});
+	}
 }
 ```
 
@@ -159,50 +170,52 @@ export default class ShowMeController {
 ```typescript
 // Dans kernel.ts
 export const middleware = router.named({
-  auth: () => import('#middleware/auth_middleware'),
-})
+	auth: () => import('#middleware/auth_middleware'),
+});
 
 // Utilisation sur les routes
 router
-  .group(() => {
-    router.get('/me', [ShowMeController]).as('me.show')
-  })
-  .prefix('player')
-  .use(middleware.auth())
+	.group(() => {
+		router.get('/me', [ShowMeController]).as('me.show');
+	})
+	.prefix('player')
+	.use(middleware.auth());
 ```
 
 ### Validation des Données
 
 #### Validation d'Inscription
+
 ```typescript
 const registerValidator = vine.compile(
-  vine.object({
-    firstName: vine.string().trim().minLength(2),
-    lastName: vine.string().trim().minLength(2),
-    username: vine.string().trim().minLength(3).unique(),
-    email: vine.string().email().unique(),
-    password: vine.string().minLength(8).confirmed(),
-  })
-)
+	vine.object({
+		firstName: vine.string().trim().minLength(2),
+		lastName: vine.string().trim().minLength(2),
+		username: vine.string().trim().minLength(3).unique(),
+		email: vine.string().email().unique(),
+		password: vine.string().minLength(8).confirmed(),
+	})
+);
 ```
 
 ## Factory et Seeders
 
 ### UserFactory
+
 ```typescript
 export const UserFactory = factory
-  .define(User, async ({ faker }) => {
-    return {
-      firstName: faker.person.firstName(),
-      lastName: faker.person.lastName(),
-      username: faker.internet.userName(),
-      email: faker.internet.email(),
-      password: faker.internet.password(),
-      avatarUrl: faker.image.avatar(),
-      emailVerifiedAt: DateTime.fromJSDate(faker.date.past()),
-    }
-  })
-  .build()
+	.define(User, async ({ faker }) => {
+		return {
+			firstName: faker.person.firstName(),
+			lastName: faker.person.lastName(),
+			username: faker.internet.userName(),
+			email: faker.internet.email(),
+			password: faker.internet.password(),
+			avatarUrl: faker.image.avatar(),
+			emailVerifiedAt: DateTime.fromJSDate(faker.date.past()),
+		};
+	})
+	.build();
 ```
 
 ## Interface Utilisateur
@@ -210,16 +223,19 @@ export const UserFactory = factory
 ### Pages Principales
 
 #### `/register` - Inscription
+
 - Formulaire d'inscription
 - Validation côté client et serveur
 - Redirection après inscription
 
 #### `/login` - Connexion
+
 - Formulaire de connexion
 - Option "Se souvenir de moi"
 - Lien mot de passe oublié
 
 #### `/player/me` - Profil
+
 - Affichage des informations utilisateur
 - Modification du pseudonyme
 - Historique des parties
@@ -237,8 +253,8 @@ export default function PlayerProfile({ user, player }: PlayerProfileProps) {
     <div className="max-w-2xl mx-auto">
       <div className="bg-white shadow rounded-lg p-6">
         <div className="flex items-center space-x-4">
-          <img 
-            src={user.avatarUrl || '/default-avatar.png'} 
+          <img
+            src={user.avatarUrl || '/default-avatar.png'}
             alt="Avatar"
             className="w-16 h-16 rounded-full"
           />
@@ -269,9 +285,9 @@ declare sessions: ManyToMany<typeof Session>
 
 ```typescript
 interface PlayerState {
-  isOnline: boolean
-  currentSession?: string  // UUID de la session active
-  lastActivity: DateTime
+	isOnline: boolean;
+	currentSession?: string; // UUID de la session active
+	lastActivity: DateTime;
 }
 ```
 
@@ -281,16 +297,16 @@ interface PlayerState {
 
 ```typescript
 export default class WelcomeNotification extends BaseMail {
-  constructor(private user: User) {
-    super()
-  }
+	constructor(private user: User) {
+		super();
+	}
 
-  prepare() {
-    this.message
-      .to(this.user.email)
-      .subject('Bienvenue sur Infinity Gauntlet Love Letter!')
-      .htmlView('emails/welcome', { user: this.user })
-  }
+	prepare() {
+		this.message
+			.to(this.user.email)
+			.subject('Bienvenue sur infinity Gauntlet Love Letter!')
+			.htmlView('emails/welcome', { user: this.user });
+	}
 }
 ```
 
@@ -307,16 +323,16 @@ export default class WelcomeNotification extends BaseMail {
 ```typescript
 // Configuration dans config/hash.ts
 const hashConfig = defineConfig({
-  default: 'scrypt',
-  list: {
-    scrypt: scryptDriver({
-      cost: 16384,
-      blockSize: 8,
-      parallelization: 1,
-      maxMemory: 33554432,
-    }),
-  },
-})
+	default: 'scrypt',
+	list: {
+		scrypt: scryptDriver({
+			cost: 16384,
+			blockSize: 8,
+			parallelization: 1,
+			maxMemory: 33554432,
+		}),
+	},
+});
 ```
 
 ### Protection CSRF
@@ -357,12 +373,12 @@ async validatePlayerOwnership(userUUID: string, playerUUID: string) {
 
 ```typescript
 test('should create player profile after user registration', async ({ assert }) => {
-  const user = await UserFactory.create()
-  const player = await Player.findBy('user_id', user.id)
-  
-  assert.isNotNull(player)
-  assert.equal(player.userId, user.id)
-})
+	const user = await UserFactory.create();
+	const player = await Player.findBy('user_id', user.id);
+
+	assert.isNotNull(player);
+	assert.equal(player.userId, user.id);
+});
 ```
 
 ### Tests d'Intégration

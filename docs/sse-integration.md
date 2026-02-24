@@ -7,6 +7,7 @@ Le système utilise **Server-Sent Events (SSE)** au lieu de WebSockets pour les 
 ## Pourquoi SSE plutôt que WebSockets ?
 
 ### Avantages des SSE
+
 - **Simplicité** : Protocole HTTP standard, pas de handshake complexe
 - **Reconnexion automatique** : Le navigateur reconnecte automatiquement
 - **Compatibilité** : Fonctionne avec tous les proxies/firewalls HTTP
@@ -14,6 +15,7 @@ Le système utilise **Server-Sent Events (SSE)** au lieu de WebSockets pour les 
 - **Unidirectionnel** : Parfait pour les notifications (serveur → client)
 
 ### Cas d'usage dans le jeu
+
 - Notifications de lobby (joueur rejoint/quitte)
 - Démarrage de partie
 - Mises à jour d'état de jeu
@@ -45,80 +47,80 @@ Client (React)     SSE Connection     Server (AdonisJS)
 
 ```typescript
 // config/sse.ts
-import { defineConfig } from '@adonisjs/core/build/config'
+import { defineConfig } from '@adonisjs/core/build/config';
 
 export default defineConfig({
-  // Configuration des headers SSE
-  headers: {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Cache-Control'
-  },
-  
-  // Heartbeat pour maintenir la connexion
-  heartbeatInterval: 30000, // 30 secondes
-  
-  // Timeout de connexion
-  connectionTimeout: 300000, // 5 minutes
-})
+	// Configuration des headers SSE
+	headers: {
+		'Content-Type': 'text/event-stream',
+		'Cache-Control': 'no-cache',
+		'Connection': 'keep-alive',
+		'Access-Control-Allow-Origin': '*',
+		'Access-Control-Allow-Headers': 'Cache-Control',
+	},
+
+	// Heartbeat pour maintenir la connexion
+	heartbeatInterval: 30000, // 30 secondes
+
+	// Timeout de connexion
+	connectionTimeout: 300000, // 5 minutes
+});
 ```
 
 ### 2. SSE Controller
 
 ```typescript
 // app/Controllers/Http/SSEController.ts
-import type { HttpContext } from '@adonisjs/core/http'
-import { inject } from '@adonisjs/core/build/standalone'
-import EventBroadcaster from '#services/EventBroadcaster'
+import type { HttpContext } from '@adonisjs/core/http';
+import { inject } from '@adonisjs/core/build/standalone';
+import EventBroadcaster from '#services/EventBroadcaster';
 
 @inject()
 export default class SSEController {
-  constructor(private eventBroadcaster: EventBroadcaster) {}
+	constructor(private eventBroadcaster: EventBroadcaster) {}
 
-  async connect({ request, response, auth }: HttpContext) {
-    const user = auth.user!
-    
-    // Configuration des headers SSE
-    response.response.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-      'Access-Control-Allow-Origin': '*'
-    })
+	async connect({ request, response, auth }: HttpContext) {
+		const user = auth.user!;
 
-    // Création de la connexion
-    const connectionId = this.generateConnectionId()
-    const connection = new SSEConnection(connectionId, user.uuid, response)
-    
-    // Enregistrement de la connexion
-    await this.eventBroadcaster.addConnection(connection)
-    
-    // Message de bienvenue
-    connection.send('connected', {
-      connectionId,
-      timestamp: new Date().toISOString()
-    })
+		// Configuration des headers SSE
+		response.response.writeHead(200, {
+			'Content-Type': 'text/event-stream',
+			'Cache-Control': 'no-cache',
+			'Connection': 'keep-alive',
+			'Access-Control-Allow-Origin': '*',
+		});
 
-    // Gestion de la déconnexion
-    request.request.on('close', async () => {
-      await this.eventBroadcaster.removeConnection(connectionId)
-    })
+		// Création de la connexion
+		const connectionId = this.generateConnectionId();
+		const connection = new SSEConnection(connectionId, user.uuid, response);
 
-    // Heartbeat pour maintenir la connexion
-    const heartbeat = setInterval(() => {
-      connection.ping()
-    }, 30000)
+		// Enregistrement de la connexion
+		await this.eventBroadcaster.addConnection(connection);
 
-    request.request.on('close', () => {
-      clearInterval(heartbeat)
-    })
-  }
+		// Message de bienvenue
+		connection.send('connected', {
+			connectionId,
+			timestamp: new Date().toISOString(),
+		});
 
-  private generateConnectionId(): string {
-    return `sse_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-  }
+		// Gestion de la déconnexion
+		request.request.on('close', async () => {
+			await this.eventBroadcaster.removeConnection(connectionId);
+		});
+
+		// Heartbeat pour maintenir la connexion
+		const heartbeat = setInterval(() => {
+			connection.ping();
+		}, 30000);
+
+		request.request.on('close', () => {
+			clearInterval(heartbeat);
+		});
+	}
+
+	private generateConnectionId(): string {
+		return `sse_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+	}
 }
 ```
 
@@ -126,49 +128,49 @@ export default class SSEController {
 
 ```typescript
 // app/Services/SSEConnection.ts
-import type { Response } from '@adonisjs/core/http'
+import type { Response } from '@adonisjs/core/http';
 
 export default class SSEConnection {
-  private isAlive: boolean = true
+	private isAlive: boolean = true;
 
-  constructor(
-    public readonly id: string,
-    public readonly userUUID: string,
-    private response: Response
-  ) {}
+	constructor(
+		public readonly id: string,
+		public readonly userUUID: string,
+		private response: Response
+	) {}
 
-  send(event: string, data: any): void {
-    if (!this.isAlive) return
+	send(event: string, data: any): void {
+		if (!this.isAlive) return;
 
-    try {
-      const message = this.formatSSEMessage(event, data)
-      this.response.response.write(message)
-    } catch (error) {
-      this.close()
-    }
-  }
+		try {
+			const message = this.formatSSEMessage(event, data);
+			this.response.response.write(message);
+		} catch (error) {
+			this.close();
+		}
+	}
 
-  ping(): void {
-    this.send('ping', { timestamp: new Date().toISOString() })
-  }
+	ping(): void {
+		this.send('ping', { timestamp: new Date().toISOString() });
+	}
 
-  close(): void {
-    this.isAlive = false
-    try {
-      this.response.response.end()
-    } catch (error) {
-      // Connection already closed
-    }
-  }
+	close(): void {
+		this.isAlive = false;
+		try {
+			this.response.response.end();
+		} catch (error) {
+			// Connection already closed
+		}
+	}
 
-  private formatSSEMessage(event: string, data: any): string {
-    const jsonData = JSON.stringify(data)
-    return `event: ${event}\ndata: ${jsonData}\n\n`
-  }
+	private formatSSEMessage(event: string, data: any): string {
+		const jsonData = JSON.stringify(data);
+		return `event: ${event}\ndata: ${jsonData}\n\n`;
+	}
 
-  get alive(): boolean {
-    return this.isAlive
-  }
+	get alive(): boolean {
+		return this.isAlive;
+	}
 }
 ```
 
@@ -176,103 +178,102 @@ export default class SSEConnection {
 
 ```typescript
 // app/Services/EventBroadcaster.ts
-import SSEConnection from './SSEConnection'
-import logger from '@adonisjs/core/services/logger'
+import SSEConnection from './SSEConnection';
+import logger from '@adonisjs/core/services/logger';
 
 export default class EventBroadcaster {
-  private connections: Map<string, SSEConnection> = new Map()
-  private userConnections: Map<string, Set<string>> = new Map()
+	private connections: Map<string, SSEConnection> = new Map();
+	private userConnections: Map<string, Set<string>> = new Map();
 
-  async addConnection(connection: SSEConnection): Promise<void> {
-    this.connections.set(connection.id, connection)
-    
-    // Index par utilisateur
-    if (!this.userConnections.has(connection.userUUID)) {
-      this.userConnections.set(connection.userUUID, new Set())
-    }
-    this.userConnections.get(connection.userUUID)!.add(connection.id)
+	async addConnection(connection: SSEConnection): Promise<void> {
+		this.connections.set(connection.id, connection);
 
-    logger.info('SSE connection added', {
-      connectionId: connection.id,
-      userUUID: connection.userUUID,
-      totalConnections: this.connections.size
-    })
-  }
+		// Index par utilisateur
+		if (!this.userConnections.has(connection.userUUID)) {
+			this.userConnections.set(connection.userUUID, new Set());
+		}
+		this.userConnections.get(connection.userUUID)!.add(connection.id);
 
-  async removeConnection(connectionId: string): Promise<void> {
-    const connection = this.connections.get(connectionId)
-    if (!connection) return
+		logger.info('SSE connection added', {
+			connectionId: connection.id,
+			userUUID: connection.userUUID,
+			totalConnections: this.connections.size,
+		});
+	}
 
-    // Nettoyage des index
-    this.connections.delete(connectionId)
-    const userConnections = this.userConnections.get(connection.userUUID)
-    if (userConnections) {
-      userConnections.delete(connectionId)
-      if (userConnections.size === 0) {
-        this.userConnections.delete(connection.userUUID)
-      }
-    }
+	async removeConnection(connectionId: string): Promise<void> {
+		const connection = this.connections.get(connectionId);
+		if (!connection) return;
 
-    connection.close()
+		// Nettoyage des index
+		this.connections.delete(connectionId);
+		const userConnections = this.userConnections.get(connection.userUUID);
+		if (userConnections) {
+			userConnections.delete(connectionId);
+			if (userConnections.size === 0) {
+				this.userConnections.delete(connection.userUUID);
+			}
+		}
 
-    logger.info('SSE connection removed', {
-      connectionId,
-      userUUID: connection.userUUID,
-      totalConnections: this.connections.size
-    })
-  }
+		connection.close();
 
-  // Diffusion à tous les clients connectés
-  broadcast(event: string, data: any): void {
-    const message = { event, data, timestamp: new Date().toISOString() }
-    
-    for (const connection of this.connections.values()) {
-      connection.send(event, message)
-    }
+		logger.info('SSE connection removed', {
+			connectionId,
+			userUUID: connection.userUUID,
+			totalConnections: this.connections.size,
+		});
+	}
 
-    logger.debug('SSE broadcast sent', {
-      event,
-      recipientCount: this.connections.size
-    })
-  }
+	// Diffusion à tous les clients connectés
+	broadcast(event: string, data: any): void {
+		const message = { event, data, timestamp: new Date().toISOString() };
 
-  // Diffusion à un utilisateur spécifique
-  sendToUser(userUUID: string, event: string, data: any): void {
-    const userConnectionIds = this.userConnections.get(userUUID)
-    if (!userConnectionIds) return
+		for (const connection of this.connections.values()) {
+			connection.send(event, message);
+		}
 
-    const message = { event, data, timestamp: new Date().toISOString() }
+		logger.debug('SSE broadcast sent', {
+			event,
+			recipientCount: this.connections.size,
+		});
+	}
 
-    for (const connectionId of userConnectionIds) {
-      const connection = this.connections.get(connectionId)
-      if (connection) {
-        connection.send(event, message)
-      }
-    }
-  }
+	// Diffusion à un utilisateur spécifique
+	sendToUser(userUUID: string, event: string, data: any): void {
+		const userConnectionIds = this.userConnections.get(userUUID);
+		if (!userConnectionIds) return;
 
-  // Diffusion à un groupe d'utilisateurs (ex: lobby)
-  sendToUsers(userUUIDs: string[], event: string, data: any): void {
-    for (const userUUID of userUUIDs) {
-      this.sendToUser(userUUID, event, data)
-    }
-  }
+		const message = { event, data, timestamp: new Date().toISOString() };
 
-  // Statistiques
-  getStats(): SSEStats {
-    return {
-      totalConnections: this.connections.size,
-      uniqueUsers: this.userConnections.size,
-      connectionsPerUser: Array.from(this.userConnections.values())
-        .map(connections => connections.size)
-    }
-  }
+		for (const connectionId of userConnectionIds) {
+			const connection = this.connections.get(connectionId);
+			if (connection) {
+				connection.send(event, message);
+			}
+		}
+	}
+
+	// Diffusion à un groupe d'utilisateurs (ex: lobby)
+	sendToUsers(userUUIDs: string[], event: string, data: any): void {
+		for (const userUUID of userUUIDs) {
+			this.sendToUser(userUUID, event, data);
+		}
+	}
+
+	// Statistiques
+	getStats(): SSEStats {
+		return {
+			totalConnections: this.connections.size,
+			uniqueUsers: this.userConnections.size,
+			connectionsPerUser: Array.from(this.userConnections.values()).map((connections) => connections.size),
+		};
+	}
 }
 
 interface SSEStats {
-  totalConnections: number
-  uniqueUsers: number
-  connectionsPerUser: number[]
+	totalConnections: number;
+	uniqueUsers: number;
+	connectionsPerUser: number[];
 }
 ```
 
@@ -280,67 +281,67 @@ interface SSEStats {
 
 ```typescript
 // app/EventHandlers/LobbyEventHandler.ts
-import { inject } from '@adonisjs/core/build/standalone'
-import EventBroadcaster from '#services/EventBroadcaster'
-import type { LobbyCreatedEvent, PlayerJoinedLobbyEvent } from '#events/LobbyEvents'
+import { inject } from '@adonisjs/core/build/standalone';
+import EventBroadcaster from '#services/EventBroadcaster';
+import type { LobbyCreatedEvent, PlayerJoinedLobbyEvent } from '#events/LobbyEvents';
 
 @inject()
 export default class LobbyEventHandler {
-  constructor(private eventBroadcaster: EventBroadcaster) {}
+	constructor(private eventBroadcaster: EventBroadcaster) {}
 
-  async handleLobbyCreated(event: LobbyCreatedEvent): Promise<void> {
-    // Notification globale de nouveau lobby
-    this.eventBroadcaster.broadcast('lobby:created', {
-      lobbyId: event.lobby.uuid,
-      name: event.lobby.name,
-      createdBy: event.lobby.createdBy,
-      maxPlayers: event.lobby.maxPlayers,
-      currentPlayers: event.lobby.playerCount
-    })
-  }
+	async handleLobbyCreated(event: LobbyCreatedEvent): Promise<void> {
+		// Notification globale de nouveau lobby
+		this.eventBroadcaster.broadcast('lobby:created', {
+			lobbyId: event.lobby.uuid,
+			name: event.lobby.name,
+			createdBy: event.lobby.createdBy,
+			maxPlayers: event.lobby.maxPlayers,
+			currentPlayers: event.lobby.playerCount,
+		});
+	}
 
-  async handlePlayerJoinedLobby(event: PlayerJoinedLobbyEvent): Promise<void> {
-    const { lobby, player } = event
+	async handlePlayerJoinedLobby(event: PlayerJoinedLobbyEvent): Promise<void> {
+		const { lobby, player } = event;
 
-    // Notification aux joueurs du lobby
-    const lobbyPlayerUUIDs = lobby.players.map(p => p.uuid)
-    
-    this.eventBroadcaster.sendToUsers(lobbyPlayerUUIDs, 'lobby:player_joined', {
-      lobbyId: lobby.uuid,
-      player: {
-        uuid: player.uuid,
-        nickName: player.nickName
-      },
-      currentPlayers: lobby.playerCount,
-      lobbyStatus: lobby.status
-    })
+		// Notification aux joueurs du lobby
+		const lobbyPlayerUUIDs = lobby.players.map((p) => p.uuid);
 
-    // Mise à jour globale de la liste des lobbies
-    this.eventBroadcaster.broadcast('lobby:updated', {
-      lobbyId: lobby.uuid,
-      currentPlayers: lobby.playerCount,
-      status: lobby.status
-    })
-  }
+		this.eventBroadcaster.sendToUsers(lobbyPlayerUUIDs, 'lobby:player_joined', {
+			lobbyId: lobby.uuid,
+			player: {
+				uuid: player.uuid,
+				nickName: player.nickName,
+			},
+			currentPlayers: lobby.playerCount,
+			lobbyStatus: lobby.status,
+		});
 
-  async handleGameStarted(event: GameStartedEvent): Promise<void> {
-    const { game, players } = event
-    const playerUUIDs = players.map(p => p.uuid)
+		// Mise à jour globale de la liste des lobbies
+		this.eventBroadcaster.broadcast('lobby:updated', {
+			lobbyId: lobby.uuid,
+			currentPlayers: lobby.playerCount,
+			status: lobby.status,
+		});
+	}
 
-    // Notification aux joueurs que la partie commence
-    this.eventBroadcaster.sendToUsers(playerUUIDs, 'game:started', {
-      gameId: game.uuid,
-      players: players.map(p => ({
-        uuid: p.uuid,
-        nickName: p.nickName
-      }))
-    })
+	async handleGameStarted(event: GameStartedEvent): Promise<void> {
+		const { game, players } = event;
+		const playerUUIDs = players.map((p) => p.uuid);
 
-    // Le lobby n'existe plus, notification globale
-    this.eventBroadcaster.broadcast('lobby:removed', {
-      lobbyId: event.lobbyId
-    })
-  }
+		// Notification aux joueurs que la partie commence
+		this.eventBroadcaster.sendToUsers(playerUUIDs, 'game:started', {
+			gameId: game.uuid,
+			players: players.map((p) => ({
+				uuid: p.uuid,
+				nickName: p.nickName,
+			})),
+		});
+
+		// Le lobby n'existe plus, notification globale
+		this.eventBroadcaster.broadcast('lobby:removed', {
+			lobbyId: event.lobbyId,
+		});
+	}
 }
 ```
 
@@ -350,86 +351,86 @@ export default class LobbyEventHandler {
 
 ```typescript
 // resources/js/hooks/useSSE.ts
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react';
 
 interface SSEOptions {
-  url: string
-  onMessage?: (event: string, data: any) => void
-  onError?: (error: Event) => void
-  onConnect?: () => void
-  onDisconnect?: () => void
+	url: string;
+	onMessage?: (event: string, data: any) => void;
+	onError?: (error: Event) => void;
+	onConnect?: () => void;
+	onDisconnect?: () => void;
 }
 
 export function useSSE(options: SSEOptions) {
-  const [isConnected, setIsConnected] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const eventSourceRef = useRef<EventSource | null>(null)
+	const [isConnected, setIsConnected] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	const eventSourceRef = useRef<EventSource | null>(null);
 
-  useEffect(() => {
-    const eventSource = new EventSource(options.url, {
-      withCredentials: true
-    })
+	useEffect(() => {
+		const eventSource = new EventSource(options.url, {
+			withCredentials: true,
+		});
 
-    eventSourceRef.current = eventSource
+		eventSourceRef.current = eventSource;
 
-    eventSource.onopen = () => {
-      setIsConnected(true)
-      setError(null)
-      options.onConnect?.()
-    }
+		eventSource.onopen = () => {
+			setIsConnected(true);
+			setError(null);
+			options.onConnect?.();
+		};
 
-    eventSource.onerror = (error) => {
-      setIsConnected(false)
-      setError('Connection error')
-      options.onError?.(error)
-    }
+		eventSource.onerror = (error) => {
+			setIsConnected(false);
+			setError('Connection error');
+			options.onError?.(error);
+		};
 
-    // Écoute de tous les événements personnalisés
-    const eventTypes = [
-      'connected',
-      'lobby:created',
-      'lobby:updated',
-      'lobby:removed',
-      'lobby:player_joined',
-      'lobby:player_left',
-      'game:started',
-      'game:updated',
-      'chat:message',
-      'ping'
-    ]
+		// Écoute de tous les événements personnalisés
+		const eventTypes = [
+			'connected',
+			'lobby:created',
+			'lobby:updated',
+			'lobby:removed',
+			'lobby:player_joined',
+			'lobby:player_left',
+			'game:started',
+			'game:updated',
+			'chat:message',
+			'ping',
+		];
 
-    eventTypes.forEach(eventType => {
-      eventSource.addEventListener(eventType, (event) => {
-        if (eventType === 'ping') return // Ignore heartbeat
-        
-        try {
-          const data = JSON.parse(event.data)
-          options.onMessage?.(eventType, data)
-        } catch (error) {
-          console.error('Failed to parse SSE message:', error)
-        }
-      })
-    })
+		eventTypes.forEach((eventType) => {
+			eventSource.addEventListener(eventType, (event) => {
+				if (eventType === 'ping') return; // Ignore heartbeat
 
-    return () => {
-      eventSource.close()
-      eventSourceRef.current = null
-    }
-  }, [options.url])
+				try {
+					const data = JSON.parse(event.data);
+					options.onMessage?.(eventType, data);
+				} catch (error) {
+					console.error('Failed to parse SSE message:', error);
+				}
+			});
+		});
 
-  const disconnect = () => {
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close()
-      eventSourceRef.current = null
-      setIsConnected(false)
-    }
-  }
+		return () => {
+			eventSource.close();
+			eventSourceRef.current = null;
+		};
+	}, [options.url]);
 
-  return {
-    isConnected,
-    error,
-    disconnect
-  }
+	const disconnect = () => {
+		if (eventSourceRef.current) {
+			eventSourceRef.current.close();
+			eventSourceRef.current = null;
+			setIsConnected(false);
+		}
+	};
+
+	return {
+		isConnected,
+		error,
+		disconnect,
+	};
 }
 ```
 
@@ -603,7 +604,7 @@ export default function LobbyShow({ lobby: initialLobby }: LobbyShowProps) {
                   Démarrer la partie
                 </button>
               )}
-              
+
               <button className="w-full bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700">
                 Quitter le lobby
               </button>
@@ -620,13 +621,11 @@ export default function LobbyShow({ lobby: initialLobby }: LobbyShowProps) {
 
 ```typescript
 // start/routes.ts
-import router from '@adonisjs/core/services/router'
-import { middleware } from './kernel.js'
+import router from '@adonisjs/core/services/router';
+import { middleware } from './kernel.js';
 
 // Route SSE (nécessite authentification)
-router
-  .get('/sse/connect', '#controllers/SSEController.connect')
-  .use(middleware.auth())
+router.get('/sse/connect', '#controllers/SSEController.connect').use(middleware.auth());
 ```
 
 ## Gestion des Erreurs et Reconnexion
@@ -636,28 +635,28 @@ router
 ```typescript
 // resources/js/utils/sseReconnection.ts
 export class SSEReconnectionManager {
-  private reconnectAttempts = 0
-  private maxReconnectAttempts = 5
-  private reconnectDelay = 1000 // 1 seconde
+	private reconnectAttempts = 0;
+	private maxReconnectAttempts = 5;
+	private reconnectDelay = 1000; // 1 seconde
 
-  async handleReconnection(createConnection: () => EventSource): Promise<EventSource> {
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      throw new Error('Max reconnection attempts reached')
-    }
+	async handleReconnection(createConnection: () => EventSource): Promise<EventSource> {
+		if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+			throw new Error('Max reconnection attempts reached');
+		}
 
-    await this.delay(this.reconnectDelay * Math.pow(2, this.reconnectAttempts))
-    this.reconnectAttempts++
+		await this.delay(this.reconnectDelay * Math.pow(2, this.reconnectAttempts));
+		this.reconnectAttempts++;
 
-    return createConnection()
-  }
+		return createConnection();
+	}
 
-  resetAttempts(): void {
-    this.reconnectAttempts = 0
-  }
+	resetAttempts(): void {
+		this.reconnectAttempts = 0;
+	}
 
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms))
-  }
+	private delay(ms: number): Promise<void> {
+		return new Promise((resolve) => setTimeout(resolve, ms));
+	}
 }
 ```
 
@@ -667,32 +666,32 @@ export class SSEReconnectionManager {
 
 ```typescript
 // app/Services/SSELogger.ts
-import logger from '@adonisjs/core/services/logger'
+import logger from '@adonisjs/core/services/logger';
 
 export class SSELogger {
-  static logConnection(connectionId: string, userUUID: string): void {
-    logger.info('SSE connection established', {
-      connectionId,
-      userUUID,
-      timestamp: new Date().toISOString()
-    })
-  }
+	static logConnection(connectionId: string, userUUID: string): void {
+		logger.info('SSE connection established', {
+			connectionId,
+			userUUID,
+			timestamp: new Date().toISOString(),
+		});
+	}
 
-  static logDisconnection(connectionId: string, reason?: string): void {
-    logger.info('SSE connection closed', {
-      connectionId,
-      reason,
-      timestamp: new Date().toISOString()
-    })
-  }
+	static logDisconnection(connectionId: string, reason?: string): void {
+		logger.info('SSE connection closed', {
+			connectionId,
+			reason,
+			timestamp: new Date().toISOString(),
+		});
+	}
 
-  static logBroadcast(event: string, recipientCount: number): void {
-    logger.debug('SSE broadcast sent', {
-      event,
-      recipientCount,
-      timestamp: new Date().toISOString()
-    })
-  }
+	static logBroadcast(event: string, recipientCount: number): void {
+		logger.debug('SSE broadcast sent', {
+			event,
+			recipientCount,
+			timestamp: new Date().toISOString(),
+		});
+	}
 }
 ```
 
@@ -703,19 +702,19 @@ export class SSELogger {
 ```typescript
 // app/Middleware/SSEAuthMiddleware.ts
 export default class SSEAuthMiddleware {
-  async handle({ auth, response }: HttpContext, next: NextFn) {
-    try {
-      await auth.check()
-      
-      if (!auth.user) {
-        return response.status(401).json({ error: 'Unauthorized' })
-      }
-      
-      await next()
-    } catch (error) {
-      return response.status(401).json({ error: 'Authentication required' })
-    }
-  }
+	async handle({ auth, response }: HttpContext, next: NextFn) {
+		try {
+			await auth.check();
+
+			if (!auth.user) {
+				return response.status(401).json({ error: 'Unauthorized' });
+			}
+
+			await next();
+		} catch (error) {
+			return response.status(401).json({ error: 'Authentication required' });
+		}
+	}
 }
 ```
 
@@ -724,26 +723,27 @@ export default class SSEAuthMiddleware {
 ```typescript
 // app/Middleware/SSERateLimitMiddleware.ts
 export default class SSERateLimitMiddleware {
-  private connections: Map<string, number> = new Map()
-  private maxConnectionsPerUser = 3
+	private connections: Map<string, number> = new Map();
+	private maxConnectionsPerUser = 3;
 
-  async handle({ auth, response }: HttpContext, next: NextFn) {
-    const userUUID = auth.user!.uuid
-    const currentConnections = this.connections.get(userUUID) || 0
+	async handle({ auth, response }: HttpContext, next: NextFn) {
+		const userUUID = auth.user!.uuid;
+		const currentConnections = this.connections.get(userUUID) || 0;
 
-    if (currentConnections >= this.maxConnectionsPerUser) {
-      return response.status(429).json({ 
-        error: 'Too many SSE connections' 
-      })
-    }
+		if (currentConnections >= this.maxConnectionsPerUser) {
+			return response.status(429).json({
+				error: 'Too many SSE connections',
+			});
+		}
 
-    this.connections.set(userUUID, currentConnections + 1)
-    await next()
-  }
+		this.connections.set(userUUID, currentConnections + 1);
+		await next();
+	}
 }
 ```
 
 Cette implémentation SSE offre :
+
 - **Communication temps réel** fiable et performante
 - **Reconnexion automatique** en cas de perte de connexion
 - **Authentification sécurisée** des connexions

@@ -41,6 +41,14 @@ export default defineConfig({
     () => import('@adonisjs/drive/drive_provider'),
     () => import('#providers/app_provider'),
     () => import('@adonisjs/transmit/transmit_provider'),
+    {
+      file: () => import('adonisjs-server-stats/provider'),
+      environment: ['web'],
+    },
+    {
+      file: () => import('adonisjs-server-stats/log-stream/provider'),
+      environment: ['web'],
+    },
   ],
 
   /*
@@ -68,6 +76,11 @@ export default defineConfig({
         files: ['tests/unit/**/*.spec(.ts|.js)'],
         name: 'unit',
         timeout: 2000,
+      },
+      {
+        files: ['tests/integration/**/*.spec(.ts|.js)'],
+        name: 'integration',
+        timeout: 15000,
       },
       {
         files: ['tests/functional/**/*.spec(.ts|.js)'],

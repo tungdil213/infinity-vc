@@ -1,0 +1,600 @@
+# INFINITY GAUNTLET LOVE LETTER - PROJET DOCUMENTATION COMPLÈTE
+
+## OVERVIEW GÉNÉRAL
+
+**Nom du projet**: infinity Gauntlet Love Letter  
+**Type**: Jeu multijoueur en temps réel basé sur Love Letter  
+**Architecture**: Full-stack TypeScript avec Domain-Driven Design  
+**Status**: En développement actif - Backend production-ready, Frontend intégré
+
+## STACK TECHNOLOGIQUE COMPLÈTE
+
+### Backend Core
+
+```json
+{
+	"framework": "AdonisJS v6.17.2",
+	"language": "TypeScript 5.7.3",
+	"architecture": "Hexagonal Architecture + DDD",
+	"database": {
+		"orm": "Lucid ORM v21.6.0",
+		"supported": ["PostgreSQL", "SQLite"],
+		"current": "SQLite (dev), PostgreSQL (prod)"
+	},
+	"authentication": {
+		"provider": "@adonisjs/auth v9.3.1",
+		"strategy": "session-based",
+		"guards": ["web"]
+	},
+	"validation": "@vinejs/vine v3.0.0",
+	"testing": {
+		"unit": "Jest v29.7.0",
+		"integration": "@japa/runner v4.2.0",
+		"mutation": "@stryker-mutator/core v9.0.1"
+	}
+}
+```
+
+### Frontend Core
+
+```json
+{
+	"framework": "React v19.0.0",
+	"bridge": "@inertiajs/react v2.0.3",
+	"styling": "TailwindCSS v4.0.8",
+	"bundler": "Vite v6.1.1",
+	"ui_library": "@infinity.dev/ui (shadcn/ui based)",
+	"real_time": "Server-Sent Events (SSE)"
+}
+```
+
+## ARCHITECTURE DÉTAILLÉE
+
+### Structure des Répertoires
+
+```
+apps/infinity/
+├── app/
+│   ├── controllers/          # HTTP Controllers
+│   ├── middleware/           # HTTP Middleware
+│   ├── models/              # Lucid Models
+│   ├── domain/              # Domain Layer (DDD)
+│   │   ├── entities/        # Domain Entities
+│   │   ├── value_objects/   # Value Objects
+│   │   ├── events/          # Domain Events
+│   │   └── interfaces/      # Domain Interfaces
+│   ├── application/         # Application Layer
+│   │   ├── use_cases/       # Use Cases
+│   │   └── repositories/    # Repository Interfaces
+│   └── infrastructure/      # Infrastructure Layer
+│       ├── repositories/    # Repository Implementations
+│       ├── events/          # Event Infrastructure
+│       └── sse/            # SSE Infrastructure
+├── database/
+│   ├── migrations/         # Database Migrations
+│   └── seeders/           # Database Seeders
+├── inertia/               # Frontend React Code
+│   ├── app/              # App Configuration
+│   ├── components/       # React Components
+│   ├── pages/           # Inertia Pages
+│   └── hooks/           # React Hooks
+├── config/              # Configuration Files
+├── start/               # Bootstrap Files
+└── tests/               # Test Suites
+```
+
+### Domain-Driven Design Implementation
+
+#### Entités Domaine
+
+```json
+{
+	"User": {
+		"fields": [
+			"uuid",
+			"firstName",
+			"lastName",
+			"username",
+			"email",
+			"password",
+			"isEmailVerified",
+			"avatarUrl",
+			"emailVerifiedAt",
+			"createdAt"
+		],
+		"methods": ["create", "updateProfile", "verifyEmail", "changePassword", "toJSON"],
+		"validation": "Email unique, password 8+ chars, names non-empty"
+	},
+	"Player": {
+		"fields": ["uuid", "userId", "username", "isReady", "joinedAt"],
+		"methods": ["create", "markReady", "markNotReady", "serialize"],
+		"purpose": "Représentation d'un utilisateur dans le contexte du jeu"
+	},
+	"Lobby": {
+		"fields": [
+			"uuid",
+			"name",
+			"ownerId",
+			"maxPlayers",
+			"status",
+			"invitationCode",
+			"lobbyPass",
+			"players",
+			"createdAt"
+		],
+		"methods": ["create", "addPlayer", "removePlayer", "startGame", "generateInvitationCode", "serialize"],
+		"status_values": ["waiting", "starting", "in_game", "finished"],
+		"business_rules": ["Max 4 players", "Owner required", "Unique invitation codes"]
+	},
+	"Game": {
+		"fields": ["uuid", "lobbyId", "status", "currentTurn", "players", "deck", "discardPile", "round", "createdAt"],
+		"methods": ["create", "playCard", "nextTurn", "endRound", "serialize"],
+		"status_values": ["active", "paused", "finished"],
+		"game_logic": "Love Letter rules implementation"
+	}
+}
+```
+
+#### Use Cases Implémentés
+
+```json
+{
+	"authentication": {
+		"RegisterUserUseCase": {
+			"input": "firstName, lastName, username, email, password",
+			"output": "success: boolean, error?: string",
+			"validation": "Email uniqueness, password strength"
+		},
+		"AuthenticateUserUseCase": {
+			"input": "email, password",
+			"output": "user: User, player: Player",
+			"process": "Validation + Player creation/retrieval"
+		}
+	},
+	"lobby_management": {
+		"CreateLobbyUseCase": {
+			"input": "name, maxPlayers, lobbyPass?, ownerId",
+			"output": "lobby: Lobby",
+			"features": "Auto invitation code generation"
+		},
+		"JoinLobbyUseCase": {
+			"input": "lobbyUuid, playerId, lobbyPass?",
+			"output": "success: boolean, error?: string",
+			"validation": "Capacity, password, duplicate check"
+		},
+		"StartGameUseCase": {
+			"input": "lobbyUuid, ownerId",
+			"output": "game: Game",
+			"requirements": "Owner only, min 2 players"
+		}
+	},
+	"game_logic": {
+		"GameActionUseCase": {
+			"input": "gameUuid, playerId, action, target?, cardId?",
+			"output": "success: boolean, gameState: Game",
+			"actions": ["play_card", "target_player", "guess_card", "end_turn"]
+		}
+	}
+}
+```
+
+## INFRASTRUCTURE TECHNIQUE
+
+### Base de Données
+
+```json
+{
+	"migrations": {
+		"users": {
+			"fields": {
+				"user_uuid": "string PRIMARY KEY",
+				"full_name": "string NOT NULL",
+				"email": "string UNIQUE NOT NULL",
+				"password": "string NOT NULL",
+				"email_verified_at": "timestamp NULL",
+				"deleted_at": "timestamp NULL",
+				"created_at": "timestamp DEFAULT NOW",
+				"updated_at": "timestamp DEFAULT NOW"
+			},
+			"indexes": ["email", "deleted_at"]
+		},
+		"players": {
+			"fields": {
+				"player_uuid": "string PRIMARY KEY",
+				"user_uuid": "string FOREIGN KEY",
+				"username": "string NOT NULL",
+				"is_ready": "boolean DEFAULT false",
+				"joined_at": "timestamp DEFAULT NOW"
+			}
+		},
+		"lobbies": {
+			"fields": {
+				"lobby_uuid": "string PRIMARY KEY",
+				"name": "string NOT NULL",
+				"owner_id": "string FOREIGN KEY",
+				"max_players": "integer DEFAULT 4",
+				"status": "enum(waiting,starting,in_game,finished)",
+				"invitation_code": "string UNIQUE",
+				"lobby_pass": "string NULL",
+				"created_at": "timestamp DEFAULT NOW"
+			}
+		},
+		"games": {
+			"fields": {
+				"game_uuid": "string PRIMARY KEY",
+				"lobby_id": "string FOREIGN KEY",
+				"status": "enum(active,paused,finished)",
+				"current_turn": "integer DEFAULT 0",
+				"round": "integer DEFAULT 1",
+				"game_state": "json",
+				"created_at": "timestamp DEFAULT NOW"
+			}
+		}
+	}
+}
+```
+
+### Server-Sent Events (SSE) Architecture
+
+```json
+{
+	"sse_infrastructure": {
+		"EventBus": {
+			"purpose": "Central event distribution",
+			"methods": ["emit", "subscribe", "unsubscribe"],
+			"events": ["lobby.player_joined", "lobby.player_left", "game.card_played", "game.turn_changed"]
+		},
+		"SSEConnectionManager": {
+			"purpose": "Manage client connections",
+			"features": ["Connection pooling", "Heartbeat", "Auto-reconnect"],
+			"storage": "In-memory Map<userId, connection>"
+		},
+		"ChannelManager": {
+			"purpose": "Route events to specific channels",
+			"channels": ["lobby:{uuid}", "game:{uuid}", "user:{uuid}"],
+			"authorization": "JWT-based channel access control"
+		},
+		"EventTransformer": {
+			"purpose": "Transform domain events to SSE format",
+			"output_format": "{ type: string, data: object, timestamp: ISO8601 }"
+		}
+	}
+}
+```
+
+## CONFIGURATION ET ENVIRONNEMENT
+
+### Variables d'Environnement
+
+```json
+{
+	"required_env_vars": {
+		"NODE_ENV": "development|production|test",
+		"PORT": "3333",
+		"HOST": "localhost",
+		"LOG_LEVEL": "info",
+		"APP_KEY": "random_32_char_string",
+		"DB_CONNECTION": "sqlite|postgres|mysql",
+		"DB_HOST": "localhost",
+		"DB_PORT": "5432",
+		"DB_USER": "username",
+		"DB_PASSWORD": "password",
+		"DB_DATABASE": "infinity_game",
+		"SESSION_DRIVER": "cookie",
+		"VITE_APP_NAME": "infinity Game"
+	}
+}
+```
+
+### Imports et Alias
+
+```json
+{
+	"subpath_imports": {
+		"#controllers/*": "./app/controllers/*.js",
+		"#models/*": "./app/models/*.js",
+		"#domain/*": "./app/domain/*.js",
+		"#application/*": "./app/application/*.js",
+		"#infrastructure/*": "./app/infrastructure/*.js",
+		"#config/*": "./config/*.js",
+		"#start/*": "./start/*.js"
+	},
+	"vite_aliases": {
+		"~/": "./inertia/"
+	}
+}
+```
+
+## ROUTING ET API
+
+### Routes et Navigation
+
+routing:
+development_routes: - GET /dev/routes - Page de développement avec toutes les routes (dev uniquement)
+
+public_routes: - GET / (home) - Page d'accueil - GET /auth/login - Formulaire de connexion - POST /auth/login - Connexion utilisateur - GET /auth/register - Formulaire d'inscription - POST /auth/register - Inscription utilisateur - GET /lobbies/join/:invitationCode - Rejoindre par invitation - POST /lobbies/join/:invitationCode - Traiter invitation
+
+protected_routes: - POST /auth/logout - Déconnexion - GET /lobbies - Liste des lobbies - GET /lobbies/create - Créer un lobby - POST /lobbies - Sauvegarder lobby - GET /lobbies/:uuid - Voir un lobby - POST /lobbies/:uuid/join - Rejoindre lobby - POST /lobbies/:uuid/leave - Quitter lobby - POST /lobbies/:uuid/start - Démarrer jeu - POST /lobbies/:uuid/kick - Expulser un joueur - POST /lobbies/:uuid/transfer - Transférer la propriété - GET /games/:uuid - Voir un jeu - POST /games/:uuid/leave - Quitter jeu
+
+api_routes: - GET /api/v1/auth/me - Profil utilisateur - GET /api/v1/auth/check - Vérifier authentification - GET /api/v1/lobbies - API liste lobbies - GET /api/v1/lobbies/:uuid - API voir lobby - GET /api/v1/games/:uuid - API voir jeu - POST /api/v1/games/:uuid/action - API action jeu
+
+sse_routes: - GET /sse/connect - Connexion SSE - POST /sse/subscribe - S'abonner aux événements - POST /sse/unsubscribe - Se désabonner - GET /sse/stats - Statistiques SSE
+
+# Page de développement
+
+development:
+routes_page: /dev/routes
+description: Page accessible uniquement en développement listant toutes les routes
+features: - Liste complète des routes par groupe - Liens cliquables pour les routes GET sans paramètres - Codes couleur par méthode HTTP - Actions rapides vers les pages principales - Accessible via le titre "infinity Game" sur la page d'accueil
+
+## FRONTEND ARCHITECTURE
+
+### React/Inertia Structure
+
+```json
+{
+	"pages": {
+		"auth/login.tsx": "Login page with form validation",
+		"auth/register.tsx": "Registration with toast feedback",
+		"lobbies/index.tsx": "Lobby list with real-time updates",
+		"lobbies/show.tsx": "Lobby detail with player management",
+		"lobbies/create.tsx": "Lobby creation form",
+		"games/show.tsx": "Game interface with card play",
+		"home.tsx": "Landing page"
+	},
+	"components": {
+		"layout": "Main app layout with navigation",
+		"lobby": "Lobby-specific components",
+		"game": "Game UI components",
+		"auth": "Authentication forms"
+	},
+	"hooks": {
+		"useSSE": "Server-Sent Events client",
+		"useFlashMessages": "Toast notifications from backend",
+		"useAuth": "Authentication state management"
+	}
+}
+```
+
+### Toast System (Sonner Integration)
+
+```json
+{
+	"library": "Sonner (@sonner/react)",
+	"implementation": "Integrated in @infinity.dev/ui package",
+	"components": {
+		"Toaster": "packages/ui/src/components/primitives/sonner.tsx",
+		"FlashMessages": "apps/infinity/inertia/components/layout.tsx"
+	},
+	"integration": {
+		"global_layout": "Toaster component in main layout",
+		"flash_conversion": "FlashMessages converts Inertia flash to toasts",
+		"manual_usage": "import { toast } from 'sonner' for client-side toasts"
+	},
+	"usage_patterns": {
+		"backend_flash": "session.flash('success'|'error', message) → auto toast",
+		"client_success": "toast.success('Message')",
+		"client_error": "toast.error('Error message')",
+		"client_loading": "toast.loading('Processing...')",
+		"client_promise": "toast.promise(promise, { loading, success, error })"
+	},
+	"styling": {
+		"theme": "Integrated with next-themes",
+		"position": "bottom-right",
+		"duration": "4000ms default",
+		"animations": "Smooth slide animations"
+	},
+	"best_practices": {
+		"backend_actions": "Use session flash for redirects",
+		"ajax_actions": "Use client-side toast calls",
+		"user_feedback": "Always provide feedback for user actions",
+		"error_handling": "Consistent error toast patterns"
+	}
+}
+```
+
+## TESTING STRATEGY
+
+### Test Configuration
+
+```json
+{
+	"unit_tests": {
+		"framework": "Jest",
+		"coverage": "app/** directory",
+		"focus": "Domain entities, Use cases, Value objects"
+	},
+	"integration_tests": {
+		"framework": "@japa/runner",
+		"database": "SQLite in-memory",
+		"reset": "Before each test",
+		"scope": "API endpoints, Database operations"
+	},
+	"mutation_testing": {
+		"framework": "Stryker",
+		"target": "TypeScript files",
+		"threshold": "80% mutation score"
+	}
+}
+```
+
+## DEPLOYMENT ET BUILD
+
+### Build Process
+
+```json
+{
+	"development": {
+		"command": "node ace serve --hmr",
+		"features": ["Hot reload", "TypeScript compilation", "Vite HMR"]
+	},
+	"production": {
+		"build": "node ace build",
+		"start": "NODE_ENV=production node bin/server.js",
+		"assets": "Vite build process",
+		"optimization": "Minification, tree-shaking"
+	}
+}
+```
+
+## SÉCURITÉ
+
+### Mesures Implémentées
+
+```json
+{
+	"authentication": {
+		"password_hashing": "Argon2 via @adonisjs/core/hash",
+		"session_management": "Encrypted cookies",
+		"csrf_protection": "@adonisjs/shield"
+	},
+	"authorization": {
+		"middleware": "auth middleware on protected routes",
+		"sse_channels": "JWT-based channel authorization",
+		"lobby_access": "Owner/player validation"
+	},
+	"data_validation": {
+		"input_validation": "VineJS schemas",
+		"sql_injection": "Lucid ORM parameterized queries",
+		"xss_protection": "Edge.js template escaping"
+	}
+}
+```
+
+## PERFORMANCE
+
+### Optimisations
+
+```json
+{
+	"database": {
+		"indexes": "On frequently queried fields",
+		"connection_pooling": "Lucid ORM built-in",
+		"query_optimization": "N+1 prevention with preloading"
+	},
+	"frontend": {
+		"code_splitting": "Vite automatic splitting",
+		"lazy_loading": "React.lazy for components",
+		"asset_optimization": "Vite minification"
+	},
+	"real_time": {
+		"sse_connection_pooling": "Efficient memory usage",
+		"event_batching": "Reduce network overhead",
+		"heartbeat_optimization": "Connection health monitoring"
+	}
+}
+```
+
+## ÉTAT ACTUEL DU PROJET
+
+### Fonctionnalités Complétées ✅
+
+```json
+{
+	"backend_core": {
+		"domain_entities": "User, Player, Lobby, Game - 100%",
+		"use_cases": "Auth, Lobby management, Game logic - 100%",
+		"database": "Migrations, models, repositories - 100%",
+		"api_endpoints": "REST API complet - 100%",
+		"sse_infrastructure": "Real-time events - 100%"
+	},
+	"authentication": {
+		"user_registration": "Avec validation et persistance - 100%",
+		"user_login": "Session-based auth - 100%",
+		"password_security": "Hashing Argon2 - 100%",
+		"middleware_protection": "Routes protégées - 100%"
+	},
+	"frontend_integration": {
+		"react_inertia": "Pages et composants - 100%",
+		"toast_notifications": "Flash messages - 100%",
+		"sse_client": "Real-time updates - 100%",
+		"responsive_ui": "TailwindCSS - 100%"
+	}
+}
+```
+
+### Fonctionnalités En Cours 🚧
+
+```json
+{
+	"ui_consistency": {
+		"shadcn_migration": "Migration vers @infinity.dev/ui",
+		"storybook_integration": "Documentation composants",
+		"design_system": "Cohérence visuelle"
+	},
+	"advanced_features": {
+		"lobby_invitations": "Codes d'invitation - 90%",
+		"game_spectators": "Mode observateur",
+		"player_statistics": "Historique des parties"
+	}
+}
+```
+
+## CHOIX TECHNIQUES JUSTIFIÉS
+
+### Pourquoi AdonisJS ?
+
+- **TypeScript natif**: Pas de configuration supplémentaire
+- **Architecture mature**: MVC + DDD support
+- **Écosystème complet**: Auth, ORM, Validation intégrés
+- **Performance**: V8 optimizations, async/await natif
+- **Maintenabilité**: Structure claire, conventions établies
+
+### Pourquoi Inertia.js ?
+
+- **Simplicité**: Pas de API REST complexe
+- **Performance**: Pas de double rendu (SPA + SSR)
+- **DX**: Développement comme une SPA, déploiement comme une app traditionnelle
+- **SEO**: Rendu côté serveur natif
+- **Maintenance**: Une seule base de code
+
+### Pourquoi Server-Sent Events ?
+
+- **Simplicité**: Plus simple que WebSockets
+- **Fiabilité**: Reconnexion automatique
+- **Compatibilité**: Support navigateur natif
+- **Scalabilité**: Moins de ressources serveur
+- **Debugging**: Outils de développement standard
+
+## PATTERNS ET CONVENTIONS
+
+### Domain-Driven Design
+
+```json
+{
+	"entities": "Logique métier encapsulée",
+	"value_objects": "Objets immuables (Status, Result)",
+	"use_cases": "Actions métier isolées",
+	"repositories": "Abstraction de persistance",
+	"events": "Communication découplée"
+}
+```
+
+### Hexagonal Architecture
+
+```json
+{
+	"domain": "Cœur métier indépendant",
+	"application": "Orchestration des use cases",
+	"infrastructure": "Détails techniques (DB, SSE, HTTP)"
+}
+```
+
+### Code Quality
+
+```json
+{
+	"typescript": "Strict mode, no any",
+	"eslint": "@adonisjs/eslint-config",
+	"prettier": "@adonisjs/prettier-config",
+	"testing": "TDD approach, 80%+ coverage",
+	"documentation": "JSDoc pour les APIs publiques"
+}
+```
+
+---
+
+**Dernière mise à jour**: 2025-08-14  
+**Version**: 1.0.0  
+**Statut**: Production-ready backend, Frontend intégré  
+**Prochaine étape**: Migration UI vers shadcn/ui complète

@@ -1,0 +1,239 @@
+# Snapshot complet de /.windsurfrules
+# Objectif: garantir zéro perte d'information pendant la réorganisation.
+
+project:
+  name: infinity.dev
+  root: .
+  structure: monorepo
+  packageManager: pnpm
+  packageManagerVersion: pnpm@10.4.0
+  buildSystem: turbo
+  containerization: docker
+
+workspace:
+  packagesGlobs:
+    - apps/**
+    - packages/**
+  excludedGlobs:
+    - apps/infinity/build
+    - apps/infinity.dev/build
+  primaryApp:
+    name: '@infinity/app'
+    path: apps/infinity
+  uiPackage:
+    name: '@infinity.dev/ui'
+    path: packages/ui
+  docsApp:
+    path: apps/docs
+
+architecture:
+  backend: AdonisJS
+  frontend: React
+  bridge: InertiaJS
+  styling: TailwindCSS
+  language: TypeScript
+  database: PostgreSQL
+  domainStyle: DDD
+  dependencyInjection: constructor_injection_plus_adonis_inject
+
+scripts:
+  root:
+    build: pnpm build
+    dev: pnpm dev
+    lint: pnpm lint
+    format: pnpm format
+    typecheck: pnpm typecheck
+    dockerUp: pnpm docker:up
+    dockerDown: pnpm docker:down
+    dockerBuild: pnpm docker:build
+    dockerRun: pnpm docker:run
+    depsUpdate: pnpm taze
+    previewStorybook: pnpm preview-storybook
+  app:
+    dev: pnpm --filter @infinity/app run dev
+    build: pnpm --filter @infinity/app run build
+    start: pnpm --filter @infinity/app run start
+    test: pnpm --filter @infinity/app run test
+    testUnit: pnpm --filter @infinity/app run test:unit
+    testIntegration: pnpm --filter @infinity/app run test:integration
+    testFunctional: pnpm --filter @infinity/app run test:functional
+    migrate: pnpm --filter @infinity/app exec node ace migration:run
+    seed: pnpm --filter @infinity/app exec node ace db:seed
+  monorepoFallbacks:
+    test: pnpm turbo run test
+    lint: pnpm turbo run lint
+    typecheck: pnpm turbo run typecheck
+    build: pnpm turbo run build
+
+quality:
+  mustPassBeforeMerge:
+    - lint
+    - typecheck
+    - tests
+  preferredFlow:
+    - 'pnpm exec prettier . --check'
+    - 'pnpm lint'
+    - 'pnpm typecheck'
+    - 'pnpm turbo run test'
+  ifBroken:
+    policy: fix_until_green
+    strategy: minimal_root_cause_patch
+
+dddRules:
+  layering:
+    domain: 'No framework/ORM dependency'
+    application: 'Use cases orchestrate, no direct Lucid model access'
+    infrastructure: 'Adapters + repository implementations'
+    presentation: 'Controllers/Screens map HTTP/Inertia and delegate to use cases'
+  dependencyRule:
+    - controllers_must_call_usecases_not_repositories
+    - usecases_depend_on_ports_interfaces
+    - infrastructure_implements_ports
+
+resultPattern:
+  required: true
+  classPath: apps/infinity/app/domain/shared/result.ts
+  rules:
+    - 'Use cases return Promise<Result<T>>'
+    - 'Never read result.value without isSuccess/isFailure guard'
+    - 'Use Result.ok / Result.fail for explicit flow'
+    - 'Avoid throw for business flow in application/domain'
+
+businessExceptionPattern:
+  required: true
+  classPath: apps/infinity/app/exceptions/business_exception.ts
+  handlerPath: apps/infinity/app/exceptions/handler.ts
+  requiredMetadata:
+    - classification
+    - severity
+    - userMessage
+    - toastType
+    - context
+  classifications:
+    - USER_SAFE
+    - INTERNAL
+    - SECURITY
+  severities:
+    - low
+    - medium
+    - high
+    - critical
+  toastTypes:
+    - success
+    - error
+    - warning
+    - info
+  forbidden:
+    - 'throw new Error() in domain/application/infrastructure business paths'
+
+presentationRules:
+  inertiaScreens: true
+  mapping:
+    - 'Controller checks Result'
+    - 'Failure -> throw BusinessException (or mapped safe response)'
+    - 'Success -> render/redirect/json'
+  flashToast:
+    requiredForMutations: true
+    successKey: success
+    errorKey: error
+
+frontendRules:
+  httpClientPreference: fetch
+  avoidAxios: true
+  uiPackageBoundary:
+    - 'packages/ui must not import from apps/**'
+  storybook:
+    docsAppPath: apps/docs
+
+testing:
+  primaryRunner: adonis_japa
+  commands:
+    - node ace test
+    - node ace test tests/unit
+    - node ace test tests/integration
+    - node ace test tests/functional
+  directories:
+    unit: apps/infinity/tests/unit
+    integration: apps/infinity/tests/integration
+    functional: apps/infinity/tests/functional
+  expectations:
+    - 'Test Result.ok and Result.fail paths'
+    - 'Test BusinessException mapping in controllers/handlers'
+    - 'Use characterization tests before refactor'
+
+turboRules:
+  file: turbo.json
+  tasks:
+    - build
+    - build:ui
+    - build:adonis
+    - lint
+    - typecheck
+    - test
+    - dev
+    - preview-storybook
+  checks:
+    - 'outputs must match real artifacts (apps/infinity/build, packages/ui/dist)'
+    - 'dependsOn should be minimal but correct'
+    - 'cache correctness must be verified with repeated runs'
+
+dockerRules:
+  imageTag: site
+  appPort: 3333
+  envFile: apps/infinity/.env
+  notes:
+    - 'docker:run already sets NODE_ENV=production and HOST=0.0.0.0'
+    - 'On macOS, DB_HOST=host.docker.internal is expected for host DB'
+
+workflowSystem:
+  commandStyle: '/workflow-name'
+  preferredLocation: .windsurf/workflows
+  fallbackLocation: tmp-wind/workflows
+  available:
+    - /_index
+    - /bootstrap-dev
+    - /quality-gate
+    - /run-tests-and-fix
+    - /deps-update
+    - /docker-prod-check
+    - /turbo-optimize
+    - /ddd-new-usecase
+    - /ddd-refactor-safe
+    - /pr-review-ddd
+    - /docs-sync
+    - /release-prep
+    - /incident-hotfix
+
+assistantBehavior:
+  priorities:
+    - security
+    - correctness
+    - maintainability
+    - delivery_speed
+  coding:
+    - 'Prefer minimal diffs'
+    - 'Do not introduce architectural drift'
+    - 'Do not add new dependencies without clear justification'
+  commandPolicy:
+    - 'Use existing scripts first'
+    - 'If script missing, use turbo/pnpm fallback and suggest script addition'
+
+releasePolicy:
+  noAutoPushOrTag: true
+  requiredBeforeRelease:
+    - quality_gate_green
+    - build_artifacts_verified
+    - release_notes_prepared
+    - rollback_plan_documented
+
+quickStart:
+  onboarding:
+    - pnpm install
+    - pnpm docker:up
+    - pnpm --filter @infinity/app exec node ace migration:run
+    - pnpm --filter @infinity/app run dev
+  qualityGate:
+    - pnpm exec prettier . --check
+    - pnpm lint
+    - pnpm typecheck
+    - pnpm turbo run test

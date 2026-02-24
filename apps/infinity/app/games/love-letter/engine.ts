@@ -1,22 +1,22 @@
 /**
  * Love Letter Game Engine
  *
- * Implementation of the Love Letter card game using the generic @tyfo.dev/game-engine.
+ * Implementation of the Love Letter card game using the generic @infinity.dev/game-engine.
  * This demonstrates how to extend BaseGameEngine to create a complete game.
  */
-import type { Result } from '@tyfo.dev/events'
-import { BaseGameEngine } from '@tyfo.dev/game-engine/core'
+import type { Result } from '@infinity.dev/events'
+import { BaseGameEngine } from '@infinity.dev/game-engine/core'
 import type {
   IGameConfig,
   IPlayer,
   IActionResult,
   IGameMetadata,
   IGameEvent,
-} from '@tyfo.dev/game-engine/core'
+} from '@infinity.dev/game-engine/core'
 import type {
-  ILoveLetterState,
-  ILoveLetterAction,
-  ILoveLetterPlayer,
+  LoveLetterState,
+  LoveLetterAction,
+  LoveLetterPlayer,
   CardType,
   PlayCardPayload,
 } from './types.js'
@@ -25,7 +25,7 @@ import { CardTypes, Cards, LoveLetterActionTypes } from './types.js'
 /**
  * Love Letter game engine - extends the generic BaseGameEngine
  */
-export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLetterAction> {
+export class LoveLetterEngine extends BaseGameEngine<LoveLetterState, LoveLetterAction> {
   readonly metadata: IGameMetadata = {
     gameType: 'love-letter',
     version: '1.0.0',
@@ -36,13 +36,13 @@ export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLett
     complexity: 'simple',
   }
 
-  initialize(players: IPlayer[], _config?: Partial<IGameConfig>): Result<ILoveLetterState, Error> {
+  initialize(players: IPlayer[], _config?: Partial<IGameConfig>): Result<LoveLetterState, Error> {
     if (players.length < 2 || players.length > 4) {
       return {
         isSuccess: false,
         isFailure: true,
         error: new Error('Love Letter requires 2-4 players'),
-      } as Result<ILoveLetterState, Error>
+      } as Result<LoveLetterState, Error>
     }
 
     // Create deck
@@ -61,7 +61,7 @@ export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLett
     }
 
     // Create players with initial hand
-    const gamePlayers: ILoveLetterPlayer[] = players.map((p) => ({
+    const gamePlayers: LoveLetterPlayer[] = players.map((p) => ({
       ...p,
       hand: [deck.pop()!],
       discardPile: [],
@@ -73,7 +73,7 @@ export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLett
     // Determine tokens needed to win based on player count
     const tokensToWin = this.getTokensToWin(players.length)
 
-    const state: ILoveLetterState = {
+    const state: LoveLetterState = {
       gameId: crypto.randomUUID(),
       phase: 'draw',
       currentPlayerId: gamePlayers[0].id,
@@ -93,12 +93,12 @@ export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLett
       isSuccess: true,
       isFailure: false,
       value: state,
-    } as Result<ILoveLetterState, Error>
+    } as Result<LoveLetterState, Error>
   }
 
   protected validateActionSpecific(
-    state: ILoveLetterState,
-    action: ILoveLetterAction
+    state: LoveLetterState,
+    action: LoveLetterAction
   ): Result<void, Error> {
     const player = state.players.find((p) => p.id === action.playerId)
     if (!player) {
@@ -149,9 +149,9 @@ export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLett
   }
 
   executeAction(
-    state: ILoveLetterState,
-    action: ILoveLetterAction
-  ): Result<IActionResult<ILoveLetterState>, Error> {
+    state: LoveLetterState,
+    action: LoveLetterAction
+  ): Result<IActionResult<LoveLetterState>, Error> {
     const events: IGameEvent[] = []
     let newState = { ...state }
 
@@ -169,7 +169,7 @@ export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLett
           isSuccess: false,
           isFailure: true,
           error: new Error(`Unknown action type: ${action.type}`),
-        } as Result<IActionResult<ILoveLetterState>, Error>
+        } as Result<IActionResult<LoveLetterState>, Error>
     }
 
     // Check for round/game end
@@ -183,10 +183,10 @@ export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLett
         newState,
         events,
       },
-    } as Result<IActionResult<ILoveLetterState>, Error>
+    } as Result<IActionResult<LoveLetterState>, Error>
   }
 
-  getAvailableActions(state: ILoveLetterState, playerId: string): string[] {
+  getAvailableActions(state: LoveLetterState, playerId: string): string[] {
     if (state.currentPlayerId !== playerId) return []
 
     const player = state.players.find((p) => p.id === playerId)
@@ -203,9 +203,9 @@ export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLett
   }
 
   protected filterStateForPlayer(
-    state: ILoveLetterState,
+    state: LoveLetterState,
     playerId: string
-  ): Partial<ILoveLetterState> {
+  ): Partial<LoveLetterState> {
     // Hide other players' hands and deck contents
     const filteredPlayers = state.players.map((p) => {
       if (p.id === playerId) {
@@ -258,10 +258,10 @@ export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLett
   }
 
   private handleDrawCard(
-    state: ILoveLetterState,
+    state: LoveLetterState,
     playerId: string,
     events: IGameEvent[]
-  ): ILoveLetterState {
+  ): LoveLetterState {
     const playerIndex = state.players.findIndex((p) => p.id === playerId)
     const player = state.players[playerIndex]
     const deck = [...state.deck]
@@ -290,11 +290,11 @@ export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLett
   }
 
   private handlePlayCard(
-    state: ILoveLetterState,
+    state: LoveLetterState,
     playerId: string,
     payload: PlayCardPayload,
     events: IGameEvent[]
-  ): ILoveLetterState {
+  ): LoveLetterState {
     const playerIndex = state.players.findIndex((p) => p.id === playerId)
     const player = state.players[playerIndex]
     const newPlayers = [...state.players]
@@ -317,7 +317,7 @@ export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLett
       timestamp: new Date(),
     })
 
-    let newState: ILoveLetterState = {
+    let newState: LoveLetterState = {
       ...state,
       players: newPlayers,
     }
@@ -332,11 +332,11 @@ export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLett
   }
 
   private resolveCardEffect(
-    state: ILoveLetterState,
+    state: LoveLetterState,
     playerId: string,
     payload: PlayCardPayload,
     events: IGameEvent[]
-  ): ILoveLetterState {
+  ): LoveLetterState {
     const { cardType, targetPlayerId, guessedCard } = payload
     let newState = { ...state }
 
@@ -407,11 +407,11 @@ export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLett
   }
 
   private resolveBaron(
-    state: ILoveLetterState,
+    state: LoveLetterState,
     playerId: string,
     targetPlayerId: string,
     events: IGameEvent[]
-  ): ILoveLetterState {
+  ): LoveLetterState {
     const player = state.players.find((p) => p.id === playerId)!
     const target = state.players.find((p) => p.id === targetPlayerId)!
 
@@ -442,10 +442,10 @@ export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLett
   }
 
   private resolvePrince(
-    state: ILoveLetterState,
+    state: LoveLetterState,
     targetPlayerId: string,
     events: IGameEvent[]
-  ): ILoveLetterState {
+  ): LoveLetterState {
     const target = state.players.find((p) => p.id === targetPlayerId)!
 
     if (target.isProtected) return state
@@ -491,11 +491,11 @@ export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLett
   }
 
   private resolveKing(
-    state: ILoveLetterState,
+    state: LoveLetterState,
     playerId: string,
     targetPlayerId: string,
     events: IGameEvent[]
-  ): ILoveLetterState {
+  ): LoveLetterState {
     const target = state.players.find((p) => p.id === targetPlayerId)!
 
     if (target.isProtected) return state
@@ -521,10 +521,10 @@ export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLett
   }
 
   private eliminatePlayer(
-    state: ILoveLetterState,
+    state: LoveLetterState,
     playerId: string,
     events: IGameEvent[]
-  ): ILoveLetterState {
+  ): LoveLetterState {
     const playerIndex = state.players.findIndex((p) => p.id === playerId)
     const player = state.players[playerIndex]
     const newPlayers = [...state.players]
@@ -546,7 +546,7 @@ export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLett
     return { ...state, players: newPlayers }
   }
 
-  private advanceToNextPlayer(state: ILoveLetterState): ILoveLetterState {
+  private advanceToNextPlayer(state: LoveLetterState): LoveLetterState {
     const activePlayers = state.players.filter((p) => !p.isEliminated)
     const currentIndex = activePlayers.findIndex((p) => p.id === state.currentPlayerId)
     const nextIndex = (currentIndex + 1) % activePlayers.length
@@ -560,7 +560,7 @@ export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLett
     }
   }
 
-  private checkRoundEnd(state: ILoveLetterState, events: IGameEvent[]): ILoveLetterState {
+  private checkRoundEnd(state: LoveLetterState, events: IGameEvent[]): LoveLetterState {
     const activePlayers = state.players.filter((p) => !p.isEliminated)
 
     // Round ends when 1 player left or deck empty
@@ -571,7 +571,7 @@ export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLett
     return state
   }
 
-  private endRound(state: ILoveLetterState, events: IGameEvent[]): ILoveLetterState {
+  private endRound(state: LoveLetterState, events: IGameEvent[]): LoveLetterState {
     const activePlayers = state.players.filter((p) => !p.isEliminated)
 
     // Determine winner (highest card value)
@@ -627,7 +627,7 @@ export class LoveLetterEngine extends BaseGameEngine<ILoveLetterState, ILoveLett
     if (newRoundState.isSuccess) {
       return {
         ...newRoundState.value,
-        players: newRoundState.value.players.map((p: ILoveLetterPlayer, i: number) => ({
+        players: newRoundState.value.players.map((p: LoveLetterPlayer, i: number) => ({
           ...p,
           tokensOfAffection: newPlayers[i].tokensOfAffection,
         })),

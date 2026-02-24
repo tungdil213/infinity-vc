@@ -1,70 +1,68 @@
 /**
  * Game Engine Service
  *
- * Encapsulates the LoveLetterEngine and provides game management functionality.
+ * Encapsulates launcher-driven game engines and provides game management functionality.
  * This service acts as a bridge between the domain use cases and the game engine.
  */
-import {
-  LoveLetterEngine,
-  createLoveLetterEngine,
-  type ILoveLetterState,
-  type ILoveLetterAction,
-  type LoveLetterActionType,
-  LoveLetterActionTypes,
-} from '../../games/love-letter/index.js'
-import type { IPlayer, IPlayerView } from '@tyfo.dev/game-engine/core'
+import { createDefaultLauncher } from '@infinity.dev/game-engine'
+import { RpsActionTypes } from '@infinity.dev/game-engine'
+import type { IAction, IGameState, IPlayer, IPlayerView } from '@infinity.dev/game-engine/core'
 import type { PlayerInterface } from '../../domain/interfaces/player_interface.js'
-import { eventBus } from '../../infrastructure/events/event_bus.js'
+import { Result } from '../../domain/shared/result.js'
+import {
+  type GenericAction,
+  type GameActionRequest,
+  type GameActionResponse,
+  type GameSession,
+} from './game_engine_types.js'
+import { GameSessionStore } from './game_session_store.js'
+import { GameEngineEventPublisher } from './game_engine_event_publisher.js'
 
-/**
- * Active game session
- */
-export interface GameSession {
-  gameId: string
-  lobbyId: string
-  engine: LoveLetterEngine
-  state: ILoveLetterState
-  createdAt: Date
-}
-
-/**
- * Game action request
- */
-export interface GameActionRequest {
-  gameId: string
-  playerId: string
-  actionType: LoveLetterActionType
-  payload?: {
-    cardType?: string
-    targetPlayerId?: string
-    guessedCard?: string
-  }
-}
-
-/**
- * Game action response
- */
-export interface GameActionResponse {
-  success: boolean
-  newState?: ILoveLetterState
-  error?: string
-  events?: Array<{
-    type: string
-    payload: unknown
-  }>
-}
+export type { GameActionRequest, GameActionResponse, GameSession } from './game_engine_types.js'
 
 /**
  * Service for managing game sessions using the LoveLetterEngine
  */
 export class GameEngineService {
-  private sessions: Map<string, GameSession> = new Map()
+  private readonly launcher = createDefaultLauncher()
+  private static readonly GAME_TYPE_ALIASES: Record<string, string> = {
+    'love-letter': 'love-letter-infinity-gauntlet',
+  }
+
+  constructor(
+    private readonly sessionStore: GameSessionStore = new GameSessionStore(),
+    private readonly eventPublisher: GameEngineEventPublisher = new GameEngineEventPublisher()
+  ) {}
 
   /**
    * Create a new game session
    */
-  createGame(lobbyId: string, players: PlayerInterface[]): GameSession {
-    const engine = createLoveLetterEngine()
+  createGame(
+    lobbyId: string,
+    players: PlayerInterface[],
+    gameType: string,
+    gameSettings: Record<string, unknown> = {}
+  ): Result<GameSession> {
+    const resolvedGameType = this.resolveGameType(gameType)
+    const launchResult = this.launcher.launch({
+      gameId: resolvedGameType,
+      players: players.map((p) => ({ id: p.uuid, name: p.nickName, isActive: true })),
+      settings: gameSettings,
+    })
+
+    if (launchResult.isFailure) {
+      return Result.fail(launchResult.error?.message || 'Failed to launch game')
+    }
+
+    const startedResultPromise = this.launcher.startSession(launchResult.value)
+    const startedResultSync = Result.fail<GameSession>(
+      'Game launcher start is async and must be awaited'
+    )
+    void startedResultPromise
+    void startedResultSync
+
+    const startedResult = launchResult.value
+    const engine = startedResult.engine
 
     // Convert PlayerInterface to IPlayer
     const gamePlayers: IPlayer[] = players.map((p) => ({
@@ -73,49 +71,48 @@ export class GameEngineService {
       isActive: true,
     }))
 
-    const result = engine.initialize(gamePlayers)
+    const result = engine.initialize(gamePlayers, {
+      gameType: startedResult.definition.metadata.gameType,
+      minPlayers: startedResult.definition.playerConstraints.minPlayers,
+      maxPlayers: startedResult.definition.playerConstraints.maxPlayers,
+      settings: startedResult.settings as Record<string, unknown>,
+    })
 
     if (result.isFailure) {
-      throw new Error(result.error?.message || 'Failed to initialize game')
+      return Result.fail(result.error?.message || 'Failed to initialize game')
     }
 
     const session: GameSession = {
       gameId: result.value.gameId,
       lobbyId,
+      gameType: resolvedGameType,
       engine,
       state: result.value,
+      players: gamePlayers,
       createdAt: new Date(),
     }
 
-    this.sessions.set(session.gameId, session)
+    this.sessionStore.save(session)
+    this.eventPublisher.publishGameStarted(
+      session,
+      players.map((player) => ({ uuid: player.uuid, nickName: player.nickName }))
+    )
 
-    // Publish game started event
-    eventBus.publish({
-      id: crypto.randomUUID(),
-      type: 'game.started',
-      timestamp: new Date(),
-      payload: {
-        gameId: session.gameId,
-        lobbyId,
-        players: players.map((p) => ({ uuid: p.uuid, nickName: p.nickName })),
-      },
-    })
-
-    return session
+    return Result.ok(session)
   }
 
   /**
    * Get a game session by ID
    */
   getSession(gameId: string): GameSession | undefined {
-    return this.sessions.get(gameId)
+    return this.sessionStore.get(gameId)
   }
 
   /**
    * Get game state for a player (filtered view)
    */
-  getPlayerView(gameId: string, playerId: string): IPlayerView<ILoveLetterState> | null {
-    const session = this.sessions.get(gameId)
+  getPlayerView(gameId: string, playerId: string): IPlayerView<IGameState> | null {
+    const session = this.sessionStore.get(gameId)
     if (!session) return null
 
     return session.engine.getPlayerView(session.state, playerId)
@@ -125,7 +122,7 @@ export class GameEngineService {
    * Get available actions for a player
    */
   getAvailableActions(gameId: string, playerId: string): string[] {
-    const session = this.sessions.get(gameId)
+    const session = this.sessionStore.get(gameId)
     if (!session) return []
 
     return session.engine.getAvailableActions(session.state, playerId)
@@ -135,22 +132,12 @@ export class GameEngineService {
    * Execute a game action
    */
   executeAction(request: GameActionRequest): GameActionResponse {
-    const session = this.sessions.get(request.gameId)
+    const session = this.sessionStore.get(request.gameId)
     if (!session) {
       return { success: false, error: 'Game not found' }
     }
 
-    // Build the action
-    const action: ILoveLetterAction = {
-      type: request.actionType,
-      playerId: request.playerId,
-      timestamp: new Date(),
-      payload: {
-        cardType: request.payload?.cardType as any,
-        targetPlayerId: request.payload?.targetPlayerId,
-        guessedCard: request.payload?.guessedCard as any,
-      },
-    }
+    const action = this.buildAction(request)
 
     // Validate the action
     const validationResult = session.engine.validateAction(session.state, action)
@@ -164,40 +151,17 @@ export class GameEngineService {
       return { success: false, error: executeResult.error?.message }
     }
 
-    // Update session state
-    session.state = executeResult.value.newState
+    const nextState = executeResult.value.newState
+    this.sessionStore.updateState(session.gameId, nextState)
+    this.eventPublisher.publishActionEvents(session.gameId, executeResult.value.events)
 
-    // Publish events
-    for (const event of executeResult.value.events) {
-      const eventPayload =
-        typeof event.payload === 'object' && event.payload !== null
-          ? { gameId: session.gameId, ...(event.payload as Record<string, unknown>) }
-          : { gameId: session.gameId, data: event.payload }
-
-      eventBus.publish({
-        id: crypto.randomUUID(),
-        type: `game.${event.type}`,
-        timestamp: new Date(),
-        payload: eventPayload,
-      })
-    }
-
-    // Check if game is finished
-    if (session.state.isFinished) {
-      eventBus.publish({
-        id: crypto.randomUUID(),
-        type: 'game.finished',
-        timestamp: new Date(),
-        payload: {
-          gameId: session.gameId,
-          winnerId: session.state.winnerId,
-        },
-      })
+    if (nextState.isFinished) {
+      this.eventPublisher.publishGameFinished(session.gameId, nextState.winnerId)
     }
 
     return {
       success: true,
-      newState: session.state,
+      newState: nextState,
       events: executeResult.value.events.map((e) => ({
         type: e.type,
         payload: e.payload,
@@ -212,7 +176,7 @@ export class GameEngineService {
     return this.executeAction({
       gameId,
       playerId,
-      actionType: LoveLetterActionTypes.DRAW_CARD,
+      actionType: 'draw_card',
     })
   }
 
@@ -229,8 +193,17 @@ export class GameEngineService {
     return this.executeAction({
       gameId,
       playerId,
-      actionType: LoveLetterActionTypes.PLAY_CARD,
+      actionType: 'play_card',
       payload: { cardType, targetPlayerId, guessedCard },
+    })
+  }
+
+  submitMove(gameId: string, playerId: string, move: string): GameActionResponse {
+    return this.executeAction({
+      gameId,
+      playerId,
+      actionType: RpsActionTypes.SUBMIT_MOVE,
+      payload: { move },
     })
   }
 
@@ -238,16 +211,9 @@ export class GameEngineService {
    * End a game session
    */
   endGame(gameId: string): void {
-    const session = this.sessions.get(gameId)
+    const session = this.sessionStore.delete(gameId)
     if (session) {
-      this.sessions.delete(gameId)
-
-      eventBus.publish({
-        id: crypto.randomUUID(),
-        type: 'game.session_ended',
-        timestamp: new Date(),
-        payload: { gameId },
-      })
+      this.eventPublisher.publishSessionEnded(gameId)
     }
   }
 
@@ -255,19 +221,28 @@ export class GameEngineService {
    * Get all active sessions
    */
   getActiveSessions(): GameSession[] {
-    return Array.from(this.sessions.values())
+    return this.sessionStore.list()
   }
 
   /**
    * Get session by lobby ID
    */
   getSessionByLobby(lobbyId: string): GameSession | undefined {
-    for (const session of this.sessions.values()) {
-      if (session.lobbyId === lobbyId) {
-        return session
-      }
-    }
-    return undefined
+    return this.sessionStore.getByLobbyId(lobbyId)
+  }
+
+  private buildAction(request: GameActionRequest): GenericAction {
+    return {
+      type: request.actionType,
+      playerId: request.playerId,
+      timestamp: new Date(),
+      payload: (request.payload ?? {}) as IAction['payload'],
+    } as GenericAction
+  }
+
+  private resolveGameType(gameType: string): string {
+    const normalizedGameType = GameEngineService.GAME_TYPE_ALIASES[gameType]
+    return normalizedGameType || gameType
   }
 }
 

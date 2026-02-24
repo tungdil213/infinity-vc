@@ -81,7 +81,7 @@ export default class EnhancedAuthController {
         await auth.use('web').login(newUser)
         session.flash(
           'success',
-          `Account created successfully! Welcome to Infinity Game, ${newUser.fullName}!`
+          `Account created successfully! Welcome to infinity Game, ${newUser.fullName}!`
         )
       } else {
         session.flash('success', 'Account created successfully! Please log in.')

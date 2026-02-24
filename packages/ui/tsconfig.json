@@ -1,10 +1,10 @@
 {
-	"extends": "@tyfo.dev/typescript-config/react-library.json",
+	"extends": "@infinity.dev/typescript-config/react-library.json",
 	"compilerOptions": {
 		"baseUrl": ".",
 		"paths": {
 			"@/*": ["src/*"],
-			"@tyfo.dev/ui/sytles": ["dist/style/global.css"]
+			"@infinity.dev/ui/sytles": ["dist/style/global.css"]
 		},
 		"declaration": true,
 		"declarationDir": "./dist",

@@ -1,60 +1,61 @@
 {
-  "name": "tyfo.dev",
-  "type": "module",
-  "version": "0.0.1",
-  "private": true,
-  "packageManager": "pnpm@10.4.0",
-  "license": "MIT",
-  "scripts": {
-    "build": "turbo run build && cp -r apps/infinity/.env apps/infinity/build/",
-    "clean": "turbo run clean && rm -rf node_modules",
-    "dev": "turbo run dev",
-    "docker:up": "docker compose up -d",
-    "docker:down": "docker compose down",
-    "docker:build": "docker build . -t site",
-    "docker:run": "docker run --rm --name site_tyfo.dev --env-file ./apps/infinity/.env -e NODE_ENV=production -e HOST=0.0.0.0 -e DB_HOST=host.docker.internal -it -p 3333:3333 --add-host=host.docker.internal:host-gateway site",
-    "lint": "eslint .",
-    "preview-storybook": "turbo run preview-storybook",
-    "format": "prettier .",
-    "taze": "yarn dlx taze -r -I",
-    "typecheck": "npm run typecheck --workspaces"
-  },
-  "devDependencies": {
-    "@julr/tooling-configs": "^4.0.0",
-    "@types/sinon": "^17.0.4",
-    "eslint": "^9.39.2",
-    "prettier": "^3.8.1",
-    "prettier-edgejs": "^0.2.36",
-    "turbo": "^2.8.7"
-  },
-  "pnpm": {
-    "overrides": {
-      "@inertiajs/core": "2.0.0",
-      "strtok3": "8.0.1"
-    },
-    "ignoredBuiltDependencies": [
-      "@parcel/watcher",
-      "@swc/core",
-      "better-sqlite3",
-      "esbuild",
-      "prettier-edgejs",
-      "unrs-resolver"
-    ],
-    "onlyBuiltDependencies": [
-      "@parcel/watcher",
-      "@swc/core",
-      "better-sqlite3",
-      "esbuild",
-      "prettier-edgejs",
-      "unrs-resolver"
-    ]
-  },
-  "overrides": {
-    "@inertiajs/core": "2.0.0",
-    "strtok3": "8.0.1"
-  },
-  "resolutions": {
-    "@inertiajs/core": "2.0.0",
-    "strtok3": "8.0.1"
-  }
+	"name": "infinity.dev",
+	"type": "module",
+	"version": "0.0.1",
+	"private": true,
+	"packageManager": "pnpm@10.4.0",
+	"license": "MIT",
+	"scripts": {
+		"build": "turbo run build && cp -r apps/infinity/.env apps/infinity/build/",
+		"clean": "turbo run clean && rm -rf node_modules",
+		"dev": "turbo run dev",
+		"demo:rps": "pnpm --filter @infinity/app run game:demo:rps",
+		"docker:up": "docker compose up -d",
+		"docker:down": "docker compose down",
+		"docker:build": "docker build . -t site",
+		"docker:run": "docker run --rm --name site_infinity.dev --env-file ./apps/infinity/.env -e NODE_ENV=production -e HOST=0.0.0.0 -e DB_HOST=host.docker.internal -it -p 3333:3333 --add-host=host.docker.internal:host-gateway site",
+		"lint": "turbo run lint",
+		"preview-storybook": "turbo run preview-storybook",
+		"format": "prettier .",
+		"taze": "yarn dlx taze -r -I",
+		"typecheck": "pnpm -r run typecheck"
+	},
+	"devDependencies": {
+		"@julr/tooling-configs": "^4.0.0",
+		"@types/sinon": "^17.0.4",
+		"eslint": "^9.39.2",
+		"prettier": "^3.8.1",
+		"prettier-plugin-edgejs": "^1.0.6",
+		"turbo": "^2.8.7"
+	},
+	"pnpm": {
+		"overrides": {
+			"@inertiajs/core": "^2.3.15",
+			"strtok3": "8.0.1"
+		},
+		"ignoredBuiltDependencies": [
+			"@parcel/watcher",
+			"@swc/core",
+			"better-sqlite3",
+			"esbuild",
+			"prettier-edgejs",
+			"unrs-resolver"
+		],
+		"onlyBuiltDependencies": [
+			"@parcel/watcher",
+			"@swc/core",
+			"better-sqlite3",
+			"esbuild",
+			"prettier-edgejs",
+			"unrs-resolver"
+		]
+	},
+	"overrides": {
+		"@inertiajs/core": "^2.3.15",
+		"strtok3": "8.0.1"
+	},
+	"resolutions": {
+		"@inertiajs/core": "^2.3.15",
+		"strtok3": "8.0.1"
+	}
 }

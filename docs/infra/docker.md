@@ -1,6 +1,6 @@
 # Docker & Docker Compose
 
-Ce document décrit comment construire et lancer l’application **Infinity** via Docker et Docker Compose.
+Ce document décrit comment construire et lancer l’application **infinity** via Docker et Docker Compose.
 
 ## 1. Vue d’ensemble
 
@@ -8,11 +8,11 @@ L’image Docker est construite à partir du `Dockerfile` à la racine :
 
 - Build des dépendances et workspaces avec **pnpm**
 - Build des packages partagés :
-  - `@tyfo.dev/ui`
-  - `@tyfo.dev/events`
-  - `@tyfo.dev/game-engine`
-  - `@tyfo.dev/transcript`
-- Build de l’application AdonisJS **Infinity** (`apps/infinity`)
+  - `@infinity.dev/ui`
+  - `@infinity.dev/events`
+  - `@infinity.dev/game-engine`
+  - `@infinity.dev/transcript`
+- Build de l’application AdonisJS **infinity** (`apps/infinity`)
 - Image finale avec uniquement les dépendances de production pour `@infinity/app`
 
 Le port exposé est **3333**.
@@ -20,7 +20,7 @@ Le port exposé est **3333**.
 ## 2. Pré-requis
 
 - Docker et Docker Compose
-- Fichier d’environnement pour l’app Infinity :
+- Fichier d’environnement pour l’app infinity :
 
 ```bash
 cd apps/infinity
@@ -48,7 +48,7 @@ L’image produite se nomme `site` (tu peux la renommer selon tes besoins).
 
 Le fichier `compose.yml` définit trois services :
 
-- `site` : application Infinity (AdonisJS + Inertia)
+- `site` : application infinity (AdonisJS + Inertia)
 - `database` : PostgreSQL
 - `mailer` : Mailpit pour les emails de développement
 
@@ -95,7 +95,7 @@ environment:
   - POSTGRES_PASSWORD=root
 ```
 
-Adapte ton `.env` d’Infinity en conséquence :
+Adapte ton `.env` d’infinity en conséquence :
 
 ```bash
 DB_HOST=database

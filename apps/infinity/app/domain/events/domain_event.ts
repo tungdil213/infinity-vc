@@ -1,7 +1,7 @@
 /**
- * Domain Event - Re-exports from @tyfo.dev/events for backward compatibility
+ * Domain Event - Re-exports from @infinity.dev/events for backward compatibility
  */
-import { type IEvent } from '@tyfo.dev/events'
+import { type IEvent } from '@infinity.dev/events'
 
 // Backward compatible alias
 export interface DomainEvent<T = unknown> {

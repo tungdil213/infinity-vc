@@ -10,6 +10,9 @@
 
 import router from '@adonisjs/core/services/router'
 import server from '@adonisjs/core/services/server'
+import env from '#start/env'
+
+const isDevelopment = env.get('NODE_ENV') === 'development'
 
 /**
  * The error handler is used to convert an exception
@@ -28,6 +31,7 @@ server.use([
   () => import('@adonisjs/cors/cors_middleware'),
   () => import('@adonisjs/vite/vite_middleware'),
   () => import('@adonisjs/inertia/inertia_middleware'),
+  ...(isDevelopment ? [() => import('adonisjs-server-stats/middleware')] : []),
 ])
 
 /**

@@ -1,5 +1,5 @@
 {
-	"name": "@tyfo.dev/eslint-config",
+	"name": "@infinity.dev/eslint-config",
 	"version": "1.0.0",
 	"files": [
 		"library.js",

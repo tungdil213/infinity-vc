@@ -3,12 +3,12 @@ import { router } from '@inertiajs/react'
 import { toast } from 'sonner'
 import { useLobbyDetail } from '../hooks/use_lobby_detail'
 import { useLobbyLeaveGuard } from '../hooks/use_lobby_leave_guard'
-import { Button } from '@tyfo.dev/ui/primitives/button'
-import { Badge } from '@tyfo.dev/ui/primitives/badge'
+import { Button } from '@infinity.dev/ui/primitives/button'
+import { Badge } from '@infinity.dev/ui/primitives/badge'
 import { Users } from 'lucide-react'
-import { LobbyPlayersPanel } from '@tyfo.dev/ui/components/lobby-players-panel'
-import { LobbyHeaderPanel } from '@tyfo.dev/ui/components/lobby-header-panel'
-import { ConnectionStatusIndicator } from '@tyfo.dev/ui/components/connection-status-indicator'
+import { LobbyPlayersPanel } from '@infinity.dev/ui/components/lobby-players-panel'
+import { LobbyHeaderPanel } from '@infinity.dev/ui/components/lobby-header-panel'
+import { ConnectionStatusIndicator } from '@infinity.dev/ui/components/connection-status-indicator'
 import { useTransmit } from '../contexts/TransmitContext'
 
 interface Player {
@@ -32,7 +32,7 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
   const { subscribeToLobby, isConnected } = useTransmit()
 
   // Détecter si l'utilisateur est dans le lobby
-  const isUserInLobby = lobby?.players?.some(player => player.uuid === currentUser.uuid) || false
+  const isUserInLobby = lobby?.players?.some((player) => player.uuid === currentUser.uuid) || false
 
   // Hook pour gérer la confirmation de sortie
   const { markAsLeaving } = useLobbyLeaveGuard({
@@ -44,7 +44,7 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
 
   const handleStartGame = async () => {
     if (!lobby?.canStart || !isServiceReady) return
-    
+
     setIsStartingGame(true)
     try {
       const result = await startGame(currentUser.uuid)
@@ -70,7 +70,11 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
 
     const subscribe = async () => {
       unsubscribe = await subscribeToLobby(lobbyUuid, (event) => {
-        if (event.type === 'lobby.game.started' && event.lobbyUuid === lobbyUuid && event.gameUuid) {
+        if (
+          event.type === 'lobby.game.started' &&
+          event.lobbyUuid === lobbyUuid &&
+          event.gameUuid
+        ) {
           setIsStartingGame(true)
           toast.success('Game is starting!')
           router.visit(`/games/${event.gameUuid}`)
@@ -91,11 +95,11 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
 
   const handleLeaveLobby = async () => {
     if (!isServiceReady) return
-    
+
     setIsLeavingLobby(true)
     // Marquer qu'on quitte volontairement pour éviter la confirmation
     markAsLeaving()
-    
+
     try {
       await leaveLobby(currentUser.uuid)
       toast.success('Left lobby successfully')
@@ -111,19 +115,24 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
   const handleJoinLobby = async () => {
     setIsJoiningLobby(true)
     try {
-      router.post(`/lobbies/${lobbyUuid}/join`, {}, {
-        onSuccess: () => {
-          toast.success('Vous avez rejoint le lobby avec succès!')
-          // Reload the page to update the lobby state
-          router.reload()
-        },
-        onError: (errors) => {
-          const errorMessage = typeof errors === 'object' && errors !== null && 'error' in errors 
-            ? (errors as any).error 
-            : 'Impossible de rejoindre le lobby'
-          toast.error(errorMessage)
+      router.post(
+        `/lobbies/${lobbyUuid}/join`,
+        {},
+        {
+          onSuccess: () => {
+            toast.success('Vous avez rejoint le lobby avec succès!')
+            // Reload the page to update the lobby state
+            router.reload()
+          },
+          onError: (errors) => {
+            const errorMessage =
+              typeof errors === 'object' && errors !== null && 'error' in errors
+                ? (errors as any).error
+                : 'Impossible de rejoindre le lobby'
+            toast.error(errorMessage)
+          },
         }
-      })
+      )
     } catch (error) {
       toast.error('Une erreur est survenue')
     } finally {
@@ -148,7 +157,11 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
           <div className="flex">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
               </svg>
             </div>
             <div className="ml-3">

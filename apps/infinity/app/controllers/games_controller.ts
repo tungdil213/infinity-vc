@@ -1,13 +1,20 @@
 import { HttpContext } from '@adonisjs/core/http'
-import { inject } from '@adonisjs/core'
-import { DatabaseGameRepository } from '../infrastructure/repositories/database_game_repository.js'
 import { gameEngineService } from '../application/services/game_engine_service.js'
-import { Cards } from '../games/love-letter/types.js'
+import {
+  executeParsedGameAction,
+  getAuthorizedGameSession,
+  parseGameActionInput,
+  type RawGameActionInput,
+} from './support/game_controller_guard.js'
+import {
+  toActionResponsePayload,
+  toGameActionsPayload,
+  toGameApiPayload,
+  toGamePagePayload,
+  toPublicPlayersPayload,
+} from '../presenters/game_presenter.js'
 
-@inject()
 export default class GamesController {
-  constructor(private gameRepository: DatabaseGameRepository) {}
-
   /**
    * Display specific game (Inertia page)
    */
@@ -15,42 +22,27 @@ export default class GamesController {
     const user = auth.user!
     const { uuid } = params
 
-    // Get game session from engine
-    const session = gameEngineService.getSession(uuid)
+    const session = getAuthorizedGameSession(uuid, user.userUuid, (gameUuid) =>
+      gameEngineService.getSession(gameUuid)
+    )
     if (!session) {
-      // Try to find in database (game might have finished)
-      const game = await this.gameRepository.findByUuid(uuid)
-      if (!game) {
-        return inertia.render('errors/not_found', {
-          error: { message: 'Game not found' },
-        })
-      }
-
-      return inertia.render('game', {
-        game: game.toJSON(),
-        user: { uuid: user.userUuid, nickName: user.fullName },
-        isFinished: true,
-      })
-    }
-
-    // Check if user is part of this game
-    const isPlayerInGame = session.state.players.some((p) => p.id === user.userUuid)
-    if (!isPlayerInGame) {
       return inertia.render('errors/not_found', {
-        error: { message: 'You are not part of this game' },
+        error: { message: 'Game not found' },
       })
     }
 
-    // Get player-specific view (hides other players' hands)
     const playerView = gameEngineService.getPlayerView(uuid, user.userUuid)
+    const availableActions = gameEngineService.getAvailableActions(uuid, user.userUuid)
 
-    return inertia.render('game', {
-      gameId: session.gameId,
-      playerView,
-      availableActions: gameEngineService.getAvailableActions(uuid, user.userUuid),
-      user: { uuid: user.userUuid, nickName: user.fullName },
-      isFinished: session.state.isFinished,
-    })
+    return inertia.render(
+      'game',
+      toGamePagePayload({
+        session,
+        playerView,
+        availableActions,
+        user: { uuid: user.userUuid, nickName: user.fullName ?? user.email },
+      })
+    )
   }
 
   /**
@@ -60,26 +52,17 @@ export default class GamesController {
     const user = auth.user!
     const { uuid } = params
 
-    const session = gameEngineService.getSession(uuid)
+    const session = getAuthorizedGameSession(uuid, user.userUuid, (gameUuid) =>
+      gameEngineService.getSession(gameUuid)
+    )
     if (!session) {
       return response.status(404).json({ error: 'Game not found or finished' })
     }
 
-    // Check if user is part of this game
-    const isPlayerInGame = session.state.players.some((p) => p.id === user.uuid)
-    if (!isPlayerInGame) {
-      return response.status(403).json({ error: 'You are not part of this game' })
-    }
+    const playerView = gameEngineService.getPlayerView(uuid, user.userUuid)
+    const availableActions = gameEngineService.getAvailableActions(uuid, user.userUuid)
 
-    // Get player-specific view
-    const playerView = gameEngineService.getPlayerView(uuid, user.uuid)
-
-    return response.json({
-      gameId: session.gameId,
-      playerView,
-      availableActions: gameEngineService.getAvailableActions(uuid, user.uuid),
-      isFinished: session.state.isFinished,
-    })
+    return response.json(toGameApiPayload({ session, playerView, availableActions }))
   }
 
   /**
@@ -89,19 +72,22 @@ export default class GamesController {
     const user = auth.user!
     const { uuid } = params
 
-    const session = gameEngineService.getSession(uuid)
+    const session = getAuthorizedGameSession(uuid, user.userUuid, (gameUuid) =>
+      gameEngineService.getSession(gameUuid)
+    )
     if (!session) {
       return response.status(404).json({ error: 'Game not found' })
     }
 
     const availableActions = gameEngineService.getAvailableActions(uuid, user.userUuid)
-    const isMyTurn = session.state.currentPlayerId === user.userUuid
 
-    return response.json({
-      availableActions,
-      isMyTurn,
-      phase: session.state.phase,
-    })
+    return response.json(
+      toGameActionsPayload({
+        session,
+        availableActions,
+        currentUserUuid: user.userUuid,
+      })
+    )
   }
 
   /**
@@ -110,58 +96,49 @@ export default class GamesController {
   async action({ params, request, response, auth }: HttpContext) {
     const user = auth.user!
     const { uuid } = params
-    const body = request.only(['action', 'cardType', 'targetPlayerId', 'guessedCard'])
+    const body = request.only([
+      'action',
+      'actionType',
+      'cardType',
+      'targetPlayerId',
+      'guessedCard',
+      'move',
+      'payload',
+    ]) as RawGameActionInput
 
-    const session = gameEngineService.getSession(uuid)
+    const session = getAuthorizedGameSession(uuid, user.userUuid, (gameUuid) =>
+      gameEngineService.getSession(gameUuid)
+    )
     if (!session) {
       return response.status(404).json({ error: 'Game not found' })
     }
 
-    // Check if user is part of this game
-    const isPlayerInGame = session.state.players.some((p) => p.id === user.uuid)
-    if (!isPlayerInGame) {
-      return response.status(403).json({ error: 'You are not part of this game' })
+    const parsedAction = parseGameActionInput(body)
+    if (!parsedAction.ok) {
+      return response.status(400).json({ error: parsedAction.error })
     }
 
-    let result
-
-    switch (body.action) {
-      case 'draw':
-        result = gameEngineService.drawCard(uuid, user.userUuid)
-        break
-
-      case 'play':
-        if (!body.cardType) {
-          return response.status(400).json({ error: 'cardType is required' })
-        }
-        result = gameEngineService.playCard(
-          uuid,
-          user.userUuid,
-          body.cardType,
-          body.targetPlayerId,
-          body.guessedCard
-        )
-        break
-
-      default:
-        return response.status(400).json({ error: `Unknown action: ${body.action}` })
-    }
+    const result = executeParsedGameAction(uuid, user.userUuid, parsedAction.value, {
+      drawCard: (gameUuid, userUuid) => gameEngineService.drawCard(gameUuid, userUuid),
+      playCard: (gameUuid, userUuid, cardType, targetPlayerId, guessedCard) =>
+        gameEngineService.playCard(gameUuid, userUuid, cardType, targetPlayerId, guessedCard),
+      executeAction: (engineAction) => gameEngineService.executeAction(engineAction),
+    })
 
     if (!result.success) {
       return response.status(400).json({ error: result.error })
     }
 
-    // Get updated player view
-    const playerView = gameEngineService.getPlayerView(uuid, user.uuid)
+    const playerView = gameEngineService.getPlayerView(uuid, user.userUuid)
+    const availableActions = gameEngineService.getAvailableActions(uuid, user.userUuid)
 
-    return response.json({
-      success: true,
-      playerView,
-      availableActions: gameEngineService.getAvailableActions(uuid, user.userUuid),
-      events: result.events,
-      isFinished: result.newState?.isFinished ?? false,
-      winnerId: result.newState?.winnerId,
-    })
+    return response.json(
+      toActionResponsePayload({
+        actionResult: result,
+        playerView,
+        availableActions,
+      })
+    )
   }
 
   /**
@@ -171,36 +148,14 @@ export default class GamesController {
     const user = auth.user!
     const { uuid } = params
 
-    const session = gameEngineService.getSession(uuid)
+    const session = getAuthorizedGameSession(uuid, user.userUuid, (gameUuid) =>
+      gameEngineService.getSession(gameUuid)
+    )
     if (!session) {
       return response.status(404).json({ error: 'Game not found' })
     }
 
-    // Return public player information
-    const players = session.state.players.map((p) => ({
-      id: p.id,
-      name: p.name,
-      isActive: p.isActive,
-      isEliminated: p.isEliminated,
-      isProtected: p.isProtected,
-      handCount: p.hand.length,
-      discardPile: p.discardPile.map((cardType) => ({
-        type: cardType,
-        name: Cards[cardType].name,
-        value: Cards[cardType].value,
-      })),
-      tokensOfAffection: p.tokensOfAffection,
-      isCurrentPlayer: p.id === session.state.currentPlayerId,
-      isMe: p.id === user.userUuid,
-    }))
-
-    return response.json({
-      players,
-      currentPlayerId: session.state.currentPlayerId,
-      phase: session.state.phase,
-      round: session.state.round,
-      deckCount: session.state.deck.length,
-    })
+    return response.json(toPublicPlayersPayload({ session, currentUserUuid: user.userUuid }))
   }
 
   /**

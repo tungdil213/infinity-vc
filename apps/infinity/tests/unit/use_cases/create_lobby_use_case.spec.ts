@@ -207,6 +207,7 @@ test.group('CreateLobbyUseCase', (group) => {
     const request = {
       userUuid: 'user-123',
       name: 'Test Lobby',
+      gameType: 'love-letter-infinity-gauntlet',
     }
 
     // Act
@@ -214,7 +215,7 @@ test.group('CreateLobbyUseCase', (group) => {
 
     // Assert
     assert.isTrue(result.isSuccess)
-    assert.equal(result.value.maxPlayers, 4) // Default value
+    assert.equal(result.value.maxPlayers, 6) // Default value from game definition constraints
     assert.isFalse(result.value.isPrivate) // Default value
   })
 })

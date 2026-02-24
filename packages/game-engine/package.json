@@ -1,43 +1,57 @@
 {
-  "name": "@tyfo.dev/game-engine",
-  "version": "1.0.0",
-  "type": "module",
-  "license": "MIT",
-  "description": "Generic game engine framework for building turn-based games",
-  "keywords": ["game-engine", "state-machine", "turn-based", "board-game", "typescript"],
-  "sideEffects": false,
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./core": {
-      "types": "./dist/core/index.d.ts",
-      "import": "./dist/core/index.js"
-    },
-    "./state-machine": {
-      "types": "./dist/state-machine/index.d.ts",
-      "import": "./dist/state-machine/index.js"
-    }
-  },
-  "scripts": {
-    "build": "tsc",
-    "dev": "tsc -w",
-    "clean": "rm -rf dist .turbo node_modules",
-    "lint": "eslint . --max-warnings 0",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest"
-  },
-  "dependencies": {
-    "@tyfo.dev/events": "workspace:*"
-  },
-  "devDependencies": {
-    "@tyfo.dev/typescript-config": "workspace:*",
-    "typescript": "~5.7.3",
-    "vitest": "^2.1.0"
-  },
-  "publishConfig": {
-    "access": "public"
-  }
+	"name": "@infinity.dev/game-engine",
+	"version": "1.0.0",
+	"type": "module",
+	"license": "MIT",
+	"description": "Generic game engine framework for building turn-based games",
+	"keywords": [
+		"game-engine",
+		"state-machine",
+		"turn-based",
+		"board-game",
+		"typescript"
+	],
+	"sideEffects": false,
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
+		"./core": {
+			"types": "./dist/core/index.d.ts",
+			"import": "./dist/core/index.js"
+		},
+		"./platform": {
+			"types": "./dist/platform/index.d.ts",
+			"import": "./dist/platform/index.js"
+		},
+		"./games": {
+			"types": "./dist/games/index.d.ts",
+			"import": "./dist/games/index.js"
+		},
+		"./state-machine": {
+			"types": "./dist/state-machine/index.d.ts",
+			"import": "./dist/state-machine/index.js"
+		}
+	},
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc -w",
+		"clean": "rm -rf dist .turbo node_modules",
+		"lint": "eslint . --max-warnings 0",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run --passWithNoTests",
+		"test:watch": "vitest"
+	},
+	"dependencies": {
+		"@infinity.dev/events": "workspace:*"
+	},
+	"devDependencies": {
+		"@infinity.dev/typescript-config": "workspace:*",
+		"typescript": "~5.7.3",
+		"vitest": "^2.1.0"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
 }

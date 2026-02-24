@@ -1,0 +1,13 @@
+# Dependencies and caches
+**/node_modules
+**/.turbo
+**/.pnpm-store
+
+# Build artifacts
+**/dist
+**/build
+apps/docs/storybook-static
+apps/infinity/public/assets
+
+# Tooling outputs
+apps/infinity/.adonisjs

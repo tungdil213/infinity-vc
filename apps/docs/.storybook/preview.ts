@@ -1,10 +1,10 @@
-import type { Preview } from "@storybook/react-vite";
+import type { Preview } from '@storybook/react-vite';
 
-import "@tyfo.dev/ui/styles";
+import '@infinity.dev/ui/styles';
 
 const preview: Preview = {
-  parameters: {},
-  tags: ["autodocs"]
+	parameters: {},
+	tags: ['autodocs'],
 };
 
 export default preview;

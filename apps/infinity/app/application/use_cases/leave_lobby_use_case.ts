@@ -67,10 +67,10 @@ export class LeaveLobbyUseCase {
       // Si le lobby est vide après le départ, le supprimer
       if (lobby.players.length === 0) {
         await this.lobbyRepository.delete(lobby.uuid)
-        
+
         // Émettre l'événement de suppression de lobby
         await this.eventService.emitLobbyDeleted(lobby.uuid)
-        
+
         const response: LeaveLobbyResponse = {
           lobby: {
             uuid: lobby.uuid,

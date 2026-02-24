@@ -1,14 +1,14 @@
 import React from 'react'
 import { Head, Link } from '@inertiajs/react'
-import { Button } from '@tyfo.dev/ui/primitives/button'
+import { Button } from '@infinity.dev/ui/primitives/button'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@tyfo.dev/ui/primitives/card'
-import { Footer } from '@tyfo.dev/ui/components/footer'
+} from '@infinity.dev/ui/primitives/card'
+import { Footer } from '@infinity.dev/ui/components/footer'
 import Layout from '../layouts/layout'
 import { HeaderWrapper } from '../layouts/HeaderWrapper'
 import { Zap, Users, Globe, Shield, Heart, TrendingUp } from 'lucide-react'
@@ -31,7 +31,7 @@ interface WelcomeProps {
 export default function Welcome({ user, currentLobby }: WelcomeProps) {
   return (
     <Layout>
-      <Head title="Infinity Game - Multiplayer Gaming Platform" />
+      <Head title="infinity Game - Multiplayer Gaming Platform" />
 
       <div className="min-h-screen bg-background text-foreground font-mono">
         {/* Enhanced Navigation */}
@@ -90,7 +90,7 @@ export default function Welcome({ user, currentLobby }: WelcomeProps) {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <h2 className="text-3xl sm:text-4xl font-heading text-foreground mb-4">
-                Why Choose Infinity Game?
+                Why Choose infinity Game?
               </h2>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
                 Built for modern multiplayer gaming with cutting-edge technology
@@ -198,7 +198,7 @@ export default function Welcome({ user, currentLobby }: WelcomeProps) {
               Ready to Start Playing?
             </h2>
             <p className="text-xl text-main-foreground/80 mb-8 max-w-2xl mx-auto">
-              Join thousands of players already enjoying multiplayer games on Infinity Game
+              Join thousands of players already enjoying multiplayer games on infinity Game
             </p>
 
             {user ? (

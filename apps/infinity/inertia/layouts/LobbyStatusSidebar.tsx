@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { router } from '@inertiajs/react'
-import { Button } from '@tyfo.dev/ui/primitives/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@tyfo.dev/ui/primitives/card'
-import { Badge } from '@tyfo.dev/ui/primitives/badge'
+import { Button } from '@infinity.dev/ui/primitives/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@infinity.dev/ui/primitives/card'
+import { Badge } from '@infinity.dev/ui/primitives/badge'
 import { Users, LogOut, Play } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLobbyService } from '../hooks/use_lobby_service'
@@ -32,7 +32,7 @@ export function LobbyStatusSidebar({ currentLobby, currentUser }: LobbyStatusSid
 
   const handleLeaveLobby = async () => {
     if (!currentUser || !isConnected || !lobbyService) return
-    
+
     setIsLeavingLobby(true)
     try {
       await lobbyService.leaveLobby(currentLobby.uuid, currentUser.uuid)
@@ -83,9 +83,7 @@ export function LobbyStatusSidebar({ currentLobby, currentUser }: LobbyStatusSid
           <CardTitle className="text-lg flex items-center gap-2">
             <Users className="h-5 w-5" />
             Lobby Actuel
-            {!isConnected && (
-              <div className="w-2 h-2 bg-red-500 rounded-full" title="Déconnecté" />
-            )}
+            {!isConnected && <div className="w-2 h-2 bg-red-500 rounded-full" title="Déconnecté" />}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -102,7 +100,7 @@ export function LobbyStatusSidebar({ currentLobby, currentUser }: LobbyStatusSid
           </div>
 
           <div className="flex flex-col gap-2">
-            <Button 
+            <Button
               onClick={handleGoToLobby}
               className="w-full"
               variant="default"
@@ -111,8 +109,8 @@ export function LobbyStatusSidebar({ currentLobby, currentUser }: LobbyStatusSid
               <Play className="h-4 w-4 mr-2" />
               Aller au lobby
             </Button>
-            
-            <Button 
+
+            <Button
               onClick={handleLeaveLobby}
               variant="neutral"
               className="w-full"
@@ -124,7 +122,8 @@ export function LobbyStatusSidebar({ currentLobby, currentUser }: LobbyStatusSid
           </div>
 
           <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
-            💡 Vous êtes actuellement dans ce lobby. Vous devez le quitter avant de rejoindre un autre.
+            💡 Vous êtes actuellement dans ce lobby. Vous devez le quitter avant de rejoindre un
+            autre.
           </div>
         </CardContent>
       </Card>

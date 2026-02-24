@@ -1,11 +1,11 @@
 /**
- * Game Events - Compatible with @tyfo.dev/events IEvent interface
+ * Game Events - Compatible with @infinity.dev/events IEvent interface
  */
-import type { IEvent } from '@tyfo.dev/events'
+import type { IEvent } from '@infinity.dev/events'
 import Player from '../entities/player.js'
 
 // Re-export event types from package for new code
-export { GameEventTypes } from '@tyfo.dev/events/domain'
+export { GameEventTypes } from '@infinity.dev/events/domain'
 
 export enum GameEventType {
   GAME_STARTED = 'GameStarted',

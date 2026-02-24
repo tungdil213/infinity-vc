@@ -1,7 +1,7 @@
 /**
- * Lobby Events - Compatible with @tyfo.dev/events IEvent interface
+ * Lobby Events - Compatible with @infinity.dev/events IEvent interface
  */
-import type { IEvent } from '@tyfo.dev/events'
+import type { IEvent } from '@infinity.dev/events'
 import type { PlayerInterface } from '../interfaces/player_interface.js'
 
 // Re-export event types from package for new code
@@ -11,7 +11,7 @@ export {
   type PlayerJoinedLobbyPayload,
   type PlayerLeftLobbyPayload,
   type LobbyStatusChangedPayload,
-} from '@tyfo.dev/events/domain'
+} from '@infinity.dev/events/domain'
 
 export enum LobbyEvent {
   PLAYER_JOINED = 'PLAYER_JOINED',

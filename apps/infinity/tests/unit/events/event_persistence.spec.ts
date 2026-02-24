@@ -17,7 +17,7 @@ test.group('Event Persistence and Reconstruction', () => {
     const deserialized = JSON.parse(serialized)
 
     // Assert
-    assert.equal(deserialized.eventType, 'LobbyCreated')
+    assert.equal(deserialized.type, 'LobbyCreated')
     assert.equal(deserialized.lobbyUuid, 'lobby-123')
     assert.equal(deserialized.lobbyName, 'Test Lobby')
     assert.equal(deserialized.createdBy, 'user-456')
@@ -35,7 +35,7 @@ test.group('Event Persistence and Reconstruction', () => {
     const deserialized = JSON.parse(serialized)
 
     // Assert
-    assert.equal(deserialized.eventType, 'PlayerJoinedLobby')
+    assert.equal(deserialized.type, 'PlayerJoinedLobby')
     assert.equal(deserialized.lobbyUuid, 'lobby-123')
     assert.equal(deserialized.player.uuid, 'player-123')
     assert.equal(deserialized.player.nickName, 'TestPlayer')
@@ -52,7 +52,7 @@ test.group('Event Persistence and Reconstruction', () => {
     const deserialized = JSON.parse(serialized)
 
     // Assert
-    assert.equal(deserialized.eventType, 'LobbyStatusChanged')
+    assert.equal(deserialized.type, 'LobbyStatusChanged')
     assert.equal(deserialized.lobbyUuid, 'lobby-123')
     assert.equal(deserialized.oldStatus, 'WAITING')
     assert.equal(deserialized.newStatus, 'READY')
@@ -67,7 +67,7 @@ test.group('Event Persistence and Reconstruction', () => {
     const deserialized = JSON.parse(serialized)
 
     // Assert
-    assert.equal(deserialized.eventType, 'LobbyDeleted')
+    assert.equal(deserialized.type, 'LobbyDeleted')
     assert.equal(deserialized.lobbyUuid, 'lobby-123')
     assert.equal(deserialized.reason, 'All players left')
   })
