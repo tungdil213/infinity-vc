@@ -61,6 +61,11 @@ export class GameLauncher {
 		return module?.definition.settings ?? null;
 	}
 
+	getGameDefinition(gameId: string): GameDefinition<Record<string, unknown>> | null {
+		const module = this.modules.get(gameId);
+		return module?.definition ?? null;
+	}
+
 	launch<TSettings extends object>(
 		request: LaunchGameRequest<TSettings>
 	): ResultType<LaunchedGameSession<IGameState, IAction, TSettings>, Error> {
@@ -72,6 +77,15 @@ export class GameLauncher {
 		const validationErrors = module.definition.settings.validate(request.settings as Record<string, unknown>);
 		if (validationErrors.length > 0) {
 			return fail(new Error(`Invalid settings: ${validationErrors.join('; ')}`));
+		}
+
+		const { minPlayers, maxPlayers } = module.definition.playerConstraints;
+		if (request.players.length < minPlayers || request.players.length > maxPlayers) {
+			return fail(
+				new Error(
+					`Invalid player count for '${module.definition.id}': expected between ${minPlayers} and ${maxPlayers}, received ${request.players.length}`
+				)
+			);
 		}
 
 		const resolvedSettings = this.resolveSettings(
@@ -118,8 +132,8 @@ export class GameLauncher {
 
 		const initialized = session.engine.initialize(session.players as IPlayer[], {
 			gameType: session.definition.metadata.gameType,
-			minPlayers: session.definition.metadata.minPlayers,
-			maxPlayers: session.definition.metadata.maxPlayers,
+			minPlayers: session.definition.playerConstraints.minPlayers,
+			maxPlayers: session.definition.playerConstraints.maxPlayers,
 			settings: session.settings as Record<string, unknown>,
 		});
 

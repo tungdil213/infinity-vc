@@ -80,11 +80,13 @@ export class StartGameUseCase {
       // Sauvegarder le lobby mis à jour
       await this.lobbyRepository.save(lobby)
 
+      const resolvedGameType = lobby.gameType || 'love-letter-infinity-gauntlet'
+
       // Créer la session de jeu avec le LoveLetterEngine
       const gameSessionResult = gameEngineService.createGame(
         lobby.uuid,
         lobby.players,
-        lobby.gameType,
+        resolvedGameType,
         lobby.gameSettings
       )
       if (gameSessionResult.isFailure) {

@@ -25,6 +25,9 @@ export type { GameActionRequest, GameActionResponse, GameSession } from './game_
  */
 export class GameEngineService {
   private readonly launcher = createDefaultLauncher()
+  private static readonly GAME_TYPE_ALIASES: Record<string, string> = {
+    'love-letter': 'love-letter-infinity-gauntlet',
+  }
 
   constructor(
     private readonly sessionStore: GameSessionStore = new GameSessionStore(),
@@ -40,8 +43,9 @@ export class GameEngineService {
     gameType: string,
     gameSettings: Record<string, unknown> = {}
   ): Result<GameSession> {
+    const resolvedGameType = this.resolveGameType(gameType)
     const launchResult = this.launcher.launch({
-      gameId: gameType,
+      gameId: resolvedGameType,
       players: players.map((p) => ({ id: p.uuid, name: p.nickName, isActive: true })),
       settings: gameSettings,
     })
@@ -69,8 +73,8 @@ export class GameEngineService {
 
     const result = engine.initialize(gamePlayers, {
       gameType: startedResult.definition.metadata.gameType,
-      minPlayers: startedResult.definition.metadata.minPlayers,
-      maxPlayers: startedResult.definition.metadata.maxPlayers,
+      minPlayers: startedResult.definition.playerConstraints.minPlayers,
+      maxPlayers: startedResult.definition.playerConstraints.maxPlayers,
       settings: startedResult.settings as Record<string, unknown>,
     })
 
@@ -81,7 +85,7 @@ export class GameEngineService {
     const session: GameSession = {
       gameId: result.value.gameId,
       lobbyId,
-      gameType,
+      gameType: resolvedGameType,
       engine,
       state: result.value,
       players: gamePlayers,
@@ -234,6 +238,11 @@ export class GameEngineService {
       timestamp: new Date(),
       payload: (request.payload ?? {}) as IAction['payload'],
     } as GenericAction
+  }
+
+  private resolveGameType(gameType: string): string {
+    const normalizedGameType = GameEngineService.GAME_TYPE_ALIASES[gameType]
+    return normalizedGameType || gameType
   }
 }
 

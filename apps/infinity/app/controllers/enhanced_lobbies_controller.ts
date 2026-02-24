@@ -88,8 +88,8 @@ export default class EnhancedLobbiesController {
       id: game.id,
       displayName: game.displayName,
       description: game.description,
-      minPlayers: game.metadata.minPlayers,
-      maxPlayers: game.metadata.maxPlayers,
+      minPlayers: game.playerConstraints.minPlayers,
+      maxPlayers: game.playerConstraints.maxPlayers,
     }))
   }
 

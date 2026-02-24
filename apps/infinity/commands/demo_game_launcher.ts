@@ -35,6 +35,7 @@ type DemoLaunchedSession = {
   }
   definition: {
     metadata: { gameType: string; minPlayers: number; maxPlayers: number }
+    playerConstraints: { minPlayers: number; maxPlayers: number }
   }
   settings: Record<string, unknown>
 }
@@ -102,8 +103,8 @@ export default class DemoGameLauncher extends BaseCommand {
 
     const initResult = started.value.engine.initialize(players, {
       gameType: started.value.definition.metadata.gameType,
-      minPlayers: started.value.definition.metadata.minPlayers,
-      maxPlayers: started.value.definition.metadata.maxPlayers,
+      minPlayers: started.value.definition.playerConstraints.minPlayers,
+      maxPlayers: started.value.definition.playerConstraints.maxPlayers,
       settings: started.value.settings,
     })
 

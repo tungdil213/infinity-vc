@@ -2,6 +2,7 @@ export type {
 	AnyGameModule,
 	GameDefinition,
 	GameModule,
+	GamePlayerConstraints,
 	GameSettingField,
 	GameSettingFieldType,
 	GameSettingOption,

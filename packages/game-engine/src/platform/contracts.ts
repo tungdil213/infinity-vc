@@ -24,11 +24,17 @@ export interface GameSettingsDefinition<TSettings extends object> {
 	validate(settings: Partial<TSettings>): string[];
 }
 
+export interface GamePlayerConstraints {
+	readonly minPlayers: number;
+	readonly maxPlayers: number;
+}
+
 export interface GameDefinition<TSettings extends object> {
 	readonly id: string;
 	readonly displayName: string;
 	readonly description: string;
 	readonly metadata: IGameMetadata;
+	readonly playerConstraints: GamePlayerConstraints;
 	readonly settings: GameSettingsDefinition<TSettings>;
 }
 

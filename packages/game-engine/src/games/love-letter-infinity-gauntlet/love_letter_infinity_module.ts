@@ -54,6 +54,10 @@ export const loveLetterInfinityModule: GameModule<
 		description:
 			'Love Letter variant for 2-6 players with hidden hands and one-loser-end condition (all other players win)',
 		metadata: new LoveLetterInfinityEngine().metadata,
+		playerConstraints: {
+			minPlayers: 2,
+			maxPlayers: 6,
+		},
 		settings: loveLetterInfinitySettingsDefinition,
 	},
 	createEngine() {

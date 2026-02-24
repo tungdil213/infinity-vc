@@ -15,6 +15,10 @@ describe('GameLauncher', () => {
 		const games = launcher.listGames();
 		expect(games).toHaveLength(1);
 		expect(games[0].id).toBe('rock-paper-scissors');
+		expect(launcher.getGameDefinition('rock-paper-scissors')?.playerConstraints).toEqual({
+			minPlayers: 2,
+			maxPlayers: 2,
+		});
 
 		const launched = launcher.launch({
 			gameId: 'rock-paper-scissors',
@@ -47,6 +51,20 @@ describe('GameLauncher', () => {
 		expect(launched.isFailure).toBe(true);
 		if (launched.isFailure) {
 			expect(launched.error.message).toContain('Invalid settings');
+		}
+	});
+
+	it('fails launch when player count is outside game constraints', () => {
+		const launcher = createGameLauncher([rockPaperScissorsModule]);
+		const launched = launcher.launch({
+			gameId: 'rock-paper-scissors',
+			players: [{ id: 'p1', name: 'Alice', isActive: true }],
+			settings: { roundsToWin: 2 },
+		});
+
+		expect(launched.isFailure).toBe(true);
+		if (launched.isFailure) {
+			expect(launched.error.message).toContain('Invalid player count');
 		}
 	});
 });

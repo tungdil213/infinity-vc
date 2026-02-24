@@ -1,4 +1,5 @@
 import Lobby from '../../domain/entities/lobby.js'
+import { createDefaultLauncher } from '@infinity.dev/game-engine'
 import { PlayerRepository } from '../repositories/player_repository.js'
 import { LobbyRepository } from '../repositories/lobby_repository.js'
 import { Result } from '../../domain/shared/result.js'
@@ -33,6 +34,11 @@ export interface CreateLobbyResponse {
 }
 
 export class CreateLobbyUseCase {
+  private readonly launcher = createDefaultLauncher()
+  private static readonly GAME_TYPE_ALIASES: Record<string, string> = {
+    'love-letter': 'love-letter-infinity-gauntlet',
+  }
+
   constructor(
     private playerRepository: PlayerRepository,
     private lobbyRepository: LobbyRepository,
@@ -45,6 +51,18 @@ export class CreateLobbyUseCase {
       const validationResult = this.validateRequest(request)
       if (validationResult.isFailure) {
         return Result.fail<CreateLobbyResponse>(validationResult.error)
+      }
+
+      const resolvedGameType = this.resolveGameType(request.gameType)
+      const selectedGame = this.launcher.getGameDefinition(resolvedGameType)
+      if (!selectedGame) {
+        return Result.fail(`Unknown gameType: ${request.gameType}`)
+      }
+
+      const requestedMaxPlayers = request.maxPlayers ?? selectedGame.playerConstraints.maxPlayers
+      const { minPlayers, maxPlayers } = selectedGame.playerConstraints
+      if (requestedMaxPlayers < minPlayers || requestedMaxPlayers > maxPlayers) {
+        return Result.fail(`maxPlayers must be between ${minPlayers} and ${maxPlayers}`)
       }
 
       // Vérifier que le joueur existe
@@ -74,9 +92,9 @@ export class CreateLobbyUseCase {
       const lobby = Lobby.create({
         name: request.name,
         creator: player,
-        maxPlayers: request.maxPlayers || 4,
+        maxPlayers: requestedMaxPlayers,
         isPrivate: request.isPrivate || false,
-        gameType: request.gameType,
+        gameType: resolvedGameType,
         gameSettings: request.gameSettings,
       })
 
@@ -118,12 +136,17 @@ export class CreateLobbyUseCase {
     if (!request.name || !request.name.trim()) {
       return Result.fail('Lobby name is required')
     }
-    if (request.maxPlayers !== undefined && (request.maxPlayers < 2 || request.maxPlayers > 8)) {
-      return Result.fail('maxPlayers must be between 2 and 8')
+    if (request.maxPlayers !== undefined && request.maxPlayers < 2) {
+      return Result.fail('maxPlayers must be greater than or equal to 2')
     }
     if (!request.gameType || !request.gameType.trim()) {
       return Result.fail('gameType is required')
     }
     return Result.ok(undefined)
+  }
+
+  private resolveGameType(gameType: string): string {
+    const normalizedGameType = CreateLobbyUseCase.GAME_TYPE_ALIASES[gameType]
+    return normalizedGameType || gameType
   }
 }

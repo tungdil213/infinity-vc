@@ -317,8 +317,11 @@ export default class Lobby extends BaseEntity {
   }
 
   private static validateMaxPlayers(maxPlayers: number): void {
-    if (maxPlayers < 2 || maxPlayers > 8) {
-      throw new LobbyValidationException('Max players must be between 2 and 8', 'maxPlayers')
+    if (maxPlayers < 2) {
+      throw new LobbyValidationException(
+        'Max players must be greater than or equal to 2',
+        'maxPlayers'
+      )
     }
   }
 

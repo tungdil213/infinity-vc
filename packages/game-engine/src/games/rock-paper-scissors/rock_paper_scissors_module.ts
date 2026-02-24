@@ -38,6 +38,10 @@ export const rockPaperScissorsModule: GameModule<RpsState, RpsAction, RpsSetting
 		displayName: 'Rock Paper Scissors',
 		description: 'Reference game module for launcher and state orchestration',
 		metadata: new RockPaperScissorsEngine().metadata,
+		playerConstraints: {
+			minPlayers: 2,
+			maxPlayers: 2,
+		},
 		settings: rpsSettingsDefinition,
 	},
 	createEngine() {
