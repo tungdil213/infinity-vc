@@ -116,7 +116,7 @@ export default class LobbiesController {
     }
 
     return inertia.render('lobby', {
-      lobby: result.value,
+      lobby: result.value as any,
       user: {
         uuid: user.uuid,
         nickName: user.fullName,
@@ -165,7 +165,7 @@ export default class LobbiesController {
       })
     }
 
-    return response.redirect().toRoute('lobbies.index')
+    return response.redirect('/lobbies')
   }
 
   /**

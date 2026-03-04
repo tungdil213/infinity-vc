@@ -3,17 +3,16 @@
   "compilerOptions": {
     "rootDir": "./",
     "outDir": "./build",
-    "baseUrl": ".",
-    "paths": {
-      "@infinity.dev/ui": ["../../packages/ui/src"],
-      "@infinity.dev/ui/*": ["../../packages/ui/src/*"]
-    }
+    "jsx": "react-jsx",
+    "allowSyntheticDefaultImports": true
   },
   "exclude": [
     "./inertia/**/*",
     "./resources/**/*",
     "./database/samples/**/*",
     "./app/tests/**/*",
+    "./tests/unit/inertia/**/*",
+    "./.adonisjs/server/pages.d.ts",
     "node_modules",
     "build"
   ]

@@ -1,4 +1,4 @@
-import { ApplicationService } from '@adonisjs/core/types'
+import { type ApplicationService } from '@adonisjs/core/types'
 import { DatabaseUserRepository } from '#infrastructure/repositories/database_user_repository'
 import { DatabasePlayerRepository } from '#infrastructure/repositories/database_player_repository'
 import { DatabaseLobbyRepository } from '#infrastructure/repositories/database_lobby_repository'

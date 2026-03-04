@@ -1,6 +1,6 @@
-import Player from '../../domain/entities/player.js'
-import { PlayerInterface } from '../../domain/interfaces/player_interface.js'
-import { PlayerRepository } from '../../application/repositories/player_repository.js'
+import type Player from '../../domain/entities/player.js'
+import { type PlayerInterface } from '../../domain/interfaces/player_interface.js'
+import { type PlayerRepository } from '../../application/repositories/player_repository.js'
 import { EntityNotFoundError } from '../../application/repositories/base_repository.js'
 
 export class InMemoryPlayerRepository implements PlayerRepository {

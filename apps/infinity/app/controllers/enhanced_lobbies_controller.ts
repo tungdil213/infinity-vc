@@ -16,8 +16,7 @@ import {
 } from '../exceptions/lobby_exceptions.js'
 import { lobbyStoreValidator } from '#validators/lobby_store_validator'
 import { toUserSummary } from '#presenters/lobby_presenter'
-import type { Request } from '@adonisjs/core/http'
-import type { Response } from '@adonisjs/core/http'
+import type { HttpRequest, HttpResponse } from '@adonisjs/core/http'
 import type { Session } from '@adonisjs/session'
 import { createDefaultLauncher } from '@infinity.dev/game-engine'
 
@@ -237,7 +236,7 @@ export default class EnhancedLobbiesController {
       }
 
       return inertia.render('lobby', {
-        lobby: this.toLobbyViewModel(result.value),
+        lobby: this.toLobbyViewModel(result.value) as any,
         user: { uuid: user.userUuid, nickName: user.fullName },
       })
     } catch (error) {
@@ -264,7 +263,7 @@ export default class EnhancedLobbiesController {
       }
 
       return inertia.render('join-lobby', {
-        lobby: this.toLobbyViewModel(result.value, invitationCode),
+        lobby: this.toLobbyViewModel(result.value, invitationCode) as any,
         user: user ? toUserSummary(user) : null,
         invitationCode,
       })
@@ -557,8 +556,8 @@ export default class EnhancedLobbiesController {
     session,
     error,
   }: {
-    request: Request
-    response: Response
+    request: HttpRequest
+    response: HttpResponse
     session: Session
     error: string
   }) {
@@ -579,8 +578,8 @@ export default class EnhancedLobbiesController {
     userMessage,
     apiMessage,
   }: {
-    request: Request
-    response: Response
+    request: HttpRequest
+    response: HttpResponse
     session: Session
     error: unknown
     logMessage: string

@@ -4,7 +4,7 @@
  * Connects the domain event bus to the Transmit adapter using @infinity.dev/transcript EventBridge.
  * This service automatically broadcasts domain events to the appropriate Transmit channels.
  */
-import { EventBridge, createEventBridge } from '@infinity.dev/transcript/server'
+import { type EventBridge, createEventBridge } from '@infinity.dev/transcript/server'
 import { eventBus } from '../events/event_bus.js'
 import { transmitAdapter } from './transmit_adapter.js'
 

@@ -1,6 +1,10 @@
 import { LobbyStatus } from '../value_objects/lobby_status.js'
 import { LobbyEvent } from '../events/lobby_events.js'
-import { StateMachine, StateTransition, InvalidStateTransitionError } from './state_machine.js'
+import {
+  type StateMachine,
+  type StateTransition,
+  InvalidStateTransitionError,
+} from './state_machine.js'
 
 // Re-export LobbyEvent for convenience
 export { LobbyEvent }

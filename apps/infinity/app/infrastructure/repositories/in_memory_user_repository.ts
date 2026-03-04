@@ -1,5 +1,5 @@
-import User from '../../domain/entities/user.js'
-import { UserRepository } from '../../application/repositories/user_repository.js'
+import type User from '../../domain/entities/user.js'
+import { type UserRepository } from '../../application/repositories/user_repository.js'
 import { EntityNotFoundError } from '../../application/repositories/base_repository.js'
 
 export class InMemoryUserRepository implements UserRepository {

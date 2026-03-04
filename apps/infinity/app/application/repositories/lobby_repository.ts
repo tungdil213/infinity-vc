@@ -1,6 +1,6 @@
-import Lobby from '../../domain/entities/lobby.js'
-import { LobbyStatus } from '../../domain/value_objects/lobby_status.js'
-import { BaseRepository } from './base_repository.js'
+import type Lobby from '../../domain/entities/lobby.js'
+import { type LobbyStatus } from '../../domain/value_objects/lobby_status.js'
+import { type BaseRepository } from './base_repository.js'
 
 export interface LobbyRepository extends BaseRepository<Lobby> {
   findByCreator(creatorUuid: string): Promise<Lobby[]>

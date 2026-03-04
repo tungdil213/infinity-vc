@@ -2,7 +2,7 @@ import { BaseSeeder } from '@adonisjs/lucid/seeders'
 import { FolderFactory } from '#database/samples/factories/folder_factory'
 import Circle from '#models/circle'
 import User from '#models/user'
-import Folder from '#models/folder'
+import type Folder from '#models/folder'
 
 export default class FolderSeeder extends BaseSeeder {
   public async run() {

@@ -1,7 +1,7 @@
-import { LobbyRepository } from '../repositories/lobby_repository.js'
+import { type LobbyRepository } from '../repositories/lobby_repository.js'
 import { Result } from '../../domain/shared/result.js'
-import { TransmitLobbyService } from '../services/transmit_lobby_service.js'
-import { LobbyEventService } from '../services/lobby_event_service.js'
+import { type TransmitLobbyService } from '../services/transmit_lobby_service.js'
+import { type LobbyEventService } from '../services/lobby_event_service.js'
 
 export interface LeaveLobbyRequest {
   userUuid: string

@@ -1,4 +1,4 @@
-import { HttpContext } from '@adonisjs/core/http'
+import { type HttpContext } from '@adonisjs/core/http'
 import { gameEngineService } from '../application/services/game_engine_service.js'
 import {
   executeParsedGameAction,
@@ -41,7 +41,7 @@ export default class GamesController {
         playerView,
         availableActions,
         user: { uuid: user.userUuid, nickName: user.fullName ?? user.email },
-      })
+      }) as any
     )
   }
 

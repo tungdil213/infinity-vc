@@ -1,7 +1,7 @@
-import { PlayerRepository } from '../repositories/player_repository.js'
-import { LobbyRepository } from '../repositories/lobby_repository.js'
+import { type PlayerRepository } from '../repositories/player_repository.js'
+import { type LobbyRepository } from '../repositories/lobby_repository.js'
 import { Result } from '../../domain/shared/result.js'
-import { TransmitLobbyService } from '../services/transmit_lobby_service.js'
+import { type TransmitLobbyService } from '../services/transmit_lobby_service.js'
 
 export interface JoinLobbyRequest {
   userUuid: string

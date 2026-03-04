@@ -1,6 +1,6 @@
 import { BaseEntity } from './base_entity.js'
 import { LobbyStatus } from '../value_objects/lobby_status.js'
-import { PlayerInterface } from '../interfaces/player_interface.js'
+import { type PlayerInterface } from '../interfaces/player_interface.js'
 import { LobbyValidationException } from '../../exceptions/domain_exceptions.js'
 import { Result } from '../shared/result.js'
 import {

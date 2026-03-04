@@ -1,5 +1,8 @@
 import { BaseEntity } from './base_entity.js'
-import { PlayerInterface, PlayerWithStatsInterface } from '../interfaces/player_interface.js'
+import {
+  type PlayerInterface,
+  type PlayerWithStatsInterface,
+} from '../interfaces/player_interface.js'
 import { PlayerValidationException } from '../../exceptions/domain_exceptions.js'
 
 export interface PlayerData {

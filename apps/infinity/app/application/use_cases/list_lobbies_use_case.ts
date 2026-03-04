@@ -1,5 +1,5 @@
-import { LobbyRepository } from '../repositories/lobby_repository.js'
-import { LobbyStatus } from '../../domain/value_objects/lobby_status.js'
+import { type LobbyRepository } from '../repositories/lobby_repository.js'
+import { type LobbyStatus } from '../../domain/value_objects/lobby_status.js'
 import { Result } from '../../domain/shared/result.js'
 
 export interface ListLobbiesRequest {

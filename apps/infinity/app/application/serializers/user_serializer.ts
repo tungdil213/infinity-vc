@@ -1,9 +1,9 @@
-import User from '../../domain/entities/user.js'
+import type User from '../../domain/entities/user.js'
 import {
-  UserDto,
-  PlayerDto,
-  RegisterUserResponseDto,
-  AuthenticateUserResponseDto,
+  type UserDto,
+  type PlayerDto,
+  type RegisterUserResponseDto,
+  type AuthenticateUserResponseDto,
 } from '../dtos/user_dto.js'
 
 /**

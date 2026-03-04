@@ -1,4 +1,4 @@
-import { HttpContext } from '@adonisjs/core/http'
+import { type HttpContext } from '@adonisjs/core/http'
 import app from '@adonisjs/core/services/app'
 
 export default class DevRoutesController {
@@ -8,7 +8,7 @@ export default class DevRoutesController {
   async index({ inertia }: HttpContext) {
     // Only available in development
     if (!app.inDev) {
-      return inertia.render('errors/not_found')
+      return inertia.render('errors/not_found', {})
     }
 
     const routes = [

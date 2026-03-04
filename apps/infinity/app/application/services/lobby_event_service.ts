@@ -1,11 +1,11 @@
 import { eventBus } from '#infrastructure/events/event_bus'
-import { HybridLobbyService } from './hybrid_lobby_service.js'
+import { type HybridLobbyService } from './hybrid_lobby_service.js'
 import {
   LobbyCreatedEvent,
   LobbyUpdatedEvent,
   LobbyDeletedEvent,
 } from '#domain/events/lobby_events'
-import Lobby from '#domain/entities/lobby'
+import type Lobby from '#domain/entities/lobby'
 
 /**
  * Service pour gérer les événements liés aux lobbies

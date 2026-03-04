@@ -1,10 +1,10 @@
 import { Exception } from '@adonisjs/core/exceptions'
-import { HttpContext } from '@adonisjs/core/http'
+import { type HttpContext } from '@adonisjs/core/http'
 import {
   ErrorClassification,
-  ErrorSeverity,
+  type ErrorSeverity,
   ToastType,
-  ErrorMetadata,
+  type ErrorMetadata,
 } from './types/error_classification.js'
 
 /**

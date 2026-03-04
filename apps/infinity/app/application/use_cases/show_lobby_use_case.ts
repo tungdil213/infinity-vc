@@ -1,7 +1,7 @@
-import { LobbyRepository } from '../repositories/lobby_repository.js'
+import { type LobbyRepository } from '../repositories/lobby_repository.js'
 import { Result } from '../../domain/shared/result.js'
 import { LobbySerializer } from '../serializers/lobby_serializer.js'
-import { LobbyDto } from '../dtos/lobby_dto.js'
+import { type LobbyDto } from '../dtos/lobby_dto.js'
 
 export interface ShowLobbyRequest {
   lobbyUuid: string

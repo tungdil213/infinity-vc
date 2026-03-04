@@ -1,6 +1,6 @@
 import { BaseEntity } from './base_entity.js'
 import { GameStatus } from '../value_objects/game_status.js'
-import { PlayerInterface } from '../interfaces/player_interface.js'
+import { type PlayerInterface } from '../interfaces/player_interface.js'
 import { GameStateException } from '../../exceptions/domain_exceptions.js'
 
 export interface GameData {

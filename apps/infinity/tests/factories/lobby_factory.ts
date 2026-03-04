@@ -1,4 +1,8 @@
-import { CreateLobbyRequestDto, LobbyDto, PlayerDto } from '../../app/application/dtos/lobby_dto.js'
+import {
+  type CreateLobbyRequestDto,
+  type LobbyDto,
+  type PlayerDto,
+} from '../../app/application/dtos/lobby_dto.js'
 
 /**
  * Lobby Factory

@@ -1,6 +1,6 @@
-import Lobby from '../../domain/entities/lobby.js'
+import type Lobby from '../../domain/entities/lobby.js'
 import { LobbyStatus } from '../../domain/value_objects/lobby_status.js'
-import { LobbyRepository } from '../../application/repositories/lobby_repository.js'
+import { type LobbyRepository } from '../../application/repositories/lobby_repository.js'
 import { EntityNotFoundError } from '../../application/repositories/base_repository.js'
 
 export class InMemoryLobbyRepository implements LobbyRepository {

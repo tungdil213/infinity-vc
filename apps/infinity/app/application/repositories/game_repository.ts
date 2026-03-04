@@ -1,6 +1,6 @@
-import Game from '../../domain/entities/game.js'
-import { GameStatus } from '../../domain/value_objects/game_status.js'
-import { BaseRepository } from './base_repository.js'
+import type Game from '../../domain/entities/game.js'
+import { type GameStatus } from '../../domain/value_objects/game_status.js'
+import { type BaseRepository } from './base_repository.js'
 
 export interface GameRepository extends BaseRepository<Game> {
   findByPlayer(playerUuid: string): Promise<Game[]>

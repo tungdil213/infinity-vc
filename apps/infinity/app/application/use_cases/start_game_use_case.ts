@@ -1,8 +1,8 @@
 import Game from '../../domain/entities/game.js'
-import { LobbyRepository } from '../repositories/lobby_repository.js'
-import { GameRepository } from '../repositories/game_repository.js'
+import { type LobbyRepository } from '../repositories/lobby_repository.js'
+import { type GameRepository } from '../repositories/game_repository.js'
 import { Result } from '../../domain/shared/result.js'
-import { TransmitLobbyService } from '../services/transmit_lobby_service.js'
+import { type TransmitLobbyService } from '../services/transmit_lobby_service.js'
 import { gameEngineService } from '../services/game_engine_service.js'
 
 export interface StartGameRequest {

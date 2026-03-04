@@ -1,5 +1,5 @@
-import Lobby from '../../domain/entities/lobby.js'
-import { LobbyDto, PlayerDto, CreateLobbyResponseDto } from '../dtos/lobby_dto.js'
+import type Lobby from '../../domain/entities/lobby.js'
+import { type LobbyDto, type PlayerDto, type CreateLobbyResponseDto } from '../dtos/lobby_dto.js'
 
 /**
  * Lobby Serializer

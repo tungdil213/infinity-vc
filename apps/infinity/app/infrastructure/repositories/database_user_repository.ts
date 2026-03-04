@@ -1,5 +1,5 @@
 import User from '../../domain/entities/user.js'
-import { UserRepository } from '../../application/repositories/user_repository.js'
+import { type UserRepository } from '../../application/repositories/user_repository.js'
 import { EntityNotFoundException } from '../../exceptions/domain_exceptions.js'
 import UserModel from '#models/user'
 
