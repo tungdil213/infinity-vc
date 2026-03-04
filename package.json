@@ -7,8 +7,9 @@
 	"license": "MIT",
 	"scripts": {
 		"build": "turbo run build && cp -r apps/infinity/.env apps/infinity/build/",
+		"build:packages": "turbo run build --filter='packages/*'",
 		"install:locked": "pnpm install --frozen-lockfile",
-		"deploy:app": "pnpm --filter @infinity/app run build && pnpm --filter @infinity/app --prod deploy --legacy .deploy/infinity-app",
+		"deploy:app": "pnpm run build:packages && pnpm --filter @infinity/app run build && pnpm --filter @infinity/app --prod deploy --legacy .deploy/infinity-app",
 		"deploy:app:with-env": "pnpm run deploy:app && cp apps/infinity/.env .deploy/infinity-app/.env",
 		"deploy:app:locked": "pnpm run install:locked && pnpm run deploy:app:with-env",
 		"clean": "turbo run clean && rm -rf node_modules",
