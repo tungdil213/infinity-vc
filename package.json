@@ -7,6 +7,10 @@
 	"license": "MIT",
 	"scripts": {
 		"build": "turbo run build && cp -r apps/infinity/.env apps/infinity/build/",
+		"install:locked": "pnpm install --frozen-lockfile",
+		"deploy:app": "pnpm --filter @infinity/app run build && pnpm --filter @infinity/app --prod deploy --legacy .deploy/infinity-app",
+		"deploy:app:with-env": "pnpm run deploy:app && cp apps/infinity/.env .deploy/infinity-app/.env",
+		"deploy:app:locked": "pnpm run install:locked && pnpm run deploy:app:with-env",
 		"clean": "turbo run clean && rm -rf node_modules",
 		"dev": "turbo run dev",
 		"demo:rps": "pnpm --filter @infinity/app run game:demo:rps",
@@ -24,6 +28,7 @@
 		"@julr/tooling-configs": "^4.0.0",
 		"@types/sinon": "^17.0.4",
 		"eslint": "^9.39.2",
+		"pnpm": "10.4.0",
 		"prettier": "^3.8.1",
 		"prettier-plugin-edgejs": "^1.0.6",
 		"turbo": "^2.8.7"
