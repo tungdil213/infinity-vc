@@ -10,7 +10,7 @@
 		"build:packages": "pnpm -r --filter '@infinity.dev/*' run build",
 		"install:locked": "pnpm install --frozen-lockfile",
 		"deploy:app": "pnpm run build:packages && pnpm --filter @infinity/app run build && pnpm --filter @infinity/app --prod deploy --legacy .deploy/infinity-app",
-		"deploy:app:with-env": "pnpm run deploy:app && cp apps/infinity/.env .deploy/infinity-app/.env",
+		"deploy:app:with-env": "pnpm run deploy:app && cp .env .deploy/infinity-app/.env",
 		"deploy:app:locked": "pnpm run install:locked && pnpm run deploy:app:with-env",
 		"clean": "turbo run clean && rm -rf node_modules",
 		"dev": "turbo run dev",
