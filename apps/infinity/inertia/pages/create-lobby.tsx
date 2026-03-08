@@ -1,6 +1,5 @@
-import React, { useState } from 'react'
-import { Head, router } from '@inertiajs/react'
-import { Link } from '@adonisjs/inertia/react'
+import { useState } from 'react'
+import { Head, Link, router } from '@inertiajs/react'
 import { Button } from '@infinity.dev/ui/primitives/button'
 import { Input } from '@infinity.dev/ui/primitives/input'
 import { Textarea } from '@infinity.dev/ui/primitives/textarea'

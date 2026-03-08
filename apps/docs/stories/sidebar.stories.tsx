@@ -19,7 +19,6 @@ import {
 	SidebarMenuSubButton,
 	SidebarMenuSubItem,
 	SidebarProvider,
-	SidebarSeparator,
 	SidebarTrigger,
 } from '@infinity.dev/ui/primitives/sidebar';
 import { Button } from '@infinity.dev/ui/primitives/button';
@@ -98,7 +97,6 @@ export const Default: Story = {
 							</SidebarMenuButton>
 						</SidebarMenuItem>
 					</SidebarMenu>
-					<SidebarSeparator />
 					<SidebarGroup>
 						<SidebarGroupLabel>Projects</SidebarGroupLabel>
 						<SidebarGroupAction>

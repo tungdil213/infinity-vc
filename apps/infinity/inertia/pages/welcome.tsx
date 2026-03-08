@@ -1,6 +1,4 @@
-import React from 'react'
-import { Head } from '@inertiajs/react'
-import { Link } from '@adonisjs/inertia/react'
+import { Head, Link } from '@inertiajs/react'
 import { Button } from '@infinity.dev/ui/primitives/button'
 import {
   Card,

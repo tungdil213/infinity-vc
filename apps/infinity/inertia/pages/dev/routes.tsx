@@ -1,6 +1,4 @@
-import React from 'react'
-import { Head } from '@inertiajs/react'
-import { Link } from '@adonisjs/inertia/react'
+import { Head, Link } from '@inertiajs/react'
 import { Button } from '@infinity.dev/ui/primitives/button'
 import Layout from '../../layouts/layout'
 
@@ -55,16 +53,18 @@ export default function DevRoutes({ routes }: DevRoutesProps) {
                   Liste complète des routes disponibles dans l'application infinity Game
                 </p>
               </div>
-              <Link href="/">
-                <Button variant="neutral">← Retour à l'accueil</Button>
-              </Link>
+              <div className="shrink-0">
+                <Link href="/">
+                  <Button variant="neutral">← Retour à l'accueil</Button>
+                </Link>
+              </div>
             </div>
           </div>
 
           {/* Warning */}
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-8">
             <div className="flex">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
                   <path
                     fillRule="evenodd"
