@@ -7,7 +7,7 @@
 		},
 		"build": {
 			"dependsOn": ["^build"],
-			"outputs": ["dist/**"]
+			"outputs": ["dist/**", "build/**", "storybook-static/**"]
 		},
 		"build:ui": {
 			"inputs": ["packages/ui/src/**/*", "packages/ui/tailwind.config.js"],
