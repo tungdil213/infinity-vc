@@ -1,19 +1,19 @@
 import { HttpContext } from '@adonisjs/core/http'
 import { inject } from '@adonisjs/core'
 import logger from '@adonisjs/core/services/logger'
-import { CreateLobbyUseCase } from '../application/use_cases/create_lobby_use_case.js'
-import { JoinLobbyUseCase } from '../application/use_cases/join_lobby_use_case.js'
-import { LeaveLobbyUseCase } from '../application/use_cases/leave_lobby_use_case.js'
-import { StartGameUseCase } from '../application/use_cases/start_game_use_case.js'
-import { ListLobbiesUseCase } from '../application/use_cases/list_lobbies_use_case.js'
-import { ShowLobbyUseCase } from '../application/use_cases/show_lobby_use_case.js'
-import { KickPlayerUseCase } from '../application/use_cases/kick_player_use_case.js'
-import BusinessException from '../exceptions/business_exception.js'
+import { CreateLobbyUseCase } from '#application/use_cases/create_lobby_use_case'
+import { JoinLobbyUseCase } from '#application/use_cases/join_lobby_use_case'
+import { LeaveLobbyUseCase } from '#application/use_cases/leave_lobby_use_case'
+import { StartGameUseCase } from '#application/use_cases/start_game_use_case'
+import { ListLobbiesUseCase } from '#application/use_cases/list_lobbies_use_case'
+import { ShowLobbyUseCase } from '#application/use_cases/show_lobby_use_case'
+import { KickPlayerUseCase } from '#application/use_cases/kick_player_use_case'
+import BusinessException from '#exceptions/business_exception'
 import {
   LobbyCreationException,
   InvalidLobbyConfigurationException,
   LobbyCreationInternalException,
-} from '../exceptions/lobby_exceptions.js'
+} from '#exceptions/lobby_exceptions'
 import { lobbyStoreValidator } from '#validators/lobby_store_validator'
 import { toUserSummary } from '#presenters/lobby_presenter'
 import type { HttpRequest, HttpResponse } from '@adonisjs/core/http'

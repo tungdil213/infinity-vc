@@ -1,5 +1,5 @@
-import { BaseEntity } from './base_entity.js'
-import { DomainValidationException } from '../../exceptions/domain_exceptions.js'
+import { BaseEntity } from '#domain/entities/base_entity'
+import { DomainValidationException } from '#exceptions/domain_exceptions'
 
 export interface UserData {
   uuid?: string

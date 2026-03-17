@@ -1,8 +1,8 @@
-import { type LobbyRepository } from '../repositories/lobby_repository.js'
-import { Result } from '../../domain/shared/result.js'
-import { LobbySerializer } from '../serializers/lobby_serializer.js'
-import { type LobbyDto } from '../dtos/lobby_dto.js'
-import { safeSystemError } from '../../domain/shared/error_sanitizer.js'
+import { type LobbyRepository } from '#application/repositories/lobby_repository'
+import { Result } from '#domain/shared/result'
+import { LobbySerializer } from '#application/serializers/lobby_serializer'
+import { type LobbyDto } from '#application/dtos/lobby_dto'
+import { safeSystemError } from '#domain/shared/error_sanitizer'
 
 export interface ShowLobbyRequest {
   lobbyUuid: string

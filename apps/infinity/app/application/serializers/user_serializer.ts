@@ -1,10 +1,10 @@
-import type User from '../../domain/entities/user.js'
+import type User from '#domain/entities/user'
 import {
   type UserDto,
   type PlayerDto,
   type RegisterUserResponseDto,
   type AuthenticateUserResponseDto,
-} from '../dtos/user_dto.js'
+} from '#application/dtos/user_dto'
 
 /**
  * User Serializer

@@ -1,10 +1,10 @@
-import Lobby from '../../domain/entities/lobby.js'
+import Lobby from '#domain/entities/lobby'
 import { createDefaultLauncher } from '@infinity.dev/game-engine'
-import { type PlayerRepository } from '../repositories/player_repository.js'
-import { type LobbyRepository } from '../repositories/lobby_repository.js'
-import { Result } from '../../domain/shared/result.js'
-import { type TransmitLobbyService } from '../services/transmit_lobby_service.js'
-import { safeSystemError } from '../../domain/shared/error_sanitizer.js'
+import { type PlayerRepository } from '#application/repositories/player_repository'
+import { type LobbyRepository } from '#application/repositories/lobby_repository'
+import { Result } from '#domain/shared/result'
+import { type TransmitLobbyService } from '#application/services/transmit_lobby_service'
+import { safeSystemError } from '#domain/shared/error_sanitizer'
 
 export interface CreateLobbyRequest {
   userUuid: string

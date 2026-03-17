@@ -1,6 +1,6 @@
-import type Player from '../../domain/entities/player.js'
-import { type PlayerInterface } from '../../domain/interfaces/player_interface.js'
-import { type BaseRepository } from './base_repository.js'
+import type Player from '#domain/entities/player'
+import { type PlayerInterface } from '#domain/interfaces/player_interface'
+import { type BaseRepository } from '#application/repositories/base_repository'
 
 export interface PlayerRepository extends BaseRepository<Player> {
   findByUserUuid(userUuid: string): Promise<Player | null>

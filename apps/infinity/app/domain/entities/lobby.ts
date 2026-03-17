@@ -1,13 +1,13 @@
-import { BaseEntity } from './base_entity.js'
-import { LobbyStatus } from '../value_objects/lobby_status.js'
-import { type PlayerInterface } from '../interfaces/player_interface.js'
-import { LobbyValidationException } from '../../exceptions/domain_exceptions.js'
-import { Result } from '../shared/result.js'
+import { BaseEntity } from '#domain/entities/base_entity'
+import { LobbyStatus } from '#domain/value_objects/lobby_status'
+import { type PlayerInterface } from '#domain/interfaces/player_interface'
+import { LobbyValidationException } from '#exceptions/domain_exceptions'
+import { Result } from '#domain/shared/result'
 import {
   LobbyCreatedEvent,
   PlayerJoinedLobbyEvent,
   PlayerLeftLobbyEvent,
-} from '../events/lobby_events.js'
+} from '#domain/events/lobby_events'
 
 export interface LobbyData {
   uuid?: string

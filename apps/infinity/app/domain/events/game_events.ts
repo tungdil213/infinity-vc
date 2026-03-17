@@ -2,7 +2,7 @@
  * Game Events - Compatible with @infinity.dev/events IEvent interface
  */
 import type { IEvent } from '@infinity.dev/events'
-import type Player from '../entities/player.js'
+import type Player from '#domain/entities/player'
 
 // Re-export event types from package for new code
 export { GameEventTypes } from '@infinity.dev/events/domain'

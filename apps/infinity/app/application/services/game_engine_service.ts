@@ -7,18 +7,22 @@
 import { createDefaultLauncher } from '@infinity.dev/game-engine'
 import { RpsActionTypes } from '@infinity.dev/game-engine'
 import type { IAction, IGameState, IPlayer, IPlayerView } from '@infinity.dev/game-engine/core'
-import type { PlayerInterface } from '../../domain/interfaces/player_interface.js'
-import { Result } from '../../domain/shared/result.js'
+import type { PlayerInterface } from '#domain/interfaces/player_interface'
+import { Result } from '#domain/shared/result'
 import {
   type GenericAction,
   type GameActionRequest,
   type GameActionResponse,
   type GameSession,
-} from './game_engine_types.js'
-import { GameSessionStore } from './game_session_store.js'
-import { GameEngineEventPublisher } from './game_engine_event_publisher.js'
+} from '#application/services/game_engine_types'
+import { GameSessionStore } from '#application/services/game_session_store'
+import { GameEngineEventPublisher } from '#application/services/game_engine_event_publisher'
 
-export type { GameActionRequest, GameActionResponse, GameSession } from './game_engine_types.js'
+export type {
+  GameActionRequest,
+  GameActionResponse,
+  GameSession,
+} from '#application/services/game_engine_types'
 
 /**
  * Service for managing game sessions using the LoveLetterEngine

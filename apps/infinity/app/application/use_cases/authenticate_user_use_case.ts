@@ -1,9 +1,7 @@
-// import User from '../../domain/entities/user.js'
-// import Player from '../../domain/entities/player.js'
-import { type UserRepository } from '../repositories/user_repository.js'
-import { type PlayerRepository } from '../repositories/player_repository.js'
-import { Result } from '../../domain/shared/result.js'
-import { safeSystemError } from '../../domain/shared/error_sanitizer.js'
+import { type UserRepository } from '#application/repositories/user_repository'
+import { type PlayerRepository } from '#application/repositories/player_repository'
+import { Result } from '#domain/shared/result'
+import { safeSystemError } from '#domain/shared/error_sanitizer'
 
 export interface AuthenticateUserRequest {
   email: string

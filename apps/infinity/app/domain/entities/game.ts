@@ -1,7 +1,7 @@
-import { BaseEntity } from './base_entity.js'
-import { GameStatus } from '../value_objects/game_status.js'
-import { type PlayerInterface } from '../interfaces/player_interface.js'
-import { GameStateException } from '../../exceptions/domain_exceptions.js'
+import { BaseEntity } from '#domain/entities/base_entity'
+import { GameStatus } from '#domain/value_objects/game_status'
+import { type PlayerInterface } from '#domain/interfaces/player_interface'
+import { GameStateException } from '#exceptions/domain_exceptions'
 
 export interface GameData {
   uuid?: string

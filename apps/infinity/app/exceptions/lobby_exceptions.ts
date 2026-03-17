@@ -1,5 +1,9 @@
-import BusinessException from './business_exception.js'
-import { ErrorClassification, ErrorSeverity, ToastType } from './types/error_classification.js'
+import BusinessException from '#exceptions/business_exception'
+import {
+  ErrorClassification,
+  ErrorSeverity,
+  ToastType,
+} from '#exceptions/types/error_classification'
 
 /**
  * Exception thrown when lobby creation fails due to validation errors

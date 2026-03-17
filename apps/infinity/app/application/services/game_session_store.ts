@@ -1,4 +1,4 @@
-import type { GameSession } from './game_engine_types.js'
+import type { GameSession } from '#application/services/game_engine_types'
 
 export class GameSessionStore {
   private sessions = new Map<string, GameSession>()

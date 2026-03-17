@@ -1,6 +1,6 @@
-import type { EventBus } from '../../infrastructure/events/event_bus.js'
-import { eventBus } from '../../infrastructure/events/event_bus.js'
-import type { GameSession } from './game_engine_types.js'
+import type { EventBus } from '#infrastructure/events/event_bus'
+import { eventBus } from '#infrastructure/events/event_bus'
+import type { GameSession } from '#application/services/game_engine_types'
 
 interface ActionEvent {
   type: string

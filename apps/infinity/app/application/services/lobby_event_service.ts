@@ -1,5 +1,5 @@
 import { eventBus } from '#infrastructure/events/event_bus'
-import { type HybridLobbyService } from './hybrid_lobby_service.js'
+import { type HybridLobbyService } from '#application/services/hybrid_lobby_service'
 import {
   LobbyCreatedEvent,
   LobbyUpdatedEvent,

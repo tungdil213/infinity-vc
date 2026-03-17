@@ -2,7 +2,7 @@
  * Lobby Events - Compatible with @infinity.dev/events IEvent interface
  */
 import type { IEvent } from '@infinity.dev/events'
-import type { PlayerInterface } from '../interfaces/player_interface.js'
+import type { PlayerInterface } from '#domain/interfaces/player_interface'
 
 // Re-export event types from package for new code
 export {

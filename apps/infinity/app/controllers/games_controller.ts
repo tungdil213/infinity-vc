@@ -1,18 +1,18 @@
 import { type HttpContext } from '@adonisjs/core/http'
-import { gameEngineService } from '../application/services/game_engine_service.js'
+import { gameEngineService } from '#application/services/game_engine_service'
 import {
   executeParsedGameAction,
   getAuthorizedGameSession,
   parseGameActionInput,
   type RawGameActionInput,
-} from './support/game_controller_guard.js'
+} from '#controllers/support/game_controller_guard'
 import {
   toActionResponsePayload,
   toGameActionsPayload,
   toGameApiPayload,
   toGamePagePayload,
   toPublicPlayersPayload,
-} from '../presenters/game_presenter.js'
+} from '#presenters/game_presenter'
 
 export default class GamesController {
   /**

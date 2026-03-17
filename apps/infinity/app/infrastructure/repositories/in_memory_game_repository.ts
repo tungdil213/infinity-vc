@@ -1,7 +1,7 @@
-import type Game from '../../domain/entities/game.js'
-import { GameStatus } from '../../domain/value_objects/game_status.js'
-import { type GameRepository } from '../../application/repositories/game_repository.js'
-import { EntityNotFoundError } from '../../application/repositories/base_repository.js'
+import type Game from '#domain/entities/game'
+import { GameStatus } from '#domain/value_objects/game_status'
+import { type GameRepository } from '#application/repositories/game_repository'
+import { EntityNotFoundError } from '#application/repositories/base_repository'
 
 export class InMemoryGameRepository implements GameRepository {
   private games: Map<string, Game> = new Map()

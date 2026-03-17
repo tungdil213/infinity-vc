@@ -2,7 +2,7 @@ import app from '@adonisjs/core/services/app'
 import { type HttpContext, ExceptionHandler } from '@adonisjs/core/http'
 import type { StatusPageRange, StatusPageRenderer } from '@adonisjs/core/types/http'
 import { errors } from '@vinejs/vine'
-import BusinessException from './business_exception.js'
+import BusinessException from '#exceptions/business_exception'
 
 export default class HttpExceptionHandler extends ExceptionHandler {
   /**

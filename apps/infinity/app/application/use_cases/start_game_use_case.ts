@@ -1,10 +1,10 @@
-import Game from '../../domain/entities/game.js'
-import { type LobbyRepository } from '../repositories/lobby_repository.js'
-import { type GameRepository } from '../repositories/game_repository.js'
-import { Result } from '../../domain/shared/result.js'
-import { type TransmitLobbyService } from '../services/transmit_lobby_service.js'
-import { gameEngineService } from '../services/game_engine_service.js'
-import { safeSystemError } from '../../domain/shared/error_sanitizer.js'
+import Game from '#domain/entities/game'
+import { type LobbyRepository } from '#application/repositories/lobby_repository'
+import { type GameRepository } from '#application/repositories/game_repository'
+import { Result } from '#domain/shared/result'
+import { type TransmitLobbyService } from '#application/services/transmit_lobby_service'
+import { gameEngineService } from '#application/services/game_engine_service'
+import { safeSystemError } from '#domain/shared/error_sanitizer'
 
 export interface StartGameRequest {
   userUuid: string

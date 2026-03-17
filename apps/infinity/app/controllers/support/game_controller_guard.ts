@@ -1,7 +1,4 @@
-import type {
-  GameActionResponse,
-  GameSession,
-} from '../../application/services/game_engine_service.js'
+import type { GameActionResponse, GameSession } from '#application/services/game_engine_service'
 
 export interface RawGameActionInput {
   action?: string

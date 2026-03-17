@@ -1,4 +1,4 @@
-import User from '../../domain/entities/user.js'
+import User from '#domain/entities/user'
 
 export class UserFactory {
   static create(

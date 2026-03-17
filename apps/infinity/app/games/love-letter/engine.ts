@@ -19,8 +19,8 @@ import type {
   LoveLetterPlayer,
   CardType,
   PlayCardPayload,
-} from './types.js'
-import { CardTypes, Cards, LoveLetterActionTypes } from './types.js'
+} from '#games/love-letter/types'
+import { CardTypes, Cards, LoveLetterActionTypes } from '#games/love-letter/types'
 
 /**
  * Love Letter game engine - extends the generic BaseGameEngine

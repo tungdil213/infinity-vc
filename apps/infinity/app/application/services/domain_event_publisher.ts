@@ -1,4 +1,4 @@
-import { eventBus, type IEvent } from '../../infrastructure/events/event_bus.js'
+import { eventBus, type IEvent } from '#infrastructure/events/event_bus'
 
 /**
  * Event type that supports both old and new event formats

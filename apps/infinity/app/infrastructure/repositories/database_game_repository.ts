@@ -1,9 +1,9 @@
 import { inject } from '@adonisjs/core'
-import { GameRepository } from '../../application/repositories/game_repository.js'
-import { EntityNotFoundError } from '../../application/repositories/base_repository.js'
-import Game from '../../domain/entities/game.js'
-import { GameStatus } from '../../domain/value_objects/game_status.js'
-import GameModel from '../../models/game_model.js'
+import { GameRepository } from '#application/repositories/game_repository'
+import { EntityNotFoundError } from '#application/repositories/base_repository'
+import Game from '#domain/entities/game'
+import { GameStatus } from '#domain/value_objects/game_status'
+import GameModel from '#models/game_model'
 import { DateTime } from 'luxon'
 
 @inject()

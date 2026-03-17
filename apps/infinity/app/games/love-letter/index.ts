@@ -19,6 +19,6 @@ export {
   CardTypes,
   Cards,
   LoveLetterActionTypes,
-} from './types.js'
+} from '#games/love-letter/types'
 
-export { LoveLetterEngine, createLoveLetterEngine } from './engine.js'
+export { LoveLetterEngine, createLoveLetterEngine } from '#games/love-letter/engine'

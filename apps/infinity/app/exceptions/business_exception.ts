@@ -5,7 +5,7 @@ import {
   type ErrorSeverity,
   ToastType,
   type ErrorMetadata,
-} from './types/error_classification.js'
+} from '#exceptions/types/error_classification'
 
 /**
  * Exception de base pour les erreurs métier avec classification de sécurité

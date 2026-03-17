@@ -1,5 +1,5 @@
-import Lobby from '../../domain/entities/lobby.js'
-import { type PlayerInterface } from '../../domain/interfaces/player_interface.js'
+import Lobby from '#domain/entities/lobby'
+import { type PlayerInterface } from '#domain/interfaces/player_interface'
 import { PlayerFactory } from './player_factory.js'
 
 export class LobbyFactory {

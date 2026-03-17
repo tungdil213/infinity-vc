@@ -1,5 +1,5 @@
-import Player from '../../domain/entities/player.js'
-import { type PlayerInterface } from '../../domain/interfaces/player_interface.js'
+import Player from '#domain/entities/player'
+import { type PlayerInterface } from '#domain/interfaces/player_interface'
 
 export class PlayerFactory {
   static create(

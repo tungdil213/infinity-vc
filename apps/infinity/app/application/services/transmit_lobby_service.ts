@@ -1,4 +1,4 @@
-import { eventBus } from '../../infrastructure/events/event_bus.js'
+import { eventBus } from '#infrastructure/events/event_bus'
 
 /**
  * Service de notification pour les événements de lobby

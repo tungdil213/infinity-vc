@@ -43,6 +43,7 @@
     "#start/*": "./start/*.js",
     "#config/*": "./config/*.js",
     "#generated/*": "./.adonisjs/server/*.js",
+    "#games/*": "./app/games/*.js",
     "#transformers/*": "./app/transformers/*.js",
     "#infrastructure/*": "./app/infrastructure/*.js",
     "#domain/*": "./app/domain/*.js",

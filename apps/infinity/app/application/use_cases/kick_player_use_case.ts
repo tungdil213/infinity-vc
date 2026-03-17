@@ -1,12 +1,12 @@
 import { inject } from '@adonisjs/core'
-import type { LobbyRepository } from '../repositories/lobby_repository.js'
-import type { PlayerRepository } from '../repositories/player_repository.js'
-import type { DomainEventPublisher } from '../services/domain_event_publisher.js'
-import { Result } from '../../domain/shared/result.js'
-import { LobbyStatus } from '../../domain/value_objects/lobby_status.js'
-import { PlayerKickedEvent } from '../../domain/events/lobby_events.js'
-import Player from '../../domain/entities/player.js'
-import { safeSystemError } from '../../domain/shared/error_sanitizer.js'
+import type { LobbyRepository } from '#application/repositories/lobby_repository'
+import type { PlayerRepository } from '#application/repositories/player_repository'
+import type { DomainEventPublisher } from '#application/services/domain_event_publisher'
+import { Result } from '#domain/shared/result'
+import { LobbyStatus } from '#domain/value_objects/lobby_status'
+import { PlayerKickedEvent } from '#domain/events/lobby_events'
+import Player from '#domain/entities/player'
+import { safeSystemError } from '#domain/shared/error_sanitizer'
 
 export interface KickPlayerRequest {
   lobbyUuid: string

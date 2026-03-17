@@ -1,17 +1,17 @@
 import { inject } from '@adonisjs/core'
-import type { GameRepository } from '../repositories/game_repository.js'
-import type { UserRepository } from '../repositories/user_repository.js'
-import type { DomainEventPublisher } from '../services/domain_event_publisher.js'
-import { Result } from '../../domain/shared/result.js'
+import type { GameRepository } from '#application/repositories/game_repository'
+import type { UserRepository } from '#application/repositories/user_repository'
+import type { DomainEventPublisher } from '#application/services/domain_event_publisher'
+import { Result } from '#domain/shared/result'
 import {
   PlayerActionEvent,
   TurnChangedEvent,
   GameStateUpdatedEvent,
   PlayerEliminatedEvent,
   GameFinishedEvent,
-} from '../../domain/events/game_events.js'
-import Player from '../../domain/entities/player.js'
-import { safeSystemError } from '../../domain/shared/error_sanitizer.js'
+} from '#domain/events/game_events'
+import Player from '#domain/entities/player'
+import { safeSystemError } from '#domain/shared/error_sanitizer'
 
 export interface GameActionRequest {
   gameUuid: string

@@ -1,8 +1,8 @@
 import { DateTime } from 'luxon'
 import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
-import User from './user.js'
-import LobbyModel from './lobby_model.js'
+import User from '#models/user'
+import LobbyModel from '#models/lobby_model'
 
 export default class LobbyPlayer extends BaseModel {
   static table = 'lobby_players'

@@ -1,7 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 import { inject } from '@adonisjs/core'
-import { HybridLobbyService } from '../application/services/hybrid_lobby_service.js'
+import { HybridLobbyService } from '#application/services/hybrid_lobby_service'
 
 @inject()
 export default class CurrentLobbyMiddleware {
