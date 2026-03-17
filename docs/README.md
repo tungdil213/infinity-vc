@@ -27,7 +27,7 @@ Ce projet implémente une version en ligne du jeu de cartes **Love Letter** avec
 1. **Installation des dépendances**
 
    ```bash
-   pnpm install
+   yarn install
    ```
 
 2. **Configuration de l'environnement**
@@ -45,7 +45,7 @@ Ce projet implémente une version en ligne du jeu de cartes **Love Letter** avec
 
 4. **Démarrage du serveur de développement**
    ```bash
-   pnpm dev
+   yarn dev
    ```
 
 ## Fonctionnalités Principales

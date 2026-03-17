@@ -5,7 +5,7 @@ Merci de ton intérêt pour ce projet ! Voici un guide rapide pour installer l�
 ## 1. Pré-requis
 
 - Node.js (version LTS recommandée)
-- pnpm (via Corepack recommandé)
+- Yarn 1.22.22
 - Docker (optionnel mais recommandé pour PostgreSQL et les tests manuels)
 
 ## 2. Installation
@@ -14,7 +14,7 @@ Merci de ton intérêt pour ce projet ! Voici un guide rapide pour installer l�
 git clone <url_du_dépôt>
 cd <nom_du_dépôt>
 
-pnpm install
+yarn install
 ```
 
 ## 3. Démarrer l’application infinity
@@ -29,7 +29,7 @@ node ace migration:run
 node ace db:seed
 
 # Démarrer le serveur de dev
-pnpm dev
+yarn dev
 ```
 
 L’application sera disponible sur `http://localhost:3333`.
@@ -40,18 +40,18 @@ Depuis la racine du monorepo :
 
 ```bash
 # Lancer le dev (workspaces)
-pnpm dev
+yarn dev
 
 # Lancer les tests de l’app infinity
 cd apps/infinity
-pnpm test
+yarn test
 
 # Lancer ESLint sur le monorepo
 cd ../..
-pnpm lint
+yarn lint
 
 # Vérifier les types
-pnpm typecheck
+yarn typecheck
 ```
 
 Pour le design system et les packages partagés :
@@ -59,11 +59,11 @@ Pour le design system et les packages partagés :
 ```bash
 # Design system UI + Storybook
 cd apps/docs
-pnpm dev
+yarn dev
 
 # Build du package UI
 cd ../../packages/ui
-pnpm build
+yarn build
 ```
 
 ## 5. Style de code
@@ -81,8 +81,8 @@ pnpm build
 2. Faire les modifications + ajouter des tests si possible.
 3. Vérifier :
    ```bash
-   pnpm lint
-   pnpm typecheck
+   yarn lint
+   yarn typecheck
    ```
 4. Pousser la branche et ouvrir une Pull Request en décrivant :
    - le problème résolu ou la fonctionnalité ajoutée,

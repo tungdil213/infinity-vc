@@ -79,14 +79,14 @@ Depuis la racine du monorepo:
 
 ```bash
 # Qualité package game-engine
-pnpm --filter @infinity.dev/game-engine run typecheck
-pnpm --filter @infinity.dev/game-engine run lint
-pnpm --filter @infinity.dev/game-engine run test
+yarn workspace @infinity.dev/game-engine typecheck
+yarn workspace @infinity.dev/game-engine lint
+yarn workspace @infinity.dev/game-engine test
 
 # Démo Ace
-pnpm --filter @infinity/app run game:demo:rps
+yarn workspace @infinity/app game:demo:rps
 # ou
-pnpm run demo:rps
+yarn demo:rps
 ```
 
 ## Tests existants

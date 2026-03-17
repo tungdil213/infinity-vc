@@ -68,7 +68,7 @@ export default class DemoGameLauncher extends BaseCommand {
 
     if (!createDefaultLauncher) {
       this.logger.error('createDefaultLauncher is not exported by @infinity.dev/game-engine')
-      this.logger.info('Run: pnpm --filter @infinity.dev/game-engine run build')
+      this.logger.info('Run: yarn workspace @infinity.dev/game-engine build')
       return
     }
 

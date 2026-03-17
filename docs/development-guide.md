@@ -4,7 +4,7 @@
 
 ### Prérequis
 
-- **Node.js** : v20+ avec pnpm
+- **Node.js** : v20+ avec Yarn 1.22.22
 - **PostgreSQL** : v14+
 - **Docker** : Pour le développement containerisé
 - **Git** : Pour le contrôle de version
@@ -21,7 +21,7 @@
 2. **Installer les dépendances**
 
    ```bash
-   pnpm install
+   yarn install
    ```
 
 3. **Configuration de l'environnement**
@@ -70,7 +70,7 @@
 
 7. **Démarrage du serveur de développement**
    ```bash
-   pnpm dev
+   yarn dev
    ```
 
 ## Structure du Projet
@@ -381,22 +381,22 @@ export const PlayerFactory = factory
 
 ```bash
 # Tous les tests
-pnpm test
+yarn test
 
 # Tests par type
-pnpm test:unit
-pnpm test:integration
-pnpm test:functional
-pnpm test:e2e
+yarn test:unit
+yarn test:integration
+yarn test:functional
+yarn test:e2e
 
 # Tests avec couverture
-pnpm test:coverage
+yarn test:coverage
 
 # Tests en mode watch
-pnpm test:watch
+yarn test:watch
 
 # Tests spécifiques
-pnpm test tests/unit/entities/Lobby.test.ts
+yarn test tests/unit/entities/Lobby.test.ts
 ```
 
 ## Frontend (React + Inertia.js)

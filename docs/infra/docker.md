@@ -6,7 +6,7 @@ Ce document décrit comment construire et lancer l’application **infinity** vi
 
 L’image Docker est construite à partir du `Dockerfile` à la racine :
 
-- Build des dépendances et workspaces avec **pnpm**
+- Build des dépendances et workspaces avec **Yarn 1.22.22**
 - Build des packages partagés :
   - `@infinity.dev/ui`
   - `@infinity.dev/events`
@@ -33,7 +33,7 @@ cp .env.example .env
 Depuis la racine du projet :
 
 ```bash
-pnpm docker:build
+yarn docker:build
 ```
 
 Cela exécute :
@@ -55,7 +55,7 @@ Le fichier `compose.yml` définit trois services :
 Lancer l’ensemble :
 
 ```bash
-pnpm docker:up
+yarn docker:up
 ```
 
 Ce qui exécute :
@@ -74,7 +74,7 @@ Le service `site` :
 Arrêter les services :
 
 ```bash
-pnpm docker:down
+yarn docker:down
 ```
 
 Ce qui exécute :

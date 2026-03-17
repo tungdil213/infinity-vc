@@ -3,19 +3,19 @@
 	"type": "module",
 	"version": "0.0.1",
 	"private": true,
-	"packageManager": "pnpm@10.4.0",
+	"packageManager": "yarn@1.22.22",
+	"workspaces": [
+		"apps/*",
+		"packages/*"
+	],
 	"license": "MIT",
 	"scripts": {
 		"build": "turbo run build && cp -r apps/infinity/.env apps/infinity/build/",
-		"build:packages": "pnpm -r --filter '@infinity.dev/*' run build",
-		"install:locked": "pnpm install --frozen-lockfile",
-		"clean:deploy": "rm -rf .deploy",
-		"deploy:app": "pnpm run build:packages && pnpm --filter @infinity/app run build && pnpm --filter @infinity/app --prod deploy --legacy .deploy/infinity-app",
-		"deploy:app:with-env": "pnpm run deploy:app && cp .env .deploy/infinity-app/.env",
-		"deploy:app:locked": "pnpm run clean:deploy && pnpm run install:locked && pnpm run deploy:app:with-env",
+		"start": "yarn workspace @infinity/app start",
+		"install:locked": "yarn install --frozen-lockfile",
 		"clean": "turbo run clean && rm -rf node_modules",
 		"dev": "turbo run dev",
-		"demo:rps": "pnpm --filter @infinity/app run game:demo:rps",
+		"demo:rps": "yarn workspace @infinity/app game:demo:rps",
 		"docker:up": "docker compose up -d",
 		"docker:down": "docker compose down",
 		"docker:build": "docker build . -t site",
@@ -23,39 +23,20 @@
 		"lint": "turbo run lint",
 		"preview-storybook": "turbo run preview-storybook",
 		"format": "prettier .",
-		"taze": "yarn dlx taze -r -I",
-		"typecheck": "pnpm -r run typecheck"
+		"taze": "npx taze -r -I",
+		"typecheck": "turbo run typecheck",
+		"preinstall": "node -e \"const ua=process.env.npm_config_user_agent||''; if(!ua.startsWith('yarn/1.22.22')){console.error('Please use yarn@1.22.22'); process.exit(1)}\""
+	},
+	"engines": {
+		"yarn": "1.22.22"
 	},
 	"devDependencies": {
 		"@julr/tooling-configs": "^4.0.0",
 		"@types/sinon": "^17.0.4",
 		"eslint": "^9.39.2",
-		"pnpm": "10.4.0",
 		"prettier": "^3.8.1",
 		"prettier-plugin-edgejs": "^1.0.6",
 		"turbo": "^2.8.7"
-	},
-	"pnpm": {
-		"overrides": {
-			"@inertiajs/core": "^2.3.15",
-			"strtok3": "8.0.1"
-		},
-		"ignoredBuiltDependencies": [
-			"@parcel/watcher",
-			"@swc/core",
-			"better-sqlite3",
-			"esbuild",
-			"prettier-edgejs",
-			"unrs-resolver"
-		],
-		"onlyBuiltDependencies": [
-			"@parcel/watcher",
-			"@swc/core",
-			"better-sqlite3",
-			"esbuild",
-			"prettier-edgejs",
-			"unrs-resolver"
-		]
 	},
 	"overrides": {
 		"@inertiajs/core": "^2.3.15",

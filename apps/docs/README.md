@@ -11,26 +11,26 @@ The documentation app provides a comprehensive showcase of our design system's c
 ### Prerequisites
 
 - Node.js (v22.0 or higher)
-- pnpm (package manager)
+- Yarn 1.22.22 (package manager)
 
 ### Installation
 
 ```bash
 # Install dependencies
-pnpm install
+yarn install
 ```
 
 ### Development
 
 ```bash
 # Start Storybook development server
-pnpm dev
+yarn dev
 
 # Build Storybook for production
-pnpm build
+yarn build
 
 # Preview built Storybook
-pnpm preview-storybook
+yarn preview-storybook
 ```
 
 ## Component Documentation
@@ -120,7 +120,7 @@ Each story should:
 
 ```bash
 # Run linting
-pnpm lint
+yarn lint
 ```
 
 ## Contributing

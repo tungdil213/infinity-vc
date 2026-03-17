@@ -13,7 +13,7 @@ Real-time communication abstraction for SSE and WebSocket, with server and clien
 ## Installation
 
 ```bash
-pnpm add @infinity.dev/transcript
+yarn add @infinity.dev/transcript
 ```
 
 ## Server Usage

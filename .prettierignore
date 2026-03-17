@@ -1,7 +1,6 @@
 # Dependencies and caches
 **/node_modules
 **/.turbo
-**/.pnpm-store
 
 # Build artifacts
 **/dist

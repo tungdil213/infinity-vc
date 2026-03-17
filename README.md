@@ -14,7 +14,7 @@
 
 - **Node.js** : Version LTS recommandée (Bookworm Slim utilisée dans le Dockerfile).
 - **Docker** : Dernière version stable.
-- **pnpm** : Gestionnaire de paquets recommandé (via Corepack).
+- **Yarn 1.22.22** : Gestionnaire de paquets requis.
 
 ## Installation
 
@@ -25,7 +25,7 @@
    ```
 2. Installez les dépendances :
    ```bash
-   pnpm install
+   yarn install
    ```
 
 ## Commandes principales
