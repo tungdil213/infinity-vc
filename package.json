@@ -11,7 +11,7 @@
 	"license": "MIT",
 	"scripts": {
 		"build": "turbo run build && cp -r apps/infinity/.env apps/infinity/build/",
-		"start": "yarn workspace @infinity/app start",
+		"start": "NODE_ENV=production node apps/infinity/build/bin/server.js",
 		"install:locked": "yarn install --frozen-lockfile",
 		"clean": "turbo run clean && rm -rf node_modules",
 		"dev": "turbo run dev",
