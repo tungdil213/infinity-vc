@@ -1,4 +1,4 @@
-import type { GameSession } from '#application/services/game_engine_service'
+import type { GameActionResponse, GameSession } from '#application/services/game_engine_service'
 
 export function toGamePagePayload(args: {
   session: GameSession
@@ -114,8 +114,5 @@ export function toPublicPlayerView(
     tokensOfAffection: Number(player.tokensOfAffection ?? 0),
     isCurrentPlayer: String(player.id ?? '') === currentPlayerId,
     isMe: String(player.id ?? '') === currentUserUuid,
-  }
-}
-
   }
 }
