@@ -10,8 +10,9 @@
 	],
 	"license": "MIT",
 	"scripts": {
-		"build": "turbo run build && cp -r apps/infinity/.env apps/infinity/build/",
-		"start": "NODE_ENV=production node apps/infinity/build/bin/server.js",
+		"build": "yarn workspace @infinity/app build && cp -r apps/infinity/.env apps/infinity/build/ && test -f apps/infinity/build/public/assets/.vite/manifest.json",
+		"build:all": "turbo run build && yarn build",
+		"start": "NODE_ENV=production yarn --cwd apps/infinity/build node bin/server.js",
 		"install:locked": "yarn install --frozen-lockfile",
 		"clean": "turbo run clean && rm -rf node_modules",
 		"dev": "turbo run dev",

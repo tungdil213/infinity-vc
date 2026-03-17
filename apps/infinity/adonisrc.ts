@@ -52,10 +52,6 @@ export default defineConfig({
       file: () => import('adonisjs-server-stats/provider'),
       environment: ['web'],
     },
-    {
-      file: () => import('adonisjs-server-stats/log-stream/provider'),
-      environment: ['web'],
-    },
   ],
 
   /*
