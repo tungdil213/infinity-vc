@@ -11,6 +11,7 @@ import {
   GameFinishedEvent,
 } from '../../domain/events/game_events.js'
 import Player from '../../domain/entities/player.js'
+import { safeSystemError } from '../../domain/shared/error_sanitizer.js'
 
 export interface GameActionRequest {
   gameUuid: string
@@ -96,7 +97,7 @@ export class GameActionUseCase {
 
       return actionResult
     } catch (error) {
-      return Result.fail(`Game action failed: ${error.message}`)
+      return Result.fail(safeSystemError(error, 'game_action'))
     }
   }
 
@@ -216,7 +217,7 @@ export class GameActionUseCase {
         gameFinished: false,
       })
     } catch (error) {
-      return Result.fail(`Failed to play card: ${error.message}`)
+      return Result.fail(safeSystemError(error, 'play_card'))
     }
   }
 
@@ -288,7 +289,7 @@ export class GameActionUseCase {
         gameFinished: game.isFinished,
       })
     } catch (error) {
-      return Result.fail(`Failed to guess card: ${error.message}`)
+      return Result.fail(safeSystemError(error, 'guess_card'))
     }
   }
 
@@ -329,7 +330,7 @@ export class GameActionUseCase {
         gameFinished: false,
       })
     } catch (error) {
-      return Result.fail(`Failed to end turn: ${error.message}`)
+      return Result.fail(safeSystemError(error, 'end_turn'))
     }
   }
 
@@ -387,7 +388,7 @@ export class GameActionUseCase {
         gameFinished: false,
       })
     } catch (error) {
-      return Result.fail(`Failed to forfeit: ${error.message}`)
+      return Result.fail(safeSystemError(error, 'forfeit'))
     }
   }
 

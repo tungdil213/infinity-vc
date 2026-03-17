@@ -3,6 +3,7 @@ import Player from '../../domain/entities/player.js'
 import { type UserRepository } from '../repositories/user_repository.js'
 import { type PlayerRepository } from '../repositories/player_repository.js'
 import { Result } from '../../domain/shared/result.js'
+import { safeSystemError } from '../../domain/shared/error_sanitizer.js'
 
 export interface RegisterUserRequest {
   firstName: string
@@ -79,9 +80,7 @@ export class RegisterUserUseCase {
         },
       })
     } catch (error) {
-      return Result.fail(
-        error instanceof Error ? error.message : 'Registration failed due to an unexpected error'
-      )
+      return Result.fail(safeSystemError(error, 'register_user'))
     }
   }
 

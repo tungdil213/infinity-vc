@@ -4,6 +4,7 @@ import type { DomainEventPublisher } from '../services/domain_event_publisher.js
 import { Result } from '../../domain/shared/result.js'
 import { LobbyStatus } from '../../domain/value_objects/lobby_status.js'
 import { LobbyUpdatedEvent } from '../../domain/events/lobby_events.js'
+import { safeSystemError } from '../../domain/shared/error_sanitizer.js'
 
 export interface UpdateLobbySettingsRequest {
   lobbyUuid: string
@@ -101,7 +102,7 @@ export class UpdateLobbySettingsUseCase {
         lobbyState: lobby.serialize(),
       })
     } catch (error) {
-      return Result.fail(`Failed to update lobby settings: ${error.message}`)
+      return Result.fail(safeSystemError(error, 'update_lobby_settings'))
     }
   }
 

@@ -6,6 +6,7 @@ import { Result } from '../../domain/shared/result.js'
 import { LobbyStatus } from '../../domain/value_objects/lobby_status.js'
 import { PlayerKickedEvent } from '../../domain/events/lobby_events.js'
 import Player from '../../domain/entities/player.js'
+import { safeSystemError } from '../../domain/shared/error_sanitizer.js'
 
 export interface KickPlayerRequest {
   lobbyUuid: string
@@ -100,7 +101,7 @@ export class KickPlayerUseCase {
         lobbyState: lobby.serialize(),
       })
     } catch (error) {
-      return Result.fail(`Failed to kick player: ${error.message}`)
+      return Result.fail(safeSystemError(error, 'kick_player'))
     }
   }
 }

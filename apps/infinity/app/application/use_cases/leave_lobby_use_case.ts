@@ -2,6 +2,7 @@ import { type LobbyRepository } from '../repositories/lobby_repository.js'
 import { Result } from '../../domain/shared/result.js'
 import { type TransmitLobbyService } from '../services/transmit_lobby_service.js'
 import { type LobbyEventService } from '../services/lobby_event_service.js'
+import { safeSystemError } from '../../domain/shared/error_sanitizer.js'
 
 export interface LeaveLobbyRequest {
   userUuid: string
@@ -125,9 +126,7 @@ export class LeaveLobbyUseCase {
 
       return Result.ok(response)
     } catch (error) {
-      return Result.fail(
-        `System error: ${error instanceof Error ? error.message : 'Unknown error'}`
-      )
+      return Result.fail(safeSystemError(error, 'leave_lobby'))
     }
   }
 

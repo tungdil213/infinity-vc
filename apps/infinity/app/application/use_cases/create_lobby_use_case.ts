@@ -4,6 +4,7 @@ import { type PlayerRepository } from '../repositories/player_repository.js'
 import { type LobbyRepository } from '../repositories/lobby_repository.js'
 import { Result } from '../../domain/shared/result.js'
 import { type TransmitLobbyService } from '../services/transmit_lobby_service.js'
+import { safeSystemError } from '../../domain/shared/error_sanitizer.js'
 
 export interface CreateLobbyRequest {
   userUuid: string
@@ -122,10 +123,7 @@ export class CreateLobbyUseCase {
 
       return Result.ok(response)
     } catch (error) {
-      // System errors (DB down, IO errors, etc.)
-      return Result.fail(
-        `System error: ${error instanceof Error ? error.message : 'Unknown error'}`
-      )
+      return Result.fail(safeSystemError(error, 'create_lobby'))
     }
   }
 

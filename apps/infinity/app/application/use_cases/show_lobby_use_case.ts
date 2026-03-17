@@ -2,6 +2,7 @@ import { type LobbyRepository } from '../repositories/lobby_repository.js'
 import { Result } from '../../domain/shared/result.js'
 import { LobbySerializer } from '../serializers/lobby_serializer.js'
 import { type LobbyDto } from '../dtos/lobby_dto.js'
+import { safeSystemError } from '../../domain/shared/error_sanitizer.js'
 
 export interface ShowLobbyRequest {
   lobbyUuid: string
@@ -39,9 +40,7 @@ export class ShowLobbyUseCase {
 
       return Result.ok(lobbyDto)
     } catch (error) {
-      return Result.fail(
-        `System error: ${error instanceof Error ? error.message : 'Unknown error'}`
-      )
+      return Result.fail(safeSystemError(error, 'show_lobby'))
     }
   }
 

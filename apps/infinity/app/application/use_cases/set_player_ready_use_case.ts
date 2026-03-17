@@ -1,5 +1,6 @@
 import { inject } from '@adonisjs/core'
 import { Result } from '#domain/shared/result'
+import { safeSystemError } from '../../domain/shared/error_sanitizer.js'
 
 export interface SetPlayerReadyRequest {
   lobbyUuid: string
@@ -68,7 +69,7 @@ export class SetPlayerReadyUseCase {
         canStartGame,
       })
     } catch (error) {
-      return Result.fail(`Failed to set player ready status: ${error.message}`)
+      return Result.fail(safeSystemError(error, 'set_player_ready'))
     }
   }
 }

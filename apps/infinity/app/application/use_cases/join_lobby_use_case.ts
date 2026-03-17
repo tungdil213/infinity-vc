@@ -2,6 +2,7 @@ import { type PlayerRepository } from '../repositories/player_repository.js'
 import { type LobbyRepository } from '../repositories/lobby_repository.js'
 import { Result } from '../../domain/shared/result.js'
 import { type TransmitLobbyService } from '../services/transmit_lobby_service.js'
+import { safeSystemError } from '../../domain/shared/error_sanitizer.js'
 
 export interface JoinLobbyRequest {
   userUuid: string
@@ -83,7 +84,7 @@ export class JoinLobbyUseCase {
         lobby: lobby.serialize(),
       })
     } catch (error) {
-      return Result.fail(error instanceof Error ? error.message : 'Failed to join lobby')
+      return Result.fail(safeSystemError(error, 'join_lobby'))
     }
   }
 

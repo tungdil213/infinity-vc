@@ -3,6 +3,7 @@
 import { type UserRepository } from '../repositories/user_repository.js'
 import { type PlayerRepository } from '../repositories/player_repository.js'
 import { Result } from '../../domain/shared/result.js'
+import { safeSystemError } from '../../domain/shared/error_sanitizer.js'
 
 export interface AuthenticateUserRequest {
   email: string
@@ -77,9 +78,7 @@ export default class AuthenticateUserUseCase {
 
       return Result.ok(response)
     } catch (error) {
-      return Result.fail(
-        `System error: ${error instanceof Error ? error.message : 'Unknown error'}`
-      )
+      return Result.fail(safeSystemError(error, 'authenticate_user'))
     }
   }
 
