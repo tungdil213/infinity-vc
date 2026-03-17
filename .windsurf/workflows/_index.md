@@ -56,6 +56,7 @@ Workflows disponibles:
 - `/docs-sync`: aligner documentation et scripts réels.
 - `/release-prep`: préparer release sans push automatique.
 - `/incident-hotfix`: corriger prod rapidement avec risque maîtrisé.
+- `/atomic-deploy`: déploiement zero-downtime avec swap atomique de symlink et rollback.
 
 ## 9) Example
 

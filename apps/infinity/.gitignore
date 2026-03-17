@@ -3,6 +3,11 @@ node_modules
 build
 tmp
 
+# Atomic deploy (releases + symlink)
+releases
+current
+shared
+
 # Secrets
 .env
 .env.local
