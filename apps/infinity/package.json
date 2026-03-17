@@ -47,7 +47,18 @@
     "#transformers/*": "./app/transformers/*.js",
     "#infrastructure/*": "./app/infrastructure/*.js",
     "#domain/*": "./app/domain/*.js",
+    "#domain/shared/*": "./app/domain/shared/*.js",
+    "#domain/entities/*": "./app/domain/entities/*.js",
+    "#domain/events/*": "./app/domain/events/*.js",
+    "#domain/interfaces/*": "./app/domain/interfaces/*.js",
+    "#domain/state_machine/*": "./app/domain/state_machine/*.js",
+    "#domain/value_objects/*": "./app/domain/value_objects/*.js",
     "#application/*": "./app/application/*.js",
+    "#application/repositories/*": "./app/application/repositories/*.js",
+    "#application/services/*": "./app/application/services/*.js",
+    "#application/use_cases/*": "./app/application/use_cases/*.js",
+    "#application/dtos/*": "./app/application/dtos/*.js",
+    "#application/serializers/*": "./app/application/serializers/*.js",
     "#presenters/*": "./app/presenters/*.js"
   },
   "devDependencies": {

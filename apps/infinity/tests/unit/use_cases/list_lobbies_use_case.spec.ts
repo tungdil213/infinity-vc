@@ -52,7 +52,7 @@ test.group('ListLobbiesUseCase', () => {
     // Par défaut, les lobbies privés sont filtrés, donc 1 lobby public sur 2
     assert.equal(result.value.lobbies.length, 1)
     assert.equal(result.value.total, 1)
-    result.value.lobbies.forEach((lobby) => {
+    result.value.lobbies.forEach((lobby: { status: string }) => {
       assert.equal(lobby.status, LobbyStatus.OPEN)
     })
   })
@@ -61,15 +61,23 @@ test.group('ListLobbiesUseCase', () => {
     const result = await useCase.execute()
 
     assert.isTrue(result.isSuccess)
-    const privateLobbies = result.value.lobbies.filter((lobby) => lobby.isPrivate)
+    const privateLobbies = result.value.lobbies.filter(
+      
+    
+      (lobby: { isPrivate: boolean }) => lobby.isPrivate
+    )
     assert.equal(privateLobbies.length, 0)
   })
 
   test('should include private lobbies when requested', async ({ assert }) => {
     const result = await useCase.execute({ includePrivate: true })
 
+      
+    
     assert.isTrue(result.isSuccess)
-    const privateLobbies = result.value.lobbies.filter((lobby) => lobby.isPrivate)
+    const privateLobbies = result.value.lobbies.filter(
+      (lobby: { isPrivate: boolean }) => lobby.isPrivate
+    )
     assert.isAbove(privateLobbies.length, 0)
   })
 

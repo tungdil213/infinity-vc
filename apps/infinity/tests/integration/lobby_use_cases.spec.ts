@@ -337,8 +337,8 @@ test.group('Lobby Use Cases Integration', (group) => {
     const results = await Promise.all(joinPromises)
 
     // 3 devraient réussir, 1 devrait échouer (lobby plein)
-    const successful = results.filter((r) => r.isSuccess)
-    const failed = results.filter((r) => r.isFailure)
+    const successful = results.filter((r: { isSuccess: boolean }) => r.isSuccess)
+    const failed = results.filter((r: { isFailure: boolean; error?: string }) => r.isFailure)
 
     assert.lengthOf(successful, 3)
     assert.lengthOf(failed, 1)
