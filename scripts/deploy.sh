@@ -52,7 +52,6 @@ cmd_deploy() {
         --exclude '.git' \
         --exclude 'releases' \
         --exclude 'current' \
-        --exclude '/apps/infinity/shared' \
         --exclude 'build' \
         --exclude '.turbo' \
         --exclude 'coverage' \
