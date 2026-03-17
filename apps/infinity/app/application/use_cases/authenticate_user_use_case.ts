@@ -1,7 +1,7 @@
 import { type UserRepository } from '#application/repositories/user_repository'
 import { type PlayerRepository } from '#application/repositories/player_repository'
-import { Result } from '#domain/shared/result'
-import { safeSystemError } from '#domain/shared/error_sanitizer'
+import { Result } from '#shared/result'
+import { safeSystemError } from '#shared/error_sanitizer'
 
 export interface AuthenticateUserRequest {
   email: string

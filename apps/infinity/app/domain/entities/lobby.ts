@@ -2,7 +2,7 @@ import { BaseEntity } from '#domain/entities/base_entity'
 import { LobbyStatus } from '#domain/value_objects/lobby_status'
 import { type PlayerInterface } from '#domain/interfaces/player_interface'
 import { LobbyValidationException } from '#exceptions/domain_exceptions'
-import { Result } from '#domain/shared/result'
+import { Result } from '#shared/result'
 import {
   LobbyCreatedEvent,
   PlayerJoinedLobbyEvent,

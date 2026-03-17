@@ -1,8 +1,8 @@
 import { type LobbyRepository } from '#application/repositories/lobby_repository'
-import { Result } from '#domain/shared/result'
+import { Result } from '#shared/result'
 import { LobbySerializer } from '#application/serializers/lobby_serializer'
 import { type LobbyDto } from '#application/dtos/lobby_dto'
-import { safeSystemError } from '#domain/shared/error_sanitizer'
+import { safeSystemError } from '#shared/error_sanitizer'
 
 export interface ShowLobbyRequest {
   lobbyUuid: string

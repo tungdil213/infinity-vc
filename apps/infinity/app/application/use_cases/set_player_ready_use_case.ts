@@ -1,6 +1,6 @@
 import { inject } from '@adonisjs/core'
-import { Result } from '#domain/shared/result'
-import { safeSystemError } from '#domain/shared/error_sanitizer'
+import { Result } from '#shared/result'
+import { safeSystemError } from '#shared/error_sanitizer'
 
 export interface SetPlayerReadyRequest {
   lobbyUuid: string

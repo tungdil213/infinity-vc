@@ -1,10 +1,10 @@
 import { inject } from '@adonisjs/core'
 import type { LobbyRepository } from '#application/repositories/lobby_repository'
 import type { DomainEventPublisher } from '#application/services/domain_event_publisher'
-import { Result } from '#domain/shared/result'
+import { Result } from '#shared/result'
 import { LobbyStatus } from '#domain/value_objects/lobby_status'
 import { LobbyUpdatedEvent } from '#domain/events/lobby_events'
-import { safeSystemError } from '#domain/shared/error_sanitizer'
+import { safeSystemError } from '#shared/error_sanitizer'
 
 export interface UpdateLobbySettingsRequest {
   lobbyUuid: string

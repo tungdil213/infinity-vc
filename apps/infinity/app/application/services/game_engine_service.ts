@@ -8,7 +8,7 @@ import { createDefaultLauncher } from '@infinity.dev/game-engine'
 import { RpsActionTypes } from '@infinity.dev/game-engine'
 import type { IAction, IGameState, IPlayer, IPlayerView } from '@infinity.dev/game-engine/core'
 import type { PlayerInterface } from '#domain/interfaces/player_interface'
-import { Result } from '#domain/shared/result'
+import { Result } from '#shared/result'
 import {
   type GenericAction,
   type GameActionRequest,

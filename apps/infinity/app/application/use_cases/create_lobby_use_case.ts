@@ -2,9 +2,9 @@ import Lobby from '#domain/entities/lobby'
 import { createDefaultLauncher } from '@infinity.dev/game-engine'
 import { type PlayerRepository } from '#application/repositories/player_repository'
 import { type LobbyRepository } from '#application/repositories/lobby_repository'
-import { Result } from '#domain/shared/result'
+import { Result } from '#shared/result'
 import { type TransmitLobbyService } from '#application/services/transmit_lobby_service'
-import { safeSystemError } from '#domain/shared/error_sanitizer'
+import { safeSystemError } from '#shared/error_sanitizer'
 
 export interface CreateLobbyRequest {
   userUuid: string

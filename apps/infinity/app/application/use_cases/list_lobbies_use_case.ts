@@ -1,6 +1,6 @@
 import { type LobbyRepository } from '#application/repositories/lobby_repository'
 import { type LobbyStatus } from '#domain/value_objects/lobby_status'
-import { Result } from '#domain/shared/result'
+import { Result } from '#shared/result'
 
 export interface ListLobbiesRequest {
   status?: LobbyStatus

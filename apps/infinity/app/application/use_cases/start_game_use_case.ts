@@ -1,10 +1,10 @@
 import Game from '#domain/entities/game'
 import { type LobbyRepository } from '#application/repositories/lobby_repository'
 import { type GameRepository } from '#application/repositories/game_repository'
-import { Result } from '#domain/shared/result'
+import { Result } from '#shared/result'
 import { type TransmitLobbyService } from '#application/services/transmit_lobby_service'
 import { gameEngineService } from '#application/services/game_engine_service'
-import { safeSystemError } from '#domain/shared/error_sanitizer'
+import { safeSystemError } from '#shared/error_sanitizer'
 
 export interface StartGameRequest {
   userUuid: string
