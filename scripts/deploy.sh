@@ -55,6 +55,8 @@ cmd_deploy() {
         --exclude 'build' \
         --exclude '.turbo' \
         --exclude 'coverage' \
+        --exclude '/apps/infinity/releases/***' \
+        --exclude '/apps/infinity/current/***' \
         "$PROJECT_ROOT/" "$RELEASE_DIR/"
     
     # Step 3: Install dependencies
@@ -68,7 +70,7 @@ cmd_deploy() {
 
     # Step 5: Build the application
     log_info "Building application..."
-    yarn workspace @infinity/app build
+    NODE_ENV=development yarn workspace @infinity/app build
     
     # Step 6: Copy .env to build
     if [[ -f "$RELEASE_DIR/apps/infinity/.env" ]]; then

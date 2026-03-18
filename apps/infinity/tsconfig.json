@@ -9,6 +9,8 @@
   "exclude": [
     "./inertia/**/*",
     "./resources/**/*",
+    "./releases/**/*",
+    "./current/**/*",
     "./database/samples/**/*",
     "./app/tests/**/*",
     "./tests/unit/inertia/**/*",
