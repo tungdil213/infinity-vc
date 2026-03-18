@@ -62,11 +62,15 @@ cmd_deploy() {
     cd "$RELEASE_DIR"
     yarn install --frozen-lockfile
     
-    # Step 4: Build the application
+    # Step 4: Build internal workspace dependencies first (dist types/runtime)
+    log_info "Building workspace dependencies..."
+    yarn build:deps
+
+    # Step 5: Build the application
     log_info "Building application..."
     yarn workspace @infinity/app build
     
-    # Step 5: Copy .env to build
+    # Step 6: Copy .env to build
     if [[ -f "$RELEASE_DIR/apps/infinity/.env" ]]; then
         cp "$RELEASE_DIR/apps/infinity/.env" "$RELEASE_DIR/apps/infinity/build/"
         log_ok ".env copied to build"
@@ -74,7 +78,7 @@ cmd_deploy() {
         log_warn "No .env file found - make sure to configure environment"
     fi
     
-    # Step 6: Verify build artifacts
+    # Step 7: Verify build artifacts
     log_info "Verifying build..."
     if [[ ! -f "$RELEASE_DIR/apps/infinity/build/public/assets/.vite/manifest.json" ]]; then
         log_error "Build verification failed: manifest.json not found"
@@ -82,13 +86,13 @@ cmd_deploy() {
     fi
     log_ok "Build verified - manifest.json exists"
     
-    # Step 7: Link shared directories (logs, uploads, etc.)
+    # Step 8: Link shared directories (logs, uploads, etc.)
     cmd_link_shared
     
-    # Step 8: Atomic symlink swap
+    # Step 9: Atomic symlink swap
     cmd_swap
     
-    # Step 9: Cleanup old releases
+    # Step 10: Cleanup old releases
     cmd_cleanup
     
     log_ok "Deploy completed successfully!"
