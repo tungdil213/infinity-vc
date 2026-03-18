@@ -49,10 +49,10 @@ export function LobbyHeaderPanel({
 	return (
 		<Card className="mb-6">
 			<CardHeader>
-				<div className="flex justify-between items-start">
-					<div>
-						<CardTitle className="text-2xl">{name}</CardTitle>
-						<div className="flex items-center gap-4 mt-2">
+				<div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+					<div className="min-w-0">
+						<CardTitle className="truncate text-2xl">{name}</CardTitle>
+						<div className="mt-2 flex flex-wrap items-center gap-3">
 							<Badge className={statusClass}>{status}</Badge>
 							<span className="text-sm text-gray-600 flex items-center gap-1">
 								<Users className="w-4 h-4" />
@@ -62,7 +62,7 @@ export function LobbyHeaderPanel({
 						</div>
 					</div>
 
-					<div className="flex gap-2">
+					<div className="flex flex-wrap gap-2">
 						{canJoinLobby && (
 							<Button onClick={onJoinLobby} disabled={isJoiningLobby} className="bg-blue-600 hover:bg-blue-700">
 								<UserPlus className="w-4 h-4 mr-2" />

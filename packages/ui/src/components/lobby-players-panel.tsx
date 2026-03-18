@@ -49,7 +49,7 @@ export function LobbyPlayersPanel({
 						>
 							<div className="flex items-center justify-between">
 								<div>
-									<h3 className="font-medium text-gray-900">{player.nickName}</h3>
+									<h3 className="break-words font-medium text-gray-900">{player.nickName}</h3>
 									<div className="flex items-center gap-2 mt-1">
 										{player.uuid === creatorUuid && (
 											<Badge variant="neutral" className="text-xs">
@@ -80,7 +80,7 @@ export function LobbyPlayersPanel({
 				</div>
 
 				<div className="mt-6 pt-4 border-t border-gray-200">
-					<div className="flex items-center justify-between text-sm text-gray-600">
+					<div className="flex flex-col gap-2 text-sm text-gray-600 sm:flex-row sm:items-center sm:justify-between">
 						<span>Created: {createdAtDate.toLocaleString()}</span>
 						<span>
 							{hasAvailableSlots ? 'Open for new players' : 'Lobby is full'}

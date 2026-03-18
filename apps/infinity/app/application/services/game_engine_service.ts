@@ -8,9 +8,9 @@ import { type GameLauncher, RpsActionTypes } from '@infinity.dev/game-engine'
 import type { IAction, IGameState, IPlayer, IPlayerView } from '@infinity.dev/game-engine/core'
 import { Effect } from 'effect'
 import type { PlayerInterface } from '#domain/interfaces/player_interface'
-import { Result } from '#shared/result'
+import { type Result } from '#shared/result'
 import type { GameRuntimePort } from '#application/services/game_runtime_port'
-import { runEffectAsResult } from '#shared/effect_result'
+import { runEffectAsResult } from '#domain/shared/effect_result'
 import { getAppGameLauncher } from '#infrastructure/game_engine/app_game_launcher'
 import {
   type GenericAction,

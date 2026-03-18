@@ -550,7 +550,7 @@ export default function Game({
         <div className="min-h-screen bg-main p-4">
           <div className="max-w-4xl mx-auto space-y-4">
             <UICard>
-              <CardContent className="p-4 flex items-center justify-between">
+              <CardContent className="p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h1 className="text-2xl font-heading">{gameTitle}</h1>
                   <div className="flex gap-2 mt-1">
@@ -558,7 +558,7 @@ export default function Game({
                     <Badge variant="secondary">First to {roundsToWin}</Badge>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                   <Badge variant={isConnected ? 'default' : 'destructive'}>
                     {isConnected ? 'Connected' : 'Disconnected'}
                   </Badge>
@@ -595,7 +595,7 @@ export default function Game({
                 {playersWithScores.map((player) => (
                   <div
                     key={player.id}
-                    className="flex items-center justify-between rounded-base border-2 border-border p-3"
+                    className="flex flex-col gap-2 rounded-base border-2 border-border p-3 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div>
                       <p className="font-heading">
@@ -683,7 +683,7 @@ export default function Game({
       <div className="min-h-screen bg-main p-4">
         <div className="max-w-6xl mx-auto mb-4">
           <UICard>
-            <CardContent className="p-4 flex items-center justify-between">
+            <CardContent className="p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h1 className="text-2xl font-heading">{gameTitle}</h1>
                 <div className="flex gap-2 mt-1">
@@ -691,7 +691,7 @@ export default function Game({
                   <Badge variant="secondary">Deck: {gameState?.state?.deckCount || 0}</Badge>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                 <Badge variant={isConnected ? 'default' : 'destructive'}>
                   {isConnected ? 'Connected' : 'Disconnected'}
                 </Badge>

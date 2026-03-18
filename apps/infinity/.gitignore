@@ -6,7 +6,7 @@ tmp
 # Atomic deploy (releases + symlink)
 releases
 current
-shared
+/shared
 
 # Secrets
 .env

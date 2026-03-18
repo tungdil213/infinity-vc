@@ -106,18 +106,20 @@ export function Header({
 		<>
 			<nav className={`bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-50 ${className}`}>
 				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-					<div className="flex justify-between items-center h-16">
+					<div className="flex flex-col gap-3 py-3 sm:min-h-16 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:py-0">
 						{/* Logo */}
-						<div className="flex items-center">
-							<a href={logoHref} className="flex-shrink-0">
-								<h1 className="text-2xl font-bold text-primary hover:opacity-80 transition-opacity">{logoText}</h1>
+						<div className="flex min-w-0 items-center">
+							<a href={logoHref} className="block min-w-0 flex-shrink-0">
+								<h1 className="truncate text-xl font-bold text-primary transition-opacity hover:opacity-80 sm:text-2xl">
+									{logoText}
+								</h1>
 							</a>
 						</div>
 
 						{/* Navigation */}
-						<div className="flex items-center space-x-4">
+						<div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:gap-3">
 							{/* Connection Status */}
-							<div className="flex items-center gap-2" title={isConnected ? 'Connected' : 'Disconnected'}>
+							<div className="flex shrink-0 items-center gap-2" title={isConnected ? 'Connected' : 'Disconnected'}>
 								{isConnected ? (
 									<Wifi className="w-4 h-4 text-green-500" />
 								) : (
@@ -133,18 +135,18 @@ export function Header({
 											onClick={onGoToCurrentLobby}
 											variant="neutral"
 											size="sm"
-											className="flex items-center gap-2"
+											className="flex min-w-0 max-w-full items-center gap-2"
 										>
 											<div className={`w-2 h-2 rounded-full ${getStatusColor(currentLobby.status)}`} />
-											<span className="hidden sm:inline">{currentLobby.name}</span>
-											<Badge variant="secondary" className="text-xs">
+											<span className="hidden max-w-40 truncate sm:inline md:max-w-56">{currentLobby.name}</span>
+											<Badge variant="secondary" className="shrink-0 text-xs">
 												{currentLobby.currentPlayers}/{currentLobby.maxPlayers}
 											</Badge>
 										</Button>
 									)}
 
 									{/* Quick Actions */}
-									<div className="flex items-center gap-2">
+									<div className="flex shrink-0 items-center gap-2">
 										<Button onClick={onCreateLobby} size="sm" className="flex items-center gap-2">
 											<Plus className="w-4 h-4" />
 											<span className="hidden sm:inline">Créer</span>
@@ -188,22 +190,26 @@ export function Header({
 									</div>
 
 									{/* Browse Lobbies */}
-									<Button onClick={onGoToLobbies} variant="neutral" className="flex items-center gap-2">
+									<Button
+										onClick={onGoToLobbies}
+										variant="neutral"
+										className="flex shrink-0 items-center gap-2"
+									>
 										<Gamepad2 className="w-4 h-4" />
 										<span className="hidden sm:inline">Lobbies</span>
 									</Button>
 
 									{/* Notifications */}
-									<Button variant="noShadow" size="sm" className="relative">
+									<Button variant="noShadow" size="sm" className="relative shrink-0">
 										<Bell className="w-4 h-4" />
 									</Button>
 
 									{/* User Menu */}
 									<DropdownMenu>
 										<DropdownMenuTrigger asChild>
-											<Button variant="noShadow" size="sm" className="flex items-center gap-2">
+											<Button variant="noShadow" size="sm" className="flex max-w-full items-center gap-2">
 												<User className="w-4 h-4" />
-												<span className="hidden md:inline">{user.fullName}</span>
+												<span className="hidden max-w-32 truncate md:inline">{user.fullName}</span>
 											</Button>
 										</DropdownMenuTrigger>
 										<DropdownMenuContent align="end" className="w-56">
@@ -229,11 +235,16 @@ export function Header({
 									</DropdownMenu>
 								</>
 							) : (
-								<>
+								<div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
 									{/* Public Lobbies Preview */}
-									<Button onClick={onGoToLobbies} variant="noShadow" className="flex items-center gap-2">
+									<Button
+										onClick={onGoToLobbies}
+										variant="noShadow"
+										className="flex items-center gap-2"
+									>
 										<Users className="w-4 h-4" />
-										Voir les lobbies
+										<span className="hidden sm:inline">Voir les lobbies</span>
+										<span className="sm:hidden">Lobbies</span>
 									</Button>
 
 									{/* Auth Buttons */}
@@ -241,7 +252,7 @@ export function Header({
 										Connexion
 									</Button>
 									<Button onClick={onRegister}>S'inscrire</Button>
-								</>
+								</div>
 							)}
 						</div>
 					</div>

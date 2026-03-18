@@ -15,7 +15,7 @@ export default function Home() {
     <>
       <Head title="Homepage" />
 
-      <div className="fixed xl:absolute left-8 right-8 top-0 bottom-0 xl:inset-0 max-w-screen-xl mx-auto before:content-[''] before:[background:repeating-linear-gradient(0deg,var(--sand-5)_0_4px,transparent_0_8px)] before:absolute before:top-0 before:left-0 before:h-full before:w-px after:content-[''] after:[background:repeating-linear-gradient(0deg,var(--sand-5)_0_4px,transparent_0_8px)] after:absolute after:top-0 after:right-0 after:h-full after:w-px"></div>
+      <div className="fixed xl:absolute left-4 right-4 top-0 bottom-0 sm:left-8 sm:right-8 xl:inset-0 max-w-screen-xl mx-auto before:content-[''] before:[background:repeating-linear-gradient(0deg,var(--sand-5)_0_4px,transparent_0_8px)] before:absolute before:top-0 before:left-0 before:h-full before:w-px after:content-[''] after:[background:repeating-linear-gradient(0deg,var(--sand-5)_0_4px,transparent_0_8px)] after:absolute after:top-0 after:right-0 after:h-full after:w-px"></div>
 
       <div className="pt-4 h-full flex flex-col">
         {/* Header */}
@@ -32,7 +32,7 @@ export default function Home() {
         </div>
 
         {/* Bento with documentation, Adocasts, packages and Discord */}
-        <div className="isolate mt-10 max-w-screen-xl mx-auto px-16 xl:px-8 grid grid-cols-1 xl:grid-cols-2 xl:grid-rows-3 gap-8">
+        <div className="isolate mt-10 max-w-screen-xl mx-auto px-4 sm:px-8 xl:px-8 grid grid-cols-1 xl:grid-cols-2 xl:grid-rows-3 gap-8">
           <Button size="default" variant="default">
             Button
           </Button>
@@ -182,7 +182,7 @@ export default function Home() {
         </div>
 
         {/* Features */}
-        <div className="grow mt-10 mb-8 px-16 xl:px-8 max-w-screen-xl mx-auto">
+        <div className="grow mt-10 mb-8 px-4 sm:px-8 xl:px-8 max-w-screen-xl mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             <article className="relative py-4 px-5 bg-white border border-transparent rounded-lg hover:border-sand-8 hover:shadow-sm transition duration-100 ease-in-out group">
               <h2 className="font-semibold text-sand-12">

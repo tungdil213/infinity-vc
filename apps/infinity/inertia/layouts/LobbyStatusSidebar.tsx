@@ -98,7 +98,7 @@ function LobbyStatusSidebarConnected({
   }
 
   return (
-    <div className="fixed right-4 top-20 w-80 z-50">
+    <div className="fixed top-20 left-4 right-4 z-50 sm:left-auto sm:w-80">
       <Card className="border-l-4 border-l-blue-500 shadow-lg">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
@@ -109,7 +109,7 @@ function LobbyStatusSidebarConnected({
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <h3 className="font-semibold text-base mb-2">{currentLobby.name}</h3>
+            <h3 className="font-semibold text-base mb-2 break-words">{currentLobby.name}</h3>
             <div className="flex items-center justify-between mb-2">
               <Badge className={`${getStatusColor(currentLobby.status)} text-white`}>
                 {getStatusText(currentLobby.status)}

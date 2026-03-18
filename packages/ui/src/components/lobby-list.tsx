@@ -156,7 +156,7 @@ export function LobbyList({
 						</p>
 					)}
 				</div>
-				<div className="flex items-center gap-2">
+				<div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
 					{onRefresh && (
 						<Button variant="neutral" size="sm" onClick={onRefresh} disabled={loading}>
 							<RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
@@ -181,7 +181,7 @@ export function LobbyList({
 						</Button>
 					</div>
 					{onCreateLobby && (
-						<Button onClick={onCreateLobby}>
+						<Button onClick={onCreateLobby} className="w-full sm:w-auto">
 							<Plus className="h-4 w-4 mr-2" />
 							Créer un lobby
 						</Button>
@@ -355,11 +355,11 @@ export function LobbyList({
 
 			{/* Results Summary */}
 			{!loading && sortedLobbies.length > 0 && (
-				<div className="flex justify-between items-center text-sm text-gray-600">
+				<div className="flex flex-col gap-2 text-sm text-gray-600 sm:flex-row sm:items-center sm:justify-between">
 					<span>
 						Affichage de {sortedLobbies.length} lobby{sortedLobbies.length > 1 ? 's' : ''}
 					</span>
-					<div className="flex items-center gap-2">
+					<div className="flex flex-wrap items-center gap-2">
 						<Badge variant="neutral">
 							{sortedLobbies.filter((l) => l.hasAvailableSlots).length} avec places libres
 						</Badge>

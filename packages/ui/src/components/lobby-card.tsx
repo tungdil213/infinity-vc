@@ -80,14 +80,14 @@ export function LobbyCard({
 		return (
 			<Card className={cn('hover:shadow-md transition-shadow', className)}>
 				<CardContent className="p-4">
-					<div className="flex items-center justify-between">
-						<div className="flex items-center space-x-3">
-							<div className="flex-1">
+					<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+						<div className="min-w-0 flex items-center space-x-3">
+							<div className="min-w-0 flex-1">
 								<div className="flex items-center gap-2">
-									<h3 className="font-medium text-sm">{lobby.name}</h3>
+									<h3 className="truncate font-medium text-sm">{lobby.name}</h3>
 									{lobby.isPrivate && <Lock className="h-3 w-3 text-gray-500" />}
 								</div>
-								<div className="flex items-center gap-2 mt-1">
+								<div className="mt-1 flex flex-wrap items-center gap-2">
 									<Badge className={cn('text-xs', statusConfig[lobby.status].color)}>
 										{statusConfig[lobby.status].label}
 									</Badge>
@@ -98,7 +98,7 @@ export function LobbyCard({
 								</div>
 							</div>
 						</div>
-						<div className="flex items-center gap-1">
+						<div className="flex items-center gap-1 self-end sm:self-auto">
 							{canJoin && (
 								<Button size="sm" onClick={() => onJoin?.(lobby.uuid)}>
 									Rejoindre
@@ -118,13 +118,13 @@ export function LobbyCard({
 		return (
 			<Card className={cn('border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50', className)}>
 				<CardHeader>
-					<div className="flex justify-between items-start">
-						<div>
-							<CardTitle className="text-xl flex items-center gap-2">
-								{lobby.name}
+					<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+						<div className="min-w-0">
+							<CardTitle className="flex min-w-0 items-center gap-2 text-xl">
+								<span className="truncate">{lobby.name}</span>
 								{lobby.isPrivate && <Lock className="h-4 w-4 text-gray-500" />}
 							</CardTitle>
-							<div className="flex items-center gap-3 mt-2">
+							<div className="mt-2 flex flex-wrap items-center gap-3">
 								<Badge className={cn('text-sm', statusConfig[lobby.status].color)}>
 									{statusConfig[lobby.status].label}
 								</Badge>
@@ -134,7 +134,7 @@ export function LobbyCard({
 								</span>
 							</div>
 						</div>
-						<div className="flex gap-2">
+						<div className="flex flex-wrap gap-2">
 							{canStart && (
 								<Button onClick={() => onStart?.(lobby.uuid)} className="bg-green-600 hover:bg-green-700">
 									<Play className="h-4 w-4 mr-2" />
@@ -184,13 +184,13 @@ export function LobbyCard({
 	return (
 		<Card className={cn('hover:shadow-lg transition-shadow', className)}>
 			<CardHeader>
-				<div className="flex justify-between items-start">
-					<div>
-						<CardTitle className="flex items-center gap-2">
-							{lobby.name}
+				<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+					<div className="min-w-0 flex-1">
+						<CardTitle className="flex min-w-0 items-center gap-2">
+							<span className="truncate">{lobby.name}</span>
 							{lobby.isPrivate && <Lock className="h-4 w-4 text-gray-500" />}
 						</CardTitle>
-						<div className="flex items-center gap-3 mt-2">
+						<div className="mt-2 flex flex-wrap items-center gap-3">
 							<Badge className={cn(statusConfig[lobby.status].color)}>{statusConfig[lobby.status].label}</Badge>
 							<span className="text-sm text-gray-600 flex items-center gap-1">
 								<Users className="h-4 w-4" />
@@ -198,7 +198,7 @@ export function LobbyCard({
 							</span>
 						</div>
 					</div>
-					<div className="flex gap-1">
+					<div className="flex shrink-0 gap-1">
 						{onShare && (
 							<Button variant="noShadow" size="sm" onClick={() => onShare(lobby.uuid)}>
 								<Share2 className="h-4 w-4" />
@@ -262,7 +262,7 @@ export function LobbyCard({
 					)}
 
 					{/* Actions */}
-					<div className="flex gap-2 pt-2">
+					<div className="flex flex-wrap gap-2 pt-2">
 						{canStart && (
 							<Button onClick={() => onStart?.(lobby.uuid)} className="bg-green-600 hover:bg-green-700">
 								<Play className="h-4 w-4 mr-2" />

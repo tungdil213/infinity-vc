@@ -6,12 +6,10 @@ import type { DomainEventPublisher } from '#application/services/domain_event_pu
 import type Game from '#domain/entities/game'
 import type Player from '#domain/entities/player'
 import { Result } from '#shared/result'
-import { runEffectAsResult } from '#shared/effect_result'
+import { runEffectAsResult } from '#domain/shared/effect_result'
 import { GameActionEventService } from '#application/services/game_actions/game_action_event_service'
 import { GameActionHandlerService } from '#application/services/game_actions/game_action_handler_service'
-import {
-  GameActionPlayerFactory,
-} from '#application/services/game_actions/game_action_player_factory'
+import { GameActionPlayerFactory } from '#application/services/game_actions/game_action_player_factory'
 import type {
   GameActionRequest,
   GameActionResponse,
@@ -66,12 +64,7 @@ export class GameActionUseCase {
         catch: (error) => error,
       })
 
-      yield* self.eventService.publishPostAction(
-        game,
-        player,
-        request.action,
-        request.actionData
-      )
+      yield* self.eventService.publishPostAction(game, player, request.action, request.actionData)
 
       return actionResponse
     })
