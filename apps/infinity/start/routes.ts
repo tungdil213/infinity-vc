@@ -98,6 +98,7 @@ router
   .group(() => {
     router.get('/auth/me', '#controllers/enhanced_auth_controller.me').as('api.auth.me')
     router.get('/auth/check', '#controllers/enhanced_auth_controller.check').as('api.auth.check')
+    router.get('/games/catalog', '#controllers/game_catalog_controller.publicIndex').as('api.games.catalog')
   })
   .prefix('/api/v1')
 
@@ -138,6 +139,14 @@ router
   })
   .prefix('/api/v1')
   .use(middleware.auth())
+
+// Admin API routes - includes proprietary game modules in catalog
+router
+  .group(() => {
+    router.get('/games/catalog', '#controllers/game_catalog_controller.adminIndex').as('admin.games.catalog')
+  })
+  .prefix('/admin/api')
+  .use([middleware.auth(), middleware.adminGuard()])
 
 // Transmit routes
 transmit.registerRoutes((route) => {

@@ -4,14 +4,14 @@
  * Encapsulates launcher-driven game engines and provides game management functionality.
  * This service acts as a bridge between the domain use cases and the game engine.
  */
-import { createDefaultLauncher } from '@infinity.dev/game-engine'
-import { RpsActionTypes } from '@infinity.dev/game-engine'
+import { type GameLauncher, RpsActionTypes } from '@infinity.dev/game-engine'
 import type { IAction, IGameState, IPlayer, IPlayerView } from '@infinity.dev/game-engine/core'
 import { Effect } from 'effect'
 import type { PlayerInterface } from '#domain/interfaces/player_interface'
 import { Result } from '#shared/result'
 import type { GameRuntimePort } from '#application/services/game_runtime_port'
 import { runEffectAsResult } from '#shared/effect_result'
+import { getAppGameLauncher } from '#infrastructure/game_engine/app_game_launcher'
 import {
   type GenericAction,
   type GameActionRequest,
@@ -31,14 +31,14 @@ export type {
  * Service for managing game sessions using the LoveLetterEngine
  */
 export class GameEngineService implements GameRuntimePort {
-  private readonly launcher = createDefaultLauncher()
   private static readonly GAME_TYPE_ALIASES: Record<string, string> = {
     'love-letter': 'love-letter-infinity-gauntlet',
   }
 
   constructor(
     private readonly sessionStore: GameSessionStore = new GameSessionStore(),
-    private readonly eventPublisher: GameEngineEventPublisher = new GameEngineEventPublisher()
+    private readonly eventPublisher: GameEngineEventPublisher = new GameEngineEventPublisher(),
+    private readonly launcher: GameLauncher = getAppGameLauncher()
   ) {}
 
   /**

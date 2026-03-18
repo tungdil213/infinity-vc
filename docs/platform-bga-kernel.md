@@ -15,6 +15,10 @@ Ce document decrit le socle ajoute pour separer la plateforme (open source) des 
   - validation defensive des modules en enregistrement
 - **Session de jeu enrichie**:
   - l'etat initial est expose apres `startSession`, ce qui evite une double initialisation.
+- **Loader dynamique de modules proprietaires**:
+  - charge des modules prives au demarrage depuis `PRIVATE_GAME_MODULE_SPECS`
+  - validation defensive des specifiers (pas de path relatif/URL)
+  - enregistrement automatique dans le launcher singleton de l'app
 
 ## Couche application AdonisJS
 
@@ -45,6 +49,24 @@ Cette approche facilite:
 3. Renseigner `licensing.distribution = "proprietary"` dans la definition.
 4. Charger ces modules au demarrage via un registre interne.
 5. N'exposer au frontend que le catalogue filtre (pas de logique interne du jeu).
+
+## Endpoints catalogue prets front
+
+- **Public OSS**: `GET /api/v1/games/catalog`
+  - retourne uniquement les jeux open source
+  - filtre optionnel par capabilities via query `?capabilities=turn-based,replay`
+- **Admin (inclut proprietaires)**: `GET /admin/api/games/catalog`
+  - retourne open source + proprietaires
+  - protege par auth + guard admin
+
+## Variables d'environnement utiles
+
+- `PRIVATE_GAME_MODULE_SPECS`:
+  - liste CSV de package specifiers a importer dynamiquement
+  - exemple: `@infinity.private/chess-module,@infinity.private/go-module`
+- `ADMIN_EMAILS`:
+  - liste CSV des emails autorises a consulter `/admin/api/*`
+  - exemple: `admin@example.com,ops@example.com`
 
 ## Checklist securite recommandee
 

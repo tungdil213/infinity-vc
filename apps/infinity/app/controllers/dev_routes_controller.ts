@@ -178,10 +178,22 @@ export default class DevRoutesController {
             description: 'API voir jeu',
           },
           {
+            method: 'GET',
+            path: '/api/v1/games/catalog',
+            name: 'api.games.catalog',
+            description: 'Catalogue public des jeux OSS',
+          },
+          {
             method: 'POST',
             path: '/api/v1/games/:uuid/action',
             name: 'api.games.action',
             description: 'API action jeu',
+          },
+          {
+            method: 'GET',
+            path: '/admin/api/games/catalog',
+            name: 'admin.games.catalog',
+            description: 'Catalogue admin incluant les jeux propriétaires',
           },
         ],
       },

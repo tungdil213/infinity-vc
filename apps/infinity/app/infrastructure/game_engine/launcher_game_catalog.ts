@@ -1,8 +1,9 @@
-import { createDefaultLauncher, type GameDefinition, type GameLauncher } from '@infinity.dev/game-engine'
+import { type GameDefinition, type GameLauncher } from '@infinity.dev/game-engine'
 import type { GameCatalogPort, GameCatalogQuery } from '#application/services/game_catalog_port'
+import { getAppGameLauncher } from '#infrastructure/game_engine/app_game_launcher'
 
 export class LauncherGameCatalog implements GameCatalogPort {
-  constructor(private readonly launcher: GameLauncher = createDefaultLauncher()) {}
+  constructor(private readonly launcher: GameLauncher = getAppGameLauncher()) {}
 
   findGameDefinition(gameId: string): GameDefinition<Record<string, unknown>> | null {
     return this.launcher.getGameDefinition(gameId)

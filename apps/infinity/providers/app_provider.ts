@@ -17,9 +17,11 @@ import { ShowLobbyUseCase } from '#application/use_cases/show_lobby_use_case'
 import { KickPlayerUseCase } from '#application/use_cases/kick_player_use_case'
 import { UpdateLobbySettingsUseCase } from '#application/use_cases/update_lobby_settings_use_case'
 import { SetPlayerReadyUseCase } from '#application/use_cases/set_player_ready_use_case'
+import { ListGameCatalogUseCase } from '#application/use_cases/list_game_catalog_use_case'
 import { LobbyEventService } from '#application/services/lobby_event_service'
 import { EventBusDomainEventPublisher } from '#application/services/domain_event_publisher'
 import { eventBridgeService } from '#infrastructure/transcript/index'
+import { initializeAppGameLauncher } from '#infrastructure/game_engine/app_game_launcher'
 
 export default class AppProvider {
   constructor(protected app: ApplicationService) {}
@@ -28,6 +30,7 @@ export default class AppProvider {
    * Called when the application is ready to accept HTTP requests
    */
   async ready() {
+    await initializeAppGameLauncher()
     // Initialize EventBridge to connect domain events to Transmit
     await eventBridgeService.initialize()
     console.log('[AppProvider] EventBridge initialized')
@@ -130,6 +133,10 @@ export default class AppProvider {
     this.app.container.singleton(ListLobbiesUseCase, async (resolver) => {
       const hybridLobbyService = await resolver.make(HybridLobbyService)
       return new ListLobbiesUseCase(hybridLobbyService)
+    })
+
+    this.app.container.singleton(ListGameCatalogUseCase, () => {
+      return new ListGameCatalogUseCase()
     })
 
     this.app.container.singleton(ShowLobbyUseCase, async (resolver) => {
