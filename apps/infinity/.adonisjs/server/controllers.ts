@@ -10,6 +10,7 @@ export const controllers = {
   DevRoutes: () => import('#controllers/dev_routes_controller'),
   EnhancedAuth: () => import('#controllers/enhanced_auth_controller'),
   EnhancedLobbies: () => import('#controllers/enhanced_lobbies_controller'),
+  GameCatalog: () => import('#controllers/game_catalog_controller'),
   Games: () => import('#controllers/games_controller'),
   Lobbies: () => import('#controllers/lobbies_controller'),
   SimpleLobbies: () => import('#controllers/simple_lobbies_controller'),

@@ -76,6 +76,7 @@ La documentation complète se trouve dans le dossier `docs`. Voici les principal
 2. **[Commandes npm TODO](docs/infra/scripts.md)** : Détails sur chaque script du `package.json`.
 3. **[Design System TODO](docs/design-system.md)** : Guide d'utilisation et de contribution au système de design.
 4. **[Package.json](docs/infra/package_json.md)** : Description des propriétés et scripts.
+5. **[Noyau plateforme BGA-like](docs/platform-bga-kernel.md)** : Contrats de modules de jeux (open source/propriétaire), sécurité et pattern d’extension.
 
 ## Contributions
 

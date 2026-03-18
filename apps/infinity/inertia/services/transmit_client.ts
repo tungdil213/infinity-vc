@@ -1,4 +1,4 @@
-import { Transmit } from '@adonisjs/transmit-client'
+import { Transmit, type Subscription } from '@adonisjs/transmit-client'
 
 type BrowserLikeGlobals = {
   location?: {
@@ -19,47 +19,92 @@ function getCsrfToken(): string | undefined {
   )
 }
 
-/**
- * Client Transmit configuré pour l'application
- */
-export const transmitClient = new Transmit({
-  baseUrl: browserGlobals.location?.origin ?? '',
-  beforeSubscribe: (request: RequestInit) => {
-    // Ajouter les headers d'authentification si nécessaire
-    const csrfToken = getCsrfToken()
-    if (csrfToken) {
-      if (!request.headers) {
-        request.headers = {}
+type TransmitClientStatus = 'initializing' | 'connected' | 'disconnected' | 'reconnecting'
+
+let transmitClientStatus: TransmitClientStatus = 'initializing'
+let transmitClientInstance: Transmit | null = null
+
+function createTransmitClient(): Transmit {
+  const transmitClient = new Transmit({
+    baseUrl: browserGlobals.location?.origin ?? '',
+    maxReconnectAttempts: 50,
+    beforeSubscribe: (request: RequestInit) => {
+      // Ajouter les headers d'authentification si nécessaire
+      const csrfToken = getCsrfToken()
+      if (csrfToken) {
+        if (!request.headers) {
+          request.headers = {}
+        }
+        ;(request.headers as Record<string, string>)['X-CSRF-TOKEN'] = csrfToken
       }
-      ;(request.headers as Record<string, string>)['X-CSRF-TOKEN'] = csrfToken
-    }
-  },
-  beforeUnsubscribe: (request: RequestInit) => {
-    // Ajouter les headers d'authentification si nécessaire
-    const csrfToken = getCsrfToken()
-    if (csrfToken) {
-      if (!request.headers) {
-        request.headers = {}
+    },
+    beforeUnsubscribe: (request: RequestInit) => {
+      // Ajouter les headers d'authentification si nécessaire
+      const csrfToken = getCsrfToken()
+      if (csrfToken) {
+        if (!request.headers) {
+          request.headers = {}
+        }
+        ;(request.headers as Record<string, string>)['X-CSRF-TOKEN'] = csrfToken
       }
-      ;(request.headers as Record<string, string>)['X-CSRF-TOKEN'] = csrfToken
-    }
-  },
-  onReconnectAttempt: (attempt) => {
-    console.log(`Tentative de reconnexion Transmit #${attempt}`)
-  },
-  onReconnectFailed: () => {
-    console.error('Échec de la reconnexion Transmit')
-  },
-  onSubscribeFailed: (response) => {
-    console.error('Échec de souscription Transmit:', response)
-  },
-  onSubscription: (channel) => {
-    console.log(`Souscription Transmit réussie au channel: ${channel}`)
-  },
-  onUnsubscription: (channel) => {
-    console.log(`Désouscription Transmit du channel: ${channel}`)
-  },
-})
+    },
+    onReconnectAttempt: (attempt) => {
+      console.log(`Tentative de reconnexion Transmit #${attempt}`)
+    },
+    onReconnectFailed: () => {
+      console.error('Échec de la reconnexion Transmit')
+    },
+    onSubscribeFailed: (response) => {
+      console.error('Échec de souscription Transmit:', response)
+    },
+    onSubscription: (channel) => {
+      console.log(`Souscription Transmit réussie au channel: ${channel}`)
+    },
+    onUnsubscription: (channel) => {
+      console.log(`Désouscription Transmit du channel: ${channel}`)
+    },
+  })
+
+  transmitClient.on('initializing', () => {
+    transmitClientStatus = 'initializing'
+  })
+
+  transmitClient.on('connected', () => {
+    transmitClientStatus = 'connected'
+  })
+
+  transmitClient.on('disconnected', () => {
+    transmitClientStatus = 'disconnected'
+  })
+
+  transmitClient.on('reconnecting', () => {
+    transmitClientStatus = 'reconnecting'
+  })
+
+  return transmitClient
+}
+
+export function getTransmitClient(): Transmit {
+  if (!transmitClientInstance) {
+    transmitClientStatus = 'initializing'
+    transmitClientInstance = createTransmitClient()
+  }
+
+  return transmitClientInstance
+}
+
+export function resetTransmitClient(): void {
+  if (transmitClientInstance) {
+    transmitClientInstance.close()
+    transmitClientInstance = null
+  }
+
+  transmitClientStatus = 'initializing'
+}
+
+export function getTransmitClientStatus(): TransmitClientStatus {
+  return transmitClientStatus
+}
 
 /**
  * Interface pour les événements de lobby reçus via Transmit
@@ -78,31 +123,57 @@ export interface LobbyTransmitEvent {
   newStatus?: string
   status?: string
   gameUuid?: string
+  gameId?: string
 }
 
 /**
  * Service de gestion des événements de lobby via Transmit
  */
 export class TransmitLobbyClient {
-  private subscriptions = new Map<string, any>()
+  private subscriptions = new Map<string, Subscription>()
+
+  private async subscribeToChannel<T>(
+    channelName: string,
+    callback: (event: T) => void
+  ): Promise<() => void> {
+    const transmitClient = getTransmitClient()
+    const subscription =
+      this.subscriptions.get(channelName) ?? transmitClient.subscription(channelName)
+
+    this.subscriptions.set(channelName, subscription)
+
+    const removeHandler = subscription.onMessage((data: T) => {
+      callback(data)
+    })
+
+    await subscription.create()
+
+    if (!subscription.isCreated) {
+      removeHandler()
+      if (subscription.handlerCount === 0) {
+        this.subscriptions.delete(channelName)
+      }
+
+      throw new Error(`Échec de souscription Transmit au channel: ${channelName}`)
+    }
+
+    return () => {
+      removeHandler()
+
+      if (subscription.handlerCount > 0) {
+        return
+      }
+
+      void subscription.delete()
+      this.subscriptions.delete(channelName)
+    }
+  }
 
   /**
    * S'abonner aux événements globaux des lobbies
    */
   async subscribeToLobbies(callback: (event: LobbyTransmitEvent) => void): Promise<() => void> {
-    const subscription = transmitClient.subscription('lobbies')
-
-    subscription.onMessage((data: LobbyTransmitEvent) => {
-      callback(data)
-    })
-
-    await subscription.create()
-    this.subscriptions.set('lobbies', subscription)
-
-    return () => {
-      subscription.delete()
-      this.subscriptions.delete('lobbies')
-    }
+    return this.subscribeToChannel('lobbies', callback)
   }
 
   /**
@@ -113,19 +184,7 @@ export class TransmitLobbyClient {
     callback: (event: LobbyTransmitEvent) => void
   ): Promise<() => void> {
     const channelName = `lobbies/${lobbyUuid}`
-    const subscription = transmitClient.subscription(channelName)
-
-    subscription.onMessage((data: LobbyTransmitEvent) => {
-      callback(data)
-    })
-
-    await subscription.create()
-    this.subscriptions.set(channelName, subscription)
-
-    return () => {
-      subscription.delete()
-      this.subscriptions.delete(channelName)
-    }
+    return this.subscribeToChannel(channelName, callback)
   }
 
   /**
@@ -133,19 +192,7 @@ export class TransmitLobbyClient {
    */
   async subscribeToGame(gameId: string, callback: (event: any) => void): Promise<() => void> {
     const channelName = `games/${gameId}`
-    const subscription = transmitClient.subscription(channelName)
-
-    subscription.onMessage((data: any) => {
-      callback(data)
-    })
-
-    await subscription.create()
-    this.subscriptions.set(channelName, subscription)
-
-    return () => {
-      subscription.delete()
-      this.subscriptions.delete(channelName)
-    }
+    return this.subscribeToChannel(channelName, callback)
   }
 
   /**
@@ -156,19 +203,7 @@ export class TransmitLobbyClient {
     callback: (event: any) => void
   ): Promise<() => void> {
     const channelName = `users/${userUuid}`
-    const subscription = transmitClient.subscription(channelName)
-
-    subscription.onMessage((data: any) => {
-      callback(data)
-    })
-
-    await subscription.create()
-    this.subscriptions.set(channelName, subscription)
-
-    return () => {
-      subscription.delete()
-      this.subscriptions.delete(channelName)
-    }
+    return this.subscribeToChannel(channelName, callback)
   }
 
   /**

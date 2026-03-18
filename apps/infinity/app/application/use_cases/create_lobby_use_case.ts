@@ -1,9 +1,10 @@
 import Lobby from '#domain/entities/lobby'
-import { createDefaultLauncher } from '@infinity.dev/game-engine'
 import { type PlayerRepository } from '#application/repositories/player_repository'
 import { type LobbyRepository } from '#application/repositories/lobby_repository'
 import { Result } from '#shared/result'
 import { type TransmitLobbyService } from '#application/services/transmit_lobby_service'
+import { type GameCatalogPort } from '#application/services/game_catalog_port'
+import { defaultGameCatalog } from '#infrastructure/game_engine/launcher_game_catalog'
 import { safeSystemError } from '#shared/error_sanitizer'
 
 export interface CreateLobbyRequest {
@@ -35,7 +36,6 @@ export interface CreateLobbyResponse {
 }
 
 export class CreateLobbyUseCase {
-  private readonly launcher = createDefaultLauncher()
   private static readonly GAME_TYPE_ALIASES: Record<string, string> = {
     'love-letter': 'love-letter-infinity-gauntlet',
   }
@@ -43,7 +43,8 @@ export class CreateLobbyUseCase {
   constructor(
     private playerRepository: PlayerRepository,
     private lobbyRepository: LobbyRepository,
-    private notificationService: TransmitLobbyService
+    private notificationService: TransmitLobbyService,
+    private gameCatalog: GameCatalogPort = defaultGameCatalog
   ) {}
 
   async execute(request: CreateLobbyRequest): Promise<Result<CreateLobbyResponse>> {
@@ -55,7 +56,7 @@ export class CreateLobbyUseCase {
       }
 
       const resolvedGameType = this.resolveGameType(request.gameType)
-      const selectedGame = this.launcher.getGameDefinition(resolvedGameType)
+      const selectedGame = this.gameCatalog.findGameDefinition(resolvedGameType)
       if (!selectedGame) {
         return Result.fail(`Unknown gameType: ${request.gameType}`)
       }

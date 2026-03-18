@@ -1,5 +1,54 @@
 import type { IGameEngine, IGameMetadata, IGameState, IAction } from '../core/index.js';
 
+export type GameDistribution = 'open-source' | 'proprietary';
+
+export type GameCapability =
+	| 'turn-based'
+	| 'simultaneous-turns'
+	| 'hidden-information'
+	| 'spectator-mode'
+	| 'replay'
+	| 'async-play'
+	| 'live-play'
+	| 'bot-players'
+	| 'custom-assets'
+	| 'deterministic-rng';
+
+export interface GameLicensing {
+	readonly distribution: GameDistribution;
+	readonly license?: string;
+	readonly sourceAvailable?: boolean;
+}
+
+export interface GameSecurityPolicy {
+	readonly maxActionPayloadBytes?: number;
+	readonly allowUnknownSettings?: boolean;
+	readonly allowSpectatorState?: boolean;
+}
+
+export type ActionParameterType = 'number' | 'boolean' | 'string' | 'enum';
+
+export interface ActionParameterOption {
+	readonly value: string;
+	readonly label: string;
+}
+
+export interface GameActionParameterDescriptor {
+	readonly key: string;
+	readonly label: string;
+	readonly type: ActionParameterType;
+	readonly description?: string;
+	readonly required?: boolean;
+	readonly options?: readonly ActionParameterOption[];
+}
+
+export interface GameActionDescriptor {
+	readonly actionType: string;
+	readonly label: string;
+	readonly description: string;
+	readonly parameters?: readonly GameActionParameterDescriptor[];
+}
+
 export type GameSettingFieldType = 'number' | 'boolean' | 'select' | 'string';
 
 export interface GameSettingOption {
@@ -36,6 +85,10 @@ export interface GameDefinition<TSettings extends object> {
 	readonly metadata: IGameMetadata;
 	readonly playerConstraints: GamePlayerConstraints;
 	readonly settings: GameSettingsDefinition<TSettings>;
+	readonly capabilities?: readonly GameCapability[];
+	readonly licensing?: GameLicensing;
+	readonly security?: GameSecurityPolicy;
+	readonly actionDescriptors?: readonly GameActionDescriptor[];
 }
 
 export interface GameModule<

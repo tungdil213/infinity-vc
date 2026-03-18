@@ -176,7 +176,7 @@ test.group('SetPlayerReadyUseCase', () => {
     const result = await useCase.execute(request)
 
     assert.isTrue(result.isFailure)
-    assert.equal(result.error, 'Failed to set player ready status: Lobby not found')
+    assert.equal(result.error, 'Lobby not found')
   })
 
   test('should fail when lobby is starting', async ({ assert }) => {

@@ -98,6 +98,7 @@ router
   .group(() => {
     router.get('/auth/me', '#controllers/enhanced_auth_controller.me').as('api.auth.me')
     router.get('/auth/check', '#controllers/enhanced_auth_controller.check').as('api.auth.check')
+    router.get('/games/catalog', '#controllers/game_catalog_controller.publicIndex').as('api.games.catalog')
   })
   .prefix('/api/v1')
 
@@ -139,33 +140,16 @@ router
   .prefix('/api/v1')
   .use(middleware.auth())
 
+// Admin API routes - includes proprietary game modules in catalog
+router
+  .group(() => {
+    router.get('/games/catalog', '#controllers/game_catalog_controller.adminIndex').as('admin.games.catalog')
+  })
+  .prefix('/admin/api')
+  .use([middleware.auth(), middleware.adminGuard()])
+
 // Transmit routes
 transmit.registerRoutes((route) => {
   // Ensure you are authenticated to register your client
   route.middleware(middleware.auth())
 })
-
-// Lobby synchronization routes
-router
-  .group(() => {
-    router
-      .post('/lobbies/:lobbyUuid/subscribe', '#controllers/lobby_sync_controller.subscribeLobby')
-      .as('api.lobbies.sync.subscribe')
-    router
-      .post(
-        '/lobbies/:lobbyUuid/unsubscribe',
-        '#controllers/lobby_sync_controller.unsubscribeLobby'
-      )
-      .as('api.lobbies.sync.unsubscribe')
-    router
-      .get('/lobbies/:lobbyUuid/state', '#controllers/lobby_sync_controller.getLobbyState')
-      .as('api.lobbies.sync.state')
-    router
-      .get('/lobbies/sync/stats', '#controllers/lobby_sync_controller.getSyncStats')
-      .as('api.lobbies.sync.stats')
-    router
-      .post('/lobbies/:lobbyUuid/test-event', '#controllers/lobby_sync_controller.sendTestEvent')
-      .as('api.lobbies.sync.test')
-  })
-  .prefix('/api/v1')
-  .use(middleware.auth())

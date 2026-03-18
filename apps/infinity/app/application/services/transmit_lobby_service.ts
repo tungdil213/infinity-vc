@@ -88,18 +88,23 @@ export class TransmitLobbyService {
   /**
    * Notifie qu'une partie a commencé
    */
-  notifyGameStarted(lobbyUuid: string, gameUuid: string, lobby: any): void {
-    eventBus.publish({
-      id: crypto.randomUUID(),
-      type: 'GameStarted',
-      timestamp: new Date(),
-      payload: {
-        lobbyUuid,
-        gameUuid,
-        lobby,
-      },
-    })
-    console.log(`[TransmitLobbyService] Published GameStarted for ${lobbyUuid}`)
+  async notifyGameStarted(lobbyUuid: string, gameUuid: string, lobby: any): Promise<void> {
+    try {
+      await eventBus.publish({
+        id: crypto.randomUUID(),
+        type: 'GameStarted',
+        timestamp: new Date(),
+        payload: {
+          lobbyUuid,
+          gameUuid,
+          gameId: gameUuid,
+          lobby,
+        },
+      })
+      console.log(`[TransmitLobbyService] Published GameStarted for ${lobbyUuid}`)
+    } catch (error) {
+      console.error(`[TransmitLobbyService] Failed to publish GameStarted for ${lobbyUuid}:`, error)
+    }
   }
 
   /**

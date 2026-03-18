@@ -4,11 +4,14 @@
  * Encapsulates launcher-driven game engines and provides game management functionality.
  * This service acts as a bridge between the domain use cases and the game engine.
  */
-import { createDefaultLauncher } from '@infinity.dev/game-engine'
-import { RpsActionTypes } from '@infinity.dev/game-engine'
+import { type GameLauncher, RpsActionTypes } from '@infinity.dev/game-engine'
 import type { IAction, IGameState, IPlayer, IPlayerView } from '@infinity.dev/game-engine/core'
+import { Effect } from 'effect'
 import type { PlayerInterface } from '#domain/interfaces/player_interface'
 import { Result } from '#shared/result'
+import type { GameRuntimePort } from '#application/services/game_runtime_port'
+import { runEffectAsResult } from '#shared/effect_result'
+import { getAppGameLauncher } from '#infrastructure/game_engine/app_game_launcher'
 import {
   type GenericAction,
   type GameActionRequest,
@@ -27,82 +30,81 @@ export type {
 /**
  * Service for managing game sessions using the LoveLetterEngine
  */
-export class GameEngineService {
-  private readonly launcher = createDefaultLauncher()
+export class GameEngineService implements GameRuntimePort {
   private static readonly GAME_TYPE_ALIASES: Record<string, string> = {
     'love-letter': 'love-letter-infinity-gauntlet',
   }
 
   constructor(
     private readonly sessionStore: GameSessionStore = new GameSessionStore(),
-    private readonly eventPublisher: GameEngineEventPublisher = new GameEngineEventPublisher()
+    private readonly eventPublisher: GameEngineEventPublisher = new GameEngineEventPublisher(),
+    private readonly launcher: GameLauncher = getAppGameLauncher()
   ) {}
 
   /**
    * Create a new game session
    */
-  createGame(
+  async createGame(
     lobbyId: string,
     players: PlayerInterface[],
     gameType: string,
     gameSettings: Record<string, unknown> = {}
-  ): Result<GameSession> {
+  ): Promise<Result<GameSession>> {
     const resolvedGameType = this.resolveGameType(gameType)
-    const launchResult = this.launcher.launch({
-      gameId: resolvedGameType,
-      players: players.map((p) => ({ id: p.uuid, name: p.nickName, isActive: true })),
-      settings: gameSettings,
-    })
-
-    if (launchResult.isFailure) {
-      return Result.fail(launchResult.error?.message || 'Failed to launch game')
-    }
-
-    const startedResultPromise = this.launcher.startSession(launchResult.value)
-    const startedResultSync = Result.fail<GameSession>(
-      'Game launcher start is async and must be awaited'
-    )
-    void startedResultPromise
-    void startedResultSync
-
-    const startedResult = launchResult.value
-    const engine = startedResult.engine
-
-    // Convert PlayerInterface to IPlayer
-    const gamePlayers: IPlayer[] = players.map((p) => ({
-      id: p.uuid,
-      name: p.nickName,
+    const gamePlayers: IPlayer[] = players.map((player) => ({
+      id: player.uuid,
+      name: player.nickName,
       isActive: true,
     }))
+    const launcher = this.launcher
 
-    const result = engine.initialize(gamePlayers, {
-      gameType: startedResult.definition.metadata.gameType,
-      minPlayers: startedResult.definition.playerConstraints.minPlayers,
-      maxPlayers: startedResult.definition.playerConstraints.maxPlayers,
-      settings: startedResult.settings as Record<string, unknown>,
+    const createGameProgram = Effect.gen(function* () {
+      const launchResult = launcher.launch({
+        gameId: resolvedGameType,
+        players: gamePlayers,
+        settings: gameSettings,
+      })
+
+      if (launchResult.isFailure) {
+        return yield* Effect.fail(launchResult.error?.message || 'Failed to launch game')
+      }
+
+      const startedResult = yield* Effect.tryPromise({
+        try: () => launcher.startSession(launchResult.value),
+        catch: () => 'Failed to start game session',
+      })
+
+      if (startedResult.isFailure) {
+        return yield* Effect.fail(startedResult.error?.message || 'Failed to initialize game')
+      }
+
+      if (!startedResult.value.state) {
+        return yield* Effect.fail('Game state is unavailable after session start')
+      }
+
+      return {
+        gameId: startedResult.value.state.gameId,
+        lobbyId,
+        gameType: resolvedGameType,
+        engine: startedResult.value.engine,
+        state: startedResult.value.state,
+        players: gamePlayers,
+        createdAt: new Date(),
+      } satisfies GameSession
     })
 
-    if (result.isFailure) {
-      return Result.fail(result.error?.message || 'Failed to initialize game')
+    const createdSessionResult = await runEffectAsResult(createGameProgram, 'create_game')
+    if (createdSessionResult.isFailure) {
+      return createdSessionResult
     }
 
-    const session: GameSession = {
-      gameId: result.value.gameId,
-      lobbyId,
-      gameType: resolvedGameType,
-      engine,
-      state: result.value,
-      players: gamePlayers,
-      createdAt: new Date(),
-    }
-
-    this.sessionStore.save(session)
+    this.sessionStore.save(createdSessionResult.value)
     this.eventPublisher.publishGameStarted(
-      session,
+      createdSessionResult.value,
       players.map((player) => ({ uuid: player.uuid, nickName: player.nickName }))
     )
 
-    return Result.ok(session)
+    return createdSessionResult
   }
 
   /**

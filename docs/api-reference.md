@@ -491,37 +491,48 @@ Récupération de la main du joueur.
 }
 ```
 
-## Server-Sent Events (SSE)
+## Real-time Transmit
 
-### GET /sse/connect
+Le projet utilise **AdonisJS Transmit** pour le temps reel.
 
-Connexion au flux d'événements temps réel.
+### GET /__transmit/events?uid=<client_uid>
 
-**Headers:** `Authorization: Bearer <session_cookie>`
+Connexion au flux d'evenements temps reel.
 
-**Response:** Stream d'événements SSE
+**Headers:** `Cookie: session=<...>`
 
-**Événements disponibles:**
+**Response:** Stream d'evenements serveur (consomme automatiquement via `@adonisjs/transmit-client`)
 
-- `connected` : Confirmation de connexion
-- `lobby:created` : Nouveau lobby créé
-- `lobby:updated` : Lobby mis à jour
-- `lobby:removed` : Lobby supprimé
-- `lobby:player_joined` : Joueur rejoint un lobby
-- `lobby:player_left` : Joueur quitte un lobby
-- `game:started` : Partie démarrée
-- `game:updated` : État de partie mis à jour
-- `game:finished` : Partie terminée
-- `chat:message` : Nouveau message de chat
-- `ping` : Heartbeat
+### POST /__transmit/subscribe
 
-**Exemple d'événement:**
+Souscrire a un channel Transmit.
 
+**Body:**
+
+```json
+{
+  "channel": "lobbies"
+}
 ```
-event: lobby:player_joined
-data: {"event":"lobby:player_joined","data":{"lobbyId":"lobby-123","player":{"uuid":"user-456","nickName":"PlayerTwo"},"currentPlayers":2,"lobbyStatus":"WAITING"},"timestamp":"2024-01-15T11:00:00Z"}
 
+### POST /__transmit/unsubscribe
+
+Se desabonner d'un channel Transmit.
+
+**Body:**
+
+```json
+{
+  "channel": "lobbies"
+}
 ```
+
+**Channels utilises dans le projet:**
+
+- `lobbies`
+- `lobbies/:lobbyUuid`
+- `games/:gameId`
+- `users/:userUuid`
 
 ## Codes d'Erreur
 
@@ -677,20 +688,18 @@ const startResponse = await fetch(`/api/v1/lobbies/${lobby.uuid}/start`, {
 const { game } = await startResponse.json();
 ```
 
-### Écouter les Événements SSE
+### Écouter les Événements Transmit
 
 ```javascript
-const eventSource = new EventSource('/sse/connect');
+import { Transmit } from '@adonisjs/transmit-client'
 
-eventSource.addEventListener('lobby:player_joined', (event) => {
-	const data = JSON.parse(event.data);
-	console.log('Nouveau joueur:', data.player.nickName);
-});
+const transmit = new Transmit({ baseUrl: window.location.origin })
 
-eventSource.addEventListener('game:started', (event) => {
-	const data = JSON.parse(event.data);
-	window.location.href = `/games/${data.gameId}`;
-});
+const lobbiesSubscription = transmit.subscription('lobbies')
+lobbiesSubscription.onMessage((payload) => {
+  console.log('Lobby event:', payload)
+})
+await lobbiesSubscription.create()
 ```
 
 Cette API offre une interface complète pour :
@@ -698,5 +707,5 @@ Cette API offre une interface complète pour :
 - **Gestion des utilisateurs** et authentification
 - **Création et gestion des lobbies** avec états temps réel
 - **Parties multijoueurs** avec actions validées
-- **Communication temps réel** via SSE
+- **Communication temps reel** via Transmit
 - **Monitoring et debugging** avec codes d'erreur détaillés

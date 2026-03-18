@@ -1,5 +1,11 @@
-import React, { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react'
-import { transmitLobbyClient, LobbyTransmitEvent } from '../services/transmit_client'
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react'
+import {
+  getTransmitClientStatus,
+  getTransmitClient,
+  resetTransmitClient,
+  transmitLobbyClient,
+  LobbyTransmitEvent,
+} from '../services/transmit_client'
 
 export interface TransmitEvent {
   type: string
@@ -45,39 +51,65 @@ const TransmitContext = createContext<TransmitContextType>(defaultTransmitContex
 
 interface TransmitProviderProps {
   children: ReactNode
+  enabled?: boolean
 }
 
-export function TransmitProvider({ children }: TransmitProviderProps) {
-  const [isConnected, setIsConnected] = useState(false)
+export function TransmitProvider({ children, enabled = true }: TransmitProviderProps) {
+  const [isConnected, setIsConnected] = useState(() => getTransmitClientStatus() === 'connected')
   const [error, setError] = useState<string | null>(null)
   const eventListeners = useRef<Map<string, Set<(event: TransmitEvent) => void>>>(new Map())
 
   useEffect(() => {
-    let mounted = true
+    if (!enabled) {
+      setIsConnected(false)
+      setError(null)
+      transmitLobbyClient.unsubscribeAll().catch(console.error)
+      resetTransmitClient()
+      return
+    }
 
-    // Délai pour permettre l'initialisation complète
-    const initTimer = setTimeout(() => {
-      if (mounted) {
-        console.log('TransmitProvider: Initialisation de la connexion')
-        setIsConnected(true)
-        setError(null)
-      }
-    }, 100)
+    const transmitClient = getTransmitClient()
+
+    const handleInitializing = () => {
+      setIsConnected(false)
+    }
+
+    const handleConnected = () => {
+      setIsConnected(true)
+      setError(null)
+    }
+
+    const handleDisconnected = () => {
+      setIsConnected(false)
+    }
+
+    const handleReconnecting = () => {
+      setIsConnected(false)
+    }
+
+    transmitClient.on('initializing', handleInitializing)
+    transmitClient.on('connected', handleConnected)
+    transmitClient.on('disconnected', handleDisconnected)
+    transmitClient.on('reconnecting', handleReconnecting)
+
+    setIsConnected(getTransmitClientStatus() === 'connected')
 
     return () => {
-      mounted = false
-      clearTimeout(initTimer)
+      transmitClient.off('initializing', handleInitializing)
+      transmitClient.off('connected', handleConnected)
+      transmitClient.off('disconnected', handleDisconnected)
+      transmitClient.off('reconnecting', handleReconnecting)
+
       console.log('TransmitProvider: Nettoyage des souscriptions')
       // Cleanup lors du démontage
       transmitLobbyClient.unsubscribeAll().catch(console.error)
     }
-  }, [])
+  }, [enabled])
 
   const subscribeToLobbies = async (callback: (event: LobbyTransmitEvent) => void) => {
     try {
       if (!isConnected) {
-        console.warn('TransmitProvider: Tentative de souscription avant connexion')
-        return () => {}
+        throw new Error('Transmit non connecté')
       }
       const unsubscribe = await transmitLobbyClient.subscribeToLobbies(callback)
       return unsubscribe
@@ -85,16 +117,14 @@ export function TransmitProvider({ children }: TransmitProviderProps) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur de souscription aux lobbies'
       console.error('TransmitProvider: Erreur subscribeToLobbies:', errorMessage)
       setError(errorMessage)
-      // Retourner une fonction vide au lieu de throw pour éviter les crashes
-      return () => {}
+      throw new Error(errorMessage)
     }
   }
 
   const subscribeToGame = async (gameId: string, callback: (event: any) => void) => {
     try {
       if (!isConnected) {
-        console.warn('TransmitProvider: Tentative de souscription game avant connexion')
-        return () => {}
+        throw new Error('Transmit non connecté')
       }
       const unsubscribe = await transmitLobbyClient.subscribeToGame(gameId, callback)
       return unsubscribe
@@ -102,7 +132,7 @@ export function TransmitProvider({ children }: TransmitProviderProps) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur de souscription au jeu'
       console.error('TransmitProvider: Erreur subscribeToGame:', errorMessage)
       setError(errorMessage)
-      return () => {}
+      throw new Error(errorMessage)
     }
   }
 
@@ -112,8 +142,7 @@ export function TransmitProvider({ children }: TransmitProviderProps) {
   ) => {
     try {
       if (!isConnected) {
-        console.warn('TransmitProvider: Tentative de souscription lobby avant connexion')
-        return () => {}
+        throw new Error('Transmit non connecté')
       }
       const unsubscribe = await transmitLobbyClient.subscribeToLobby(lobbyUuid, callback)
       return unsubscribe
@@ -121,16 +150,14 @@ export function TransmitProvider({ children }: TransmitProviderProps) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur de souscription au lobby'
       console.error('TransmitProvider: Erreur subscribeToLobby:', errorMessage)
       setError(errorMessage)
-      // Retourner une fonction vide au lieu de throw pour éviter les crashes
-      return () => {}
+      throw new Error(errorMessage)
     }
   }
 
   const subscribeToUserNotifications = async (userUuid: string, callback: (event: any) => void) => {
     try {
       if (!isConnected) {
-        console.warn('TransmitProvider: Tentative de souscription notifications avant connexion')
-        return () => {}
+        throw new Error('Transmit non connecté')
       }
       const unsubscribe = await transmitLobbyClient.subscribeToUserNotifications(userUuid, callback)
       return unsubscribe
@@ -139,8 +166,7 @@ export function TransmitProvider({ children }: TransmitProviderProps) {
         err instanceof Error ? err.message : 'Erreur de souscription aux notifications'
       console.error('TransmitProvider: Erreur subscribeToUserNotifications:', errorMessage)
       setError(errorMessage)
-      // Retourner une fonction vide au lieu de throw pour éviter les crashes
-      return () => {}
+      throw new Error(errorMessage)
     }
   }
 

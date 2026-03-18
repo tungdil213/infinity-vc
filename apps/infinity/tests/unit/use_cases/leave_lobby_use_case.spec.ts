@@ -265,6 +265,6 @@ test.group('LeaveLobbyUseCase', (group) => {
 
     // Assert
     assert.isTrue(result.isFailure)
-    assert.include(result.error, 'System error')
+    assert.equal(result.error, 'Lobby not found')
   })
 })

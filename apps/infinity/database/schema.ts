@@ -8,118 +8,118 @@ import { BaseModel, column } from '@adonisjs/lucid/orm'
 import { DateTime } from 'luxon'
 
 export class GameSchema extends BaseModel {
-  static $columns = ['uuid', 'status', 'players', 'gameData', 'winnerUuid', 'startedAt', 'finishedAt', 'durationMs', 'isArchived', 'createdAt', 'updatedAt'] as const
+  static $columns = ['createdAt', 'durationMs', 'finishedAt', 'gameData', 'isArchived', 'players', 'startedAt', 'status', 'updatedAt', 'uuid', 'winnerUuid'] as const
   $columns = GameSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
   @column()
-  declare uuid: string | null
-  @column()
-  declare status: string
-  @column()
-  declare players: any
-  @column()
-  declare gameData: any
-  @column()
-  declare winnerUuid: string | null
-  @column.dateTime()
-  declare startedAt: DateTime
+  declare durationMs: number | null
   @column.dateTime()
   declare finishedAt: DateTime | null
   @column()
-  declare durationMs: number | null
+  declare gameData: any
   @column()
   declare isArchived: boolean
-  @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime
+  @column()
+  declare players: any
+  @column.dateTime()
+  declare startedAt: DateTime
+  @column()
+  declare status: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
+  @column({ isPrimary: true })
+  declare uuid: string | null
+  @column()
+  declare winnerUuid: string | null
 }
 
 export class LobbySchema extends BaseModel {
-  static $columns = ['id', 'uuid', 'name', 'maxPlayers', 'isPrivate', 'status', 'createdBy', 'availableActions', 'deletedAt', 'createdAt', 'updatedAt', 'gameType', 'gameSettings'] as const
+  static $columns = ['availableActions', 'createdAt', 'createdBy', 'deletedAt', 'gameSettings', 'gameType', 'id', 'isPrivate', 'maxPlayers', 'name', 'status', 'updatedAt', 'uuid'] as const
   $columns = LobbySchema.$columns
+  @column()
+  declare availableActions: any | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column()
+  declare createdBy: string
+  @column.dateTime()
+  declare deletedAt: DateTime | null
+  @column()
+  declare gameSettings: string
+  @column()
+  declare gameType: string
   @column({ isPrimary: true })
   declare id: number
-  @column()
-  declare uuid: string
-  @column()
-  declare name: string
-  @column()
-  declare maxPlayers: number
   @column()
   declare isPrivate: boolean | null
   @column()
+  declare maxPlayers: number
+  @column()
+  declare name: string
+  @column()
   declare status: string
-  @column()
-  declare createdBy: string
-  @column()
-  declare availableActions: any | null
-  @column.dateTime()
-  declare deletedAt: DateTime | null
-  @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
   @column()
-  declare gameType: string
-  @column()
-  declare gameSettings: string
+  declare uuid: string
 }
 
 export class LobbyPlayerSchema extends BaseModel {
-  static $columns = ['uuid', 'lobbyId', 'userId', 'joinedAt', 'createdAt', 'updatedAt'] as const
+  static $columns = ['createdAt', 'joinedAt', 'lobbyId', 'updatedAt', 'userId', 'uuid'] as const
   $columns = LobbyPlayerSchema.$columns
-  @column()
-  declare uuid: string | null
-  @column()
-  declare lobbyId: number
-  @column()
-  declare userId: number
-  @column.dateTime()
-  declare joinedAt: DateTime
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
+  @column.dateTime()
+  declare joinedAt: DateTime
+  @column()
+  declare lobbyId: number
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
+  @column()
+  declare userId: number
+  @column({ isPrimary: true })
+  declare uuid: string | null
 }
 
 export class PlayerSchema extends BaseModel {
-  static $columns = ['id', 'playerUuid', 'userUuid', 'nickName', 'avatarUrl', 'deletedAt', 'createdAt', 'updatedAt'] as const
+  static $columns = ['avatarUrl', 'createdAt', 'deletedAt', 'id', 'nickName', 'playerUuid', 'updatedAt', 'userUuid'] as const
   $columns = PlayerSchema.$columns
+  @column()
+  declare avatarUrl: string | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column.dateTime()
+  declare deletedAt: DateTime | null
   @column({ isPrimary: true })
   declare id: number
-  @column()
-  declare playerUuid: string
-  @column()
-  declare userUuid: string
   @column()
   declare nickName: string
   @column()
-  declare avatarUrl: string | null
-  @column.dateTime()
-  declare deletedAt: DateTime | null
-  @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null
+  declare playerUuid: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
+  @column()
+  declare userUuid: string
 }
 
 export class UserSchema extends BaseModel {
-  static $columns = ['id', 'userUuid', 'fullName', 'email', 'password', 'deletedAt', 'createdAt', 'updatedAt'] as const
+  static $columns = ['createdAt', 'deletedAt', 'email', 'fullName', 'id', 'password', 'updatedAt', 'userUuid'] as const
   $columns = UserSchema.$columns
-  @column({ isPrimary: true })
-  declare id: number
-  @column()
-  declare userUuid: string
-  @column()
-  declare fullName: string
-  @column()
-  declare email: string
-  @column({ serializeAs: null })
-  declare password: string
-  @column.dateTime()
-  declare deletedAt: DateTime | null
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime | null
+  @column.dateTime()
+  declare deletedAt: DateTime | null
+  @column()
+  declare email: string
+  @column()
+  declare fullName: string
+  @column({ isPrimary: true })
+  declare id: number
+  @column({ serializeAs: null })
+  declare password: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
+  @column()
+  declare userUuid: string
 }

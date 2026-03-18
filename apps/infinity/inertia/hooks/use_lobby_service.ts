@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useTransmit } from '../contexts/TransmitContext'
 import { LobbyService } from '../services/lobby_service'
 
@@ -19,7 +19,6 @@ export function disposeLobbyService(): void {
  */
 export function useLobbyService() {
   const transmitContext = useTransmit()
-  const hasUpdatedContext = useRef(false)
 
   // Créer ou récupérer le service
   const service = useMemo(() => {
@@ -36,21 +35,12 @@ export function useLobbyService() {
     return globalLobbyService
   }, [transmitContext])
 
-  // Mettre à jour le contexte quand la connexion change
+  // Toujours synchroniser le service avec la dernière version du contexte Transmit
   useEffect(() => {
-    if (transmitContext.isConnected && globalLobbyService && !hasUpdatedContext.current) {
-      console.log('useLobbyService: Connexion établie, mise à jour du contexte')
+    if (globalLobbyService) {
       globalLobbyService.updateContext(transmitContext)
-      hasUpdatedContext.current = true
     }
-  }, [transmitContext.isConnected, transmitContext])
-
-  // Reset le flag quand on se déconnecte
-  useEffect(() => {
-    if (!transmitContext.isConnected) {
-      hasUpdatedContext.current = false
-    }
-  }, [transmitContext.isConnected])
+  }, [transmitContext])
 
   return {
     service,

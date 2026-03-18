@@ -124,7 +124,7 @@ test.group('ShowLobbyUseCase', () => {
     const result = await useCase.execute({ lobbyUuid: 'lobby-123' })
 
     assert.isTrue(result.isFailure)
-    assert.equal(result.error, 'System error: Database connection failed')
+    assert.equal(result.error, 'Database connection failed')
   })
 
   test('should serialize lobby data correctly', async ({ assert }) => {

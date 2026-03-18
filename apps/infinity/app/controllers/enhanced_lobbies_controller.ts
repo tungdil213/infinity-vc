@@ -18,7 +18,7 @@ import { lobbyStoreValidator } from '#validators/lobby_store_validator'
 import { toUserSummary } from '#presenters/lobby_presenter'
 import type { HttpRequest, HttpResponse } from '@adonisjs/core/http'
 import type { Session } from '@adonisjs/session'
-import { createDefaultLauncher } from '@infinity.dev/game-engine'
+import { defaultGameCatalog } from '#infrastructure/game_engine/launcher_game_catalog'
 
 type AvailableGameViewModel = {
   id: string
@@ -81,9 +81,7 @@ export default class EnhancedLobbiesController {
   }
 
   private getAvailableGames(): AvailableGameViewModel[] {
-    const launcher = createDefaultLauncher()
-
-    return launcher.listGames().map((game) => ({
+    return defaultGameCatalog.listGames({ includeProprietary: false }).map((game) => ({
       id: game.id,
       displayName: game.displayName,
       description: game.description,
