@@ -249,6 +249,7 @@ export class LobbyStateStore {
   private handleLobbyGameStarted(event: LobbyEventEnvelope): void {
     const lobbyUuid = event.data?.lobbyUuid
     const lobby = event.data?.lobby
+    const gameUuid = event.data?.gameUuid ?? event.data?.gameId
 
     if (!lobbyUuid) return
 
@@ -256,6 +257,7 @@ export class LobbyStateStore {
       status: 'IN_GAME',
       hasAvailableSlots: false,
       canStart: false,
+      ...(gameUuid ? { gameUuid } : {}),
     })
 
     this.updateLobbyDetail(lobbyUuid, (currentLobby) => {
@@ -265,6 +267,7 @@ export class LobbyStateStore {
           status: 'IN_GAME',
           hasAvailableSlots: false,
           canStart: false,
+          ...(gameUuid ? { gameUuid } : {}),
         }
       }
 
@@ -275,6 +278,7 @@ export class LobbyStateStore {
         status: 'IN_GAME',
         hasAvailableSlots: false,
         canStart: false,
+        ...(gameUuid ? { gameUuid } : {}),
       }
     })
   }

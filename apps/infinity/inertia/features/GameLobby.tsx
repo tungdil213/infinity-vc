@@ -1,20 +1,12 @@
-import React, { useState, useEffect } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { router } from '@inertiajs/react'
 import { toast } from 'sonner'
 import { useLobbyDetail } from '../hooks/use_lobby_detail'
 import { useLobbyLeaveGuard } from '../hooks/use_lobby_leave_guard'
 import { Button } from '@infinity.dev/ui/primitives/button'
-import { Badge } from '@infinity.dev/ui/primitives/badge'
-import { Users } from 'lucide-react'
 import { LobbyPlayersPanel } from '@infinity.dev/ui/components/lobby-players-panel'
 import { LobbyHeaderPanel } from '@infinity.dev/ui/components/lobby-header-panel'
 import { ConnectionStatusIndicator } from '@infinity.dev/ui/components/connection-status-indicator'
-import { useTransmit } from '../contexts/TransmitContext'
-
-interface Player {
-  uuid: string
-  nickName: string
-}
 
 interface GameLobbyProps {
   lobbyUuid: string
@@ -29,7 +21,19 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
   const [isStartingGame, setIsStartingGame] = useState(false)
   const [isLeavingLobby, setIsLeavingLobby] = useState(false)
   const [isJoiningLobby, setIsJoiningLobby] = useState(false)
-  const { subscribeToLobby, isConnected } = useTransmit()
+  const hasNavigatedToGame = useRef(false)
+  const startedGameUuid = typeof lobby?.gameUuid === 'string' ? lobby.gameUuid : undefined
+
+  const navigateToGame = useCallback((gameUuid: string) => {
+    if (!gameUuid || hasNavigatedToGame.current) {
+      return
+    }
+
+    hasNavigatedToGame.current = true
+    setIsStartingGame(true)
+    toast.success('Game is starting!')
+    router.visit(`/games/${gameUuid}`)
+  }, [])
 
   // Détecter si l'utilisateur est dans le lobby
   const isUserInLobby = lobby?.players?.some((player) => player.uuid === currentUser.uuid) || false
@@ -49,10 +53,9 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
     try {
       const result = await startGame(currentUser.uuid)
       if (result.gameUuid) {
-        toast.success('Game is starting!')
         // Redirect to game page after a short delay
         setTimeout(() => {
-          router.visit(`/games/${result.gameUuid}`)
+          navigateToGame(result.gameUuid)
         }, 2000)
       }
     } catch (error) {
@@ -62,36 +65,12 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
     }
   }
 
-  // Écouter les événements temps réel du lobby pour détecter le démarrage de la partie
+  // Fallback robuste: redirection pilotée par l'état lobby temps réel synchronisé.
   useEffect(() => {
-    if (!isConnected) return
-
-    let unsubscribe: (() => void) | null = null
-
-    const subscribe = async () => {
-      unsubscribe = await subscribeToLobby(lobbyUuid, (event) => {
-        if (
-          event.type === 'lobby.game.started' &&
-          event.lobbyUuid === lobbyUuid &&
-          event.gameUuid
-        ) {
-          setIsStartingGame(true)
-          toast.success('Game is starting!')
-          router.visit(`/games/${event.gameUuid}`)
-        }
-      })
+    if (lobby?.status === 'IN_GAME' && startedGameUuid) {
+      navigateToGame(startedGameUuid)
     }
-
-    subscribe().catch((err) => {
-      console.error('Failed to subscribe to lobby game events:', err)
-    })
-
-    return () => {
-      if (unsubscribe) {
-        unsubscribe()
-      }
-    }
-  }, [lobbyUuid, subscribeToLobby, isConnected])
+  }, [lobby?.status, startedGameUuid, navigateToGame])
 
   const handleLeaveLobby = async () => {
     if (!isServiceReady) return

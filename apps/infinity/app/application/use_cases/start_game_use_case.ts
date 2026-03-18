@@ -125,7 +125,7 @@ export class StartGameUseCase {
       await this.gameRepository.save(game)
 
       // Notifier que le jeu a commencé
-      this.notificationService.notifyGameStarted(lobby.uuid, gameSession.gameId, {
+      await this.notificationService.notifyGameStarted(lobby.uuid, gameSession.gameId, {
         uuid: lobby.uuid,
         name: lobby.name,
         status: lobby.status,

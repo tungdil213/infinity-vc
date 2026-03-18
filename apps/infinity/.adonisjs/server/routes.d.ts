@@ -42,11 +42,6 @@ export type ScannedRoutes = {
     'event_stream': { paramsTuple?: []; params?: {} }
     'subscribe': { paramsTuple?: []; params?: {} }
     'unsubscribe': { paramsTuple?: []; params?: {} }
-    'api.lobbies.sync.subscribe': { paramsTuple: [ParamValue]; params: {'lobbyUuid': ParamValue} }
-    'api.lobbies.sync.unsubscribe': { paramsTuple: [ParamValue]; params: {'lobbyUuid': ParamValue} }
-    'api.lobbies.sync.state': { paramsTuple: [ParamValue]; params: {'lobbyUuid': ParamValue} }
-    'api.lobbies.sync.stats': { paramsTuple?: []; params?: {} }
-    'api.lobbies.sync.test': { paramsTuple: [ParamValue]; params: {'lobbyUuid': ParamValue} }
   }
   GET: {
     'drive.fs.serve': { paramsTuple: [...ParamValue[]]; params: {'*': ParamValue[]} }
@@ -68,8 +63,6 @@ export type ScannedRoutes = {
     'api.games.actions': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.games.players': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'event_stream': { paramsTuple?: []; params?: {} }
-    'api.lobbies.sync.state': { paramsTuple: [ParamValue]; params: {'lobbyUuid': ParamValue} }
-    'api.lobbies.sync.stats': { paramsTuple?: []; params?: {} }
   }
   HEAD: {
     'drive.fs.serve': { paramsTuple: [...ParamValue[]]; params: {'*': ParamValue[]} }
@@ -91,8 +84,6 @@ export type ScannedRoutes = {
     'api.games.actions': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.games.players': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'event_stream': { paramsTuple?: []; params?: {} }
-    'api.lobbies.sync.state': { paramsTuple: [ParamValue]; params: {'lobbyUuid': ParamValue} }
-    'api.lobbies.sync.stats': { paramsTuple?: []; params?: {} }
   }
   POST: {
     'auth.login': { paramsTuple?: []; params?: {} }
@@ -114,9 +105,6 @@ export type ScannedRoutes = {
     'api.games.action': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'subscribe': { paramsTuple?: []; params?: {} }
     'unsubscribe': { paramsTuple?: []; params?: {} }
-    'api.lobbies.sync.subscribe': { paramsTuple: [ParamValue]; params: {'lobbyUuid': ParamValue} }
-    'api.lobbies.sync.unsubscribe': { paramsTuple: [ParamValue]; params: {'lobbyUuid': ParamValue} }
-    'api.lobbies.sync.test': { paramsTuple: [ParamValue]; params: {'lobbyUuid': ParamValue} }
   }
 }
 declare module '@adonisjs/core/types/http' {

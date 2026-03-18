@@ -6,7 +6,7 @@ import { type LobbyDetailState, LobbyData } from '../services/lobby_service'
  * Hook pour gérer les détails d'un lobby avec mises à jour temps réel
  */
 export function useLobbyDetail(lobbyUuid: string) {
-  const { service: lobbyService, isConnected, error: sseError } = useLobbyService()
+  const { service: lobbyService } = useLobbyService()
   const [state, setState] = useState<LobbyDetailState>({
     lobby: null,
     loading: true,

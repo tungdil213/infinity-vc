@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { router } from '@inertiajs/react'
 import { Button } from '@infinity.dev/ui/primitives/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@infinity.dev/ui/primitives/card'
@@ -22,13 +22,34 @@ interface LobbyStatusSidebarProps {
 }
 
 export function LobbyStatusSidebar({ currentLobby, currentUser }: LobbyStatusSidebarProps) {
-  const { service: lobbyService, isConnected } = useLobbyService()
-  const [isLeavingLobby, setIsLeavingLobby] = useState(false)
-
   // Ne pas afficher le sidebar si pas de lobby
   if (!currentLobby) {
     return null
   }
+
+  return <LobbyStatusSidebarConnected currentLobby={currentLobby} currentUser={currentUser} />
+}
+
+interface LobbyStatusSidebarConnectedProps {
+  currentLobby: {
+    uuid: string
+    name: string
+    status: string
+    currentPlayers: number
+    maxPlayers: number
+  }
+  currentUser?: {
+    uuid: string
+    fullName: string
+  }
+}
+
+function LobbyStatusSidebarConnected({
+  currentLobby,
+  currentUser,
+}: LobbyStatusSidebarConnectedProps) {
+  const { service: lobbyService, isConnected } = useLobbyService()
+  const [isLeavingLobby, setIsLeavingLobby] = useState(false)
 
   const handleLeaveLobby = async () => {
     if (!currentUser || !isConnected || !lobbyService) return

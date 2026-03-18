@@ -22,39 +22,58 @@ interface LobbyRealtimeSyncHandlers {
   onLobbyDetailEvent: (event: LobbyEventEnvelope) => void
 }
 
+interface LobbyRealtimeSyncOptions {
+  retryDelayMs?: number
+}
+
 export class LobbyRealtimeSync {
   private transmitContext: RealtimeTransmitContext
   private handlers: LobbyRealtimeSyncHandlers
+  private readonly retryDelayMs: number
 
   private isGloballySubscribed = false
   private globalUnsubscribe: (() => void) | null = null
+  private globalRetryTimeout: ReturnType<typeof setTimeout> | null = null
 
   private lobbyUnsubscribes = new Map<string, () => void>()
   private pendingLobbySubscriptions = new Set<string>()
   private cancelledLobbySubscriptions = new Set<string>()
   private requestedLobbySubscriptions = new Set<string>()
+  private lobbyRetryTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
-  constructor(transmitContext: RealtimeTransmitContext, handlers: LobbyRealtimeSyncHandlers) {
+  constructor(
+    transmitContext: RealtimeTransmitContext,
+    handlers: LobbyRealtimeSyncHandlers,
+    options: LobbyRealtimeSyncOptions = {}
+  ) {
     this.transmitContext = transmitContext
     this.handlers = handlers
+    this.retryDelayMs = options.retryDelayMs ?? 1500
 
-    this.setupGlobalSubscription()
+    void this.setupGlobalSubscription()
   }
 
   updateContext(transmitContext: RealtimeTransmitContext): void {
     this.transmitContext = transmitContext
 
-    if (!this.isGloballySubscribed) {
-      this.setupGlobalSubscription()
+    if (!this.transmitContext.isConnected) {
+      this.clearGlobalRetry()
+      this.clearAllLobbyRetries()
+      return
     }
 
-    if (this.transmitContext.isConnected) {
-      this.requestedLobbySubscriptions.forEach((lobbyUuid) => {
-        if (!this.lobbyUnsubscribes.has(lobbyUuid)) {
-          this.createLobbySubscription(lobbyUuid)
-        }
-      })
+    if (!this.isGloballySubscribed) {
+      void this.setupGlobalSubscription()
     }
+
+    this.requestedLobbySubscriptions.forEach((lobbyUuid) => {
+      if (
+        !this.lobbyUnsubscribes.has(lobbyUuid) &&
+        !this.pendingLobbySubscriptions.has(lobbyUuid)
+      ) {
+        this.createLobbySubscription(lobbyUuid)
+      }
+    })
   }
 
   subscribeLobbyDetail(lobbyUuid: string): void {
@@ -74,6 +93,7 @@ export class LobbyRealtimeSync {
   unsubscribeLobbyDetail(lobbyUuid: string): void {
     this.requestedLobbySubscriptions.delete(lobbyUuid)
     this.cancelledLobbySubscriptions.add(lobbyUuid)
+    this.clearLobbyRetry(lobbyUuid)
 
     const unsubscribe = this.lobbyUnsubscribes.get(lobbyUuid)
     if (unsubscribe) {
@@ -88,6 +108,9 @@ export class LobbyRealtimeSync {
   }
 
   destroy(): void {
+    this.clearGlobalRetry()
+    this.clearAllLobbyRetries()
+
     if (this.globalUnsubscribe) {
       this.globalUnsubscribe()
       this.globalUnsubscribe = null
@@ -114,13 +137,16 @@ export class LobbyRealtimeSync {
       )
 
       this.isGloballySubscribed = true
+      this.clearGlobalRetry()
     } catch (error) {
       this.isGloballySubscribed = false
       console.error('LobbyRealtimeSync: failed to setup global subscription', error)
+      this.scheduleGlobalRetry()
     }
   }
 
   private createLobbySubscription(lobbyUuid: string): void {
+    this.clearLobbyRetry(lobbyUuid)
     this.pendingLobbySubscriptions.add(lobbyUuid)
 
     this.transmitContext
@@ -142,6 +168,7 @@ export class LobbyRealtimeSync {
 
         this.cancelledLobbySubscriptions.delete(lobbyUuid)
         this.lobbyUnsubscribes.set(lobbyUuid, unsubscribe)
+        this.clearLobbyRetry(lobbyUuid)
       })
       .catch((error: unknown) => {
         this.pendingLobbySubscriptions.delete(lobbyUuid)
@@ -150,7 +177,73 @@ export class LobbyRealtimeSync {
           lobbyUuid,
           error,
         })
+        this.scheduleLobbyRetry(lobbyUuid)
       })
+  }
+
+  private scheduleGlobalRetry(): void {
+    if (this.globalRetryTimeout || this.isGloballySubscribed || !this.transmitContext.isConnected) {
+      return
+    }
+
+    this.globalRetryTimeout = setTimeout(() => {
+      this.globalRetryTimeout = null
+      void this.setupGlobalSubscription()
+    }, this.retryDelayMs)
+  }
+
+  private clearGlobalRetry(): void {
+    if (!this.globalRetryTimeout) {
+      return
+    }
+
+    clearTimeout(this.globalRetryTimeout)
+    this.globalRetryTimeout = null
+  }
+
+  private scheduleLobbyRetry(lobbyUuid: string): void {
+    if (
+      this.lobbyRetryTimeouts.has(lobbyUuid) ||
+      !this.requestedLobbySubscriptions.has(lobbyUuid) ||
+      this.pendingLobbySubscriptions.has(lobbyUuid) ||
+      this.lobbyUnsubscribes.has(lobbyUuid) ||
+      !this.transmitContext.isConnected
+    ) {
+      return
+    }
+
+    const retryTimeout = setTimeout(() => {
+      this.lobbyRetryTimeouts.delete(lobbyUuid)
+
+      if (
+        !this.requestedLobbySubscriptions.has(lobbyUuid) ||
+        this.pendingLobbySubscriptions.has(lobbyUuid) ||
+        this.lobbyUnsubscribes.has(lobbyUuid) ||
+        !this.transmitContext.isConnected
+      ) {
+        return
+      }
+
+      this.createLobbySubscription(lobbyUuid)
+    }, this.retryDelayMs)
+
+    this.lobbyRetryTimeouts.set(lobbyUuid, retryTimeout)
+  }
+
+  private clearLobbyRetry(lobbyUuid: string): void {
+    const retryTimeout = this.lobbyRetryTimeouts.get(lobbyUuid)
+
+    if (!retryTimeout) {
+      return
+    }
+
+    clearTimeout(retryTimeout)
+    this.lobbyRetryTimeouts.delete(lobbyUuid)
+  }
+
+  private clearAllLobbyRetries(): void {
+    this.lobbyRetryTimeouts.forEach((timeout) => clearTimeout(timeout))
+    this.lobbyRetryTimeouts.clear()
   }
 
   private wrapEvent(event: LobbyTransmitEvent, channel: string): LobbyEventEnvelope {

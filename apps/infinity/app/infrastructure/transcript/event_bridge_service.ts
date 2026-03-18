@@ -91,16 +91,26 @@ class EventBridgeService {
     builder
       .map('GameStarted')
       .toChannels((event) => {
-        const payload = event.payload as { lobbyUuid?: string; gameId?: string }
+        const payload = event.payload as { lobbyUuid?: string; gameUuid?: string; gameId?: string }
+        const gameUuid = payload.gameUuid ?? payload.gameId
         const channels = ['lobbies']
         if (payload.lobbyUuid) channels.push(`lobbies/${payload.lobbyUuid}`)
-        if (payload.gameId) channels.push(`games/${payload.gameId}`)
+        if (gameUuid) channels.push(`games/${gameUuid}`)
         return channels
       })
-      .transformWith((event) => ({
-        type: 'lobby.game.started',
-        ...(event.payload as Record<string, unknown>),
-      }))
+      .transformWith((event) => {
+        const payload = event.payload as Record<string, unknown> & {
+          gameUuid?: string
+          gameId?: string
+        }
+        const gameUuid = payload.gameUuid ?? payload.gameId
+
+        return {
+          type: 'lobby.game.started',
+          ...payload,
+          ...(gameUuid ? { gameUuid } : {}),
+        }
+      })
       .and()
 
     // Map game events

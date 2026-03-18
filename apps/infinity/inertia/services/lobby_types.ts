@@ -2,6 +2,7 @@ export interface LobbyData {
   uuid: string
   name: string
   gameType?: string
+  gameUuid?: string
   status: string
   currentPlayers: number
   maxPlayers: number

@@ -6,6 +6,7 @@ import { ToastHandler } from './toast_handler'
 import { LobbyStatusSidebar } from './LobbyStatusSidebar'
 import { AutoLeaveLobby } from './AutoLeaveLobby'
 import { TransmitProvider } from '../contexts/TransmitContext'
+import { disposeLobbyService } from '../hooks/use_lobby_service'
 
 // Flash messages component using Sonner
 function FlashMessages() {
@@ -31,6 +32,8 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const { props } = usePage()
+  const user = props.user as { uuid?: string } | null | undefined
+  const isRealtimeEnabled = Boolean(user?.uuid)
   const currentLobby = props.currentLobby as {
     uuid: string
     name: string
@@ -39,8 +42,14 @@ export default function Layout({ children }: LayoutProps) {
     maxPlayers: number
   } | null
 
+  useEffect(() => {
+    return () => {
+      disposeLobbyService()
+    }
+  }, [])
+
   return (
-    <TransmitProvider>
+    <TransmitProvider enabled={isRealtimeEnabled}>
       {children}
       <FlashMessages />
       <ToastHandler />

@@ -13,7 +13,7 @@ interface UseLobbyListOptions {
  * Hook pour gérer la liste des lobbies avec mises à jour temps réel
  */
 export function useLobbyList(options: UseLobbyListOptions = {}) {
-  const { service: lobbyService, isConnected, error: sseError } = useLobbyService()
+  const { service: lobbyService, isConnected, error: realtimeError } = useLobbyService()
   const [state, setState] = useState<LobbyListState>({
     lobbies: [],
     loading: true,
@@ -68,6 +68,6 @@ export function useLobbyList(options: UseLobbyListOptions = {}) {
     createLobby,
     joinLobby,
     isServiceReady: isConnected,
-    sseError,
+    realtimeError,
   }
 }

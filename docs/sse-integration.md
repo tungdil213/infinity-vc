@@ -1,5 +1,9 @@
 # Intégration SSE (Server-Sent Events)
 
+> Statut: archive.
+> Depuis mars 2026, le projet utilise Transmit pour tout le temps reel.
+> Cette page est conservee uniquement comme reference historique de la migration.
+
 ## Vue d'ensemble
 
 Le système utilise **Server-Sent Events (SSE)** au lieu de WebSockets pour les mises à jour temps réel. Cette approche est plus simple à implémenter, plus fiable en cas de reconnexion, et parfaitement adaptée aux besoins du jeu (communication unidirectionnelle serveur → client).

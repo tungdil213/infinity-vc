@@ -186,27 +186,26 @@ export default class DevRoutesController {
         ],
       },
       {
-        group: 'SSE Routes (Protected)',
+        group: 'Transmit Routes (Protected)',
         routes: [
           {
             method: 'GET',
-            path: '/sse/connect',
-            name: 'sse.connect',
-            description: 'Connexion SSE',
+            path: '/__transmit/events?uid=<client_uid>',
+            name: 'transmit.events',
+            description: 'Flux temps réel Transmit',
           },
           {
             method: 'POST',
-            path: '/sse/subscribe',
-            name: 'sse.subscribe',
-            description: "S'abonner aux événements",
+            path: '/__transmit/subscribe',
+            name: 'transmit.subscribe',
+            description: 'Souscrire à un channel Transmit',
           },
           {
             method: 'POST',
-            path: '/sse/unsubscribe',
-            name: 'sse.unsubscribe',
-            description: 'Se désabonner',
+            path: '/__transmit/unsubscribe',
+            name: 'transmit.unsubscribe',
+            description: 'Se désabonner d’un channel Transmit',
           },
-          { method: 'GET', path: '/sse/stats', name: 'sse.stats', description: 'Statistiques SSE' },
         ],
       },
       {
