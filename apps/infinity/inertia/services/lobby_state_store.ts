@@ -129,7 +129,7 @@ export class LobbyStateStore {
     const alreadyExists = this.lobbyListState.lobbies.some((lobby) => lobby.uuid === newLobby.uuid)
     if (alreadyExists) return
 
-    const lobbies = [...this.lobbyListState.lobbies, newLobby]
+    const lobbies = [...this.lobbyListState.lobbies, this.withDerivedFlags(newLobby)]
     this.lobbyListState = {
       ...this.lobbyListState,
       lobbies,
@@ -180,7 +180,10 @@ export class LobbyStateStore {
 
     this.updateLobbyDetail(lobbyUuid, (currentLobby) => {
       if (updatedLobby) {
-        return currentLobby ? { ...currentLobby, ...updatedLobby } : updatedLobby
+        const mergedLobby = currentLobby
+          ? ({ ...currentLobby, ...updatedLobby } as LobbyData)
+          : (updatedLobby as LobbyData)
+        return this.withDerivedFlags(mergedLobby)
       }
 
       if (!currentLobby) {
@@ -208,10 +211,7 @@ export class LobbyStateStore {
         )
       }
 
-      nextLobby.hasAvailableSlots = nextLobby.currentPlayers < nextLobby.maxPlayers
-      nextLobby.canStart = nextLobby.currentPlayers >= 2 && nextLobby.status === 'waiting'
-
-      return nextLobby
+      return this.withDerivedFlags(nextLobby)
     })
   }
 
@@ -225,16 +225,12 @@ export class LobbyStateStore {
     this.updateLobbyDetail(lobbyUuid, (lobby) => {
       if (!lobby) return lobby
 
-      const updatedLobby = {
+      const updatedLobby: LobbyData = {
         ...lobby,
         status,
       }
 
-      updatedLobby.hasAvailableSlots =
-        updatedLobby.currentPlayers < updatedLobby.maxPlayers && updatedLobby.status === 'waiting'
-      updatedLobby.canStart = updatedLobby.currentPlayers >= 2 && updatedLobby.status === 'waiting'
-
-      return updatedLobby
+      return this.withDerivedFlags(updatedLobby)
     })
   }
 
@@ -243,7 +239,7 @@ export class LobbyStateStore {
     if (!updatedLobby) return
 
     this.updateLobbyInList(updatedLobby.uuid, updatedLobby)
-    this.updateLobbyDetail(updatedLobby.uuid, () => updatedLobby)
+    this.updateLobbyDetail(updatedLobby.uuid, () => this.withDerivedFlags(updatedLobby))
   }
 
   private handleLobbyGameStarted(event: LobbyEventEnvelope): void {
@@ -288,7 +284,8 @@ export class LobbyStateStore {
     if (index === -1) return
 
     const nextLobbies = [...this.lobbyListState.lobbies]
-    nextLobbies[index] = { ...nextLobbies[index], ...updates }
+    const mergedLobby = { ...nextLobbies[index], ...updates } as LobbyData
+    nextLobbies[index] = this.withDerivedFlags(mergedLobby)
 
     this.lobbyListState = {
       ...this.lobbyListState,
@@ -334,5 +331,18 @@ export class LobbyStateStore {
     }
 
     callbacks.forEach((callback) => callback(state))
+  }
+
+  private withDerivedFlags(lobby: LobbyData): LobbyData {
+    const normalizedStatus = String(lobby.status || '').toUpperCase()
+    const currentPlayers = Number.isFinite(lobby.currentPlayers) ? lobby.currentPlayers : 0
+    const maxPlayers = Number.isFinite(lobby.maxPlayers) ? lobby.maxPlayers : 0
+
+    return {
+      ...lobby,
+      hasAvailableSlots: currentPlayers < maxPlayers,
+      canStart:
+        currentPlayers >= 2 && (normalizedStatus === 'READY' || normalizedStatus === 'FULL'),
+    }
   }
 }

@@ -123,6 +123,51 @@ test.group('LobbyStateStore', () => {
     assert.equal(receivedPlayersCount, 2)
   })
 
+  test('should recalculate canStart after player left event payload update', ({ assert }) => {
+    const store = new LobbyStateStore()
+    const lobbyUuid = 'lobby-left-1'
+
+    store.setLobbyDetail(
+      lobbyUuid,
+      makeLobby({
+        uuid: lobbyUuid,
+        status: 'FULL',
+        currentPlayers: 2,
+        maxPlayers: 2,
+        canStart: true,
+        hasAvailableSlots: false,
+      })
+    )
+
+    store.applyLobbyEvent({
+      type: 'lobby.player.left',
+      data: {
+        lobbyUuid,
+        player: { uuid: 'user-2', nickName: 'User2' },
+        lobby: {
+          uuid: lobbyUuid,
+          status: 'WAITING',
+          currentPlayers: 1,
+          maxPlayers: 2,
+          players: [{ uuid: 'user-1', nickName: 'User1' }],
+        },
+      },
+      timestamp: new Date().toISOString(),
+      channel: `lobbies/${lobbyUuid}`,
+    })
+
+    let canStart: boolean | undefined
+    let hasAvailableSlots: boolean | undefined
+
+    store.subscribeLobbyDetail(lobbyUuid, (state) => {
+      canStart = state.lobby?.canStart
+      hasAvailableSlots = state.lobby?.hasAvailableSlots
+    })
+
+    assert.equal(canStart, false)
+    assert.equal(hasAvailableSlots, true)
+  })
+
   test('should store gameUuid and set IN_GAME on lobby.game.started', ({ assert }) => {
     const store = new LobbyStateStore()
     const lobbyUuid = 'lobby-game-started-1'
