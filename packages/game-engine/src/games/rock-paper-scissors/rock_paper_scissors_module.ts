@@ -1,6 +1,6 @@
 import type { GameModule, GameSettingsDefinition } from '../../platform/contracts.js';
 import { RockPaperScissorsEngine } from './application/rock_paper_scissors_engine.js';
-import type { RpsAction, RpsSettings, RpsState } from './domain/rps_types.js';
+import { RpsActionTypes, RpsMoves, type RpsAction, type RpsSettings, type RpsState } from './domain/rps_types.js';
 
 const rpsSettingsDefinition: GameSettingsDefinition<RpsSettings> = {
 	fields: [
@@ -43,6 +43,36 @@ export const rockPaperScissorsModule: GameModule<RpsState, RpsAction, RpsSetting
 			maxPlayers: 2,
 		},
 		settings: rpsSettingsDefinition,
+		capabilities: ['turn-based', 'simultaneous-turns', 'replay', 'live-play'],
+		licensing: {
+			distribution: 'open-source',
+			license: 'MIT',
+			sourceAvailable: true,
+		},
+		security: {
+			maxActionPayloadBytes: 1024,
+			allowUnknownSettings: false,
+			allowSpectatorState: true,
+		},
+		actionDescriptors: [
+			{
+				actionType: RpsActionTypes.SUBMIT_MOVE,
+				label: 'Submit move',
+				description: 'Choose rock, paper or scissors for the current round',
+				parameters: [
+					{
+						key: 'move',
+						label: 'Move',
+						type: 'enum',
+						required: true,
+						options: Object.values(RpsMoves).map((move) => ({
+							value: move,
+							label: move,
+						})),
+					},
+				],
+			},
+		],
 	},
 	createEngine() {
 		return new RockPaperScissorsEngine();

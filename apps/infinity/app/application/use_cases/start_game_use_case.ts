@@ -3,6 +3,7 @@ import { type LobbyRepository } from '#application/repositories/lobby_repository
 import { type GameRepository } from '#application/repositories/game_repository'
 import { Result } from '#shared/result'
 import { type TransmitLobbyService } from '#application/services/transmit_lobby_service'
+import { type GameRuntimePort } from '#application/services/game_runtime_port'
 import { gameEngineService } from '#application/services/game_engine_service'
 import { safeSystemError } from '#shared/error_sanitizer'
 
@@ -46,7 +47,8 @@ export class StartGameUseCase {
   constructor(
     private lobbyRepository: LobbyRepository,
     private gameRepository: GameRepository,
-    private notificationService: TransmitLobbyService
+    private notificationService: TransmitLobbyService,
+    private gameRuntime: GameRuntimePort = gameEngineService
   ) {}
 
   async execute(request: StartGameRequest): Promise<Result<StartGameResponse>> {
@@ -84,7 +86,7 @@ export class StartGameUseCase {
       const resolvedGameType = lobby.gameType || 'love-letter-infinity-gauntlet'
 
       // Créer la session de jeu avec le LoveLetterEngine
-      const gameSessionResult = gameEngineService.createGame(
+      const gameSessionResult = await this.gameRuntime.createGame(
         lobby.uuid,
         lobby.players,
         resolvedGameType,

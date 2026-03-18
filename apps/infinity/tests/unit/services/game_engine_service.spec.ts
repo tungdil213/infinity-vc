@@ -48,6 +48,56 @@ function makeSession(): GameSession {
 }
 
 test.group('GameEngineService', () => {
+  test('createGame should create and persist a session', async ({ assert }) => {
+    const sessionStore = new GameSessionStore()
+    const calls: string[] = []
+    const publisher = {
+      publishGameStarted: () => {
+        calls.push('started')
+      },
+      publishActionEvents: () => {},
+      publishGameFinished: () => {},
+      publishSessionEnded: () => {},
+    }
+
+    const service = new GameEngineService(sessionStore, publisher as any)
+    const result = await service.createGame(
+      'lobby-rps',
+      [
+        { uuid: 'user-1', nickName: 'Alice' },
+        { uuid: 'user-2', nickName: 'Bob' },
+      ],
+      'rock-paper-scissors',
+      { roundsToWin: 2 }
+    )
+
+    assert.isTrue(result.isSuccess)
+    assert.equal(result.value.gameType, 'rock-paper-scissors')
+    assert.isDefined(service.getSession(result.value.gameId))
+    assert.deepEqual(calls, ['started'])
+  })
+
+  test('createGame should fail for unknown game type', async ({ assert }) => {
+    const service = new GameEngineService(new GameSessionStore(), {
+      publishGameStarted: () => {},
+      publishActionEvents: () => {},
+      publishGameFinished: () => {},
+      publishSessionEnded: () => {},
+    } as any)
+
+    const result = await service.createGame(
+      'lobby-unknown',
+      [
+        { uuid: 'user-1', nickName: 'Alice' },
+        { uuid: 'user-2', nickName: 'Bob' },
+      ],
+      'unknown-game'
+    )
+
+    assert.isTrue(result.isFailure)
+    assert.include(result.error, 'Unknown game')
+  })
+
   test('executeAction should return not found when session does not exist', ({ assert }) => {
     const service = new GameEngineService(new GameSessionStore(), {
       publishGameStarted: () => {},

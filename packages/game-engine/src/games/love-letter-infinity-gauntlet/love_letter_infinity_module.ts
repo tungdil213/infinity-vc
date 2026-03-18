@@ -5,6 +5,10 @@ import type {
 	LoveLetterInfinitySettings,
 	LoveLetterInfinityState,
 } from './domain/love_letter_infinity_types.js';
+import {
+	LoveLetterInfinityActionTypes,
+	LoveLetterInfinityCardTypes,
+} from './domain/love_letter_infinity_types.js';
 
 const loveLetterInfinitySettingsDefinition: GameSettingsDefinition<LoveLetterInfinitySettings> = {
 	fields: [
@@ -59,6 +63,59 @@ export const loveLetterInfinityModule: GameModule<
 			maxPlayers: 6,
 		},
 		settings: loveLetterInfinitySettingsDefinition,
+		capabilities: ['turn-based', 'hidden-information', 'spectator-mode', 'replay', 'async-play', 'live-play'],
+		licensing: {
+			distribution: 'open-source',
+			license: 'MIT',
+			sourceAvailable: true,
+		},
+		security: {
+			maxActionPayloadBytes: 4096,
+			allowUnknownSettings: false,
+			allowSpectatorState: false,
+		},
+		actionDescriptors: [
+			{
+				actionType: LoveLetterInfinityActionTypes.DRAW_CARD,
+				label: 'Draw card',
+				description: 'Draw a card from the deck at the start of your turn',
+			},
+			{
+				actionType: LoveLetterInfinityActionTypes.PLAY_CARD,
+				label: 'Play card',
+				description: 'Play one card and apply its effect',
+				parameters: [
+					{
+						key: 'cardType',
+						label: 'Card type',
+						type: 'enum',
+						required: true,
+						options: Object.values(LoveLetterInfinityCardTypes).map((cardType) => ({
+							value: cardType,
+							label: cardType,
+						})),
+					},
+					{
+						key: 'targetPlayerId',
+						label: 'Target player',
+						type: 'string',
+						required: false,
+					},
+					{
+						key: 'guessedCard',
+						label: 'Guessed card',
+						type: 'enum',
+						required: false,
+						options: Object.values(LoveLetterInfinityCardTypes)
+							.filter((cardType) => cardType !== LoveLetterInfinityCardTypes.GUARD)
+							.map((cardType) => ({
+								value: cardType,
+								label: cardType,
+							})),
+					},
+				],
+			},
+		],
 	},
 	createEngine() {
 		return new LoveLetterInfinityEngine();
