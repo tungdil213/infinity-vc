@@ -1,7 +1,6 @@
+import { Effect } from 'effect'
 import type Game from '#domain/entities/game'
 import type Player from '#domain/entities/player'
-import { Result } from '#shared/result'
-import { safeSystemError } from '#shared/error_sanitizer'
 import { GameActionEventService } from '#application/services/game_actions/game_action_event_service'
 import {
   type GameActionCard,
@@ -27,21 +26,23 @@ export class GameActionHandlerService {
     private readonly cardEffectService: LoveLetterCardEffectService = new LoveLetterCardEffectService()
   ) {}
 
-  async handlePlayCard(
+  handlePlayCard(
     game: Game,
     player: Player,
     actionData: Record<string, unknown> | undefined
-  ): Promise<Result<GameActionResponse>> {
-    try {
+  ): Effect.Effect<GameActionResponse, unknown> {
+    const self = this
+
+    return Effect.gen(function* () {
       const { cardId, targetPlayerUuid } = (actionData ?? {}) as PlayCardActionData
       if (!cardId) {
-        return Result.fail('Card ID is required')
+        return yield* Effect.fail('Card ID is required')
       }
 
-      const playerHand = this.getPlayerHand(game, player.uuid)
+      const playerHand = self.getPlayerHand(game, player.uuid)
       const cardIndex = playerHand.findIndex((card) => card.id === cardId)
       if (cardIndex === -1) {
-        return Result.fail('Player does not have this card')
+        return yield* Effect.fail('Player does not have this card')
       }
 
       const playedCard = playerHand.splice(cardIndex, 1)[0]
@@ -52,7 +53,7 @@ export class GameActionHandlerService {
         targetPlayer: targetPlayerUuid,
       })
 
-      const effectResult = this.cardEffectService.applyCardEffect(
+      const effectResult = self.cardEffectService.applyCardEffect(
         game,
         player,
         playedCard,
@@ -61,12 +62,12 @@ export class GameActionHandlerService {
 
       if (effectResult.eliminated && effectResult.eliminatedPlayer) {
         game.eliminatePlayer(effectResult.eliminatedPlayer)
-        const eliminatedPlayer = this.playerFactory.fromGamePlayer({
+        const eliminatedPlayer = self.playerFactory.fromGamePlayer({
           uuid: effectResult.eliminatedPlayer,
           nickName: 'Player',
         })
         if (eliminatedPlayer) {
-          await this.eventService.publishPlayerEliminated(
+          yield* self.eventService.publishPlayerEliminated(
             game,
             eliminatedPlayer,
             player,
@@ -76,47 +77,47 @@ export class GameActionHandlerService {
       }
 
       if (game.isFinished) {
-        const winner = this.playerFactory.fromGamePlayer(game.activePlayers[0])
-        await this.eventService.publishGameFinished(game, winner ?? null)
-        return Result.ok({
+        const winner = self.playerFactory.fromGamePlayer(game.activePlayers[0])
+        yield* self.eventService.publishGameFinished(game, winner ?? null)
+        return {
           gameState: game.toJSON(),
           gameFinished: true,
           winner,
-        })
+        }
       }
 
-      const nextPlayer = await this.advanceTurn(game, player)
-      return Result.ok({
+      const nextPlayer = yield* self.advanceTurn(game, player)
+      return {
         gameState: game.toJSON(),
         nextPlayer,
         gameFinished: false,
-      })
-    } catch (error) {
-      return Result.fail(safeSystemError(error, 'play_card'))
-    }
+      }
+    })
   }
 
-  async handleGuessCard(
+  handleGuessCard(
     game: Game,
     player: Player,
     actionData: Record<string, unknown> | undefined
-  ): Promise<Result<GameActionResponse>> {
-    try {
+  ): Effect.Effect<GameActionResponse, unknown> {
+    const self = this
+
+    return Effect.gen(function* () {
       const { targetPlayerUuid, guessedCard } = (actionData ?? {}) as GuessCardActionData
       if (!targetPlayerUuid || !guessedCard) {
-        return Result.fail('Target player and guessed card are required')
+        return yield* Effect.fail('Target player and guessed card are required')
       }
 
-      const targetHand = this.getPlayerHand(game, targetPlayerUuid)
+      const targetHand = self.getPlayerHand(game, targetPlayerUuid)
       const hasGuessedCard = targetHand.some((card) => card.name === guessedCard)
       if (hasGuessedCard) {
         game.eliminatePlayer(targetPlayerUuid)
-        const eliminatedPlayer = this.playerFactory.fromGamePlayer({
+        const eliminatedPlayer = self.playerFactory.fromGamePlayer({
           uuid: targetPlayerUuid,
           nickName: 'Target Player',
         })
         if (eliminatedPlayer) {
-          await this.eventService.publishPlayerEliminated(
+          yield* self.eventService.publishPlayerEliminated(
             game,
             eliminatedPlayer,
             player,
@@ -125,68 +126,73 @@ export class GameActionHandlerService {
         }
       }
 
-      const nextPlayer = await this.advanceTurn(game, player)
-      return Result.ok({
+      const nextPlayer = yield* self.advanceTurn(game, player)
+      return {
         gameState: game.toJSON(),
         nextPlayer,
         gameFinished: game.isFinished,
-      })
-    } catch (error) {
-      return Result.fail(safeSystemError(error, 'guess_card'))
-    }
+      }
+    })
   }
 
-  async handleEndTurn(game: Game): Promise<Result<GameActionResponse>> {
-    try {
-      const previousPlayer = this.playerFactory.fromGamePlayerOrNull(game.currentPlayer)
+  handleEndTurn(game: Game): Effect.Effect<GameActionResponse, unknown> {
+    const self = this
+
+    return Effect.gen(function* () {
+      const previousPlayer = self.playerFactory.fromGamePlayerOrNull(game.currentPlayer)
       game.nextTurn()
-      const nextPlayer = this.playerFactory.fromGamePlayer(game.currentPlayer)
+      const nextPlayer = self.playerFactory.fromGamePlayer(game.currentPlayer)
 
       if (nextPlayer) {
-        await this.eventService.publishTurnChanged(game, previousPlayer, nextPlayer)
+        yield* self.eventService.publishTurnChanged(game, previousPlayer, nextPlayer)
       }
 
-      return Result.ok({
+      return {
         gameState: game.toJSON(),
         nextPlayer,
         gameFinished: false,
-      })
-    } catch (error) {
-      return Result.fail(safeSystemError(error, 'end_turn'))
-    }
+      }
+    })
   }
 
-  async handleForfeit(game: Game, player: Player): Promise<Result<GameActionResponse>> {
-    try {
+  handleForfeit(game: Game, player: Player): Effect.Effect<GameActionResponse, unknown> {
+    const self = this
+
+    return Effect.gen(function* () {
       game.eliminatePlayer(player.uuid)
-      await this.eventService.publishPlayerEliminated(game, player, null, 'Player forfeited')
+      yield* self.eventService.publishPlayerEliminated(game, player, null, 'Player forfeited')
 
       if (game.isFinished) {
-        const winner = this.playerFactory.fromGamePlayer(game.activePlayers[0])
-        await this.eventService.publishGameFinished(game, winner ?? null)
-        return Result.ok({
+        const winner = self.playerFactory.fromGamePlayer(game.activePlayers[0])
+        yield* self.eventService.publishGameFinished(game, winner ?? null)
+        return {
           gameState: game.toJSON(),
           gameFinished: true,
           winner,
-        })
+        }
       }
 
-      return Result.ok({
+      return {
         gameState: game.toJSON(),
         gameFinished: false,
-      })
-    } catch (error) {
-      return Result.fail(safeSystemError(error, 'forfeit'))
-    }
+      }
+    })
   }
 
-  private async advanceTurn(game: Game, previousPlayer: Player): Promise<Player | undefined> {
-    game.nextTurn()
-    const nextPlayer = this.playerFactory.fromGamePlayer(game.currentPlayer)
-    if (nextPlayer) {
-      await this.eventService.publishTurnChanged(game, previousPlayer, nextPlayer)
-    }
-    return nextPlayer
+  private advanceTurn(
+    game: Game,
+    previousPlayer: Player
+  ): Effect.Effect<Player | undefined, unknown> {
+    const self = this
+
+    return Effect.gen(function* () {
+      game.nextTurn()
+      const nextPlayer = self.playerFactory.fromGamePlayer(game.currentPlayer)
+      if (nextPlayer) {
+        yield* self.eventService.publishTurnChanged(game, previousPlayer, nextPlayer)
+      }
+      return nextPlayer
+    })
   }
 
   private getPlayerHand(game: Game, playerUuid: string): GameActionCard[] {

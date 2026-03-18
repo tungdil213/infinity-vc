@@ -1,4 +1,5 @@
 import type Game from '#domain/entities/game'
+import { Effect } from 'effect'
 import {
   GameFinishedEvent,
   GameStateUpdatedEvent,
@@ -16,43 +17,59 @@ export class GameActionEventService {
     private readonly playerFactory: GameActionPlayerFactory = new GameActionPlayerFactory()
   ) {}
 
-  async publishPostAction(
+  publishPostAction(
     game: Game,
     actor: Player,
     action: string,
     actionData: Record<string, unknown> | undefined
-  ): Promise<void> {
-    await this.domainEventPublisher.publishEvents([
-      new PlayerActionEvent(game.uuid, actor, action, actionData, game.toJSON()),
-      new GameStateUpdatedEvent(game.uuid, game.toJSON(), actor.uuid),
-    ])
+  ): Effect.Effect<void, unknown> {
+    return Effect.tryPromise({
+      try: () =>
+        this.domainEventPublisher.publishEvents([
+          new PlayerActionEvent(game.uuid, actor, action, actionData, game.toJSON()),
+          new GameStateUpdatedEvent(game.uuid, game.toJSON(), actor.uuid),
+        ]),
+      catch: (error) => error,
+    })
   }
 
-  async publishPlayerEliminated(
+  publishPlayerEliminated(
     game: Game,
     eliminatedPlayer: Player,
     actor: Player | null,
     reason: string
-  ): Promise<void> {
+  ): Effect.Effect<void, unknown> {
     const remainingPlayers = this.playerFactory.fromGamePlayers(game.activePlayers)
-    await this.domainEventPublisher.publishEvents([
-      new PlayerEliminatedEvent(game.uuid, eliminatedPlayer, actor, reason, remainingPlayers),
-    ])
+    return Effect.tryPromise({
+      try: () =>
+        this.domainEventPublisher.publishEvents([
+          new PlayerEliminatedEvent(game.uuid, eliminatedPlayer, actor, reason, remainingPlayers),
+        ]),
+      catch: (error) => error,
+    })
   }
 
-  async publishTurnChanged(
+  publishTurnChanged(
     game: Game,
     previousPlayer: Player | null,
     nextPlayer: Player
-  ): Promise<void> {
-    await this.domainEventPublisher.publishEvents([
-      new TurnChangedEvent(game.uuid, previousPlayer, nextPlayer, game.gameData.currentRound),
-    ])
+  ): Effect.Effect<void, unknown> {
+    return Effect.tryPromise({
+      try: () =>
+        this.domainEventPublisher.publishEvents([
+          new TurnChangedEvent(game.uuid, previousPlayer, nextPlayer, game.gameData.currentRound),
+        ]),
+      catch: (error) => error,
+    })
   }
 
-  async publishGameFinished(game: Game, winner: Player | null): Promise<void> {
-    await this.domainEventPublisher.publishEvents([
-      new GameFinishedEvent(game.uuid, winner, {}, game.duration),
-    ])
+  publishGameFinished(game: Game, winner: Player | null): Effect.Effect<void, unknown> {
+    return Effect.tryPromise({
+      try: () =>
+        this.domainEventPublisher.publishEvents([
+          new GameFinishedEvent(game.uuid, winner, {}, game.duration),
+        ]),
+      catch: (error) => error,
+    })
   }
 }

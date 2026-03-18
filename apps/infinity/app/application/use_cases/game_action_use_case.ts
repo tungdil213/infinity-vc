@@ -1,11 +1,12 @@
 import { inject } from '@adonisjs/core'
+import { Effect } from 'effect'
 import type { GameRepository } from '#application/repositories/game_repository'
 import type { UserRepository } from '#application/repositories/user_repository'
 import type { DomainEventPublisher } from '#application/services/domain_event_publisher'
 import type Game from '#domain/entities/game'
 import type Player from '#domain/entities/player'
 import { Result } from '#shared/result'
-import { safeSystemError } from '#shared/error_sanitizer'
+import { runEffectAsResult } from '#shared/effect_result'
 import { GameActionEventService } from '#application/services/game_actions/game_action_event_service'
 import { GameActionHandlerService } from '#application/services/game_actions/game_action_handler_service'
 import {
@@ -35,46 +36,54 @@ export class GameActionUseCase {
   }
 
   async execute(request: GameActionRequest): Promise<Result<GameActionResponse>> {
-    try {
-      const game = await this.gameRepository.findByUuid(request.gameUuid)
+    const self = this
+    const actionProgram = Effect.gen(function* () {
+      const game = yield* Effect.tryPromise({
+        try: () => self.gameRepository.findByUuid(request.gameUuid),
+        catch: (error) => error,
+      })
       if (!game) {
-        return Result.fail('Game not found')
+        return yield* Effect.fail('Game not found')
       }
 
       if (!game.canPlayerPlay(request.playerUuid)) {
-        return Result.fail('Player cannot play at this time')
+        return yield* Effect.fail('Player cannot play at this time')
       }
 
-      const user = await this.userRepository.findByUuid(request.playerUuid)
+      const user = yield* Effect.tryPromise({
+        try: () => self.userRepository.findByUuid(request.playerUuid),
+        catch: (error) => error,
+      })
       if (!user) {
-        return Result.fail('User not found')
+        return yield* Effect.fail('User not found')
       }
 
-      const player = this.playerFactory.fromUser(user)
-      const actionResult = await this.dispatchAction(game, player, request)
-      if (actionResult.isFailure) {
-        return actionResult
-      }
+      const player = self.playerFactory.fromUser(user)
+      const actionResponse = yield* self.dispatchAction(game, player, request)
 
-      await this.gameRepository.save(game)
-      await this.eventService.publishPostAction(
+      yield* Effect.tryPromise({
+        try: () => self.gameRepository.save(game),
+        catch: (error) => error,
+      })
+
+      yield* self.eventService.publishPostAction(
         game,
         player,
         request.action,
         request.actionData
       )
 
-      return actionResult
-    } catch (error) {
-      return Result.fail(safeSystemError(error, 'game_action'))
-    }
+      return actionResponse
+    })
+
+    return runEffectAsResult(actionProgram, 'game_action', request.playerUuid)
   }
 
   private dispatchAction(
     game: Game,
     player: Player,
     request: GameActionRequest
-  ): Promise<Result<GameActionResponse>> {
+  ): Effect.Effect<GameActionResponse, unknown> {
     switch (request.action) {
       case 'play_card':
         return this.handlerService.handlePlayCard(game, player, request.actionData)
@@ -85,7 +94,7 @@ export class GameActionUseCase {
       case 'forfeit':
         return this.handlerService.handleForfeit(game, player)
       default:
-        return Promise.resolve(Result.fail(`Unknown action: ${request.action}`))
+        return Effect.fail(`Unknown action: ${request.action}`)
     }
   }
 }
