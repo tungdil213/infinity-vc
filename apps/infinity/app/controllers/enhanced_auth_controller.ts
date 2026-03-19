@@ -9,6 +9,7 @@ import app from '@adonisjs/core/services/app'
 import logger from '@adonisjs/core/services/logger'
 import { authRegisterValidator } from '#validators/auth_register_validator'
 import { authLoginValidator } from '#validators/auth_login_validator'
+import { generateUsernameFromEmail } from '#application/services/username_generator'
 
 @inject()
 export default class EnhancedAuthController {
@@ -53,6 +54,7 @@ export default class EnhancedAuthController {
 
     try {
       const { fullName, email, password } = await request.validateUsing(authRegisterValidator)
+      const normalizedEmail = email.trim().toLowerCase()
 
       // Get use case from container
       const registerUserUseCase = await app.container.make(RegisterUserUseCase)
@@ -61,12 +63,13 @@ export default class EnhancedAuthController {
       const nameParts = fullName.trim().split(' ')
       const firstName = nameParts[0] || ''
       const lastName = nameParts.slice(1).join(' ') || ''
+      const username = generateUsernameFromEmail(normalizedEmail)
 
       const result = await registerUserUseCase.execute({
         firstName,
         lastName,
-        username: email.split('@')[0], // Use email prefix as username
-        email: email.trim().toLowerCase(),
+        username,
+        email: normalizedEmail,
         password: password, // Pass plain password, will be hashed by User model
       })
 
@@ -76,7 +79,7 @@ export default class EnhancedAuthController {
       }
 
       // Auto-login the newly created user
-      const newUser = await User.query().where('email', email.trim().toLowerCase()).first()
+      const newUser = await User.query().where('email', normalizedEmail).first()
       if (newUser) {
         await auth.use('web').login(newUser)
         session.flash(
@@ -166,6 +169,7 @@ export default class EnhancedAuthController {
           uuid: user.userUuid,
           fullName: user.fullName,
           email: user.email,
+          role: user.normalizedRole,
           createdAt: user.createdAt,
         },
       })
@@ -190,12 +194,13 @@ export default class EnhancedAuthController {
       return response.status(200).json({
         authenticated: !!user,
         user: user
-          ? {
-              uuid: user.userUuid,
-              fullName: user.fullName,
-              email: user.email,
-            }
-          : null,
+            ? {
+                uuid: user.userUuid,
+                fullName: user.fullName,
+                email: user.email,
+                role: user.normalizedRole,
+              }
+            : null,
       })
     } catch (error) {
       logger.error({ error }, 'Auth check error')

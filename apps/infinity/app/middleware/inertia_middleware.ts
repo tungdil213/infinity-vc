@@ -3,10 +3,29 @@ import type { NextFn } from '@adonisjs/core/types/http'
 import BaseInertiaMiddleware from '@adonisjs/inertia/inertia_middleware'
 
 export default class InertiaMiddleware extends BaseInertiaMiddleware {
+  private readonly allowedLocales = new Set(['en', 'fr', 'de'])
+
+  private resolveLocale(rawLocale: unknown): 'en' | 'fr' | 'de' {
+    if (typeof rawLocale !== 'string') {
+      return 'en'
+    }
+
+    const normalized = rawLocale.toLowerCase().trim()
+    const shortLocale = normalized.split('-')[0]
+
+    if (this.allowedLocales.has(shortLocale)) {
+      return shortLocale as 'en' | 'fr' | 'de'
+    }
+
+    return 'en'
+  }
+
   share(ctx: HttpContext) {
     const { session } = ctx as Partial<HttpContext>
+    const locale = this.resolveLocale(ctx.request.cookie('locale'))
 
     return {
+      locale: ctx.inertia.always(locale),
       errors: ctx.inertia.always(this.getValidationErrors(ctx)),
       flash: ctx.inertia.always({
         error: session?.flashMessages.get('error'),

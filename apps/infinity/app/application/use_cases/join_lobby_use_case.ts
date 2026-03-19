@@ -7,6 +7,7 @@ import { safeSystemError } from '#shared/error_sanitizer'
 export interface JoinLobbyRequest {
   userUuid: string
   lobbyUuid: string
+  password?: string
 }
 
 export interface JoinLobbyResponse {
@@ -60,6 +61,16 @@ export class JoinLobbyUseCase {
       const lobby = await this.lobbyRepository.findByUuidOrFail(request.lobbyUuid)
       if (!lobby) {
         return Result.fail('Lobby not found')
+      }
+
+      if (lobby.hasPassword) {
+        if (!request.password || request.password.trim().length === 0) {
+          return Result.fail('Password is required for this lobby')
+        }
+
+        if (!lobby.verifyPassword(request.password)) {
+          return Result.fail('Invalid lobby password')
+        }
       }
 
       // Vérifier si le lobby est plein

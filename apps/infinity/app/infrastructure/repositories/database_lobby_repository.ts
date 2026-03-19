@@ -15,8 +15,10 @@ export class DatabaseLobbyRepository implements LobbyRepository {
       {
         uuid: lobby.uuid,
         name: lobby.name,
+        description: lobby.description || null,
         maxPlayers: lobby.maxPlayers,
         isPrivate: lobby.isPrivate,
+        passwordHash: lobby.passwordHash ?? null,
         gameType: lobby.gameType,
         gameSettings: lobby.gameSettings,
         status: lobby.status,
@@ -83,6 +85,7 @@ export class DatabaseLobbyRepository implements LobbyRepository {
     const models = await LobbyModel.query()
       .where('status', status)
       .whereNull('deleted_at')
+      .preload('players')
       .orderBy('created_at', 'desc')
 
     return models.map((model) => this.toDomainEntity(model))
@@ -92,6 +95,7 @@ export class DatabaseLobbyRepository implements LobbyRepository {
     const models = await LobbyModel.query()
       .where('created_by', creatorUuid)
       .whereNull('deleted_at')
+      .preload('players')
       .orderBy('created_at', 'desc')
 
     return models.map((model) => this.toDomainEntity(model))
@@ -113,6 +117,7 @@ export class DatabaseLobbyRepository implements LobbyRepository {
     const models = await LobbyModel.query()
       .whereIn('status', ['OPEN', 'WAITING', 'READY'])
       .whereNull('deleted_at')
+      .preload('players')
       .orderBy('created_at', 'desc')
 
     return models.map((model) => this.toDomainEntity(model))
@@ -124,6 +129,7 @@ export class DatabaseLobbyRepository implements LobbyRepository {
       .whereHas('players', (query) => {
         query.where('user_uuid', playerUuid)
       })
+      .preload('players')
       .first()
 
     if (!model) {
@@ -137,6 +143,7 @@ export class DatabaseLobbyRepository implements LobbyRepository {
     const models = await LobbyModel.query()
       .whereIn('status', ['OPEN', 'WAITING', 'READY', 'IN_PROGRESS'])
       .whereNull('deleted_at')
+      .preload('players')
       .orderBy('created_at', 'desc')
 
     return models.map((model) => this.toDomainEntity(model))
@@ -166,7 +173,9 @@ export class DatabaseLobbyRepository implements LobbyRepository {
       model.isPrivate,
       model.gameType,
       model.gameSettings,
-      model.createdAt.toJSDate()
+      model.createdAt.toJSDate(),
+      model.description ?? '',
+      model.passwordHash ?? undefined
     )
   }
 }

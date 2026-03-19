@@ -1,11 +1,14 @@
 import type User from '#models/user'
+import type { UserRole } from '#domain/value_objects/user_role'
 
 type LobbyEntity = {
   uuid: string
   name: string
+  description?: string
   status: string
   maxPlayers: number
   isPrivate: boolean
+  hasPassword?: boolean
   availableActions: string[]
   createdBy: string
   createdAt: Date
@@ -24,9 +27,11 @@ export type LobbySummaryDTO = {
 export type LobbyListItemDTO = {
   uuid: string
   name: string
+  description?: string
   maxPlayers: number
   currentPlayers: number
   isPrivate: boolean
+  hasPassword: boolean
   status: string
   availableActions: string[]
   createdBy: string
@@ -44,6 +49,7 @@ export type UserSummaryDTO = {
   fullName: string
   email?: string
   nickName?: string
+  role?: UserRole
 }
 
 export function toLobbySummary(lobby: LobbyEntity): LobbySummaryDTO {
@@ -60,9 +66,11 @@ export function toLobbyListItem(lobby: LobbyEntity): LobbyListItemDTO {
   return {
     uuid: lobby.uuid,
     name: lobby.name,
+    description: lobby.description,
     maxPlayers: lobby.maxPlayers,
     currentPlayers: lobby.players.length,
     isPrivate: lobby.isPrivate,
+    hasPassword: Boolean(lobby.hasPassword),
     status: lobby.status,
     availableActions: lobby.availableActions,
     createdBy: lobby.createdBy,
@@ -78,7 +86,7 @@ export function toLobbyDetail(lobby: LobbyEntity): LobbyDetailDTO {
   return {
     ...lobby.toJSON(),
     invitationCode: lobby.uuid,
-    hasPassword: false,
+    hasPassword: Boolean(lobby.hasPassword),
   }
 }
 
@@ -86,6 +94,7 @@ export function toUserSummary(user: User, options?: { includeEmail?: boolean }):
   const dto: UserSummaryDTO = {
     uuid: user.userUuid,
     fullName: user.fullName ?? 'Unknown User',
+    role: user.normalizedRole,
   }
 
   if (options?.includeEmail) {

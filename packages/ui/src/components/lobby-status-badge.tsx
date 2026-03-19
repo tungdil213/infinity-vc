@@ -17,48 +17,48 @@ export interface LobbyStatusBadgeProps {
 
 const statusConfig = {
 	WAITING: {
-		label: 'En attente',
-		description: 'Le lobby attend des joueurs',
+		label: 'Waiting',
+		description: 'The lobby is waiting for players',
 		icon: Clock,
 		color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
 		outlineColor: 'border-yellow-500 text-yellow-700',
 		secondaryColor: 'bg-yellow-50 text-yellow-600',
 	},
 	READY: {
-		label: 'Prêt',
-		description: 'Tous les joueurs sont prêts, la partie peut commencer',
+		label: 'Ready',
+		description: 'All players are ready, the game can start',
 		icon: CheckCircle,
 		color: 'bg-green-100 text-green-800 border-green-200',
 		outlineColor: 'border-green-500 text-green-700',
 		secondaryColor: 'bg-green-50 text-green-600',
 	},
 	FULL: {
-		label: 'Complet',
-		description: 'Le lobby est plein, aucune place disponible',
+		label: 'Full',
+		description: 'The lobby is full, no slot available',
 		icon: Users,
 		color: 'bg-orange-100 text-orange-800 border-orange-200',
 		outlineColor: 'border-orange-500 text-orange-700',
 		secondaryColor: 'bg-orange-50 text-orange-600',
 	},
 	IN_GAME: {
-		label: 'En jeu',
-		description: 'La partie est en cours',
+		label: 'In game',
+		description: 'The game is in progress',
 		icon: Play,
 		color: 'bg-blue-100 text-blue-800 border-blue-200',
 		outlineColor: 'border-blue-500 text-blue-700',
 		secondaryColor: 'bg-blue-50 text-blue-600',
 	},
 	PAUSED: {
-		label: 'En pause',
-		description: 'La partie est temporairement suspendue',
+		label: 'Paused',
+		description: 'The game is temporarily paused',
 		icon: Pause,
 		color: 'bg-gray-100 text-gray-800 border-gray-200',
 		outlineColor: 'border-gray-500 text-gray-700',
 		secondaryColor: 'bg-gray-50 text-gray-600',
 	},
 	ENDED: {
-		label: 'Terminé',
-		description: 'La partie est terminée',
+		label: 'Ended',
+		description: 'The game has ended',
 		icon: XCircle,
 		color: 'bg-red-100 text-red-800 border-red-200',
 		outlineColor: 'border-red-500 text-red-700',
@@ -147,15 +147,15 @@ export function LobbyPrivacyBadge({
 
 	const config = isPrivate
 		? {
-				label: 'Privé',
-				description: 'Lobby privé, invitation requise',
+				label: 'Private',
+				description: 'Private lobby, invite required',
 				color: 'bg-purple-100 text-purple-800 border-purple-200',
 				outlineColor: 'border-purple-500 text-purple-700',
 				secondaryColor: 'bg-purple-50 text-purple-600',
 			}
 		: {
 				label: 'Public',
-				description: 'Lobby public, ouvert à tous',
+				description: 'Public lobby, open to everyone',
 				color: 'bg-blue-100 text-blue-800 border-blue-200',
 				outlineColor: 'border-blue-500 text-blue-700',
 				secondaryColor: 'bg-blue-50 text-blue-600',
@@ -228,7 +228,7 @@ export function LobbyCapacityBadge({
 	const config = isFull
 		? {
 				label: `${currentPlayers}/${maxPlayers}`,
-				description: 'Lobby complet',
+				description: 'Lobby is full',
 				color: 'bg-red-100 text-red-800 border-red-200',
 				outlineColor: 'border-red-500 text-red-700',
 				secondaryColor: 'bg-red-50 text-red-600',
@@ -236,14 +236,14 @@ export function LobbyCapacityBadge({
 		: isNearFull
 			? {
 					label: `${currentPlayers}/${maxPlayers}`,
-					description: 'Presque complet',
+					description: 'Almost full',
 					color: 'bg-orange-100 text-orange-800 border-orange-200',
 					outlineColor: 'border-orange-500 text-orange-700',
 					secondaryColor: 'bg-orange-50 text-orange-600',
 				}
 			: {
 					label: `${currentPlayers}/${maxPlayers}`,
-					description: 'Places disponibles',
+					description: 'Slots available',
 					color: 'bg-green-100 text-green-800 border-green-200',
 					outlineColor: 'border-green-500 text-green-700',
 					secondaryColor: 'bg-green-50 text-green-600',
@@ -282,7 +282,7 @@ export function LobbyCapacityBadge({
 				<TooltipContent>
 					<div className="text-center">
 						<div className="font-medium">
-							{currentPlayers} sur {maxPlayers} joueurs
+							{currentPlayers} of {maxPlayers} players
 						</div>
 						<div className="text-xs text-gray-500 mt-1">{config.description}</div>
 					</div>

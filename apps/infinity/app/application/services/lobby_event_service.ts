@@ -2,6 +2,7 @@ import { eventBus } from '#infrastructure/events/event_bus'
 import { type HybridLobbyService } from '#application/services/hybrid_lobby_service'
 import {
   LobbyCreatedEvent,
+  LobbyModerationClosedEvent,
   LobbyUpdatedEvent,
   LobbyDeletedEvent,
 } from '#domain/events/lobby_events'
@@ -48,6 +49,27 @@ export class LobbyEventService {
     const event = new LobbyDeletedEvent(lobbyUuid, reason)
     await eventBus.publish(event)
     console.log(`[LobbyEventService] Published LobbyDeleted for ${lobbyUuid}`)
+  }
+
+  /**
+   * Émet un événement de fermeture modération (audit)
+   */
+  async emitLobbyModerationClosed(args: {
+    lobbyUuid: string
+    reason: string
+    closedByUserUuid: string
+    closedByRole: string
+  }): Promise<void> {
+    const event = new LobbyModerationClosedEvent(
+      args.lobbyUuid,
+      args.reason,
+      args.closedByUserUuid,
+      args.closedByRole
+    )
+    await eventBus.publish(event)
+    console.log(
+      `[LobbyEventService] Published LobbyModerationClosed for ${args.lobbyUuid} by ${args.closedByUserUuid}`
+    )
   }
 
   /**

@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { router } from '@inertiajs/react'
 import { toast } from 'sonner'
+import { useI18n } from '../i18n/use_i18n'
 
 interface AutoLeaveLobbyProps {
   currentLobby: {
@@ -11,6 +12,8 @@ interface AutoLeaveLobbyProps {
 }
 
 export function AutoLeaveLobby({ currentLobby, enabled = true }: AutoLeaveLobbyProps) {
+  const { t } = useI18n()
+
   useEffect(() => {
     if (!currentLobby || !enabled) {
       return
@@ -19,7 +22,7 @@ export function AutoLeaveLobby({ currentLobby, enabled = true }: AutoLeaveLobbyP
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       // Show confirmation dialog when user tries to leave the page
       event.preventDefault()
-      event.returnValue = 'Vous êtes actuellement dans un lobby. Voulez-vous vraiment quitter ?'
+      event.returnValue = t('guard.leaveLobbyConfirm')
       return event.returnValue
     }
 
@@ -40,7 +43,7 @@ export function AutoLeaveLobby({ currentLobby, enabled = true }: AutoLeaveLobbyP
       window.removeEventListener('beforeunload', handleBeforeUnload)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [currentLobby, enabled])
+  }, [currentLobby, enabled, t])
 
   // Auto-leave function that can be called programmatically
   const autoLeaveLobby = async () => {
@@ -52,10 +55,10 @@ export function AutoLeaveLobby({ currentLobby, enabled = true }: AutoLeaveLobbyP
         {},
         {
           onSuccess: () => {
-            toast.success(`Vous avez automatiquement quitté le lobby "${currentLobby.name}"`)
+            toast.success(t('guard.autoLeaveSuccess', { lobbyName: currentLobby.name }))
           },
           onError: () => {
-            toast.error('Erreur lors de la sortie automatique du lobby')
+            toast.error(t('guard.autoLeaveError'))
           },
         }
       )
@@ -73,6 +76,8 @@ export function useAutoLeaveLobby(
   currentLobby: { uuid: string; name: string } | null,
   enabled = true
 ) {
+  const { t } = useI18n()
+
   useEffect(() => {
     if (!currentLobby || !enabled) {
       return
@@ -80,7 +85,7 @@ export function useAutoLeaveLobby(
 
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault()
-      event.returnValue = 'Vous êtes actuellement dans un lobby. Voulez-vous vraiment quitter ?'
+      event.returnValue = t('guard.leaveLobbyConfirm')
       return event.returnValue
     }
 
@@ -89,7 +94,7 @@ export function useAutoLeaveLobby(
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload)
     }
-  }, [currentLobby, enabled])
+  }, [currentLobby, enabled, t])
 
   const autoLeaveLobby = async () => {
     if (!currentLobby) return
@@ -100,10 +105,10 @@ export function useAutoLeaveLobby(
         {},
         {
           onSuccess: () => {
-            toast.success(`Vous avez automatiquement quitté le lobby "${currentLobby.name}"`)
+            toast.success(t('guard.autoLeaveSuccess', { lobbyName: currentLobby.name }))
           },
           onError: () => {
-            toast.error('Erreur lors de la sortie automatique du lobby')
+            toast.error(t('guard.autoLeaveError'))
           },
         }
       )

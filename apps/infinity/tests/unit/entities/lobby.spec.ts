@@ -259,6 +259,31 @@ test.group('Lobby Entity', () => {
     assert.exists(json.createdAt)
   })
 
+  test('should hash and verify protected lobby password', ({ assert }) => {
+    const password = 'SuperSecret'
+    const lobby = createLobby({
+      name: 'Protected Lobby',
+      maxPlayers: 4,
+      isPrivate: true,
+      passwordHash: Lobby.hashPassword(password),
+    })
+
+    assert.isTrue(lobby.hasPassword)
+    assert.isTrue(lobby.verifyPassword(password))
+    assert.isFalse(lobby.verifyPassword('wrong-password'))
+  })
+
+  test('should expose description in serialized payload', ({ assert }) => {
+    const lobby = createLobby({
+      name: 'Described Lobby',
+      description: 'Lobby description visible in lobby page',
+    })
+
+    const json = lobby.toJSON()
+
+    assert.equal(json.description, 'Lobby description visible in lobby page')
+  })
+
   test('should record events when players join', ({ assert }) => {
     const lobby = createLobby()
     const newPlayer = createPlayerInterface()

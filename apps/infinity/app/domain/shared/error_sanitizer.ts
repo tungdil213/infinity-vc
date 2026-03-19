@@ -1,20 +1,20 @@
 import logger from '@adonisjs/core/services/logger'
 
 /**
- * Messages génériques par type d'erreur système
+ * Safe generic messages by system error category
  */
 const SAFE_MESSAGES = {
-  database: 'Une erreur de connexion est survenue. Veuillez réessayer.',
-  authentication: "Une erreur d'authentification est survenue.",
-  validation: 'Les données fournies sont invalides.',
-  network: 'Une erreur réseau est survenue. Veuillez réessayer.',
-  system: 'Une erreur inattendue est survenue. Veuillez réessayer plus tard.',
+  database: 'A connection error occurred. Please try again.',
+  authentication: 'An authentication error occurred.',
+  validation: 'The provided data is invalid.',
+  network: 'A network error occurred. Please try again.',
+  system: 'An unexpected error occurred. Please try again later.',
 } as const
 
 type ErrorCategory = keyof typeof SAFE_MESSAGES
 
 /**
- * Patterns d'erreurs sensibles à détecter
+ * Sensitive error patterns that should be sanitized
  */
 const SENSITIVE_PATTERNS: Array<{ pattern: RegExp; category: ErrorCategory }> = [
   { pattern: /Access denied for user/i, category: 'database' },
@@ -32,8 +32,8 @@ const SENSITIVE_PATTERNS: Array<{ pattern: RegExp; category: ErrorCategory }> = 
 ]
 
 /**
- * Sanitize un message d'erreur pour ne pas exposer d'informations sensibles.
- * Log le message technique complet et retourne un message safe pour l'utilisateur.
+ * Sanitizes an error message to avoid exposing sensitive information.
+ * Logs the technical message and returns a safe user-facing message.
  */
 export function sanitizeErrorMessage(
   error: unknown,
@@ -41,10 +41,10 @@ export function sanitizeErrorMessage(
 ): string {
   const technicalMessage = error instanceof Error ? error.message : String(error)
 
-  // Vérifier si le message contient des patterns sensibles
+  // Check whether message matches sensitive patterns
   for (const { pattern, category } of SENSITIVE_PATTERNS) {
     if (pattern.test(technicalMessage)) {
-      // Log le message technique complet pour debugging
+      // Log full technical message for debugging
       logger.error(
         {
           technicalMessage,
@@ -60,8 +60,7 @@ export function sanitizeErrorMessage(
     }
   }
 
-  // Si pas de pattern sensible détecté, on vérifie quand même la longueur
-  // et la présence potentielle d'informations techniques
+  // Even without a sensitive pattern, long or technical-looking messages are sanitized
   if (
     technicalMessage.length > 100 ||
     technicalMessage.includes('@') ||
@@ -84,7 +83,7 @@ export function sanitizeErrorMessage(
 }
 
 /**
- * Crée un message d'erreur Result.fail safe pour les use cases
+ * Creates a safe Result.fail message for use cases
  */
 export function safeSystemError(error: unknown, operation: string, userId?: string): string {
   return sanitizeErrorMessage(error, { operation, userId })

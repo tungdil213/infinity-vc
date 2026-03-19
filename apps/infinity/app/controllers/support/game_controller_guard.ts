@@ -24,19 +24,31 @@ export type ParsedGameAction =
       type: 'engine'
       actionType: string
       payload?: Record<string, unknown>
-    }
+}
+
+export function getGameSession(
+  gameUuid: string,
+  getSession: (gameUuid: string) => GameSession | undefined
+): GameSession | null {
+  const session = getSession(gameUuid)
+  return session || null
+}
+
+export function isUserInGameSession(session: GameSession, userUuid: string): boolean {
+  return session.state.players.some((player) => player.id === userUuid)
+}
 
 export function getAuthorizedGameSession(
   gameUuid: string,
   userUuid: string,
   getSession: (gameUuid: string) => GameSession | undefined
 ): GameSession | null {
-  const session = getSession(gameUuid)
+  const session = getGameSession(gameUuid, getSession)
   if (!session) {
     return null
   }
 
-  const isPlayerInGame = session.state.players.some((player) => player.id === userUuid)
+  const isPlayerInGame = isUserInGameSession(session, userUuid)
   return isPlayerInGame ? session : null
 }
 

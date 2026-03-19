@@ -2,6 +2,7 @@ import { router } from '@inertiajs/react'
 import { Header } from '@infinity.dev/ui/components/header'
 import { useTransmit } from '../contexts/TransmitContext'
 import { disposeLobbyService } from '../hooks/use_lobby_service'
+import { useI18n } from '../i18n/use_i18n'
 
 interface User {
   uuid: string
@@ -25,6 +26,7 @@ interface HeaderWrapperProps {
 
 export function HeaderWrapper({ user, currentLobby, className }: HeaderWrapperProps) {
   const { isConnected, unsubscribeAll } = useTransmit()
+  const { locale, setLocale, supportedLocales, t } = useI18n()
 
   const handleCreateLobby = () => {
     router.visit('/lobbies/create')
@@ -46,7 +48,7 @@ export function HeaderWrapper({ user, currentLobby, className }: HeaderWrapperPr
             const errorMessage =
               typeof errors === 'object' && errors !== null && 'error' in errors
                 ? String((errors as { error: string }).error)
-                : 'Impossible de rejoindre le lobby'
+                : 'Unable to join lobby'
 
             reject(new Error(errorMessage))
           },
@@ -98,6 +100,18 @@ export function HeaderWrapper({ user, currentLobby, className }: HeaderWrapperPr
       currentLobby={currentLobby}
       isConnected={isConnected}
       className={className}
+      locale={locale}
+      availableLocales={supportedLocales.map((value) => ({
+        value,
+        label: t(`language.${value}`),
+      }))}
+      localeLabel={t('common.language')}
+      onLocaleChange={(nextLocale) => {
+        const matchedLocale = supportedLocales.find((value) => value === nextLocale)
+        if (matchedLocale) {
+          setLocale(matchedLocale)
+        }
+      }}
       onCreateLobby={handleCreateLobby}
       onJoinByCode={handleJoinByCode}
       onGoToCurrentLobby={handleGoToCurrentLobby}

@@ -2,14 +2,16 @@ import React from 'react';
 import { Card, CardHeader, CardTitle } from './primitives/card';
 import { Button } from './primitives/button';
 import { Badge } from './primitives/badge';
-import { Users, Play, LogOut, UserPlus } from 'lucide-react';
+import { Users, Play, LogOut, UserPlus, Lock } from 'lucide-react';
 
 export interface LobbyHeaderPanelProps {
 	name: string;
+	description?: string;
 	status: string;
 	currentPlayers: number;
 	maxPlayers: number;
 	isPrivate: boolean;
+	hasPassword?: boolean;
 	isUserInLobby: boolean;
 	canJoinLobby: boolean;
 	canStartGame: boolean;
@@ -23,10 +25,12 @@ export interface LobbyHeaderPanelProps {
 
 export function LobbyHeaderPanel({
 	name,
+	description,
 	status,
 	currentPlayers,
 	maxPlayers,
 	isPrivate,
+	hasPassword = false,
 	isUserInLobby,
 	canJoinLobby,
 	canStartGame,
@@ -52,6 +56,7 @@ export function LobbyHeaderPanel({
 				<div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
 					<div className="min-w-0">
 						<CardTitle className="truncate text-2xl">{name}</CardTitle>
+						{description && <p className="mt-1 text-sm text-gray-600">{description}</p>}
 						<div className="mt-2 flex flex-wrap items-center gap-3">
 							<Badge className={statusClass}>{status}</Badge>
 							<span className="text-sm text-gray-600 flex items-center gap-1">
@@ -59,6 +64,12 @@ export function LobbyHeaderPanel({
 								{currentPlayers}/{maxPlayers} players
 							</span>
 							{isPrivate && <Badge variant="secondary">Private</Badge>}
+							{hasPassword && (
+								<Badge variant="secondary">
+									<Lock className="w-3 h-3 mr-1" />
+									Protected
+								</Badge>
+							)}
 						</div>
 					</div>
 

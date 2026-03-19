@@ -10,7 +10,6 @@
 import router from '@adonisjs/core/services/router'
 import { middleware } from './kernel.js'
 import transmit from '@adonisjs/transmit/services/main'
-import app from '@adonisjs/core/services/app'
 import './transmit.js'
 
 // Public routes
@@ -18,17 +17,6 @@ router.get('/', '#controllers/simple_lobbies_controller.welcome').as('home')
 
 // Development routes (only in dev mode)
 router.get('/dev/routes', '#controllers/dev_routes_controller.index').as('dev.routes')
-
-if (app.inDev) {
-  router
-    .group(() => {
-      router
-        .get('/server-stats', '#controllers/admin/server_stats_controller.index')
-        .as('admin.server-stats.index')
-    })
-    .prefix('/admin/api')
-    .use(middleware.auth())
-}
 
 // Authentication routes
 router
@@ -68,6 +56,9 @@ router
       .post('/lobbies/leave-on-close', '#controllers/enhanced_lobbies_controller.leaveOnClose')
       .as('lobbies.leave.close')
     router
+      .post('/lobbies/:uuid/heartbeat', '#controllers/enhanced_lobbies_controller.heartbeat')
+      .as('lobbies.heartbeat')
+    router
       .post('/lobbies/:uuid/start', '#controllers/enhanced_lobbies_controller.start')
       .as('lobbies.start')
 
@@ -78,6 +69,12 @@ router
     router
       .post('/lobbies/:uuid/transfer', '#controllers/enhanced_lobbies_controller.transferOwnership')
       .as('lobbies.transfer')
+
+    // Moderation actions
+    router
+      .post('/lobbies/:uuid/close', '#controllers/enhanced_lobbies_controller.adminClose')
+      .use(middleware.moderationGuard())
+      .as('lobbies.close')
 
     // Games routes
     router.get('/games/:uuid', '#controllers/games_controller.show').as('games.show')
@@ -122,11 +119,21 @@ router
       .post('/lobbies/leave-on-close', '#controllers/enhanced_lobbies_controller.leaveOnClose')
       .as('api.lobbies.leave.close')
     router
+      .post('/lobbies/:uuid/heartbeat', '#controllers/enhanced_lobbies_controller.heartbeat')
+      .as('api.lobbies.heartbeat')
+    router
       .post('/lobbies/:uuid/start', '#controllers/enhanced_lobbies_controller.start')
       .as('api.lobbies.start')
+    router
+      .post('/lobbies/:uuid/close', '#controllers/enhanced_lobbies_controller.adminClose')
+      .use(middleware.moderationGuard())
+      .as('api.lobbies.close')
 
     // Games API
+    router.get('/games/me/history', '#controllers/games_controller.myHistory').as('api.games.my.history')
+    router.get('/games/me/stats', '#controllers/games_controller.myStats').as('api.games.my.stats')
     router.get('/games/:uuid', '#controllers/games_controller.apiShow').as('api.games.show')
+    router.get('/games/:uuid/replay', '#controllers/games_controller.replay').as('api.games.replay')
     router
       .get('/games/:uuid/actions', '#controllers/games_controller.getActions')
       .as('api.games.actions')
@@ -139,6 +146,14 @@ router
   })
   .prefix('/api/v1')
   .use(middleware.auth())
+
+// Admin API routes - includes proprietary game modules in catalog
+router
+  .group(() => {
+    router.post('/lobbies/:uuid/close', '#controllers/enhanced_lobbies_controller.adminClose').as('admin.lobbies.close')
+  })
+  .prefix('/admin/api')
+  .use([middleware.auth(), middleware.moderationGuard()])
 
 // Admin API routes - includes proprietary game modules in catalog
 router

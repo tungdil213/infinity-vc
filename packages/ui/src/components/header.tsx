@@ -6,7 +6,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from './primitives/dropdown-menu';
-import { Button } from './primitives/button';
+import { Button, buttonVariants } from './primitives/button';
 import { Badge } from './primitives/badge';
 import {
 	Dialog,
@@ -19,7 +19,21 @@ import {
 } from './primitives/dialog';
 import { Input } from './primitives/input';
 import { Label } from './primitives/label';
-import { Users, Plus, Bell, User, Settings, LogOut, Gamepad2, Wifi, WifiOff, Hash } from 'lucide-react';
+import {
+	Users,
+	Plus,
+	Bell,
+	User,
+	Settings,
+	LogOut,
+	Gamepad2,
+	Wifi,
+	WifiOff,
+	Hash,
+	Globe,
+	Check,
+} from 'lucide-react';
+import { cn } from '../utils';
 
 interface User {
 	uuid: string;
@@ -33,6 +47,11 @@ interface CurrentLobby {
 	status: string;
 	currentPlayers: number;
 	maxPlayers: number;
+}
+
+interface LocaleOption {
+	value: string;
+	label: string;
 }
 
 interface HeaderProps {
@@ -49,6 +68,10 @@ interface HeaderProps {
 	onLogout?: () => void;
 	onProfile?: () => void;
 	onSettings?: () => void;
+	locale?: string;
+	availableLocales?: LocaleOption[];
+	onLocaleChange?: (locale: string) => void;
+	localeLabel?: string;
 	logoHref?: string;
 	logoText?: string;
 }
@@ -67,6 +90,10 @@ export function Header({
 	onLogout,
 	onProfile,
 	onSettings,
+	locale = 'en',
+	availableLocales = [],
+	onLocaleChange,
+	localeLabel = 'Language',
 	logoHref = '/',
 	logoText = '♾️ Infinity Game',
 }: HeaderProps) {
@@ -102,6 +129,8 @@ export function Header({
 		}
 	};
 
+	const selectedLocale = availableLocales.find((option) => option.value === locale);
+
 	return (
 		<>
 			<nav className={`bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-50 ${className}`}>
@@ -127,6 +156,34 @@ export function Header({
 								)}
 							</div>
 
+							{availableLocales.length > 0 && onLocaleChange && (
+								<DropdownMenu>
+									<DropdownMenuTrigger
+										className={cn(
+											buttonVariants({ variant: 'noShadow', size: 'sm' }),
+											'flex items-center gap-2'
+										)}
+									>
+										<Globe className="w-4 h-4" />
+										<span className="hidden sm:inline">{selectedLocale?.label ?? locale.toUpperCase()}</span>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent align="end" className="w-48">
+										<div className="px-2 py-1.5 text-xs text-muted-foreground">{localeLabel}</div>
+										<DropdownMenuSeparator />
+										{availableLocales.map((option) => (
+											<DropdownMenuItem
+												key={option.value}
+												onClick={() => onLocaleChange(option.value)}
+												className="flex items-center justify-between"
+											>
+												<span>{option.label}</span>
+												{option.value === locale && <Check className="w-4 h-4" />}
+											</DropdownMenuItem>
+										))}
+									</DropdownMenuContent>
+								</DropdownMenu>
+							)}
+
 							{user ? (
 								<>
 									{/* Current Lobby Indicator */}
@@ -149,29 +206,32 @@ export function Header({
 									<div className="flex shrink-0 items-center gap-2">
 										<Button onClick={onCreateLobby} size="sm" className="flex items-center gap-2">
 											<Plus className="w-4 h-4" />
-											<span className="hidden sm:inline">Créer</span>
+											<span className="hidden sm:inline">Create</span>
 										</Button>
 
 										<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-											<DialogTrigger asChild>
-												<Button variant="neutral" size="sm" className="flex items-center gap-2">
-													<Hash className="w-4 h-4" />
-													<span className="hidden sm:inline">Rejoindre</span>
-												</Button>
+											<DialogTrigger
+												className={cn(
+													buttonVariants({ variant: 'neutral', size: 'sm' }),
+													'flex items-center gap-2'
+												)}
+											>
+												<Hash className="w-4 h-4" />
+												<span className="hidden sm:inline">Join</span>
 											</DialogTrigger>
 											<DialogContent className="sm:max-w-md">
 												<DialogHeader>
-													<DialogTitle>Rejoindre un lobby</DialogTitle>
-													<DialogDescription>Entrez le code du lobby pour le rejoindre.</DialogDescription>
+													<DialogTitle>Join a lobby</DialogTitle>
+													<DialogDescription>Enter the lobby code to join.</DialogDescription>
 												</DialogHeader>
 												<div className="grid gap-4 py-4">
 													<div className="grid gap-2">
-														<Label htmlFor="lobby-code">Code du lobby</Label>
+														<Label htmlFor="lobby-code">Lobby code</Label>
 														<Input
 															id="lobby-code"
 															value={lobbyCode}
 															onChange={(e) => setLobbyCode(e.target.value)}
-															placeholder="Entrez le code du lobby"
+															placeholder="Enter lobby code"
 															onKeyDown={(e) => e.key === 'Enter' && handleJoinByCode()}
 														/>
 													</div>
@@ -182,7 +242,7 @@ export function Header({
 														disabled={!lobbyCode.trim() || isJoining}
 														className="w-full"
 													>
-														{isJoining ? 'Connexion...' : 'Rejoindre'}
+														{isJoining ? 'Joining...' : 'Join'}
 													</Button>
 												</DialogFooter>
 											</DialogContent>
@@ -206,11 +266,14 @@ export function Header({
 
 									{/* User Menu */}
 									<DropdownMenu>
-										<DropdownMenuTrigger asChild>
-											<Button variant="noShadow" size="sm" className="flex max-w-full items-center gap-2">
-												<User className="w-4 h-4" />
-												<span className="hidden max-w-32 truncate md:inline">{user.fullName}</span>
-											</Button>
+										<DropdownMenuTrigger
+											className={cn(
+												buttonVariants({ variant: 'noShadow', size: 'sm' }),
+												'flex max-w-full items-center gap-2'
+											)}
+										>
+											<User className="w-4 h-4" />
+											<span className="hidden max-w-32 truncate md:inline">{user.fullName}</span>
 										</DropdownMenuTrigger>
 										<DropdownMenuContent align="end" className="w-56">
 											<div className="px-2 py-1.5">
@@ -220,16 +283,16 @@ export function Header({
 											<DropdownMenuSeparator />
 											<DropdownMenuItem onClick={onProfile}>
 												<User className="w-4 h-4 mr-2" />
-												Profil
+												Profile
 											</DropdownMenuItem>
 											<DropdownMenuItem onClick={onSettings}>
 												<Settings className="w-4 h-4 mr-2" />
-												Paramètres
+												Settings
 											</DropdownMenuItem>
 											<DropdownMenuSeparator />
 											<DropdownMenuItem onClick={onLogout}>
 												<LogOut className="w-4 h-4 mr-2" />
-												Déconnexion
+												Log out
 											</DropdownMenuItem>
 										</DropdownMenuContent>
 									</DropdownMenu>
@@ -243,15 +306,15 @@ export function Header({
 										className="flex items-center gap-2"
 									>
 										<Users className="w-4 h-4" />
-										<span className="hidden sm:inline">Voir les lobbies</span>
+										<span className="hidden sm:inline">Browse lobbies</span>
 										<span className="sm:hidden">Lobbies</span>
 									</Button>
 
 									{/* Auth Buttons */}
 									<Button onClick={onLogin} variant="neutral">
-										Connexion
+										Log in
 									</Button>
-									<Button onClick={onRegister}>S'inscrire</Button>
+									<Button onClick={onRegister}>Sign up</Button>
 								</div>
 							)}
 						</div>

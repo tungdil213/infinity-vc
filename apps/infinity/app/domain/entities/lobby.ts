@@ -3,6 +3,7 @@ import { LobbyStatus } from '#domain/value_objects/lobby_status'
 import { type PlayerInterface } from '#domain/interfaces/player_interface'
 import { LobbyValidationException } from '#exceptions/domain_exceptions'
 import { Result } from '#shared/result'
+import { createHash, timingSafeEqual } from 'node:crypto'
 import {
   LobbyCreatedEvent,
   PlayerJoinedLobbyEvent,
@@ -12,9 +13,11 @@ import {
 export interface LobbyData {
   uuid?: string
   name: string
+  description?: string
   creator: PlayerInterface
   maxPlayers?: number
   isPrivate?: boolean
+  passwordHash?: string
   gameType?: string
   gameSettings?: Record<string, unknown>
 }
@@ -26,9 +29,11 @@ export default class Lobby extends BaseEntity {
   private constructor(
     private _uuid: string,
     private _name: string,
+    private _description: string = '',
     private _createdBy: string,
     private _maxPlayers: number = 4,
     private _isPrivate: boolean = false,
+    private _passwordHash?: string,
     private _gameType: string = 'love-letter',
     private _gameSettings: Record<string, unknown> = {},
     private _createdAt: Date = new Date()
@@ -42,14 +47,17 @@ export default class Lobby extends BaseEntity {
 
     // Validation
     Lobby.validateName(data.name)
+    Lobby.validateDescription(data.description)
     Lobby.validateMaxPlayers(data.maxPlayers || 4)
 
     const lobby = new Lobby(
       uuid,
       data.name.trim(),
+      data.description?.trim() ?? '',
       data.creator.uuid,
       data.maxPlayers || 4,
       data.isPrivate || false,
+      data.passwordHash,
       data.gameType || 'love-letter',
       data.gameSettings || {}
     )
@@ -77,14 +85,18 @@ export default class Lobby extends BaseEntity {
     isPrivate: boolean = false,
     gameType: string = 'love-letter',
     gameSettings: Record<string, unknown> = {},
-    createdAt?: Date
+    createdAt?: Date,
+    description: string = '',
+    passwordHash?: string
   ): Lobby {
     const lobby = new Lobby(
       uuid,
       name,
+      description,
       createdBy,
       maxPlayers,
       isPrivate,
+      passwordHash,
       gameType,
       gameSettings,
       createdAt || new Date()
@@ -108,6 +120,10 @@ export default class Lobby extends BaseEntity {
     return this._createdBy
   }
 
+  get description(): string {
+    return this._description
+  }
+
   get creator(): PlayerInterface {
     return this._players.find((p) => p.uuid === this._createdBy)!
   }
@@ -126,6 +142,14 @@ export default class Lobby extends BaseEntity {
 
   get isPrivate(): boolean {
     return this._isPrivate
+  }
+
+  get hasPassword(): boolean {
+    return typeof this._passwordHash === 'string' && this._passwordHash.length > 0
+  }
+
+  get passwordHash(): string | undefined {
+    return this._passwordHash
   }
 
   get gameType(): string {
@@ -275,6 +299,32 @@ export default class Lobby extends BaseEntity {
     return this._players.length >= this._maxPlayers
   }
 
+  verifyPassword(password?: string): boolean {
+    if (!this.hasPassword) {
+      return true
+    }
+
+    if (!password || password.trim().length === 0) {
+      return false
+    }
+
+    const providedHash = Lobby.hashPassword(password)
+    const expectedHash = this._passwordHash as string
+
+    const providedBuffer = Buffer.from(providedHash)
+    const expectedBuffer = Buffer.from(expectedHash)
+
+    if (providedBuffer.length !== expectedBuffer.length) {
+      return false
+    }
+
+    return timingSafeEqual(providedBuffer, expectedBuffer)
+  }
+
+  static hashPassword(password: string): string {
+    return createHash('sha256').update(password).digest('hex')
+  }
+
   private validateCanAddPlayer(player: PlayerInterface): void {
     if (this.hasPlayer(player.uuid)) {
       throw new LobbyValidationException('Player is already in the lobby')
@@ -284,7 +334,7 @@ export default class Lobby extends BaseEntity {
       throw new LobbyValidationException('Lobby is full')
     }
 
-    if (!this.isOpen) {
+    if (!this.isOpen()) {
       throw new LobbyValidationException('Lobby is not accepting new players')
     }
   }
@@ -316,6 +366,19 @@ export default class Lobby extends BaseEntity {
     }
   }
 
+  private static validateDescription(description?: string): void {
+    if (typeof description !== 'string') {
+      return
+    }
+
+    if (description.trim().length > 255) {
+      throw new LobbyValidationException(
+        'Lobby description must be less than or equal to 255 characters',
+        'description'
+      )
+    }
+  }
+
   private static validateMaxPlayers(maxPlayers: number): void {
     if (maxPlayers < 2) {
       throw new LobbyValidationException(
@@ -330,11 +393,13 @@ export default class Lobby extends BaseEntity {
     return {
       uuid: this._uuid,
       name: this._name,
+      description: this._description,
       creator: this.creator,
       players: this._players,
       maxPlayers: this._maxPlayers,
       currentPlayers: this._players.length,
       isPrivate: this._isPrivate,
+      hasPassword: this.hasPassword,
       gameType: this._gameType,
       gameSettings: this._gameSettings,
       status: this.status,

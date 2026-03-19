@@ -16,10 +16,16 @@ export default class LobbyModel extends BaseModel {
   declare name: string
 
   @column()
+  declare description: string | null
+
+  @column()
   declare maxPlayers: number
 
   @column()
   declare isPrivate: boolean
+
+  @column({ columnName: 'password_hash', serializeAs: null })
+  declare passwordHash: string | null
 
   @column()
   declare gameType: string

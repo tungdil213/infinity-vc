@@ -29,7 +29,7 @@ function createTransmitClient(): Transmit {
     baseUrl: browserGlobals.location?.origin ?? '',
     maxReconnectAttempts: 50,
     beforeSubscribe: (request: RequestInit) => {
-      // Ajouter les headers d'authentification si nécessaire
+      // Add authentication headers when needed
       const csrfToken = getCsrfToken()
       if (csrfToken) {
         if (!request.headers) {
@@ -39,7 +39,7 @@ function createTransmitClient(): Transmit {
       }
     },
     beforeUnsubscribe: (request: RequestInit) => {
-      // Ajouter les headers d'authentification si nécessaire
+      // Add authentication headers when needed
       const csrfToken = getCsrfToken()
       if (csrfToken) {
         if (!request.headers) {
@@ -49,19 +49,19 @@ function createTransmitClient(): Transmit {
       }
     },
     onReconnectAttempt: (attempt) => {
-      console.log(`Tentative de reconnexion Transmit #${attempt}`)
+      console.log(`Transmit reconnect attempt #${attempt}`)
     },
     onReconnectFailed: () => {
-      console.error('Échec de la reconnexion Transmit')
+      console.error('Transmit reconnect failed')
     },
     onSubscribeFailed: (response) => {
-      console.error('Échec de souscription Transmit:', response)
+      console.error('Transmit subscription failed:', response)
     },
     onSubscription: (channel) => {
-      console.log(`Souscription Transmit réussie au channel: ${channel}`)
+      console.log(`Transmit subscribed to channel: ${channel}`)
     },
     onUnsubscription: (channel) => {
-      console.log(`Désouscription Transmit du channel: ${channel}`)
+      console.log(`Transmit unsubscribed from channel: ${channel}`)
     },
   })
 
@@ -107,7 +107,7 @@ export function getTransmitClientStatus(): TransmitClientStatus {
 }
 
 /**
- * Interface pour les événements de lobby reçus via Transmit
+ * Lobby event shape received through Transmit
  */
 export interface LobbyTransmitEvent {
   type: string
@@ -127,7 +127,7 @@ export interface LobbyTransmitEvent {
 }
 
 /**
- * Service de gestion des événements de lobby via Transmit
+ * Lobby event subscription service based on Transmit
  */
 export class TransmitLobbyClient {
   private subscriptions = new Map<string, Subscription>()
@@ -154,7 +154,7 @@ export class TransmitLobbyClient {
         this.subscriptions.delete(channelName)
       }
 
-      throw new Error(`Échec de souscription Transmit au channel: ${channelName}`)
+      throw new Error(`Failed to subscribe to Transmit channel: ${channelName}`)
     }
 
     return () => {
@@ -170,14 +170,14 @@ export class TransmitLobbyClient {
   }
 
   /**
-   * S'abonner aux événements globaux des lobbies
+   * Subscribe to global lobby events
    */
   async subscribeToLobbies(callback: (event: LobbyTransmitEvent) => void): Promise<() => void> {
     return this.subscribeToChannel('lobbies', callback)
   }
 
   /**
-   * S'abonner aux événements d'un lobby spécifique
+   * Subscribe to events for a specific lobby
    */
   async subscribeToLobby(
     lobbyUuid: string,
@@ -188,7 +188,7 @@ export class TransmitLobbyClient {
   }
 
   /**
-   * S'abonner aux événements d'une partie spécifique
+   * Subscribe to events for a specific game
    */
   async subscribeToGame(gameId: string, callback: (event: any) => void): Promise<() => void> {
     const channelName = `games/${gameId}`
@@ -196,7 +196,7 @@ export class TransmitLobbyClient {
   }
 
   /**
-   * S'abonner aux notifications d'un utilisateur
+   * Subscribe to notifications for a specific user
    */
   async subscribeToUserNotifications(
     userUuid: string,
@@ -207,7 +207,7 @@ export class TransmitLobbyClient {
   }
 
   /**
-   * Se désabonner d'un channel spécifique
+   * Unsubscribe from a specific channel
    */
   async unsubscribeFrom(channelName: string): Promise<void> {
     const subscription = this.subscriptions.get(channelName)
@@ -218,7 +218,7 @@ export class TransmitLobbyClient {
   }
 
   /**
-   * Se désabonner de tous les channels
+   * Unsubscribe from all channels
    */
   async unsubscribeAll(): Promise<void> {
     const promises = Array.from(this.subscriptions.values()).map((subscription) =>
@@ -229,12 +229,12 @@ export class TransmitLobbyClient {
   }
 
   /**
-   * Obtenir la liste des souscriptions actives
+   * Return active subscription channel names
    */
   getActiveSubscriptions(): string[] {
     return Array.from(this.subscriptions.keys())
   }
 }
 
-// Instance globale du client
+// Global client instance
 export const transmitLobbyClient = new TransmitLobbyClient()

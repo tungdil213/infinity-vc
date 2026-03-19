@@ -94,7 +94,7 @@ export class DatabaseGameRepository implements GameRepository {
 
   async findFinishedGames(): Promise<Game[]> {
     const models = await GameModel.query()
-      .where('status', GameStatus.FINISHED)
+      .whereIn('status', [GameStatus.FINISHED, GameStatus.ABANDONED])
       .where('is_archived', false)
       .orderBy('started_at', 'desc')
 

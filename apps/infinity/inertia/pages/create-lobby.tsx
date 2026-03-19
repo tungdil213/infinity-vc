@@ -221,7 +221,7 @@ export default function CreateLobby({
                   {selectedGame && (
                     <p className="text-sm text-muted-foreground">
                       {selectedGame.description} ({selectedGame.minPlayers}-
-                      {selectedGame.maxPlayers} joueurs)
+                      {selectedGame.maxPlayers} players)
                     </p>
                   )}
                 </div>

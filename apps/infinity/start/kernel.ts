@@ -53,5 +53,6 @@ router.use([
 export const middleware = router.named({
   auth: () => import('#middleware/auth_middleware'),
   adminGuard: () => import('#middleware/admin_guard_middleware'),
+  moderationGuard: () => import('#middleware/moderation_guard_middleware'),
   loginThrottle: () => import('#middleware/login_rate_limit_middleware'),
 })

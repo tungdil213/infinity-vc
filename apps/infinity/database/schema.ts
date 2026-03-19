@@ -35,7 +35,7 @@ export class GameSchema extends BaseModel {
 }
 
 export class LobbySchema extends BaseModel {
-  static $columns = ['availableActions', 'createdAt', 'createdBy', 'deletedAt', 'gameSettings', 'gameType', 'id', 'isPrivate', 'maxPlayers', 'name', 'status', 'updatedAt', 'uuid'] as const
+  static $columns = ['availableActions', 'createdAt', 'createdBy', 'deletedAt', 'description', 'gameSettings', 'gameType', 'id', 'isPrivate', 'maxPlayers', 'name', 'passwordHash', 'status', 'updatedAt', 'uuid'] as const
   $columns = LobbySchema.$columns
   @column()
   declare availableActions: any | null
@@ -45,6 +45,8 @@ export class LobbySchema extends BaseModel {
   declare createdBy: string
   @column.dateTime()
   declare deletedAt: DateTime | null
+  @column()
+  declare description: string | null
   @column()
   declare gameSettings: string
   @column()
@@ -57,6 +59,8 @@ export class LobbySchema extends BaseModel {
   declare maxPlayers: number
   @column()
   declare name: string
+  @column()
+  declare passwordHash: string | null
   @column()
   declare status: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
@@ -104,7 +108,7 @@ export class PlayerSchema extends BaseModel {
 }
 
 export class UserSchema extends BaseModel {
-  static $columns = ['createdAt', 'deletedAt', 'email', 'fullName', 'id', 'password', 'updatedAt', 'userUuid'] as const
+  static $columns = ['createdAt', 'deletedAt', 'email', 'fullName', 'id', 'password', 'role', 'updatedAt', 'userUuid'] as const
   $columns = UserSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime | null
@@ -118,6 +122,8 @@ export class UserSchema extends BaseModel {
   declare id: number
   @column({ serializeAs: null })
   declare password: string
+  @column()
+  declare role: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
   @column()

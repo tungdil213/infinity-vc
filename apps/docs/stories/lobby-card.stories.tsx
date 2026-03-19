@@ -18,6 +18,7 @@ const meta: Meta<typeof LobbyCard> = {
 		onView: { action: 'viewed' },
 		onShare: { action: 'shared' },
 		onStart: { action: 'started' },
+		onClose: { action: 'closed' },
 		onKick: { action: 'kicked' },
 		onSettings: { action: 'settings' },
 	},
@@ -29,12 +30,13 @@ type Story = StoryObj<typeof meta>;
 const mockCurrentUser = {
 	uuid: 'user-123',
 	nickName: 'PlayerOne',
+	role: 'MODERATOR' as const,
 };
 
 const baseLobby: LobbyData = {
 	uuid: 'lobby-123',
 	name: 'Epic Battle Arena',
-	description: 'Une bataille épique pour 4 joueurs dans un monde fantastique',
+	description: 'An epic battle for 4 players in a fantasy world',
 	status: 'WAITING',
 	currentPlayers: 2,
 	maxPlayers: 4,
@@ -225,7 +227,7 @@ export const LongDescription: Story = {
 			...baseLobby,
 			name: 'Super Ultra Mega Epic Battle Arena Championship Tournament',
 			description:
-				'Une bataille épique et intense qui se déroule dans un monde fantastique rempli de magie et de créatures mystiques. Les joueurs devront faire preuve de stratégie, de courage et de coopération pour remporter la victoire dans cette aventure palpitante qui les mènera à travers des donjons dangereux et des combats spectaculaires.',
+				'An intense and epic battle set in a fantasy world filled with magic and mystical creatures. Players will need strategy, courage, and cooperation to claim victory in this thrilling adventure through dangerous dungeons and spectacular fights.',
 		},
 		currentUser: mockCurrentUser,
 		variant: 'detailed',

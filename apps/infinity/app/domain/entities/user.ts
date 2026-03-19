@@ -1,5 +1,10 @@
 import { BaseEntity } from '#domain/entities/base_entity'
 import { DomainValidationException } from '#exceptions/domain_exceptions'
+import {
+  type UserRole,
+  USER_ROLES,
+  normalizeUserRole,
+} from '#domain/value_objects/user_role'
 
 export interface UserData {
   uuid?: string
@@ -12,6 +17,7 @@ export interface UserData {
   avatarUrl?: string
   emailVerifiedAt?: Date
   createdAt?: Date
+  role?: UserRole
 }
 
 export default class User extends BaseEntity {
@@ -25,7 +31,8 @@ export default class User extends BaseEntity {
     private _isEmailVerified: boolean = false,
     private _avatarUrl?: string,
     private _emailVerifiedAt?: Date,
-    private _createdAt: Date = new Date()
+    private _createdAt: Date = new Date(),
+    private _role: UserRole = USER_ROLES.PLAYER
   ) {
     super()
   }
@@ -52,7 +59,8 @@ export default class User extends BaseEntity {
       data.isEmailVerified || false,
       data.avatarUrl,
       data.emailVerifiedAt,
-      data.createdAt || new Date()
+      data.createdAt || new Date(),
+      normalizeUserRole(data.role)
     )
   }
 
@@ -65,7 +73,8 @@ export default class User extends BaseEntity {
     password: string,
     avatarUrl?: string,
     emailVerifiedAt?: Date,
-    createdAt?: Date
+    createdAt?: Date,
+    role?: UserRole
   ): User {
     return new User(
       uuid,
@@ -77,7 +86,8 @@ export default class User extends BaseEntity {
       false, // isEmailVerified
       avatarUrl,
       emailVerifiedAt,
-      createdAt || new Date()
+      createdAt || new Date(),
+      normalizeUserRole(role)
     )
   }
 
@@ -124,6 +134,10 @@ export default class User extends BaseEntity {
 
   get createdAt(): Date {
     return this._createdAt
+  }
+
+  get role(): UserRole {
+    return this._role
   }
 
   // Methods
@@ -197,6 +211,7 @@ export default class User extends BaseEntity {
       emailVerifiedAt: this._emailVerifiedAt,
       isEmailVerified: this.isEmailVerified,
       createdAt: this._createdAt,
+      role: this._role,
     }
   }
 }

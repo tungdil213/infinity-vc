@@ -1,17 +1,17 @@
 export enum LobbyStatus {
-  OPEN = 'OPEN', // Lobby créé, accepte les joueurs
-  WAITING = 'WAITING', // 1 joueur, en attente d'autres
-  READY = 'READY', // 2-3 joueurs, peut démarrer
-  FULL = 'FULL', // 4 joueurs, complet
-  STARTING = 'STARTING', // Démarrage en cours
+  OPEN = 'OPEN', // Lobby created, accepts players
+  WAITING = 'WAITING', // 1 player, waiting for others
+  READY = 'READY', // 2-3 players, can start
+  FULL = 'FULL', // 4 players, full
+  STARTING = 'STARTING', // Starting in progress
 }
 
 export const LOBBY_STATUS_DESCRIPTIONS = {
-  [LobbyStatus.OPEN]: 'Lobby ouvert - En attente de joueurs',
-  [LobbyStatus.WAITING]: 'En attente de joueurs supplémentaires',
-  [LobbyStatus.READY]: 'Prêt à démarrer (2-3 joueurs)',
-  [LobbyStatus.FULL]: 'Lobby complet (4 joueurs)',
-  [LobbyStatus.STARTING]: 'Démarrage de la partie en cours',
+  [LobbyStatus.OPEN]: 'Open lobby - waiting for players',
+  [LobbyStatus.WAITING]: 'Waiting for more players',
+  [LobbyStatus.READY]: 'Ready to start (2-3 players)',
+  [LobbyStatus.FULL]: 'Full lobby (4 players)',
+  [LobbyStatus.STARTING]: 'Game startup in progress',
 } as const
 
 export type LobbyStatusType = keyof typeof LobbyStatus

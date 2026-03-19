@@ -11,6 +11,7 @@ interface Player {
 interface Lobby {
   uuid: string
   name: string
+  description?: string
   status: string
   currentPlayers: number
   maxPlayers: number
@@ -43,7 +44,13 @@ export default function Lobby({ lobby, user }: LobbyProps) {
       <Head title={`Lobby - ${lobby.name}`} />
 
       <div className="min-h-screen bg-secondary-background">
-        <GameLobby lobbyUuid={lobby.uuid} currentUser={user} />
+        <GameLobby
+          lobbyUuid={lobby.uuid}
+          lobbyName={lobby.name}
+          lobbyDescription={lobby.description}
+          hasPassword={lobby.hasPassword}
+          currentUser={user}
+        />
       </div>
     </Layout>
   )

@@ -33,7 +33,7 @@ export interface TransmitContextType {
   removeEventListener: (type: string, handler: (event: TransmitEvent) => void) => void
 }
 
-// Contexte par défaut pour éviter les erreurs
+// Default context to avoid runtime crashes when provider is missing
 const defaultTransmitContext: TransmitContextType = {
   isConnected: false,
   error: null,
@@ -100,8 +100,7 @@ export function TransmitProvider({ children, enabled = true }: TransmitProviderP
       transmitClient.off('disconnected', handleDisconnected)
       transmitClient.off('reconnecting', handleReconnecting)
 
-      console.log('TransmitProvider: Nettoyage des souscriptions')
-      // Cleanup lors du démontage
+      // Cleanup on unmount
       transmitLobbyClient.unsubscribeAll().catch(console.error)
     }
   }, [enabled])
@@ -109,13 +108,14 @@ export function TransmitProvider({ children, enabled = true }: TransmitProviderP
   const subscribeToLobbies = async (callback: (event: LobbyTransmitEvent) => void) => {
     try {
       if (!isConnected) {
-        throw new Error('Transmit non connecté')
+        throw new Error('Transmit is not connected')
       }
       const unsubscribe = await transmitLobbyClient.subscribeToLobbies(callback)
       return unsubscribe
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur de souscription aux lobbies'
-      console.error('TransmitProvider: Erreur subscribeToLobbies:', errorMessage)
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to subscribe to lobbies feed'
+      console.error('TransmitProvider: subscribeToLobbies failed:', errorMessage)
       setError(errorMessage)
       throw new Error(errorMessage)
     }
@@ -124,13 +124,14 @@ export function TransmitProvider({ children, enabled = true }: TransmitProviderP
   const subscribeToGame = async (gameId: string, callback: (event: any) => void) => {
     try {
       if (!isConnected) {
-        throw new Error('Transmit non connecté')
+        throw new Error('Transmit is not connected')
       }
       const unsubscribe = await transmitLobbyClient.subscribeToGame(gameId, callback)
       return unsubscribe
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur de souscription au jeu'
-      console.error('TransmitProvider: Erreur subscribeToGame:', errorMessage)
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to subscribe to game feed'
+      console.error('TransmitProvider: subscribeToGame failed:', errorMessage)
       setError(errorMessage)
       throw new Error(errorMessage)
     }
@@ -142,13 +143,14 @@ export function TransmitProvider({ children, enabled = true }: TransmitProviderP
   ) => {
     try {
       if (!isConnected) {
-        throw new Error('Transmit non connecté')
+        throw new Error('Transmit is not connected')
       }
       const unsubscribe = await transmitLobbyClient.subscribeToLobby(lobbyUuid, callback)
       return unsubscribe
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur de souscription au lobby'
-      console.error('TransmitProvider: Erreur subscribeToLobby:', errorMessage)
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to subscribe to lobby feed'
+      console.error('TransmitProvider: subscribeToLobby failed:', errorMessage)
       setError(errorMessage)
       throw new Error(errorMessage)
     }
@@ -157,14 +159,14 @@ export function TransmitProvider({ children, enabled = true }: TransmitProviderP
   const subscribeToUserNotifications = async (userUuid: string, callback: (event: any) => void) => {
     try {
       if (!isConnected) {
-        throw new Error('Transmit non connecté')
+        throw new Error('Transmit is not connected')
       }
       const unsubscribe = await transmitLobbyClient.subscribeToUserNotifications(userUuid, callback)
       return unsubscribe
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : 'Erreur de souscription aux notifications'
-      console.error('TransmitProvider: Erreur subscribeToUserNotifications:', errorMessage)
+        err instanceof Error ? err.message : 'Failed to subscribe to user notifications'
+      console.error('TransmitProvider: subscribeToUserNotifications failed:', errorMessage)
       setError(errorMessage)
       throw new Error(errorMessage)
     }
@@ -174,8 +176,8 @@ export function TransmitProvider({ children, enabled = true }: TransmitProviderP
     try {
       await transmitLobbyClient.unsubscribeFrom(channelName)
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur de désouscription'
-      console.error('TransmitProvider: Erreur unsubscribeFrom:', errorMessage)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to unsubscribe from channel'
+      console.error('TransmitProvider: unsubscribeFrom failed:', errorMessage)
       setError(errorMessage)
     }
   }
@@ -184,8 +186,8 @@ export function TransmitProvider({ children, enabled = true }: TransmitProviderP
     try {
       await transmitLobbyClient.unsubscribeAll()
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur de désouscription globale'
-      console.error('TransmitProvider: Erreur unsubscribeAll:', errorMessage)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to unsubscribe from all channels'
+      console.error('TransmitProvider: unsubscribeAll failed:', errorMessage)
       setError(errorMessage)
     }
   }
@@ -226,9 +228,7 @@ export function TransmitProvider({ children, enabled = true }: TransmitProviderP
 export function useTransmit(): TransmitContextType {
   const context = useContext(TransmitContext)
   if (!context || context === defaultTransmitContext) {
-    console.warn(
-      'useTransmit: Utilisation du contexte par défaut, TransmitProvider peut-être manquant'
-    )
+    console.warn('useTransmit: using default context, TransmitProvider may be missing')
     return defaultTransmitContext
   }
   return context

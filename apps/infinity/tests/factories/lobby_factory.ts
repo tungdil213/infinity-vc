@@ -39,6 +39,7 @@ export class LobbyFactory {
       gameType: 'love-letter',
       maxPlayers: 4,
       isPrivate: false,
+      hasPassword: false,
       status: 'OPEN',
       currentPlayers: 1,
       hasAvailableSlots: true,

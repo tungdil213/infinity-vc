@@ -90,14 +90,14 @@ export function PlayerAvatar({
 			{showCreatorBadge && isCreator && (
 				<Badge variant="neutral" className="text-xs px-1 py-0">
 					<Crown className="h-2 w-2 mr-1 text-yellow-500" />
-					Créateur
+					Host
 				</Badge>
 			)}
-			{showYouBadge && isCurrentUser && <Badge className="text-xs px-1 py-0 bg-blue-100 text-blue-800">Vous</Badge>}
+			{showYouBadge && isCurrentUser && <Badge className="text-xs px-1 py-0 bg-blue-100 text-blue-800">You</Badge>}
 			{showReadyBadge && player.isReady && (
 				<Badge className="text-xs px-1 py-0 bg-green-100 text-green-800">
 					<Check className="h-2 w-2 mr-1" />
-					Prêt
+					Ready
 				</Badge>
 			)}
 		</div>
@@ -107,10 +107,10 @@ export function PlayerAvatar({
 		<div className="text-center">
 			<div className="font-medium">{player.nickName}</div>
 			<div className="text-xs text-gray-500 mt-1">
-				{player.isOnline ? 'En ligne' : 'Hors ligne'}
-				{player.isReady && ' • Prêt'}
-				{isCreator && ' • Créateur'}
-				{isCurrentUser && ' • Vous'}
+				{player.isOnline ? 'Online' : 'Offline'}
+				{player.isReady && ' • Ready'}
+				{isCreator && ' • Host'}
+				{isCurrentUser && ' • You'}
 			</div>
 		</div>
 	) : null;
@@ -213,7 +213,7 @@ export function PlayerAvatarGroup({
 						</TooltipTrigger>
 						<TooltipContent>
 							<div>
-								<div className="font-medium">Autres joueurs ({remainingCount})</div>
+								<div className="font-medium">Other players ({remainingCount})</div>
 								<div className="text-xs text-gray-500 mt-1">
 									{players
 										.slice(maxVisible)
@@ -289,8 +289,8 @@ export function PlayerList({
 							<div>
 								<div className="font-medium text-gray-900">{player.nickName}</div>
 								<div className="text-sm text-gray-500">
-									{player.isOnline ? 'En ligne' : 'Hors ligne'}
-									{player.isReady && ' • Prêt à jouer'}
+									{player.isOnline ? 'Online' : 'Offline'}
+									{player.isReady && ' • Ready to play'}
 								</div>
 							</div>
 						</div>
@@ -307,7 +307,7 @@ export function PlayerList({
 												<Minus className="h-4 w-4" />
 											</button>
 										</TooltipTrigger>
-										<TooltipContent>Expulser {player.nickName}</TooltipContent>
+										<TooltipContent>Kick {player.nickName}</TooltipContent>
 									</Tooltip>
 								</TooltipProvider>
 							</div>

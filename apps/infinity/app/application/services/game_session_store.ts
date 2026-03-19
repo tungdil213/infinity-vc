@@ -1,4 +1,4 @@
-import type { GameSession } from '#application/services/game_engine_types'
+import type { GameReplayStep, GameSession } from '#application/services/game_engine_types'
 
 export class GameSessionStore {
   private sessions = new Map<string, GameSession>()
@@ -16,6 +16,24 @@ export class GameSessionStore {
     if (!session) return undefined
 
     session.state = state
+    this.sessions.set(gameId, session)
+    return session
+  }
+
+  setReplayTimeline(gameId: string, timeline: GameReplayStep[]): GameSession | undefined {
+    const session = this.sessions.get(gameId)
+    if (!session) return undefined
+
+    session.timeline = [...timeline]
+    this.sessions.set(gameId, session)
+    return session
+  }
+
+  appendReplayStep(gameId: string, step: GameReplayStep): GameSession | undefined {
+    const session = this.sessions.get(gameId)
+    if (!session) return undefined
+
+    session.timeline = [...(session.timeline ?? []), step]
     this.sessions.set(gameId, session)
     return session
   }

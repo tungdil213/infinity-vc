@@ -15,6 +15,7 @@ import { StartGameUseCase } from '#application/use_cases/start_game_use_case'
 import { ListLobbiesUseCase } from '#application/use_cases/list_lobbies_use_case'
 import { ShowLobbyUseCase } from '#application/use_cases/show_lobby_use_case'
 import { KickPlayerUseCase } from '#application/use_cases/kick_player_use_case'
+import { CloseLobbyUseCase } from '#application/use_cases/close_lobby_use_case'
 import { UpdateLobbySettingsUseCase } from '#application/use_cases/update_lobby_settings_use_case'
 import { SetPlayerReadyUseCase } from '#application/use_cases/set_player_ready_use_case'
 import { ListGameCatalogUseCase } from '#application/use_cases/list_game_catalog_use_case'
@@ -22,6 +23,7 @@ import { LobbyEventService } from '#application/services/lobby_event_service'
 import { EventBusDomainEventPublisher } from '#application/services/domain_event_publisher'
 import { eventBridgeService } from '#infrastructure/transcript/index'
 import { initializeAppGameLauncher } from '#infrastructure/game_engine/app_game_launcher'
+import { LobbyPresenceService } from '#application/services/lobby_presence_service'
 
 export default class AppProvider {
   constructor(protected app: ApplicationService) {}
@@ -88,6 +90,10 @@ export default class AppProvider {
       return new LobbyEventService(hybridLobbyService)
     })
 
+    this.app.container.singleton(LobbyPresenceService, () => {
+      return new LobbyPresenceService()
+    })
+
     // Register use cases as singletons with dependency injection
     this.app.container.singleton(RegisterUserUseCase, async (resolver) => {
       const userRepository = await resolver.make(DatabaseUserRepository)
@@ -149,6 +155,12 @@ export default class AppProvider {
       const playerRepository = await resolver.make(DatabasePlayerRepository)
       const domainEventPublisher = await resolver.make(EventBusDomainEventPublisher)
       return new KickPlayerUseCase(hybridLobbyService, playerRepository, domainEventPublisher)
+    })
+
+    this.app.container.singleton(CloseLobbyUseCase, async (resolver) => {
+      const hybridLobbyService = await resolver.make(HybridLobbyService)
+      const eventService = await resolver.make(LobbyEventService)
+      return new CloseLobbyUseCase(hybridLobbyService, eventService)
     })
 
     this.app.container.singleton(UpdateLobbySettingsUseCase, async (resolver) => {

@@ -7,6 +7,7 @@ import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { createInertiaApp } from '@inertiajs/react'
 import { resolvePageComponent } from '@adonisjs/inertia/helpers'
+import { I18nProvider } from '../i18n/provider'
 
 const appName = (import.meta.env?.VITE_APP_NAME as string) || 'AdonisJS'
 
@@ -20,6 +21,11 @@ createInertiaApp({
   },
 
   setup({ el, App, props }) {
-    createRoot(el).render(<App {...props} />)
+    const sharedLocale = (props.initialPage.props as { locale?: string } | undefined)?.locale
+    createRoot(el).render(
+      <I18nProvider initialLocale={sharedLocale}>
+        <App {...props} />
+      </I18nProvider>
+    )
   },
 })

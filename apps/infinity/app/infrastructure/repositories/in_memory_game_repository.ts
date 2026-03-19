@@ -56,7 +56,7 @@ export class InMemoryGameRepository implements GameRepository {
   async findFinishedGames(): Promise<Game[]> {
     const result: Game[] = []
     for (const game of this.games.values()) {
-      if (game.status === GameStatus.FINISHED) {
+      if ([GameStatus.FINISHED, GameStatus.ABANDONED].includes(game.status)) {
         result.push(game)
       }
     }

@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { useTransmit } from '../contexts/TransmitContext'
 import { LobbyService } from '../services/lobby_service'
 
-// Instance globale pour éviter les duplications
+// Global instance to avoid duplicate service creation
 let globalLobbyService: LobbyService | null = null
 
 export function disposeLobbyService(): void {
@@ -15,27 +15,25 @@ export function disposeLobbyService(): void {
 }
 
 /**
- * Hook pour utiliser le service de lobbies avec Transmit
+ * Hook exposing the lobby service synchronized with the Transmit context.
  */
 export function useLobbyService() {
   const transmitContext = useTransmit()
 
-  // Créer ou récupérer le service
+  // Create or reuse service instance
   const service = useMemo(() => {
-    // Réutiliser l'instance globale si elle existe déjà
+    // Reuse global instance when available
     if (globalLobbyService) {
-      console.log("useLobbyService: Réutilisation de l'instance globale")
       return globalLobbyService
     }
 
-    // Créer une nouvelle instance une seule fois, même si la connexion Transmit
-    // n'est pas encore établie. Le contexte sera synchronisé ensuite via updateContext.
-    console.log("useLobbyService: Création d'une nouvelle instance LobbyService")
+    // Create a single instance even before Transmit is fully connected.
+    // Context updates are pushed afterward via updateContext.
     globalLobbyService = new LobbyService(transmitContext)
     return globalLobbyService
   }, [transmitContext])
 
-  // Toujours synchroniser le service avec la dernière version du contexte Transmit
+  // Keep service synchronized with latest Transmit context
   useEffect(() => {
     if (globalLobbyService) {
       globalLobbyService.updateContext(transmitContext)

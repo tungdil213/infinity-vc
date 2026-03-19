@@ -6,7 +6,7 @@ export interface GameRepository extends BaseRepository<Game> {
   findByPlayer(playerUuid: string): Promise<Game[]>
   findByStatus(status: GameStatus): Promise<Game[]>
   findActiveGames(): Promise<Game[]> // IN_PROGRESS, PAUSED
-  findFinishedGames(): Promise<Game[]>
+  findFinishedGames(): Promise<Game[]> // FINISHED, ABANDONED
   findRecentGames(limit?: number): Promise<Game[]>
 
   // Statistiques

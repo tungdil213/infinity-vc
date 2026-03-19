@@ -10,8 +10,10 @@ import { safeSystemError } from '#shared/error_sanitizer'
 export interface CreateLobbyRequest {
   userUuid: string
   name: string
+  description?: string
   maxPlayers?: number
   isPrivate?: boolean
+  password?: string
   gameType: string
   gameSettings?: Record<string, unknown>
 }
@@ -93,9 +95,11 @@ export class CreateLobbyUseCase {
       // Créer le lobby
       const lobby = Lobby.create({
         name: request.name,
+        description: request.description,
         creator: player,
         maxPlayers: requestedMaxPlayers,
         isPrivate: request.isPrivate || false,
+        passwordHash: request.password ? Lobby.hashPassword(request.password) : undefined,
         gameType: resolvedGameType,
         gameSettings: request.gameSettings,
       })
@@ -107,12 +111,14 @@ export class CreateLobbyUseCase {
       this.notificationService.notifyLobbyCreated(lobby.uuid, {
         uuid: lobby.uuid,
         name: lobby.name,
+        description: lobby.description,
         status: lobby.status,
         currentPlayers: lobby.playerCount,
         maxPlayers: lobby.maxPlayers,
         players: lobby.players,
         creator: lobby.creator,
         isPrivate: lobby.isPrivate,
+        hasPassword: lobby.hasPassword,
         hasAvailableSlots: lobby.hasAvailableSlots,
         canStart: lobby.canStart,
         createdBy: lobby.createdBy,

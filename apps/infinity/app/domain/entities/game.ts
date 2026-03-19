@@ -19,6 +19,17 @@ export interface GameStateData {
   deck: {
     remaining: number
   }
+  runtime?: {
+    gameType?: string
+    lobbyId?: string
+    settings?: Record<string, unknown>
+    engineState?: Record<string, unknown>
+    replayTimeline?: unknown[]
+    persistedAt?: string
+    runtimeStatus?: 'HOT' | 'RESTORED'
+    abandonedBy?: string
+    abandonReason?: string
+  }
 }
 
 export default class Game extends BaseEntity {
@@ -107,7 +118,7 @@ export default class Game extends BaseEntity {
   }
 
   get isFinished(): boolean {
-    return this._status === GameStatus.FINISHED
+    return [GameStatus.FINISHED, GameStatus.ABANDONED].includes(this._status)
   }
 
   get currentPlayer(): PlayerInterface | undefined {
@@ -149,6 +160,23 @@ export default class Game extends BaseEntity {
         ...this._gameData,
         winner: winnerUuid,
       }
+    }
+  }
+
+  abandonGame(abandonedBy?: string, reason?: string): void {
+    if (this.isFinished) {
+      throw new GameStateException('Game is already completed', this._status)
+    }
+
+    this._status = GameStatus.ABANDONED
+    this._finishedAt = new Date()
+    this._gameData = {
+      ...this._gameData,
+      runtime: {
+        ...(this._gameData.runtime ?? {}),
+        abandonedBy,
+        abandonReason: reason,
+      },
     }
   }
 

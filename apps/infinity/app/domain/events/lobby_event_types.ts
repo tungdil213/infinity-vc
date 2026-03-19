@@ -8,6 +8,7 @@ export enum LobbyEventType {
   STATUS_CHANGED = 'lobby.status.changed',
   GAME_STARTED = 'lobby.game.started',
   LOBBY_DELETED = 'lobby.deleted',
+  LOBBY_MODERATION_CLOSED = 'lobby.moderation.closed',
 }
 
 /**
@@ -73,6 +74,15 @@ export interface LobbyDeletedEvent extends BaseLobbyEvent {
   type: LobbyEventType.LOBBY_DELETED
 }
 
+export interface LobbyModerationClosedEvent extends BaseLobbyEvent {
+  type: LobbyEventType.LOBBY_MODERATION_CLOSED
+  reason: string
+  closedBy: {
+    uuid: string
+    role: string
+  }
+}
+
 /**
  * Union type pour tous les événements de lobby
  */
@@ -83,6 +93,7 @@ export type LobbyEvent =
   | StatusChangedEvent
   | GameStartedEvent
   | LobbyDeletedEvent
+  | LobbyModerationClosedEvent
 
 /**
  * Type pour les listeners d'événements

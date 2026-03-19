@@ -30,6 +30,7 @@ export class DatabaseUserRepository implements UserRepository {
       existingUser.merge({
         fullName: serialized.fullName,
         email: serialized.email,
+        role: serialized.role,
       })
       await existingUser.save()
     } else {
@@ -38,6 +39,7 @@ export class DatabaseUserRepository implements UserRepository {
         userUuid: serialized.uuid,
         fullName: serialized.fullName,
         email: serialized.email,
+        role: serialized.role,
         password: user.password, // Access password directly, will be hashed by model hook
       })
     }
@@ -87,6 +89,7 @@ export class DatabaseUserRepository implements UserRepository {
       username: emailUsername, // Use sanitized email prefix as username
       email: userModel.email,
       password: userModel.password,
+      role: userModel.role ?? undefined,
     })
   }
 }

@@ -74,6 +74,7 @@ test.group('GameEngineService', () => {
     assert.isTrue(result.isSuccess)
     assert.equal(result.value.gameType, 'rock-paper-scissors')
     assert.isDefined(service.getSession(result.value.gameId))
+    assert.lengthOf(result.value.timeline || [], 1)
     assert.deepEqual(calls, ['started'])
   })
 
@@ -149,6 +150,7 @@ test.group('GameEngineService', () => {
     assert.equal(result.newState?.isFinished, true)
     assert.deepEqual(calls, ['action', 'finished'])
     assert.equal(service.getSession('game-1')?.state.isFinished, true)
+    assert.lengthOf(service.getReplayTimeline('game-1'), 1)
   })
 
   test('submitMove should delegate to executeAction with submit_move payload', ({ assert }) => {
@@ -174,5 +176,54 @@ test.group('GameEngineService', () => {
       actionType: RpsActionTypes.SUBMIT_MOVE,
       payload: { move: 'rock' },
     })
+  })
+
+  test('restoreGameSession should restore a persisted state when session is missing', async ({
+    assert,
+  }) => {
+    const sessionStore = new GameSessionStore()
+    const service = new GameEngineService(sessionStore, {
+      publishGameStarted: () => {},
+      publishActionEvents: () => {},
+      publishGameFinished: () => {},
+      publishSessionEnded: () => {},
+    } as any)
+
+    const created = await service.createGame(
+      'lobby-rps-restore',
+      [
+        { uuid: 'player-1', nickName: 'Alice' },
+        { uuid: 'player-2', nickName: 'Bob' },
+      ],
+      'rock-paper-scissors',
+      { roundsToWin: 2 }
+    )
+
+    assert.isTrue(created.isSuccess)
+    const createdSession = created.value
+    const persistedState = createdSession.state as unknown as Record<string, unknown>
+
+    service.endGame(createdSession.gameId)
+    assert.isUndefined(service.getSession(createdSession.gameId))
+
+    const restored = await service.restoreGameSession({
+      gameId: createdSession.gameId,
+      lobbyId: createdSession.lobbyId,
+      gameType: createdSession.gameType,
+      players: [
+        { uuid: 'player-1', nickName: 'Alice' },
+        { uuid: 'player-2', nickName: 'Bob' },
+      ],
+      engineState: persistedState,
+      gameSettings: { roundsToWin: 2 },
+      startedAt: createdSession.createdAt,
+      replayTimeline: createdSession.timeline,
+    })
+
+    assert.isTrue(restored.isSuccess)
+    assert.equal(restored.value.gameId, createdSession.gameId)
+    assert.equal(restored.value.gameType, 'rock-paper-scissors')
+    assert.lengthOf(restored.value.timeline || [], createdSession.timeline?.length || 0)
+    assert.isDefined(service.getSession(createdSession.gameId))
   })
 })

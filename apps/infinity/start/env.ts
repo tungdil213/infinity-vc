@@ -46,4 +46,6 @@ export default await Env.create(new URL('../', import.meta.url), {
   DRIVE_DISK: Env.schema.enum(['fs'] as const),
   TEST_TMP_DIR: Env.schema.string(),
   ADMIN_EMAILS: Env.schema.string.optional(),
+  MODERATOR_EMAILS: Env.schema.string.optional(),
+  LOBBY_DISCONNECT_GRACE_MS: Env.schema.number.optional(),
 })

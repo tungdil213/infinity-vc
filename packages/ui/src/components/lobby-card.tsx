@@ -21,6 +21,7 @@ export interface LobbyData {
 	currentPlayers: number;
 	maxPlayers: number;
 	isPrivate: boolean;
+	hasPassword?: boolean;
 	hasAvailableSlots: boolean;
 	creatorUuid: string;
 	players?: Array<{
@@ -38,6 +39,7 @@ export interface LobbyCardProps {
 	currentUser?: {
 		uuid: string;
 		nickName: string;
+		role?: 'PLAYER' | 'MODERATOR' | 'ADMIN';
 	};
 	variant?: 'compact' | 'detailed' | 'featured';
 	onJoin?: (lobbyUuid: string) => void;
@@ -45,17 +47,18 @@ export interface LobbyCardProps {
 	onView?: (lobbyUuid: string) => void;
 	onShare?: (lobbyUuid: string) => void;
 	onStart?: (lobbyUuid: string) => void;
+	onClose?: (lobbyUuid: string) => void;
 	onKick?: (lobbyUuid: string, playerUuid: string) => void;
 	onSettings?: (lobbyUuid: string) => void;
 	className?: string;
 }
 
 const statusConfig = {
-	WAITING: { color: 'bg-blue-100 text-blue-800', label: 'En attente' },
-	READY: { color: 'bg-green-100 text-green-800', label: 'Prêt' },
-	FULL: { color: 'bg-yellow-100 text-yellow-800', label: 'Complet' },
-	IN_GAME: { color: 'bg-purple-100 text-purple-800', label: 'En jeu' },
-	PRIVATE: { color: 'bg-gray-100 text-gray-800', label: 'Privé' },
+	WAITING: { color: 'bg-blue-100 text-blue-800', label: 'Waiting' },
+	READY: { color: 'bg-green-100 text-green-800', label: 'Ready' },
+	FULL: { color: 'bg-yellow-100 text-yellow-800', label: 'Full' },
+	IN_GAME: { color: 'bg-purple-100 text-purple-800', label: 'In game' },
+	PRIVATE: { color: 'bg-gray-100 text-gray-800', label: 'Private' },
 };
 
 export function LobbyCard({
@@ -67,6 +70,7 @@ export function LobbyCard({
 	onView,
 	onShare,
 	onStart,
+	onClose,
 	onKick,
 	onSettings,
 	className,
@@ -75,22 +79,36 @@ export function LobbyCard({
 	const userInLobby = lobby.players?.some((p) => p.uuid === currentUser?.uuid);
 	const canJoin = !userInLobby && lobby.hasAvailableSlots && lobby.status !== 'IN_GAME';
 	const canStart = lobby.status === 'READY' && isCreator;
+	const canModerateLobby = currentUser?.role === 'MODERATOR' || currentUser?.role === 'ADMIN';
+	const isModerationSensitiveLobby = canModerateLobby && (lobby.isPrivate || lobby.hasPassword);
+	const canCloseLobby = canModerateLobby && typeof onClose === 'function';
 
 	if (variant === 'compact') {
 		return (
-			<Card className={cn('hover:shadow-md transition-shadow', className)}>
+			<Card
+				className={cn(
+					'hover:shadow-md transition-shadow',
+					isModerationSensitiveLobby && 'border-slate-300 bg-slate-50',
+					className
+				)}
+			>
 				<CardContent className="p-4">
 					<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 						<div className="min-w-0 flex items-center space-x-3">
 							<div className="min-w-0 flex-1">
 								<div className="flex items-center gap-2">
 									<h3 className="truncate font-medium text-sm">{lobby.name}</h3>
-									{lobby.isPrivate && <Lock className="h-3 w-3 text-gray-500" />}
+									{(lobby.isPrivate || lobby.hasPassword) && <Lock className="h-3 w-3 text-gray-500" />}
 								</div>
 								<div className="mt-1 flex flex-wrap items-center gap-2">
 									<Badge className={cn('text-xs', statusConfig[lobby.status].color)}>
 										{statusConfig[lobby.status].label}
 									</Badge>
+								{(lobby.isPrivate || lobby.hasPassword) && (
+									<Badge className={cn('text-xs', isModerationSensitiveLobby ? 'bg-slate-200 text-slate-800' : 'bg-blue-100 text-blue-800')}>
+										{lobby.hasPassword ? 'Protected' : 'Private'}
+									</Badge>
+								)}
 									<span className="text-xs text-gray-500 flex items-center gap-1">
 										<Users className="h-3 w-3" />
 										{lobby.currentPlayers}/{lobby.maxPlayers}
@@ -99,9 +117,14 @@ export function LobbyCard({
 							</div>
 						</div>
 						<div className="flex items-center gap-1 self-end sm:self-auto">
+							{canCloseLobby && (
+								<Button variant="destructive" size="sm" onClick={() => onClose?.(lobby.uuid)}>
+									<UserMinus className="h-3 w-3" />
+								</Button>
+							)}
 							{canJoin && (
 								<Button size="sm" onClick={() => onJoin?.(lobby.uuid)}>
-									Rejoindre
+									Join
 								</Button>
 							)}
 							<Button variant="neutral" size="sm" onClick={() => onView?.(lobby.uuid)}>
@@ -116,35 +139,50 @@ export function LobbyCard({
 
 	if (variant === 'featured') {
 		return (
-			<Card className={cn('border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50', className)}>
+			<Card
+				className={cn(
+					'border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50',
+					isModerationSensitiveLobby && 'border-slate-300 from-slate-50 to-slate-100',
+					className
+				)}
+			>
 				<CardHeader>
 					<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 						<div className="min-w-0">
 							<CardTitle className="flex min-w-0 items-center gap-2 text-xl">
 								<span className="truncate">{lobby.name}</span>
-								{lobby.isPrivate && <Lock className="h-4 w-4 text-gray-500" />}
+								{(lobby.isPrivate || lobby.hasPassword) && <Lock className="h-4 w-4 text-gray-500" />}
 							</CardTitle>
+							{lobby.description && (
+								<p className="mt-1 line-clamp-2 text-sm text-gray-600">{lobby.description}</p>
+							)}
 							<div className="mt-2 flex flex-wrap items-center gap-3">
 								<Badge className={cn('text-sm', statusConfig[lobby.status].color)}>
 									{statusConfig[lobby.status].label}
 								</Badge>
 								<span className="text-sm text-gray-600 flex items-center gap-1">
 									<Users className="h-4 w-4" />
-									{lobby.currentPlayers}/{lobby.maxPlayers} joueurs
+									{lobby.currentPlayers}/{lobby.maxPlayers} players
 								</span>
 							</div>
 						</div>
 						<div className="flex flex-wrap gap-2">
+							{canCloseLobby && (
+								<Button variant="destructive" onClick={() => onClose?.(lobby.uuid)}>
+									<UserMinus className="h-4 w-4 mr-2" />
+									Close lobby
+								</Button>
+							)}
 							{canStart && (
 								<Button onClick={() => onStart?.(lobby.uuid)} className="bg-green-600 hover:bg-green-700">
 									<Play className="h-4 w-4 mr-2" />
-									Démarrer
+									Start
 								</Button>
 							)}
-							{canJoin && <Button onClick={() => onJoin?.(lobby.uuid)}>Rejoindre</Button>}
+							{canJoin && <Button onClick={() => onJoin?.(lobby.uuid)}>Join</Button>}
 							{userInLobby && !isCreator && (
 								<Button variant="neutral" onClick={() => onLeave?.(lobby.uuid)}>
-									Quitter
+									Leave
 								</Button>
 							)}
 						</div>
@@ -153,7 +191,7 @@ export function LobbyCard({
 				<CardContent>
 					<div className="grid grid-cols-2 gap-4">
 						<div>
-							<h4 className="text-sm font-medium mb-2">Créateur</h4>
+							<h4 className="text-sm font-medium mb-2">Host</h4>
 							<div className="flex items-center gap-2">
 								<Avatar className="h-6 w-6">
 									<AvatarImage src={lobby.players?.find((p) => p.uuid === lobby.creatorUuid)?.avatar} />
@@ -165,13 +203,13 @@ export function LobbyCard({
 									</AvatarFallback>
 								</Avatar>
 								<span className="text-sm">
-									{lobby.players?.find((p) => p.uuid === lobby.creatorUuid)?.nickName || 'Créateur'}
+									{lobby.players?.find((p) => p.uuid === lobby.creatorUuid)?.nickName || 'Host'}
 								</span>
 								<Crown className="h-3 w-3 text-yellow-500" />
 							</div>
 						</div>
 						<div>
-							<h4 className="text-sm font-medium mb-2">Créé le</h4>
+							<h4 className="text-sm font-medium mb-2">Created on</h4>
 							<span className="text-sm text-gray-600">{new Date(lobby.createdAt).toLocaleDateString()}</span>
 						</div>
 					</div>
@@ -182,19 +220,33 @@ export function LobbyCard({
 
 	// Default detailed variant
 	return (
-		<Card className={cn('hover:shadow-lg transition-shadow', className)}>
+			<Card
+				className={cn(
+					'hover:shadow-lg transition-shadow',
+					isModerationSensitiveLobby && 'border-slate-300 bg-slate-50',
+					className
+				)}
+			>
 			<CardHeader>
 				<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 					<div className="min-w-0 flex-1">
 						<CardTitle className="flex min-w-0 items-center gap-2">
 							<span className="truncate">{lobby.name}</span>
-							{lobby.isPrivate && <Lock className="h-4 w-4 text-gray-500" />}
+							{(lobby.isPrivate || lobby.hasPassword) && <Lock className="h-4 w-4 text-gray-500" />}
 						</CardTitle>
+						{lobby.description && (
+							<p className="mt-1 line-clamp-2 text-sm text-gray-600">{lobby.description}</p>
+						)}
 						<div className="mt-2 flex flex-wrap items-center gap-3">
 							<Badge className={cn(statusConfig[lobby.status].color)}>{statusConfig[lobby.status].label}</Badge>
+							{(lobby.isPrivate || lobby.hasPassword) && (
+								<Badge className={cn('text-xs', isModerationSensitiveLobby ? 'bg-slate-200 text-slate-800' : 'bg-blue-100 text-blue-800')}>
+									{lobby.hasPassword ? 'Protected' : 'Private'}
+								</Badge>
+							)}
 							<span className="text-sm text-gray-600 flex items-center gap-1">
 								<Users className="h-4 w-4" />
-								{lobby.currentPlayers}/{lobby.maxPlayers} joueurs
+								{lobby.currentPlayers}/{lobby.maxPlayers} players
 							</span>
 						</div>
 					</div>
@@ -228,11 +280,11 @@ export function LobbyCard({
 						<div>
 							<div className="flex items-center gap-1">
 								<span className="text-sm font-medium">
-									{lobby.players?.find((p) => p.uuid === lobby.creatorUuid)?.nickName || 'Créateur'}
+									{lobby.players?.find((p) => p.uuid === lobby.creatorUuid)?.nickName || 'Host'}
 								</span>
 								<Crown className="h-3 w-3 text-yellow-500" />
 							</div>
-							<span className="text-xs text-gray-500">Créateur</span>
+							<span className="text-xs text-gray-500">Host</span>
 						</div>
 					</div>
 
@@ -240,7 +292,7 @@ export function LobbyCard({
 					{lobby.players && lobby.players.length > 0 && (
 						<div>
 							<div className="flex items-center gap-2 mb-2">
-								<span className="text-sm font-medium">Joueurs</span>
+								<span className="text-sm font-medium">Players</span>
 								<Badge variant="neutral" className="text-xs">
 									{lobby.players.length}
 								</Badge>
@@ -263,21 +315,27 @@ export function LobbyCard({
 
 					{/* Actions */}
 					<div className="flex flex-wrap gap-2 pt-2">
+						{canCloseLobby && (
+							<Button className="w-full sm:w-auto" variant="destructive" onClick={() => onClose?.(lobby.uuid)}>
+								<UserMinus className="h-4 w-4 mr-2" />
+								Close
+							</Button>
+						)}
 						{canStart && (
-							<Button onClick={() => onStart?.(lobby.uuid)} className="bg-green-600 hover:bg-green-700">
+							<Button onClick={() => onStart?.(lobby.uuid)} className="w-full sm:w-auto bg-green-600 hover:bg-green-700">
 								<Play className="h-4 w-4 mr-2" />
-								Démarrer
+								Start
 							</Button>
 						)}
-						{canJoin && <Button onClick={() => onJoin?.(lobby.uuid)}>Rejoindre</Button>}
+						{canJoin && <Button className="w-full sm:w-auto" onClick={() => onJoin?.(lobby.uuid)}>Join</Button>}
 						{userInLobby && !isCreator && (
-							<Button variant="neutral" onClick={() => onLeave?.(lobby.uuid)}>
-								Quitter
+							<Button className="w-full sm:w-auto" variant="neutral" onClick={() => onLeave?.(lobby.uuid)}>
+								Leave
 							</Button>
 						)}
-						<Button variant="neutral" onClick={() => onView?.(lobby.uuid)}>
+						<Button className="w-full sm:w-auto" variant="neutral" onClick={() => onView?.(lobby.uuid)}>
 							<Eye className="h-4 w-4 mr-2" />
-							Voir détails
+							View details
 						</Button>
 					</div>
 				</div>

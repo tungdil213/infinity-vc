@@ -44,8 +44,6 @@ export class LobbyApiClient {
     })
 
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error(`LobbyApiClient: Error ${response.status}: ${errorText}`)
       throw new Error(`Failed to fetch lobby: ${response.status} ${response.statusText}`)
     }
 
@@ -98,8 +96,6 @@ export class LobbyApiClient {
     })
 
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error('LobbyApiClient: Leave lobby error response:', errorText)
       throw new Error(`Failed to leave lobby: ${response.statusText}`)
     }
 

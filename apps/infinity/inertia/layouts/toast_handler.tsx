@@ -10,7 +10,7 @@ interface ToastData {
 }
 
 /**
- * Composant pour gérer automatiquement les toasts depuis les flash messages
+ * Automatically displays toasts from shared flash messages
  */
 export function ToastHandler() {
   const { props } = usePage()

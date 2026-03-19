@@ -8,11 +8,13 @@ import { type GameLauncher, RpsActionTypes } from '@infinity.dev/game-engine'
 import type { IAction, IGameState, IPlayer, IPlayerView } from '@infinity.dev/game-engine/core'
 import { Effect } from 'effect'
 import type { PlayerInterface } from '#domain/interfaces/player_interface'
-import { type Result } from '#shared/result'
+import { Result } from '#shared/result'
 import type { GameRuntimePort } from '#application/services/game_runtime_port'
 import { runEffectAsResult } from '#domain/shared/effect_result'
 import { getAppGameLauncher } from '#infrastructure/game_engine/app_game_launcher'
 import {
+  type GameReplaySnapshot,
+  type GameReplayStep,
   type GenericAction,
   type GameActionRequest,
   type GameActionResponse,
@@ -26,6 +28,17 @@ export type {
   GameActionResponse,
   GameSession,
 } from '#application/services/game_engine_types'
+
+interface RestoreGameSessionRequest {
+  gameId: string
+  lobbyId: string
+  gameType: string
+  players: PlayerInterface[]
+  engineState: Record<string, unknown>
+  gameSettings?: Record<string, unknown>
+  startedAt?: Date
+  replayTimeline?: GameReplayStep[]
+}
 
 /**
  * Service for managing game sessions using the LoveLetterEngine
@@ -98,13 +111,24 @@ export class GameEngineService implements GameRuntimePort {
       return createdSessionResult
     }
 
-    this.sessionStore.save(createdSessionResult.value)
+    const sessionWithTimeline: GameSession = {
+      ...createdSessionResult.value,
+      timeline: [
+        this.buildReplayStep({
+          step: 0,
+          kind: 'initial',
+          state: createdSessionResult.value.state,
+        }),
+      ],
+    }
+
+    this.sessionStore.save(sessionWithTimeline)
     this.eventPublisher.publishGameStarted(
-      createdSessionResult.value,
+      sessionWithTimeline,
       players.map((player) => ({ uuid: player.uuid, nickName: player.nickName }))
     )
 
-    return createdSessionResult
+    return Result.ok(sessionWithTimeline)
   }
 
   /**
@@ -112,6 +136,10 @@ export class GameEngineService implements GameRuntimePort {
    */
   getSession(gameId: string): GameSession | undefined {
     return this.sessionStore.get(gameId)
+  }
+
+  getReplayTimeline(gameId: string): GameReplayStep[] {
+    return [...(this.sessionStore.get(gameId)?.timeline ?? [])]
   }
 
   /**
@@ -158,7 +186,24 @@ export class GameEngineService implements GameRuntimePort {
     }
 
     const nextState = executeResult.value.newState
+    const actionEvents = executeResult.value.events.map((event) => ({
+      type: event.type,
+      payload: this.toSerializablePayload(event.payload),
+    }))
+
     this.sessionStore.updateState(session.gameId, nextState)
+    this.sessionStore.appendReplayStep(
+      session.gameId,
+      this.buildReplayStep({
+        step: session.timeline?.length ?? 0,
+        kind: 'action',
+        state: nextState,
+        actorId: request.playerId,
+        actionType: request.actionType,
+        actionPayload: request.payload,
+        events: actionEvents,
+      })
+    )
     this.eventPublisher.publishActionEvents(session.gameId, executeResult.value.events)
 
     if (nextState.isFinished) {
@@ -168,10 +213,7 @@ export class GameEngineService implements GameRuntimePort {
     return {
       success: true,
       newState: nextState,
-      events: executeResult.value.events.map((e) => ({
-        type: e.type,
-        payload: e.payload,
-      })),
+      events: actionEvents,
     }
   }
 
@@ -235,6 +277,227 @@ export class GameEngineService implements GameRuntimePort {
    */
   getSessionByLobby(lobbyId: string): GameSession | undefined {
     return this.sessionStore.getByLobbyId(lobbyId)
+  }
+
+  async restoreGameSession(request: RestoreGameSessionRequest): Promise<Result<GameSession>> {
+    const existingSession = this.sessionStore.get(request.gameId)
+    if (existingSession) {
+      return Result.ok(existingSession)
+    }
+
+    const resolvedGameType = this.resolveGameType(request.gameType)
+    const gamePlayers: IPlayer[] = request.players.map((player) => ({
+      id: player.uuid,
+      name: player.nickName,
+      isActive: true,
+    }))
+
+    const launchResult = this.launcher.launch({
+      gameId: resolvedGameType,
+      players: gamePlayers,
+      settings: request.gameSettings ?? {},
+    })
+
+    if (launchResult.isFailure) {
+      return Result.fail(launchResult.error?.message || 'Failed to restore game session')
+    }
+
+    const deserializedState = launchResult.value.engine.deserializeState(
+      JSON.stringify(request.engineState)
+    )
+    if (deserializedState.isFailure) {
+      return Result.fail(deserializedState.error?.message || 'Failed to deserialize persisted game state')
+    }
+
+    const restoredSession: GameSession = {
+      gameId: request.gameId,
+      lobbyId: request.lobbyId,
+      gameType: resolvedGameType,
+      engine: launchResult.value.engine,
+      state: deserializedState.value,
+      players: gamePlayers,
+      createdAt: request.startedAt || new Date(),
+      timeline: this.normalizeReplayTimeline(request.replayTimeline, deserializedState.value),
+    }
+
+    this.sessionStore.save(restoredSession)
+    return Result.ok(restoredSession)
+  }
+
+  private normalizeReplayTimeline(
+    replayTimeline: GameReplayStep[] | undefined,
+    fallbackState: IGameState
+  ): GameReplayStep[] {
+    if (!Array.isArray(replayTimeline) || replayTimeline.length === 0) {
+      return [
+        this.buildReplayStep({
+          step: 0,
+          kind: 'initial',
+          state: fallbackState,
+        }),
+      ]
+    }
+
+    return replayTimeline.map((rawStep, index) => {
+      const events = Array.isArray(rawStep.events)
+        ? rawStep.events.map((event) => ({
+            type: String(event.type ?? ''),
+            payload: this.toSerializablePayload(event.payload),
+          }))
+        : []
+
+      const replayStep: GameReplayStep = {
+        step: index,
+        kind: rawStep.kind === 'action' ? 'action' : 'initial',
+        recordedAt:
+          typeof rawStep.recordedAt === 'string' ? rawStep.recordedAt : new Date().toISOString(),
+        events,
+        snapshot: this.normalizeReplaySnapshot(rawStep.snapshot),
+      }
+
+      if (typeof rawStep.actorId === 'string') {
+        replayStep.actorId = rawStep.actorId
+      }
+      if (typeof rawStep.actionType === 'string') {
+        replayStep.actionType = rawStep.actionType
+      }
+      if (rawStep.actionPayload && typeof rawStep.actionPayload === 'object') {
+        replayStep.actionPayload = this.toSerializablePayload(
+          rawStep.actionPayload
+        ) as Record<string, unknown>
+      }
+
+      return replayStep
+    })
+  }
+
+  private buildReplayStep(args: {
+    step: number
+    kind: 'initial' | 'action'
+    state: IGameState
+    actorId?: string
+    actionType?: string
+    actionPayload?: Record<string, unknown>
+    events?: Array<{ type: string; payload: unknown }>
+  }): GameReplayStep {
+    return {
+      step: Math.max(0, args.step),
+      kind: args.kind,
+      recordedAt: new Date().toISOString(),
+      ...(typeof args.actorId === 'string' ? { actorId: args.actorId } : {}),
+      ...(typeof args.actionType === 'string' ? { actionType: args.actionType } : {}),
+      ...(args.actionPayload ? { actionPayload: this.toSerializablePayload(args.actionPayload) } : {}),
+      events: (args.events ?? []).map((event) => ({
+        type: event.type,
+        payload: this.toSerializablePayload(event.payload),
+      })),
+      snapshot: this.buildReplaySnapshot(args.state),
+    }
+  }
+
+  private buildReplaySnapshot(state: IGameState): GameReplaySnapshot {
+    return this.normalizeReplaySnapshot(state as unknown)
+  }
+
+  private normalizeReplaySnapshot(snapshot: unknown): GameReplaySnapshot {
+    const source = this.asRecord(snapshot) ?? {}
+    const sourcePlayers = Array.isArray(source.players) ? source.players : []
+
+    const players = sourcePlayers.map((rawPlayer) => {
+      const player = this.asRecord(rawPlayer) ?? {}
+
+      return {
+        id: String(player.id ?? ''),
+        name: String(player.name ?? 'Unknown'),
+        isActive: Boolean(player.isActive),
+        isEliminated: Boolean(player.isEliminated),
+        isProtected: Boolean(player.isProtected),
+        handCount: Array.isArray(player.hand)
+          ? player.hand.length
+          : Number(player.handCount ?? 0) || 0,
+        tokensOfAffection: Number(player.tokensOfAffection ?? 0) || 0,
+      }
+    })
+
+    const rounds = Array.isArray(source.rounds)
+      ? source.rounds.map((rawRound, index) => {
+          const round = this.asRecord(rawRound) ?? {}
+          return {
+            round: Number(round.round ?? index + 1) || index + 1,
+            winnerId: typeof round.winnerId === 'string' ? round.winnerId : null,
+            choices: this.asStringRecord(round.choices) ?? {},
+          }
+        })
+      : undefined
+
+    return {
+      phase: typeof source.phase === 'string' ? source.phase : 'unknown',
+      round: Number(source.round ?? 1) || 1,
+      turn: Number(source.turn ?? 0) || 0,
+      isFinished: Boolean(source.isFinished),
+      winnerId: typeof source.winnerId === 'string' ? source.winnerId : null,
+      currentPlayerId:
+        typeof source.currentPlayerId === 'string' ? source.currentPlayerId : null,
+      players,
+      ...(this.asNumberRecord(source.scores) ? { scores: this.asNumberRecord(source.scores) } : {}),
+      ...(this.asStringRecord(source.roundChoices)
+        ? { roundChoices: this.asStringRecord(source.roundChoices) }
+        : {}),
+      ...(rounds ? { rounds } : {}),
+    }
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> | null {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return value as Record<string, unknown>
+    }
+
+    return null
+  }
+
+  private asStringRecord(value: unknown): Record<string, string> | undefined {
+    const source = this.asRecord(value)
+    if (!source) {
+      return undefined
+    }
+
+    const mapped = Object.entries(source).reduce<Record<string, string>>((acc, [key, entry]) => {
+      if (typeof entry === 'string') {
+        acc[key] = entry
+      }
+      return acc
+    }, {})
+
+    return Object.keys(mapped).length > 0 ? mapped : undefined
+  }
+
+  private asNumberRecord(value: unknown): Record<string, number> | undefined {
+    const source = this.asRecord(value)
+    if (!source) {
+      return undefined
+    }
+
+    const mapped = Object.entries(source).reduce<Record<string, number>>((acc, [key, entry]) => {
+      const numericValue = Number(entry)
+      if (Number.isFinite(numericValue)) {
+        acc[key] = numericValue
+      }
+      return acc
+    }, {})
+
+    return Object.keys(mapped).length > 0 ? mapped : undefined
+  }
+
+  private toSerializablePayload<T = unknown>(payload: T): T {
+    if (payload === null || payload === undefined) {
+      return payload
+    }
+
+    try {
+      return JSON.parse(JSON.stringify(payload)) as T
+    } catch {
+      return payload
+    }
   }
 
   private buildAction(request: GameActionRequest): GenericAction {

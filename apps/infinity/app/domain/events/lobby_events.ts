@@ -232,6 +232,39 @@ export class LobbyDeletedEvent extends BaseLobbyEvent<LobbyDeletedData> {
   }
 }
 
+export interface LobbyModerationClosedData {
+  lobbyUuid: string
+  reason: string
+  closedByUserUuid: string
+  closedByRole: string
+}
+
+export class LobbyModerationClosedEvent extends BaseLobbyEvent<LobbyModerationClosedData> {
+  readonly type = 'LobbyModerationClosed'
+
+  constructor(
+    public readonly lobbyUuid: string,
+    public readonly reason: string,
+    public readonly closedByUserUuid: string,
+    public readonly closedByRole: string
+  ) {
+    super()
+  }
+
+  get payload(): LobbyModerationClosedData {
+    return {
+      lobbyUuid: this.lobbyUuid,
+      reason: this.reason,
+      closedByUserUuid: this.closedByUserUuid,
+      closedByRole: this.closedByRole,
+    }
+  }
+
+  get eventType(): string {
+    return this.type
+  }
+}
+
 export interface PlayerKickedData {
   lobbyUuid: string
   kickedPlayer: PlayerInterface

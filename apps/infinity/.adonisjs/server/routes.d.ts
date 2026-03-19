@@ -5,9 +5,20 @@ type ParamValue = string | number | bigint | boolean
 export type ScannedRoutes = {
   ALL: {
     'drive.fs.serve': { paramsTuple: [...ParamValue[]]; params: {'*': ParamValue[]} }
+    'server-stats.api': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.config': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.diagnostics': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.queries': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.events': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.routes': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.queryExplain': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.debug.logs': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.emails': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.emailPreview': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.debug.traces': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.traceDetail': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'home': { paramsTuple?: []; params?: {} }
     'dev.routes': { paramsTuple?: []; params?: {} }
-    'admin.server-stats.index': { paramsTuple?: []; params?: {} }
     'auth.login.show': { paramsTuple?: []; params?: {} }
     'auth.login': { paramsTuple?: []; params?: {} }
     'auth.register.show': { paramsTuple?: []; params?: {} }
@@ -20,9 +31,11 @@ export type ScannedRoutes = {
     'lobbies.join': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'lobbies.leave': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'lobbies.leave.close': { paramsTuple?: []; params?: {} }
+    'lobbies.heartbeat': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'lobbies.start': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'lobbies.kick': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'lobbies.transfer': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'lobbies.close': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'games.show': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'games.leave': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'lobbies.join.invite.show': { paramsTuple: [ParamValue]; params: {'invitationCode': ParamValue} }
@@ -35,11 +48,17 @@ export type ScannedRoutes = {
     'api.lobbies.join': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.lobbies.leave': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.lobbies.leave.close': { paramsTuple?: []; params?: {} }
+    'api.lobbies.heartbeat': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.lobbies.start': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'api.lobbies.close': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'api.games.my.history': { paramsTuple?: []; params?: {} }
+    'api.games.my.stats': { paramsTuple?: []; params?: {} }
     'api.games.show': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'api.games.replay': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.games.actions': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.games.players': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.games.action': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'admin.lobbies.close': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'admin.games.catalog': { paramsTuple?: []; params?: {} }
     'event_stream': { paramsTuple?: []; params?: {} }
     'subscribe': { paramsTuple?: []; params?: {} }
@@ -47,9 +66,20 @@ export type ScannedRoutes = {
   }
   GET: {
     'drive.fs.serve': { paramsTuple: [...ParamValue[]]; params: {'*': ParamValue[]} }
+    'server-stats.api': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.config': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.diagnostics': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.queries': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.events': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.routes': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.queryExplain': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.debug.logs': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.emails': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.emailPreview': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.debug.traces': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.traceDetail': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'home': { paramsTuple?: []; params?: {} }
     'dev.routes': { paramsTuple?: []; params?: {} }
-    'admin.server-stats.index': { paramsTuple?: []; params?: {} }
     'auth.login.show': { paramsTuple?: []; params?: {} }
     'auth.register.show': { paramsTuple?: []; params?: {} }
     'lobbies.index': { paramsTuple?: []; params?: {} }
@@ -62,7 +92,10 @@ export type ScannedRoutes = {
     'api.games.catalog': { paramsTuple?: []; params?: {} }
     'api.lobbies.index': { paramsTuple?: []; params?: {} }
     'api.lobbies.show': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'api.games.my.history': { paramsTuple?: []; params?: {} }
+    'api.games.my.stats': { paramsTuple?: []; params?: {} }
     'api.games.show': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'api.games.replay': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.games.actions': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.games.players': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'admin.games.catalog': { paramsTuple?: []; params?: {} }
@@ -70,9 +103,20 @@ export type ScannedRoutes = {
   }
   HEAD: {
     'drive.fs.serve': { paramsTuple: [...ParamValue[]]; params: {'*': ParamValue[]} }
+    'server-stats.api': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.config': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.diagnostics': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.queries': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.events': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.routes': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.queryExplain': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.debug.logs': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.emails': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.emailPreview': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'server-stats.debug.traces': { paramsTuple?: []; params?: {} }
+    'server-stats.debug.traceDetail': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'home': { paramsTuple?: []; params?: {} }
     'dev.routes': { paramsTuple?: []; params?: {} }
-    'admin.server-stats.index': { paramsTuple?: []; params?: {} }
     'auth.login.show': { paramsTuple?: []; params?: {} }
     'auth.register.show': { paramsTuple?: []; params?: {} }
     'lobbies.index': { paramsTuple?: []; params?: {} }
@@ -85,7 +129,10 @@ export type ScannedRoutes = {
     'api.games.catalog': { paramsTuple?: []; params?: {} }
     'api.lobbies.index': { paramsTuple?: []; params?: {} }
     'api.lobbies.show': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'api.games.my.history': { paramsTuple?: []; params?: {} }
+    'api.games.my.stats': { paramsTuple?: []; params?: {} }
     'api.games.show': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'api.games.replay': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.games.actions': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.games.players': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'admin.games.catalog': { paramsTuple?: []; params?: {} }
@@ -99,16 +146,21 @@ export type ScannedRoutes = {
     'lobbies.join': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'lobbies.leave': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'lobbies.leave.close': { paramsTuple?: []; params?: {} }
+    'lobbies.heartbeat': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'lobbies.start': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'lobbies.kick': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'lobbies.transfer': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'lobbies.close': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'games.leave': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'lobbies.join.invite': { paramsTuple: [ParamValue]; params: {'invitationCode': ParamValue} }
     'api.lobbies.join': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.lobbies.leave': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.lobbies.leave.close': { paramsTuple?: []; params?: {} }
+    'api.lobbies.heartbeat': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.lobbies.start': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'api.lobbies.close': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.games.action': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'admin.lobbies.close': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'subscribe': { paramsTuple?: []; params?: {} }
     'unsubscribe': { paramsTuple?: []; params?: {} }
   }

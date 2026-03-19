@@ -1,12 +1,14 @@
 export interface LobbyData {
   uuid: string
   name: string
+  description?: string
   gameType?: string
   gameUuid?: string
   status: string
   currentPlayers: number
   maxPlayers: number
   isPrivate: boolean
+  hasPassword?: boolean
   hasAvailableSlots: boolean
   canStart: boolean
   createdBy: string

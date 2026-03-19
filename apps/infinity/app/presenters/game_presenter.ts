@@ -1,20 +1,39 @@
 import type { GameActionResponse, GameSession } from '#application/services/game_engine_service'
+import type { GameReplayStep } from '#application/services/game_engine_types'
 
 export function toGamePagePayload(args: {
   session: GameSession
   playerView: unknown
   availableActions: string[]
-  user: { uuid: string; nickName: string }
+  user: { uuid: string; nickName: string; role?: string }
+  isSpectator?: boolean
+  replayTimeline?: GameReplayStep[]
+  runtimeStatus?: {
+    source: 'memory' | 'restored'
+    persisted: boolean
+    inMemory: boolean
+  }
 }) {
-  const { session, playerView, availableActions, user } = args
+  const {
+    session,
+    playerView,
+    availableActions,
+    user,
+    isSpectator = false,
+    replayTimeline = [],
+    runtimeStatus,
+  } = args
 
   return {
     gameId: session.gameId,
     gameType: session.gameType,
     playerView,
     availableActions,
+    replayTimeline,
     user,
     isFinished: session.state.isFinished,
+    isSpectator,
+    ...(runtimeStatus ? { runtimeStatus } : {}),
   }
 }
 
@@ -22,15 +41,32 @@ export function toGameApiPayload(args: {
   session: GameSession
   playerView: unknown
   availableActions: string[]
+  isSpectator?: boolean
+  replayTimeline?: GameReplayStep[]
+  runtimeStatus?: {
+    source: 'memory' | 'restored'
+    persisted: boolean
+    inMemory: boolean
+  }
 }) {
-  const { session, playerView, availableActions } = args
+  const {
+    session,
+    playerView,
+    availableActions,
+    isSpectator = false,
+    replayTimeline = [],
+    runtimeStatus,
+  } = args
 
   return {
     gameId: session.gameId,
     gameType: session.gameType,
     playerView,
     availableActions,
+    replayTimeline,
     isFinished: session.state.isFinished,
+    isSpectator,
+    ...(runtimeStatus ? { runtimeStatus } : {}),
   }
 }
 
@@ -38,13 +74,15 @@ export function toGameActionsPayload(args: {
   session: GameSession
   availableActions: string[]
   currentUserUuid: string
+  isSpectator?: boolean
 }) {
-  const { session, availableActions, currentUserUuid } = args
+  const { session, availableActions, currentUserUuid, isSpectator = false } = args
 
   return {
     availableActions,
     isMyTurn: session.state.currentPlayerId === currentUserUuid,
     phase: session.state.phase,
+    isSpectator,
   }
 }
 
@@ -52,14 +90,21 @@ export function toActionResponsePayload(args: {
   actionResult: GameActionResponse
   playerView: unknown
   availableActions: string[]
+  includeDebugPayload?: boolean
 }) {
-  const { actionResult, playerView, availableActions } = args
+  const { actionResult, playerView, availableActions, includeDebugPayload = false } = args
+  const events = Array.isArray(actionResult.events)
+    ? actionResult.events.map((event) => ({
+        type: event.type,
+        payload: includeDebugPayload ? event.payload : undefined,
+      }))
+    : []
 
   return {
     success: true,
     playerView,
     availableActions,
-    events: actionResult.events,
+    events,
     isFinished: actionResult.newState?.isFinished ?? false,
     winnerId: actionResult.newState?.winnerId,
   }
@@ -85,6 +130,29 @@ export function toPublicPlayersPayload(args: { session: GameSession; currentUser
     phase: session.state.phase,
     round: session.state.round,
     deckCount,
+  }
+}
+
+export function toSpectatorPlayerView(args: { session: GameSession; currentUserUuid: string }) {
+  const { session, currentUserUuid } = args
+  const state = session.state as unknown as Record<string, unknown>
+  const publicPayload = toPublicPlayersPayload({ session, currentUserUuid })
+
+  return {
+    playerId: currentUserUuid,
+    isMyTurn: false,
+    availableActions: [] as string[],
+    state: {
+      ...state,
+      players: publicPayload.players,
+      currentPlayerId: session.state.currentPlayerId,
+      phase: session.state.phase,
+      round: session.state.round,
+      turn: Number(state.turn ?? 0),
+      isFinished: session.state.isFinished,
+      winnerId: session.state.winnerId ?? null,
+      deckCount: publicPayload.deckCount,
+    },
   }
 }
 

@@ -107,6 +107,8 @@ export class StartGameUseCase {
       const deckCount = Array.isArray(gameStateAsRecord.deck)
         ? gameStateAsRecord.deck.length
         : Number(gameStateAsRecord.deckCount ?? 0)
+      const runtimeSettings =
+        (gameStateAsRecord.settings as Record<string, unknown>) ?? lobby.gameSettings ?? {}
 
       const game = Game.create({
         uuid: gameSession.gameId,
@@ -120,6 +122,15 @@ export class StartGameUseCase {
             .filter((p) => p.isEliminated === true)
             .map((p) => String(p.id)),
           playerHands: {},
+          runtime: {
+            gameType: resolvedGameType,
+            lobbyId: lobby.uuid,
+            settings: runtimeSettings,
+            engineState: gameStateAsRecord,
+            replayTimeline: gameSession.timeline ?? [],
+            persistedAt: new Date().toISOString(),
+            runtimeStatus: 'HOT',
+          },
         },
       })
 

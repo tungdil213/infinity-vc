@@ -5,10 +5,12 @@
 export interface LobbyDto {
   readonly uuid: string
   readonly name: string
+  readonly description?: string
   readonly createdBy: string
   readonly gameType: string
   readonly maxPlayers: number
   readonly isPrivate: boolean
+  readonly hasPassword: boolean
   readonly status: string
   readonly currentPlayers: number
   readonly hasAvailableSlots: boolean
@@ -32,8 +34,10 @@ export interface PlayerDto {
 export interface CreateLobbyRequestDto {
   readonly userUuid: string
   readonly name: string
+  readonly description?: string
   readonly maxPlayers?: number
   readonly isPrivate?: boolean
+  readonly password?: string
   readonly gameType: string
 }
 
@@ -43,11 +47,13 @@ export interface CreateLobbyRequestDto {
 export interface CreateLobbyResponseDto {
   readonly uuid: string
   readonly name: string
+  readonly description?: string
   readonly gameType: string
   readonly status: string
   readonly currentPlayers: number
   readonly maxPlayers: number
   readonly isPrivate: boolean
+  readonly hasPassword: boolean
   readonly hasAvailableSlots: boolean
   readonly canStart: boolean
   readonly createdBy: string

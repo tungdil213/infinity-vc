@@ -77,6 +77,20 @@ class EventBridgeService {
       .and()
 
     builder
+      .map('LobbyModerationClosed')
+      .toChannels((event) => {
+        const payload = event.payload as { lobbyUuid?: string }
+        return payload.lobbyUuid
+          ? ['lobbies', `lobbies/${payload.lobbyUuid}`, 'admin/audit']
+          : ['lobbies', 'admin/audit']
+      })
+      .transformWith((event) => ({
+        type: 'lobby.moderation.closed',
+        ...(event.payload as Record<string, unknown>),
+      }))
+      .and()
+
+    builder
       .map('LobbyStatusChanged')
       .toChannels((event) => {
         const payload = event.payload as { lobbyUuid?: string }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { Head } from '@inertiajs/react'
 import { Button } from '@infinity.dev/ui/primitives/button'
 import {
@@ -68,6 +68,21 @@ const CARD_INFO: Record<
 
 const GUESSABLE_CARDS = ['priest', 'baron', 'handmaid', 'prince', 'king', 'countess', 'princess']
 const TARGET_CARDS = ['guard', 'priest', 'baron', 'prince', 'king']
+type RpsMove = 'rock' | 'paper' | 'scissors'
+const RPS_MOVE_META: Record<RpsMove, { label: string; picto: string }> = {
+  rock: { label: 'Rock', picto: '✊' },
+  paper: { label: 'Paper', picto: '✋' },
+  scissors: { label: 'Scissors', picto: '✌' },
+}
+
+const formatRpsMove = (move: string | undefined) => {
+  if (!move || !Object.keys(RPS_MOVE_META).includes(move)) {
+    return 'Hidden'
+  }
+
+  const typedMove = move as RpsMove
+  return `${RPS_MOVE_META[typedMove].picto} ${RPS_MOVE_META[typedMove].label}`
+}
 
 interface LoveLetterPlayer {
   id: string
@@ -100,13 +115,56 @@ interface PlayerViewState {
   isMyTurn: boolean
 }
 
+interface ReplaySnapshotPlayer {
+  id: string
+  name: string
+  isActive: boolean
+  isEliminated: boolean
+  isProtected: boolean
+  handCount: number
+  tokensOfAffection: number
+}
+
+interface ReplaySnapshot {
+  phase: string
+  round: number
+  turn: number
+  isFinished: boolean
+  winnerId: string | null
+  currentPlayerId: string | null
+  players: ReplaySnapshotPlayer[]
+  scores?: Record<string, number>
+  roundChoices?: Record<string, string>
+  rounds?: Array<{
+    round: number
+    winnerId: string | null
+    choices: Record<string, string>
+  }>
+}
+
+interface ReplayStep {
+  step: number
+  kind: 'initial' | 'action'
+  recordedAt: string
+  actorId?: string
+  actionType?: string
+  actionPayload?: Record<string, unknown>
+  events: Array<{
+    type: string
+    payload: unknown
+  }>
+  snapshot: ReplaySnapshot
+}
+
 interface GameProps {
   gameId: string
   gameType: string
   playerView: PlayerViewState | null
   availableActions: string[]
-  user: { uuid: string; nickName: string }
+  replayTimeline?: ReplayStep[]
+  user: { uuid: string; nickName: string; role?: 'PLAYER' | 'MODERATOR' | 'ADMIN' }
   isFinished: boolean
+  isSpectator?: boolean
   game?: unknown
 }
 
@@ -209,18 +267,26 @@ export default function Game({
   gameType,
   playerView,
   availableActions: initialActions,
+  replayTimeline: initialReplayTimeline = [],
   user,
   isFinished,
+  isSpectator = false,
 }: GameProps) {
   const [gameState, setGameState] = useState<PlayerViewState | null>(playerView)
   const [availableActions, setAvailableActions] = useState<string[]>(initialActions || [])
-  const [lastSubmittedMove, setLastSubmittedMove] = useState<string | null>(null)
+  const [lastSubmittedMove, setLastSubmittedMove] = useState<RpsMove | null>(null)
   const [myHand, setMyHand] = useState<string[]>([])
   const [selectedCard, setSelectedCard] = useState<string | null>(null)
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null)
   const [selectedGuess, setSelectedGuess] = useState<string | null>(null)
   const [notifications, setNotifications] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [replayTimeline, setReplayTimeline] = useState<ReplayStep[]>(initialReplayTimeline)
+  const [replayCursor, setReplayCursor] = useState<number>(
+    Math.max(initialReplayTimeline.length - 1, 0)
+  )
+  const [isReplayPinnedToLatest, setIsReplayPinnedToLatest] = useState(true)
+  const canViewDebugPayload = user.role === 'ADMIN'
 
   const { isConnected, subscribeToGame } = useTransmit()
 
@@ -228,6 +294,233 @@ export default function Game({
     setNotifications((prev) => [...prev, msg])
     setTimeout(() => setNotifications((prev) => prev.slice(1)), 5000)
   }, [])
+
+  const moveReplayCursor = useCallback(
+    (nextCursor: number) => {
+      if (replayTimeline.length === 0) {
+        setReplayCursor(0)
+        return
+      }
+
+      const lastIndex = replayTimeline.length - 1
+      const clampedCursor = Math.max(0, Math.min(nextCursor, lastIndex))
+      setReplayCursor(clampedCursor)
+      setIsReplayPinnedToLatest(clampedCursor === lastIndex)
+    },
+    [replayTimeline.length]
+  )
+
+  useEffect(() => {
+    if (replayTimeline.length === 0) {
+      setReplayCursor(0)
+      return
+    }
+
+    const lastIndex = replayTimeline.length - 1
+    setReplayCursor((current) => {
+      if (isReplayPinnedToLatest) {
+        return lastIndex
+      }
+      return Math.min(current, lastIndex)
+    })
+  }, [replayTimeline, isReplayPinnedToLatest])
+
+  const activeReplayStep =
+    replayTimeline.length > 0
+      ? replayTimeline[Math.max(0, Math.min(replayCursor, replayTimeline.length - 1))]
+      : null
+  const previousReplayStep =
+    replayTimeline.length > 0 && replayCursor > 0 ? replayTimeline[replayCursor - 1] : null
+
+  const replayDiff = useMemo(() => {
+    if (!activeReplayStep) {
+      return null
+    }
+
+    const currentSnapshot = activeReplayStep.snapshot
+    const previousSnapshot = previousReplayStep?.snapshot
+    if (!previousSnapshot) {
+      return {
+        hasPreviousStep: false,
+        previousPhase: '',
+        currentPhase: currentSnapshot.phase,
+        phaseChanged: false,
+        previousCurrentPlayerId: null as string | null,
+        currentCurrentPlayerId: currentSnapshot.currentPlayerId,
+        currentPlayerChanged: false,
+        previousFinished: false,
+        currentFinished: currentSnapshot.isFinished,
+        finishedChanged: false,
+        scoreChanges: [] as Array<{
+          playerId: string
+          previousScore: number
+          currentScore: number
+          delta: number
+        }>,
+        scoreDeltaByPlayerId: {} as Record<string, number>,
+      }
+    }
+
+    const previousScores = previousSnapshot.scores ?? {}
+    const currentScores = currentSnapshot.scores ?? {}
+    const scorePlayerIds = Array.from(
+      new Set([...Object.keys(previousScores), ...Object.keys(currentScores)])
+    )
+    const scoreChanges = scorePlayerIds
+      .map((playerId) => {
+        const previousScore = Number(previousScores[playerId] ?? 0)
+        const currentScore = Number(currentScores[playerId] ?? 0)
+        const delta = currentScore - previousScore
+        return {
+          playerId,
+          previousScore,
+          currentScore,
+          delta,
+        }
+      })
+      .filter((change) => change.delta !== 0)
+
+    const scoreDeltaByPlayerId = scoreChanges.reduce<Record<string, number>>((acc, change) => {
+      acc[change.playerId] = change.delta
+      return acc
+    }, {})
+
+    return {
+      hasPreviousStep: true,
+      previousPhase: previousSnapshot.phase,
+      currentPhase: currentSnapshot.phase,
+      phaseChanged: previousSnapshot.phase !== currentSnapshot.phase,
+      previousCurrentPlayerId: previousSnapshot.currentPlayerId,
+      currentCurrentPlayerId: currentSnapshot.currentPlayerId,
+      currentPlayerChanged: previousSnapshot.currentPlayerId !== currentSnapshot.currentPlayerId,
+      previousFinished: previousSnapshot.isFinished,
+      currentFinished: currentSnapshot.isFinished,
+      finishedChanged: previousSnapshot.isFinished !== currentSnapshot.isFinished,
+      scoreChanges,
+      scoreDeltaByPlayerId,
+    }
+  }, [activeReplayStep, previousReplayStep])
+
+  const getPlayerLabel = useCallback(
+    (playerId?: string | null) => {
+      if (!playerId) {
+        return 'Unknown player'
+      }
+
+      if (playerId === user.uuid) {
+        return 'You'
+      }
+
+      const replayPlayer = activeReplayStep?.snapshot.players.find((player) => player.id === playerId)
+      if (replayPlayer?.name) {
+        return replayPlayer.name
+      }
+
+      const currentPlayer = gameState?.state?.players.find((player) => player.id === playerId)
+      if (currentPlayer?.name) {
+        return currentPlayer.name
+      }
+
+      return playerId
+    },
+    [activeReplayStep?.snapshot.players, gameState?.state?.players, user.uuid]
+  )
+
+  const describeReplayEvent = useCallback(
+    (event: { type: string; payload: unknown }) => {
+      const payload = event.payload
+      if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+        return event.type
+      }
+
+      const record = payload as Record<string, unknown>
+      const actorId =
+        typeof record.playerId === 'string'
+          ? record.playerId
+          : typeof record.actorId === 'string'
+            ? record.actorId
+            : undefined
+      const targetId =
+        typeof record.targetPlayerId === 'string'
+          ? record.targetPlayerId
+          : typeof record.opponentId === 'string'
+            ? record.opponentId
+            : undefined
+
+      const segments = [event.type]
+      if (actorId) {
+        segments.push(`by ${getPlayerLabel(actorId)}`)
+      }
+      if (targetId) {
+        segments.push(`targeting ${getPlayerLabel(targetId)}`)
+      }
+
+      return segments.join(' ')
+    },
+    [getPlayerLabel]
+  )
+
+  const formatDebugPayload = useCallback((payload: unknown) => {
+    if (payload === undefined) {
+      return 'No debug payload'
+    }
+
+    try {
+      return JSON.stringify(payload, null, 2)
+    } catch {
+      return 'Unable to render payload'
+    }
+  }, [])
+
+  const renderReplayDiff = useCallback(() => {
+    if (!activeReplayStep || !replayDiff) {
+      return null
+    }
+
+    return (
+      <div className="rounded-base border-2 border-amber-300 bg-amber-50 p-3 text-sm">
+        <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">
+          Step Diff
+        </p>
+        {!replayDiff.hasPreviousStep ? (
+          <p className="mt-2 text-xs text-amber-900">
+            Initial snapshot: no previous step to compare.
+          </p>
+        ) : (
+          <div className="mt-2 space-y-2">
+            <div className="flex flex-wrap gap-2">
+              <Badge variant={replayDiff.phaseChanged ? 'default' : 'secondary'}>
+                Phase: {replayDiff.previousPhase} {'>'} {replayDiff.currentPhase}
+              </Badge>
+              <Badge variant={replayDiff.currentPlayerChanged ? 'default' : 'secondary'}>
+                Active:{' '}
+                {replayDiff.currentPlayerChanged
+                  ? `${getPlayerLabel(replayDiff.previousCurrentPlayerId)} -> ${getPlayerLabel(replayDiff.currentCurrentPlayerId)}`
+                  : getPlayerLabel(replayDiff.currentCurrentPlayerId)}
+              </Badge>
+              <Badge variant={replayDiff.finishedChanged ? 'default' : 'secondary'}>
+                Status: {replayDiff.previousFinished ? 'Finished' : 'Running'} {'>'}{' '}
+                {replayDiff.currentFinished ? 'Finished' : 'Running'}
+              </Badge>
+            </div>
+
+            {replayDiff.scoreChanges.length > 0 ? (
+              <div className="space-y-1">
+                {replayDiff.scoreChanges.map((change) => (
+                  <p key={`diff-score-${change.playerId}`} className="text-xs text-amber-900">
+                    {getPlayerLabel(change.playerId)}: {change.previousScore} {'>'}{' '}
+                    {change.currentScore} ({change.delta > 0 ? `+${change.delta}` : change.delta})
+                  </p>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-amber-900">No score change on this step.</p>
+            )}
+          </div>
+        )}
+      </div>
+    )
+  }, [activeReplayStep, getPlayerLabel, replayDiff])
 
   const refreshGameState = useCallback(async () => {
     try {
@@ -243,9 +536,12 @@ export default function Game({
         if (Array.isArray(data.playerView?.state?.myHand)) {
           setMyHand(data.playerView.state.myHand)
         }
+        if (Array.isArray(data.replayTimeline)) {
+          setReplayTimeline(data.replayTimeline as ReplayStep[])
+        }
       }
-    } catch (e) {
-      console.error('Failed to refresh:', e)
+    } catch {
+      return
     }
   }, [gameId])
 
@@ -279,7 +575,7 @@ export default function Game({
     }
   }
 
-  const handleSubmitMove = async (move: 'rock' | 'paper' | 'scissors') => {
+  const handleSubmitMove = async (move: RpsMove) => {
     if (isLoading) return
 
     setIsLoading(true)
@@ -302,7 +598,7 @@ export default function Game({
       const result = await res.json()
       if (result.success) {
         setLastSubmittedMove(move)
-        addNotification(`Move submitted: ${move}`)
+        addNotification(`Move submitted: ${formatRpsMove(move)}`)
         await refreshGameState()
       } else {
         addNotification(`Error: ${result.error}`)
@@ -362,7 +658,7 @@ export default function Game({
     }
   }
 
-  // Souscription temps réel aux événements de jeu via Transmit
+  // Real-time subscription to game events via Transmit
   useEffect(() => {
     if (!isConnected) return
 
@@ -374,9 +670,7 @@ export default function Game({
       })
     }
 
-    subscribe().catch((err) => {
-      console.error('Failed to subscribe to game events:', err)
-    })
+    subscribe().catch(() => undefined)
 
     return () => {
       if (unsubscribe) {
@@ -388,31 +682,23 @@ export default function Game({
   useEffect(() => {
     if (!isConnected) return
 
-    refreshGameState().catch((error) => {
-      console.error('Failed to refresh after reconnect:', error)
-    })
+    refreshGameState().catch(() => undefined)
   }, [isConnected, refreshGameState])
 
   useEffect(() => {
     const onFocus = () => {
-      refreshGameState().catch((error) => {
-        console.error('Failed to refresh on focus:', error)
-      })
+      refreshGameState().catch(() => undefined)
     }
 
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        refreshGameState().catch((error) => {
-          console.error('Failed to refresh on visibility change:', error)
-        })
+        refreshGameState().catch(() => undefined)
       }
     }
 
     const pollingIntervalMs = gameType === 'rock-paper-scissors' ? 3000 : 5000
     const intervalId = window.setInterval(() => {
-      refreshGameState().catch((error) => {
-        console.error('Polling refresh failed:', error)
-      })
+      refreshGameState().catch(() => undefined)
     }, pollingIntervalMs)
 
     window.addEventListener('focus', onFocus)
@@ -500,6 +786,62 @@ export default function Game({
                 </div>
               )}
 
+              {replayTimeline.length > 0 && activeReplayStep && (
+                <div className="space-y-3 text-left">
+                  <div className="rounded-base border-2 border-border p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="font-heading">Replay Timeline</p>
+                      <Badge variant="secondary">
+                        Step {replayCursor + 1} / {replayTimeline.length}
+                      </Badge>
+                    </div>
+                    <div className="mt-2 flex items-center gap-2">
+                      <Button
+                        variant="neutral"
+                        size="sm"
+                        onClick={() => moveReplayCursor(replayCursor - 1)}
+                        disabled={replayCursor <= 0}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        variant="neutral"
+                        size="sm"
+                        onClick={() => moveReplayCursor(replayCursor + 1)}
+                        disabled={replayCursor >= replayTimeline.length - 1}
+                      >
+                        Next
+                      </Button>
+                      <Button
+                        variant="neutral"
+                        size="sm"
+                        onClick={() => moveReplayCursor(replayTimeline.length - 1)}
+                        disabled={isReplayPinnedToLatest}
+                      >
+                        Live
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="rounded-base border-2 border-border p-3 text-sm">
+                    <p className="font-semibold">
+                      {activeReplayStep.kind === 'initial'
+                        ? 'Game started'
+                        : `${getPlayerLabel(activeReplayStep.actorId)} played ${activeReplayStep.actionType ?? 'action'}`}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {new Date(activeReplayStep.recordedAt).toLocaleString()}
+                    </p>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Phase: {activeReplayStep.snapshot.phase} | Round: {activeReplayStep.snapshot.round}{' '}
+                      | Turn: {activeReplayStep.snapshot.turn}
+                    </p>
+                  </div>
+
+                  {renderReplayDiff()}
+                </div>
+              )}
+
               <Button onClick={() => (window.location.href = '/lobbies')} className="w-full">
                 Back to Lobbies
               </Button>
@@ -516,9 +858,9 @@ export default function Game({
   const gameTitle = isRpsGame ? 'Rock Paper Scissors' : 'Love Letter'
   const isMyTurn = gameState?.isMyTurn || false
   const phase = gameState?.state?.phase || 'waiting'
-  const canDraw = availableActions.includes('draw_card')
-  const canPlay = availableActions.includes('play_card')
-  const canSubmitMove = availableActions.includes('submit_move')
+  const canDraw = !isSpectator && availableActions.includes('draw_card')
+  const canPlay = !isSpectator && availableActions.includes('play_card')
+  const canSubmitMove = !isSpectator && availableActions.includes('submit_move')
 
   if (isRpsGame) {
     const rpsScores = (stateRecord.scores as Record<string, number>) ?? {}
@@ -559,6 +901,7 @@ export default function Game({
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+                  {isSpectator && <Badge variant="secondary">Spectator</Badge>}
                   <Badge variant={isConnected ? 'default' : 'destructive'}>
                     {isConnected ? 'Connected' : 'Disconnected'}
                   </Badge>
@@ -602,7 +945,7 @@ export default function Game({
                         {player.name} {player.isMe ? '(You)' : ''}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {player.choice ? `Choice: ${player.choice}` : 'Choice: hidden'}
+                        {player.choice ? `Choice: ${formatRpsMove(player.choice)}` : 'Choice: hidden'}
                       </p>
                     </div>
                     <Badge variant="secondary">Score: {player.score}</Badge>
@@ -616,23 +959,60 @@ export default function Game({
                 <CardTitle>Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {canSubmitMove ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    {(['rock', 'paper', 'scissors'] as const).map((move) => (
-                      <Button
-                        key={move}
-                        onClick={() => handleSubmitMove(move)}
-                        disabled={isLoading}
-                        className="w-full"
-                      >
-                        {isLoading ? 'Submitting...' : move.toUpperCase()}
-                      </Button>
-                    ))}
+                {isSpectator ? (
+                  <p className="text-center text-muted-foreground py-2">
+                    Spectator mode: actions are disabled.
+                  </p>
+                ) : canSubmitMove ? (
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    {(Object.keys(RPS_MOVE_META) as RpsMove[]).map((move) => {
+                      const isSelected = lastSubmittedMove === move
+
+                      return (
+                        <button
+                          key={move}
+                          type="button"
+                          onClick={() => handleSubmitMove(move)}
+                          disabled={isLoading}
+                          className={`group relative rounded-base border-2 p-3 text-left shadow-shadow transition-all
+                            hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none
+                            focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2
+                            ${isLoading ? 'cursor-not-allowed opacity-50' : ''}
+                            ${isSelected ? 'translate-x-boxShadowX translate-y-boxShadowY shadow-none ring-2 ring-black' : ''}
+                            ${
+                              move === 'rock'
+                                ? 'bg-linear-to-br from-amber-100 via-orange-100 to-orange-200 border-orange-300'
+                                : move === 'paper'
+                                  ? 'bg-linear-to-br from-sky-100 via-cyan-100 to-cyan-200 border-cyan-300'
+                                  : 'bg-linear-to-br from-violet-100 via-fuchsia-100 to-fuchsia-200 border-fuchsia-300'
+                            }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <p className="text-sm font-base uppercase tracking-wide text-gray-700">
+                                {RPS_MOVE_META[move].label}
+                              </p>
+                              <p className="text-xs text-gray-600">
+                                {move === 'rock'
+                                  ? 'Crushes scissors'
+                                  : move === 'paper'
+                                    ? 'Covers rock'
+                                    : 'Cuts paper'}
+                              </p>
+                            </div>
+                            <span className="text-3xl leading-none">{RPS_MOVE_META[move].picto}</span>
+                          </div>
+                          <div className="mt-3 text-xs font-base text-gray-700">
+                            {isSelected ? 'Selected' : isLoading ? 'Submitting...' : 'Choose move'}
+                          </div>
+                        </button>
+                      )
+                    })}
                   </div>
                 ) : (
                   <p className="text-center text-muted-foreground py-2">
                     {lastSubmittedMove
-                      ? `Move submitted (${lastSubmittedMove}), waiting for opponent.`
+                      ? `Move submitted (${formatRpsMove(lastSubmittedMove)}), waiting for opponent.`
                       : isMyTurn
                         ? 'Move already submitted, waiting for opponent.'
                         : 'Waiting for other player...'}
@@ -658,16 +1038,158 @@ export default function Game({
                         key={`history-round-${round.round}-${round.winnerId ?? 'draw'}-${index}`}
                         className="rounded-base border-2 border-border px-3 py-2 text-sm"
                       >
-                        <span className="font-semibold mr-2">Round {round.round}</span>
-                        <span>
-                          {round.winnerId === null
-                            ? 'Draw'
-                            : round.winnerId === user.uuid
-                              ? 'Won by you'
-                              : 'Won by opponent'}
-                        </span>
+                        <p>
+                          <span className="font-semibold mr-2">Round {round.round}</span>
+                          <span>
+                            {round.winnerId === null
+                              ? 'Draw'
+                              : round.winnerId === user.uuid
+                                ? 'Won by you'
+                                : 'Won by opponent'}
+                          </span>
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {(players as Array<{ id: string; name: string }>)
+                            .map((player) => {
+                              const label = player.id === user.uuid ? 'You' : player.name
+                              return `${label}: ${formatRpsMove(round.choices?.[player.id])}`
+                            })
+                            .join(' • ')}
+                        </p>
                       </div>
                     ))
+                )}
+              </CardContent>
+            </UICard>
+
+            <UICard>
+              <CardHeader>
+                <CardTitle>Replay Timeline</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {replayTimeline.length === 0 || !activeReplayStep ? (
+                  <p className="text-sm text-muted-foreground">No replay data available yet.</p>
+                ) : (
+                  <>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <Badge variant="secondary">
+                        Step {replayCursor + 1} / {replayTimeline.length}
+                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="neutral"
+                          size="sm"
+                          onClick={() => moveReplayCursor(replayCursor - 1)}
+                          disabled={replayCursor <= 0}
+                        >
+                          Previous
+                        </Button>
+                        <Button
+                          variant="neutral"
+                          size="sm"
+                          onClick={() => moveReplayCursor(replayCursor + 1)}
+                          disabled={replayCursor >= replayTimeline.length - 1}
+                        >
+                          Next
+                        </Button>
+                        <Button
+                          variant="neutral"
+                          size="sm"
+                          onClick={() => moveReplayCursor(replayTimeline.length - 1)}
+                          disabled={isReplayPinnedToLatest}
+                        >
+                          Live
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="rounded-base border-2 border-border p-3 text-sm">
+                      <p className="font-semibold">
+                        {activeReplayStep.kind === 'initial'
+                          ? 'Game started'
+                          : `${getPlayerLabel(activeReplayStep.actorId)} played ${activeReplayStep.actionType ?? 'action'}`}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {new Date(activeReplayStep.recordedAt).toLocaleString()}
+                      </p>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Phase: {activeReplayStep.snapshot.phase} | Round:{' '}
+                        {activeReplayStep.snapshot.round} | Turn: {activeReplayStep.snapshot.turn}
+                      </p>
+                    </div>
+
+                    {renderReplayDiff()}
+
+                    <div className="rounded-base border-2 border-border p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Snapshot
+                      </p>
+                      <div className="mt-2 space-y-1 text-sm">
+                        {activeReplayStep.snapshot.players.map((player) => {
+                          const scoreDelta = replayDiff?.scoreDeltaByPlayerId?.[player.id] ?? 0
+                          return (
+                            <div
+                              key={`replay-player-${player.id}`}
+                              className={`flex items-center justify-between rounded-base px-2 py-1 ${
+                                scoreDelta !== 0 ? 'bg-amber-100 border border-amber-300' : ''
+                              }`}
+                            >
+                              <span>
+                                {player.name} {player.id === user.uuid ? '(You)' : ''}
+                              </span>
+                              <span className="flex items-center gap-2">
+                                {(activeReplayStep.snapshot.scores?.[player.id] ?? 0).toString()}
+                                {scoreDelta !== 0 && (
+                                  <span className="text-xs font-semibold text-amber-800">
+                                    {scoreDelta > 0 ? `+${scoreDelta}` : scoreDelta}
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      {activeReplayStep.snapshot.roundChoices &&
+                        Object.keys(activeReplayStep.snapshot.roundChoices).length > 0 && (
+                          <p className="mt-2 text-xs text-muted-foreground">
+                            {(activeReplayStep.snapshot.players ?? [])
+                              .map((player) => {
+                                const move = activeReplayStep.snapshot.roundChoices?.[player.id]
+                                const label = player.id === user.uuid ? 'You' : player.name
+                                return `${label}: ${formatRpsMove(move)}`
+                              })
+                              .join(' • ')}
+                          </p>
+                        )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Engine Events
+                      </p>
+                      {activeReplayStep.events.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No events for this step.</p>
+                      ) : (
+                        activeReplayStep.events.map((event, index) => (
+                          <div
+                            key={`replay-event-${activeReplayStep.step}-${event.type}-${index}`}
+                            className="rounded-base border-2 border-border px-3 py-2 text-xs"
+                          >
+                            <p className="font-semibold">{describeReplayEvent(event)}</p>
+                            {canViewDebugPayload ? (
+                              <pre className="mt-1 overflow-x-auto whitespace-pre-wrap text-muted-foreground">
+                                {formatDebugPayload(event.payload)}
+                              </pre>
+                            ) : (
+                              <p className="mt-1 text-muted-foreground">
+                                Debug payload hidden for non-admin users.
+                              </p>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </>
                 )}
               </CardContent>
             </UICard>
@@ -692,6 +1214,7 @@ export default function Game({
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+                {isSpectator && <Badge variant="secondary">Spectator</Badge>}
                 <Badge variant={isConnected ? 'default' : 'destructive'}>
                   {isConnected ? 'Connected' : 'Disconnected'}
                 </Badge>
@@ -738,7 +1261,7 @@ export default function Game({
                 </div>
               </CardContent>
             </UICard>
-            {isMyTurn && (
+            {!isSpectator && isMyTurn && (
               <Alert className="bg-main border-2 border-border">
                 <AlertDescription className="text-center text-main-foreground">
                   <span className="text-xl font-heading">🎮 Your turn!</span>
@@ -751,38 +1274,51 @@ export default function Game({
           </div>
 
           <div className="space-y-4">
-            <UICard>
-              <CardHeader>
-                <CardTitle>Your Hand</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-2 justify-center flex-wrap">
-                  {myHand.length > 0 ? (
-                    myHand.map((c, i) => (
-                      <Card
-                        key={i}
-                        cardType={c}
-                        selected={selectedCard === c}
-                        onClick={() => setSelectedCard(selectedCard === c ? null : c)}
-                        disabled={!canPlay}
-                      />
-                    ))
-                  ) : (
-                    <p className="text-muted-foreground py-8">No cards</p>
-                  )}
-                </div>
-                {selectedCard && (
-                  <div className="mt-4 p-3 bg-secondary-background rounded-base border-2 border-border">
-                    <p className="font-heading">{CARD_INFO[selectedCard]?.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {CARD_INFO[selectedCard]?.description}
-                    </p>
+            {isSpectator ? (
+              <UICard>
+                <CardHeader>
+                  <CardTitle>Spectator View</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    You are watching this game live. Player hands and actions are hidden.
+                  </p>
+                </CardContent>
+              </UICard>
+            ) : (
+              <UICard>
+                <CardHeader>
+                  <CardTitle>Your Hand</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-2 justify-center flex-wrap">
+                    {myHand.length > 0 ? (
+                      myHand.map((c, i) => (
+                        <Card
+                          key={i}
+                          cardType={c}
+                          selected={selectedCard === c}
+                          onClick={() => setSelectedCard(selectedCard === c ? null : c)}
+                          disabled={!canPlay}
+                        />
+                      ))
+                    ) : (
+                      <p className="text-muted-foreground py-8">No cards</p>
+                    )}
                   </div>
-                )}
-              </CardContent>
-            </UICard>
+                  {selectedCard && (
+                    <div className="mt-4 p-3 bg-secondary-background rounded-base border-2 border-border">
+                      <p className="font-heading">{CARD_INFO[selectedCard]?.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {CARD_INFO[selectedCard]?.description}
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </UICard>
+            )}
 
-            {selectedCard === 'guard' && (
+            {!isSpectator && selectedCard === 'guard' && (
               <UICard>
                 <CardHeader>
                   <CardTitle>Guess a Card</CardTitle>
@@ -809,20 +1345,117 @@ export default function Game({
                 <CardTitle>Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {canDraw && (
-                  <Button onClick={handleDraw} disabled={isLoading} className="w-full">
-                    {isLoading ? 'Drawing...' : '🃏 Draw Card'}
-                  </Button>
-                )}
-                {canPlay && selectedCard && (
-                  <Button onClick={handlePlayCard} disabled={isLoading} className="w-full">
-                    {isLoading ? 'Playing...' : `▶️ Play ${CARD_INFO[selectedCard]?.name}`}
-                  </Button>
-                )}
-                {!isMyTurn && (
+                {isSpectator ? (
                   <p className="text-center text-muted-foreground py-4">
-                    Waiting for other players...
+                    Spectator mode: actions are disabled.
                   </p>
+                ) : (
+                  <>
+                    {canDraw && (
+                      <Button onClick={handleDraw} disabled={isLoading} className="w-full">
+                        {isLoading ? 'Drawing...' : '🃏 Draw Card'}
+                      </Button>
+                    )}
+                    {canPlay && selectedCard && (
+                      <Button onClick={handlePlayCard} disabled={isLoading} className="w-full">
+                        {isLoading ? 'Playing...' : `▶️ Play ${CARD_INFO[selectedCard]?.name}`}
+                      </Button>
+                    )}
+                    {!isMyTurn && (
+                      <p className="text-center text-muted-foreground py-4">
+                        Waiting for other players...
+                      </p>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </UICard>
+
+            <UICard>
+              <CardHeader>
+                <CardTitle>Replay Timeline</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {replayTimeline.length === 0 || !activeReplayStep ? (
+                  <p className="text-sm text-muted-foreground">No replay data available yet.</p>
+                ) : (
+                  <>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <Badge variant="secondary">
+                        Step {replayCursor + 1} / {replayTimeline.length}
+                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="neutral"
+                          size="sm"
+                          onClick={() => moveReplayCursor(replayCursor - 1)}
+                          disabled={replayCursor <= 0}
+                        >
+                          Previous
+                        </Button>
+                        <Button
+                          variant="neutral"
+                          size="sm"
+                          onClick={() => moveReplayCursor(replayCursor + 1)}
+                          disabled={replayCursor >= replayTimeline.length - 1}
+                        >
+                          Next
+                        </Button>
+                        <Button
+                          variant="neutral"
+                          size="sm"
+                          onClick={() => moveReplayCursor(replayTimeline.length - 1)}
+                          disabled={isReplayPinnedToLatest}
+                        >
+                          Live
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="rounded-base border-2 border-border p-3 text-sm">
+                      <p className="font-semibold">
+                        {activeReplayStep.kind === 'initial'
+                          ? 'Game started'
+                          : `${getPlayerLabel(activeReplayStep.actorId)} played ${activeReplayStep.actionType ?? 'action'}`}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {new Date(activeReplayStep.recordedAt).toLocaleString()}
+                      </p>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Phase: {activeReplayStep.snapshot.phase} | Round:{' '}
+                        {activeReplayStep.snapshot.round} | Turn: {activeReplayStep.snapshot.turn}
+                      </p>
+                    </div>
+
+                    {renderReplayDiff()}
+
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Engine Events
+                      </p>
+                      {activeReplayStep.events.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No events for this step.</p>
+                      ) : (
+                        activeReplayStep.events.map((event, index) => (
+                          <div
+                            key={`replay-ll-event-${activeReplayStep.step}-${event.type}-${index}`}
+                            className="rounded-base border-2 border-border px-3 py-2 text-xs"
+                          >
+                            <p className="font-semibold">{describeReplayEvent(event)}</p>
+                            {canViewDebugPayload ? (
+                              <pre className="mt-1 overflow-x-auto whitespace-pre-wrap text-muted-foreground">
+                                {formatDebugPayload(event.payload)}
+                              </pre>
+                            ) : (
+                              <p className="mt-1 text-muted-foreground">
+                                Debug payload hidden for non-admin users.
+                              </p>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </>
                 )}
               </CardContent>
             </UICard>

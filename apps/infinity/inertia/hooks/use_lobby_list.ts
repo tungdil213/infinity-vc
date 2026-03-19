@@ -10,7 +10,7 @@ interface UseLobbyListOptions {
 }
 
 /**
- * Hook pour gérer la liste des lobbies avec mises à jour temps réel
+ * Handles lobby list state with realtime updates.
  */
 export function useLobbyList(options: UseLobbyListOptions = {}) {
   const { service: lobbyService, isConnected, error: realtimeError } = useLobbyService()
@@ -24,10 +24,10 @@ export function useLobbyList(options: UseLobbyListOptions = {}) {
   useEffect(() => {
     if (!lobbyService) return
 
-    // S'abonner aux mises à jour
+    // Subscribe to updates
     const unsubscribe = lobbyService.subscribeLobbyList(setState)
 
-    // Charger les données initiales
+    // Load initial data
     lobbyService.fetchLobbies({
       status: options.status,
       hasSlots: options.hasSlots,

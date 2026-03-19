@@ -1,38 +1,54 @@
+import { inject } from '@adonisjs/core'
 import { type HttpContext } from '@adonisjs/core/http'
+import logger from '@adonisjs/core/services/logger'
 import { gameEngineService } from '#application/services/game_engine_service'
+import type { GameReplayStep, GameSession } from '#application/services/game_engine_types'
 import {
   executeParsedGameAction,
-  getAuthorizedGameSession,
+  getGameSession,
+  isUserInGameSession,
   parseGameActionInput,
   type RawGameActionInput,
 } from '#controllers/support/game_controller_guard'
+import Game from '#domain/entities/game'
+import { GameStatus } from '#domain/value_objects/game_status'
+import { DatabaseGameRepository } from '#infrastructure/repositories/database_game_repository'
 import {
   toActionResponsePayload,
   toGameActionsPayload,
   toGameApiPayload,
   toGamePagePayload,
   toPublicPlayersPayload,
+  toSpectatorPlayerView,
 } from '#presenters/game_presenter'
 
+@inject()
 export default class GamesController {
+  private readonly restoredSessionIds = new Set<string>()
+
+  constructor(private gameRepository: DatabaseGameRepository) {}
+
   /**
    * Display specific game (Inertia page)
    */
   async show({ params, inertia, auth }: HttpContext) {
     const user = auth.user!
     const { uuid } = params
+    const canViewDebugPayload = this.canViewDebugPayload(user.normalizedRole)
 
-    const session = getAuthorizedGameSession(uuid, user.userUuid, (gameUuid) =>
-      gameEngineService.getSession(gameUuid)
-    )
-    if (!session) {
+    const resolvedSession = await this.resolveRuntimeSession(uuid)
+    if (!resolvedSession) {
       return inertia.render('errors/not_found', {
         error: { message: 'Game not found' },
       })
     }
+    const { session, source } = resolvedSession
 
-    const playerView = gameEngineService.getPlayerView(uuid, user.userUuid)
-    const availableActions = gameEngineService.getAvailableActions(uuid, user.userUuid)
+    const isSpectator = !isUserInGameSession(session, user.userUuid)
+    const playerView = isSpectator
+      ? toSpectatorPlayerView({ session, currentUserUuid: user.userUuid })
+      : gameEngineService.getPlayerView(uuid, user.userUuid)
+    const availableActions = isSpectator ? [] : gameEngineService.getAvailableActions(uuid, user.userUuid)
 
     return inertia.render(
       'game',
@@ -40,7 +56,21 @@ export default class GamesController {
         session,
         playerView,
         availableActions,
-        user: { uuid: user.userUuid, nickName: user.fullName ?? user.email },
+        user: {
+          uuid: user.userUuid,
+          nickName: user.fullName ?? user.email,
+          role: user.normalizedRole,
+        },
+        isSpectator,
+        replayTimeline: this.sanitizeReplayTimelineForViewer(
+          gameEngineService.getReplayTimeline(uuid),
+          canViewDebugPayload
+        ),
+        runtimeStatus: {
+          source,
+          persisted: source === 'restored',
+          inMemory: true,
+        },
       }) as any
     )
   }
@@ -51,18 +81,37 @@ export default class GamesController {
   async apiShow({ params, response, auth }: HttpContext) {
     const user = auth.user!
     const { uuid } = params
+    const canViewDebugPayload = this.canViewDebugPayload(user.normalizedRole)
 
-    const session = getAuthorizedGameSession(uuid, user.userUuid, (gameUuid) =>
-      gameEngineService.getSession(gameUuid)
-    )
-    if (!session) {
+    const resolvedSession = await this.resolveRuntimeSession(uuid)
+    if (!resolvedSession) {
       return response.status(404).json({ error: 'Game not found or finished' })
     }
+    const { session, source } = resolvedSession
 
-    const playerView = gameEngineService.getPlayerView(uuid, user.userUuid)
-    const availableActions = gameEngineService.getAvailableActions(uuid, user.userUuid)
+    const isSpectator = !isUserInGameSession(session, user.userUuid)
+    const playerView = isSpectator
+      ? toSpectatorPlayerView({ session, currentUserUuid: user.userUuid })
+      : gameEngineService.getPlayerView(uuid, user.userUuid)
+    const availableActions = isSpectator ? [] : gameEngineService.getAvailableActions(uuid, user.userUuid)
 
-    return response.json(toGameApiPayload({ session, playerView, availableActions }))
+    return response.json(
+      toGameApiPayload({
+        session,
+        playerView,
+        availableActions,
+        isSpectator,
+        replayTimeline: this.sanitizeReplayTimelineForViewer(
+          gameEngineService.getReplayTimeline(uuid),
+          canViewDebugPayload
+        ),
+        runtimeStatus: {
+          source,
+          persisted: source === 'restored',
+          inMemory: true,
+        },
+      })
+    )
   }
 
   /**
@@ -72,20 +121,21 @@ export default class GamesController {
     const user = auth.user!
     const { uuid } = params
 
-    const session = getAuthorizedGameSession(uuid, user.userUuid, (gameUuid) =>
-      gameEngineService.getSession(gameUuid)
-    )
-    if (!session) {
+    const resolvedSession = await this.resolveRuntimeSession(uuid)
+    if (!resolvedSession) {
       return response.status(404).json({ error: 'Game not found' })
     }
+    const { session } = resolvedSession
 
-    const availableActions = gameEngineService.getAvailableActions(uuid, user.userUuid)
+    const isSpectator = !isUserInGameSession(session, user.userUuid)
+    const availableActions = isSpectator ? [] : gameEngineService.getAvailableActions(uuid, user.userUuid)
 
     return response.json(
       toGameActionsPayload({
         session,
         availableActions,
         currentUserUuid: user.userUuid,
+        isSpectator,
       })
     )
   }
@@ -106,11 +156,13 @@ export default class GamesController {
       'payload',
     ]) as RawGameActionInput
 
-    const session = getAuthorizedGameSession(uuid, user.userUuid, (gameUuid) =>
-      gameEngineService.getSession(gameUuid)
-    )
-    if (!session) {
+    const resolvedSession = await this.resolveRuntimeSession(uuid)
+    if (!resolvedSession) {
       return response.status(404).json({ error: 'Game not found' })
+    }
+    const { session } = resolvedSession
+    if (!isUserInGameSession(session, user.userUuid)) {
+      return response.status(403).json({ error: 'Spectators cannot perform game actions' })
     }
 
     const parsedAction = parseGameActionInput(body)
@@ -129,6 +181,10 @@ export default class GamesController {
       return response.status(400).json({ error: result.error })
     }
 
+    await this.persistSessionSnapshot(session).catch((error) => {
+      logger.error({ error, gameUuid: uuid }, 'Failed to persist game snapshot after action')
+    })
+
     const playerView = gameEngineService.getPlayerView(uuid, user.userUuid)
     const availableActions = gameEngineService.getAvailableActions(uuid, user.userUuid)
 
@@ -137,6 +193,7 @@ export default class GamesController {
         actionResult: result,
         playerView,
         availableActions,
+        includeDebugPayload: this.canViewDebugPayload(user.normalizedRole),
       })
     )
   }
@@ -148,14 +205,48 @@ export default class GamesController {
     const user = auth.user!
     const { uuid } = params
 
-    const session = getAuthorizedGameSession(uuid, user.userUuid, (gameUuid) =>
-      gameEngineService.getSession(gameUuid)
-    )
-    if (!session) {
+    const resolvedSession = await this.resolveRuntimeSession(uuid)
+    if (!resolvedSession) {
+      return response.status(404).json({ error: 'Game not found' })
+    }
+    const { session } = resolvedSession
+
+    return response.json(toPublicPlayersPayload({ session, currentUserUuid: user.userUuid }))
+  }
+
+  /**
+   * Get replay timeline for live or persisted games.
+   */
+  async replay({ params, response, auth }: HttpContext) {
+    const user = auth.user
+    const { uuid } = params
+    const canViewDebugPayload = this.canViewDebugPayload(user?.normalizedRole)
+
+    const resolvedSession = await this.resolveRuntimeSession(uuid)
+    if (resolvedSession) {
+      return response.json({
+        gameId: uuid,
+        source: resolvedSession.source,
+        replayTimeline: this.sanitizeReplayTimelineForViewer(
+          gameEngineService.getReplayTimeline(uuid),
+          canViewDebugPayload
+        ),
+      })
+    }
+
+    const persistedGame = await this.gameRepository.findByUuid(uuid)
+    if (!persistedGame) {
       return response.status(404).json({ error: 'Game not found' })
     }
 
-    return response.json(toPublicPlayersPayload({ session, currentUserUuid: user.userUuid }))
+    return response.json({
+      gameId: uuid,
+      source: 'persistence',
+      replayTimeline: this.sanitizeReplayTimelineForViewer(
+        this.extractPersistedReplayTimeline(persistedGame),
+        canViewDebugPayload
+      ),
+    })
   }
 
   /**
@@ -164,13 +255,478 @@ export default class GamesController {
   async leave({ params, response }: HttpContext) {
     const { uuid } = params
 
-    const session = gameEngineService.getSession(uuid)
-    if (!session) {
+    const resolvedSession = await this.resolveRuntimeSession(uuid)
+    if (!resolvedSession) {
       return response.redirect('/lobbies')
     }
+    const { session } = resolvedSession
 
-    // TODO: Handle player forfeiting (eliminate them)
-    // For now, just redirect
+    await this.persistSessionSnapshot(session, {
+      statusOverride: session.state.isFinished ? GameStatus.FINISHED : GameStatus.ABANDONED,
+      abandonReason: session.state.isFinished ? undefined : 'player_left',
+    }).catch((error) => {
+      logger.error({ error, gameUuid: uuid }, 'Failed to persist game snapshot on leave')
+    })
+
+    gameEngineService.endGame(uuid)
+    this.restoredSessionIds.delete(uuid)
+
     return response.redirect('/lobbies')
+  }
+
+  /**
+   * Get current user's game history
+   */
+  async myHistory({ auth, request, response }: HttpContext) {
+    const user = auth.user!
+    const rawLimit = Number(request.input('limit', 20))
+    const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(Math.floor(rawLimit), 1), 100) : 20
+    const statusFilter = this.normalizeStatusFilter(request.input('status'))
+
+    const allGames = await this.gameRepository.findByPlayer(user.userUuid)
+    const filteredGames = statusFilter
+      ? allGames.filter((game) => game.status === statusFilter)
+      : allGames
+
+    const history = filteredGames.slice(0, limit).map((game) => this.toHistoryItem(game, user.userUuid))
+
+    return response.json({
+      history,
+      total: filteredGames.length,
+      limit,
+      filters: {
+        status: statusFilter ?? null,
+      },
+    })
+  }
+
+  /**
+   * Get current user's aggregated game stats
+   */
+  async myStats({ auth, response }: HttpContext) {
+    const user = auth.user!
+    const games = await this.gameRepository.findByPlayer(user.userUuid)
+
+    const byStatus = games.reduce<Record<string, number>>((acc, game) => {
+      const status = String(game.status)
+      acc[status] = (acc[status] || 0) + 1
+      return acc
+    }, {})
+
+    const wins = games.filter(
+      (game) =>
+        game.status === GameStatus.FINISHED &&
+        typeof game.gameData.winner === 'string' &&
+        game.gameData.winner === user.userUuid
+    ).length
+    const losses = games.filter(
+      (game) =>
+        game.status === GameStatus.FINISHED &&
+        typeof game.gameData.winner === 'string' &&
+        game.gameData.winner !== user.userUuid
+    ).length
+    const draws = games.filter(
+      (game) => game.status === GameStatus.FINISHED && typeof game.gameData.winner !== 'string'
+    ).length
+    const abandoned = games.filter((game) => game.status === GameStatus.ABANDONED).length
+    const completed = games.filter((game) =>
+      [GameStatus.FINISHED, GameStatus.ABANDONED, GameStatus.ARCHIVED].includes(game.status)
+    ).length
+    const active = games.filter((game) =>
+      [GameStatus.IN_PROGRESS, GameStatus.PAUSED].includes(game.status)
+    ).length
+    const totalDurationMs = games.reduce((sum, game) => sum + game.duration, 0)
+    const averageDurationMs = games.length > 0 ? Math.round(totalDurationMs / games.length) : 0
+    const winRate = completed > 0 ? Number((wins / completed).toFixed(3)) : 0
+
+    return response.json({
+      userUuid: user.userUuid,
+      totalGames: games.length,
+      activeGames: active,
+      completedGames: completed,
+      wins,
+      losses,
+      draws,
+      abandoned,
+      winRate,
+      averageDurationMs,
+      byStatus,
+    })
+  }
+
+  private async resolveRuntimeSession(
+    gameUuid: string
+  ): Promise<{ session: GameSession; source: 'memory' | 'restored' } | null> {
+    const inMemorySession = getGameSession(gameUuid, (requestedGameUuid) =>
+      gameEngineService.getSession(requestedGameUuid)
+    )
+    if (inMemorySession) {
+      const source = this.restoredSessionIds.has(gameUuid) ? 'restored' : 'memory'
+      return { session: inMemorySession, source }
+    }
+
+    const restoredSession = await this.restoreSessionFromPersistence(gameUuid)
+    if (!restoredSession) {
+      return null
+    }
+
+    this.restoredSessionIds.add(gameUuid)
+    return { session: restoredSession, source: 'restored' }
+  }
+
+  private async restoreSessionFromPersistence(gameUuid: string): Promise<GameSession | null> {
+    const persistedGame = await this.gameRepository.findByUuid(gameUuid)
+    if (!persistedGame) {
+      return null
+    }
+
+    if (![GameStatus.IN_PROGRESS, GameStatus.PAUSED].includes(persistedGame.status)) {
+      return null
+    }
+
+    const snapshot = this.extractPersistedSnapshot(persistedGame)
+    if (!snapshot) {
+      logger.warn(
+        { gameUuid },
+        'Persisted game exists but no runtime snapshot is available for restoration'
+      )
+      return null
+    }
+
+    const restoreResult = await gameEngineService.restoreGameSession({
+      gameId: persistedGame.uuid,
+      lobbyId: snapshot.lobbyId,
+      gameType: snapshot.gameType,
+      players: persistedGame.players,
+      engineState: snapshot.engineState,
+      gameSettings: snapshot.settings,
+      replayTimeline: snapshot.replayTimeline,
+      startedAt: persistedGame.startedAt,
+    })
+
+    if (restoreResult.isFailure) {
+      logger.error(
+        { gameUuid, error: restoreResult.error },
+        'Failed to restore game session from persisted snapshot'
+      )
+      return null
+    }
+
+    return restoreResult.value
+  }
+
+  private extractPersistedSnapshot(game: Game): {
+    gameType: string
+    lobbyId: string
+    settings: Record<string, unknown>
+    engineState: Record<string, unknown>
+    replayTimeline: GameReplayStep[]
+  } | null {
+    const gameData = this.asRecord(game.gameData)
+    if (!gameData) {
+      return null
+    }
+    const runtime = this.asRecord(gameData.runtime) ?? {}
+    const runtimeEngineState = this.asRecord(runtime.engineState)
+    const legacyEngineState = this.hasLegacyEngineStateShape(gameData) ? gameData : undefined
+
+    const engineState = runtimeEngineState ?? legacyEngineState
+    if (!engineState) {
+      return null
+    }
+
+    const gameType =
+      (typeof runtime.gameType === 'string' ? runtime.gameType : undefined) ||
+      (typeof gameData.gameType === 'string' ? (gameData.gameType as string) : undefined)
+    if (!gameType) {
+      return null
+    }
+
+    const lobbyId =
+      (typeof runtime.lobbyId === 'string' ? runtime.lobbyId : undefined) || `restored-${game.uuid}`
+
+    return {
+      gameType,
+      lobbyId,
+      settings: this.asRecord(runtime.settings) ?? {},
+      engineState,
+      replayTimeline: this.extractPersistedReplayTimeline(game),
+    }
+  }
+
+  private extractPersistedReplayTimeline(game: Game): GameReplayStep[] {
+    const gameData = this.asRecord(game.gameData)
+    if (!gameData) {
+      return []
+    }
+
+    const runtime = this.asRecord(gameData.runtime)
+    if (!runtime || !Array.isArray(runtime.replayTimeline)) {
+      return []
+    }
+
+    return runtime.replayTimeline
+      .map((rawStep, index) => this.normalizeReplayStep(rawStep, index))
+      .filter((step): step is GameReplayStep => step !== null)
+  }
+
+  private normalizeReplayStep(rawStep: unknown, index: number): GameReplayStep | null {
+    if (!rawStep || typeof rawStep !== 'object') {
+      return null
+    }
+
+    const source = rawStep as Record<string, unknown>
+    const rawEvents = Array.isArray(source.events) ? source.events : []
+    const normalizedEvents = rawEvents.map((rawEvent) => {
+      const event = rawEvent as Record<string, unknown>
+      return {
+        type: String(event.type ?? ''),
+        payload: event.payload,
+      }
+    })
+
+    const snapshot = source.snapshot as Record<string, unknown> | undefined
+    const rawPlayers = Array.isArray(snapshot?.players) ? snapshot.players : []
+    const players = rawPlayers.map((rawPlayer) => {
+      const player = rawPlayer as Record<string, unknown>
+
+      return {
+        id: String(player.id ?? ''),
+        name: String(player.name ?? 'Unknown'),
+        isActive: Boolean(player.isActive),
+        isEliminated: Boolean(player.isEliminated),
+        isProtected: Boolean(player.isProtected),
+        handCount: Number(player.handCount ?? 0) || 0,
+        tokensOfAffection: Number(player.tokensOfAffection ?? 0) || 0,
+      }
+    })
+
+    const rounds = Array.isArray(snapshot?.rounds)
+      ? snapshot.rounds.map((rawRound, roundIndex) => {
+          const round = rawRound as Record<string, unknown>
+          const choicesSource = this.asRecord(round.choices) ?? {}
+          const choices = Object.entries(choicesSource).reduce<Record<string, string>>(
+            (acc, [playerId, move]) => {
+              if (typeof move === 'string') {
+                acc[playerId] = move
+              }
+              return acc
+            },
+            {}
+          )
+
+          return {
+            round: Number(round.round ?? roundIndex + 1) || roundIndex + 1,
+            winnerId: typeof round.winnerId === 'string' ? round.winnerId : null,
+            choices,
+          }
+        })
+      : undefined
+
+    const scoresSource = this.asRecord(snapshot?.scores) ?? {}
+    const scores = Object.entries(scoresSource).reduce<Record<string, number>>((acc, [key, value]) => {
+      const numericValue = Number(value)
+      if (Number.isFinite(numericValue)) {
+        acc[key] = numericValue
+      }
+      return acc
+    }, {})
+
+    const roundChoicesSource = this.asRecord(snapshot?.roundChoices) ?? {}
+    const roundChoices = Object.entries(roundChoicesSource).reduce<Record<string, string>>(
+      (acc, [key, value]) => {
+        if (typeof value === 'string') {
+          acc[key] = value
+        }
+        return acc
+      },
+      {}
+    )
+
+    return {
+      step: Number(source.step ?? index) || index,
+      kind: source.kind === 'action' ? 'action' : 'initial',
+      recordedAt:
+        typeof source.recordedAt === 'string' ? source.recordedAt : new Date().toISOString(),
+      actorId: typeof source.actorId === 'string' ? source.actorId : undefined,
+      actionType: typeof source.actionType === 'string' ? source.actionType : undefined,
+      actionPayload: this.asRecord(source.actionPayload) ?? undefined,
+      events: normalizedEvents,
+      snapshot: {
+        phase: typeof snapshot?.phase === 'string' ? snapshot.phase : 'unknown',
+        round: Number(snapshot?.round ?? 1) || 1,
+        turn: Number(snapshot?.turn ?? 0) || 0,
+        isFinished: Boolean(snapshot?.isFinished),
+        winnerId: typeof snapshot?.winnerId === 'string' ? snapshot.winnerId : null,
+        currentPlayerId:
+          typeof snapshot?.currentPlayerId === 'string' ? snapshot.currentPlayerId : null,
+        players,
+        ...(Object.keys(scores).length > 0 ? { scores } : {}),
+        ...(Object.keys(roundChoices).length > 0 ? { roundChoices } : {}),
+        ...(rounds ? { rounds } : {}),
+      },
+    }
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> | null {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return value as Record<string, unknown>
+    }
+
+    return null
+  }
+
+  private hasLegacyEngineStateShape(value: Record<string, unknown>): boolean {
+    return Array.isArray(value.players) && typeof value.phase === 'string'
+  }
+
+  private async persistSessionSnapshot(
+    session: GameSession,
+    options?: {
+      statusOverride?: GameStatus
+      abandonReason?: string
+    }
+  ): Promise<void> {
+    const runtimeStatus: 'HOT' | 'RESTORED' = this.restoredSessionIds.has(session.gameId)
+      ? 'RESTORED'
+      : 'HOT'
+    const gameState = session.state as unknown as Record<string, unknown>
+    const statePlayers = Array.isArray(gameState.players)
+      ? (gameState.players as Array<Record<string, unknown>>)
+      : []
+
+    const playerHands = statePlayers.reduce<Record<string, unknown[]>>((acc, player) => {
+      const playerId = String(player.id ?? '')
+      if (!playerId) {
+        return acc
+      }
+
+      acc[playerId] = Array.isArray(player.hand) ? (player.hand as unknown[]) : []
+      return acc
+    }, {})
+
+    const discardPile = Array.isArray(gameState.publicDiscards)
+      ? (gameState.publicDiscards as unknown[])
+      : Array.isArray(gameState.discardPile)
+        ? (gameState.discardPile as unknown[])
+        : []
+
+    const deckCount = Array.isArray(gameState.deck)
+      ? gameState.deck.length
+      : Number(gameState.deckCount ?? 0)
+
+    const eliminatedPlayers = statePlayers
+      .filter((player) => player.isEliminated === true)
+      .map((player) => String(player.id))
+
+    const resolvedStatus =
+      options?.statusOverride ??
+      (session.state.isFinished ? GameStatus.FINISHED : GameStatus.IN_PROGRESS)
+
+    const persistedGame = Game.reconstitute(
+      session.gameId,
+      resolvedStatus,
+      session.players.map((player) => ({
+        uuid: player.id,
+        nickName: player.name,
+      })),
+      {
+        currentRound: Number(gameState.round ?? 1),
+        currentTurn: Number(gameState.turn ?? 0),
+        deck: {
+          remaining: Number.isNaN(deckCount) ? 0 : deckCount,
+        },
+        discardPile,
+        playerHands,
+        eliminatedPlayers,
+        winner: typeof gameState.winnerId === 'string' ? gameState.winnerId : undefined,
+        runtime: {
+          gameType: session.gameType,
+          lobbyId: session.lobbyId,
+          settings: (gameState.settings as Record<string, unknown>) ?? {},
+          engineState: gameState,
+          replayTimeline: Array.isArray(session.timeline) ? session.timeline : [],
+          persistedAt: new Date().toISOString(),
+          runtimeStatus,
+          abandonReason: options?.abandonReason,
+        },
+      },
+      session.createdAt,
+      [GameStatus.FINISHED, GameStatus.ABANDONED, GameStatus.ARCHIVED].includes(resolvedStatus)
+        ? new Date()
+        : undefined
+    )
+
+    await this.gameRepository.save(persistedGame)
+
+    if (session.state.isFinished) {
+      this.restoredSessionIds.delete(session.gameId)
+    }
+  }
+
+  private toHistoryItem(game: Game, currentUserUuid: string) {
+    const winnerUuid = typeof game.gameData.winner === 'string' ? game.gameData.winner : null
+    const result =
+      game.status === GameStatus.ABANDONED
+        ? 'abandoned'
+        : winnerUuid === currentUserUuid
+          ? 'win'
+          : winnerUuid
+            ? 'loss'
+            : 'draw'
+
+    return {
+      gameUuid: game.uuid,
+      status: game.status,
+      result,
+      gameType: this.getGameType(game),
+      playerCount: game.players.length,
+      winnerUuid,
+      startedAt: game.startedAt,
+      finishedAt: game.finishedAt ?? null,
+      durationMs: game.duration,
+    }
+  }
+
+  private getGameType(game: Game): string {
+    const gameData = this.asRecord(game.gameData)
+    const runtime = gameData ? this.asRecord(gameData.runtime) : null
+    return typeof runtime?.gameType === 'string' ? runtime.gameType : 'unknown'
+  }
+
+  private normalizeStatusFilter(rawStatus: unknown): GameStatus | null {
+    if (typeof rawStatus !== 'string' || rawStatus.trim().length === 0) {
+      return null
+    }
+
+    const normalized = rawStatus.trim().toUpperCase()
+    const allowedStatuses = new Set<string>(Object.values(GameStatus))
+    if (!allowedStatuses.has(normalized)) {
+      return null
+    }
+
+    return normalized as GameStatus
+  }
+
+  private canViewDebugPayload(role?: string): boolean {
+    return role === 'ADMIN'
+  }
+
+  private sanitizeReplayTimelineForViewer(
+    timeline: GameReplayStep[],
+    canViewDebugPayload: boolean
+  ): GameReplayStep[] {
+    if (canViewDebugPayload) {
+      return timeline
+    }
+
+    return timeline.map((step) => ({
+      ...step,
+      actionPayload: undefined,
+      events: step.events.map((event) => ({
+        type: event.type,
+        payload: undefined,
+      })),
+    }))
   }
 }
