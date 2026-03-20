@@ -21,6 +21,15 @@ import {
   toPublicPlayersPayload,
   toSpectatorPlayerView,
 } from '#presenters/game_presenter'
+import { gameActionBodyValidator, gameUuidParamValidator } from '#validators/game_action_validator'
+import { gameHistoryQueryValidator } from '#validators/game_history_validator'
+
+const GAME_ACTION_ERROR_TRANSLATION_KEYS: Record<string, string> = {
+  'Game not found': 'games.errors.notFound',
+  'action is required': 'games.errors.actionRequired',
+  'cardType is required': 'games.errors.cardTypeRequired',
+  'move is required': 'games.errors.moveRequired',
+}
 
 @inject()
 export default class GamesController {
@@ -31,15 +40,15 @@ export default class GamesController {
   /**
    * Display specific game (Inertia page)
    */
-  async show({ params, inertia, auth }: HttpContext) {
+  async show({ params, inertia, auth, i18n }: HttpContext) {
     const user = auth.user!
-    const { uuid } = params
+    const { uuid } = await gameUuidParamValidator.validate(params)
     const canViewDebugPayload = this.canViewDebugPayload(user.normalizedRole)
 
     const resolvedSession = await this.resolveRuntimeSession(uuid)
     if (!resolvedSession) {
       return inertia.render('errors/not_found', {
-        error: { message: 'Game not found' },
+        error: { message: i18n.t('games.errors.notFound') },
       })
     }
     const { session, source } = resolvedSession
@@ -78,14 +87,14 @@ export default class GamesController {
   /**
    * Get game state (API endpoint)
    */
-  async apiShow({ params, response, auth }: HttpContext) {
+  async apiShow({ params, response, auth, i18n }: HttpContext) {
     const user = auth.user!
-    const { uuid } = params
+    const { uuid } = await gameUuidParamValidator.validate(params)
     const canViewDebugPayload = this.canViewDebugPayload(user.normalizedRole)
 
     const resolvedSession = await this.resolveRuntimeSession(uuid)
     if (!resolvedSession) {
-      return response.status(404).json({ error: 'Game not found or finished' })
+      return response.status(404).json({ error: i18n.t('games.errors.notFoundOrFinished') })
     }
     const { session, source } = resolvedSession
 
@@ -117,13 +126,13 @@ export default class GamesController {
   /**
    * Get available actions for current player
    */
-  async getActions({ params, response, auth }: HttpContext) {
+  async getActions({ params, response, auth, i18n }: HttpContext) {
     const user = auth.user!
-    const { uuid } = params
+    const { uuid } = await gameUuidParamValidator.validate(params)
 
     const resolvedSession = await this.resolveRuntimeSession(uuid)
     if (!resolvedSession) {
-      return response.status(404).json({ error: 'Game not found' })
+      return response.status(404).json({ error: i18n.t('games.errors.notFound') })
     }
     const { session } = resolvedSession
 
@@ -143,31 +152,25 @@ export default class GamesController {
   /**
    * Execute a game action (draw card, play card)
    */
-  async action({ params, request, response, auth }: HttpContext) {
+  async action({ params, request, response, auth, i18n }: HttpContext) {
     const user = auth.user!
-    const { uuid } = params
-    const body = request.only([
-      'action',
-      'actionType',
-      'cardType',
-      'targetPlayerId',
-      'guessedCard',
-      'move',
-      'payload',
-    ]) as RawGameActionInput
+    const { uuid } = await gameUuidParamValidator.validate(params)
+    const body = (await request.validateUsing(gameActionBodyValidator)) as RawGameActionInput
 
     const resolvedSession = await this.resolveRuntimeSession(uuid)
     if (!resolvedSession) {
-      return response.status(404).json({ error: 'Game not found' })
+      return response.status(404).json({ error: i18n.t('games.errors.notFound') })
     }
     const { session } = resolvedSession
     if (!isUserInGameSession(session, user.userUuid)) {
-      return response.status(403).json({ error: 'Spectators cannot perform game actions' })
+      return response.status(403).json({ error: i18n.t('games.errors.spectatorsCannotAct') })
     }
 
     const parsedAction = parseGameActionInput(body)
     if (!parsedAction.ok) {
-      return response.status(400).json({ error: parsedAction.error })
+      return response.status(400).json({
+        error: this.translateGameActionError(i18n, parsedAction.error, 'games.errors.invalidAction'),
+      })
     }
 
     const result = executeParsedGameAction(uuid, user.userUuid, parsedAction.value, {
@@ -178,7 +181,9 @@ export default class GamesController {
     })
 
     if (!result.success) {
-      return response.status(400).json({ error: result.error })
+      return response.status(400).json({
+        error: this.translateGameActionError(i18n, result.error, 'games.errors.actionRejected'),
+      })
     }
 
     await this.persistSessionSnapshot(session).catch((error) => {
@@ -201,13 +206,13 @@ export default class GamesController {
   /**
    * Get all players' public state (for spectators or between turns)
    */
-  async getPlayers({ params, response, auth }: HttpContext) {
+  async getPlayers({ params, response, auth, i18n }: HttpContext) {
     const user = auth.user!
-    const { uuid } = params
+    const { uuid } = await gameUuidParamValidator.validate(params)
 
     const resolvedSession = await this.resolveRuntimeSession(uuid)
     if (!resolvedSession) {
-      return response.status(404).json({ error: 'Game not found' })
+      return response.status(404).json({ error: i18n.t('games.errors.notFound') })
     }
     const { session } = resolvedSession
 
@@ -217,9 +222,9 @@ export default class GamesController {
   /**
    * Get replay timeline for live or persisted games.
    */
-  async replay({ params, response, auth }: HttpContext) {
+  async replay({ params, response, auth, i18n }: HttpContext) {
     const user = auth.user
-    const { uuid } = params
+    const { uuid } = await gameUuidParamValidator.validate(params)
     const canViewDebugPayload = this.canViewDebugPayload(user?.normalizedRole)
 
     const resolvedSession = await this.resolveRuntimeSession(uuid)
@@ -236,7 +241,7 @@ export default class GamesController {
 
     const persistedGame = await this.gameRepository.findByUuid(uuid)
     if (!persistedGame) {
-      return response.status(404).json({ error: 'Game not found' })
+      return response.status(404).json({ error: i18n.t('games.errors.notFound') })
     }
 
     return response.json({
@@ -253,7 +258,7 @@ export default class GamesController {
    * Leave/forfeit game
    */
   async leave({ params, response }: HttpContext) {
-    const { uuid } = params
+    const { uuid } = await gameUuidParamValidator.validate(params)
 
     const resolvedSession = await this.resolveRuntimeSession(uuid)
     if (!resolvedSession) {
@@ -279,9 +284,11 @@ export default class GamesController {
    */
   async myHistory({ auth, request, response }: HttpContext) {
     const user = auth.user!
-    const rawLimit = Number(request.input('limit', 20))
-    const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(Math.floor(rawLimit), 1), 100) : 20
-    const statusFilter = this.normalizeStatusFilter(request.input('status'))
+    const { limit: rawLimit, status: rawStatus } = await request.validateUsing(
+      gameHistoryQueryValidator
+    )
+    const limit = rawLimit ? Math.min(Math.max(Number.parseInt(rawLimit, 10), 1), 100) : 20
+    const statusFilter = this.normalizeStatusFilter(rawStatus)
 
     const allGames = await this.gameRepository.findByPlayer(user.userUuid)
     const filteredGames = statusFilter
@@ -728,5 +735,23 @@ export default class GamesController {
         payload: undefined,
       })),
     }))
+  }
+
+  private translateGameActionError(
+    i18n: HttpContext['i18n'],
+    rawError: string | undefined,
+    fallbackKey: string
+  ): string {
+    if (!rawError) {
+      return i18n.t(fallbackKey)
+    }
+
+    const normalizedError = rawError.trim()
+    const translatedKey = GAME_ACTION_ERROR_TRANSLATION_KEYS[normalizedError]
+    if (translatedKey) {
+      return i18n.t(translatedKey)
+    }
+
+    return i18n.t(fallbackKey)
   }
 }

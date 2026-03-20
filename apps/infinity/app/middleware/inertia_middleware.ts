@@ -22,7 +22,7 @@ export default class InertiaMiddleware extends BaseInertiaMiddleware {
 
   share(ctx: HttpContext) {
     const { session } = ctx as Partial<HttpContext>
-    const locale = this.resolveLocale(ctx.request.cookie('locale'))
+    const locale = this.resolveLocale(ctx.i18n?.locale ?? ctx.request.cookie('locale'))
 
     return {
       locale: ctx.inertia.always(locale),

@@ -16,6 +16,14 @@ import {
   LobbyCreationInternalException,
 } from '#exceptions/lobby_exceptions'
 import { lobbyStoreValidator } from '#validators/lobby_store_validator'
+import {
+  lobbyAdminCloseValidator,
+  lobbyInvitationCodeParamValidator,
+  lobbyJoinValidator,
+  lobbyKickPlayerValidator,
+  lobbyUuidParamValidator,
+} from '#validators/lobby_action_validators'
+import { lobbyBeaconPayloadValidator } from '#validators/lobby_beacon_validator'
 import { toUserSummary } from '#presenters/lobby_presenter'
 import type { HttpRequest, HttpResponse } from '@adonisjs/core/http'
 import type { Session } from '@adonisjs/session'
@@ -33,6 +41,27 @@ type AvailableGameViewModel = {
 type CreateLobbySettingsInput = {
   roundsToWin?: number
   allowDrawReplay?: boolean
+}
+
+const LOBBY_ERROR_TRANSLATION_KEYS: Record<string, string> = {
+  'Lobby not found': 'lobbies.errors.notFound',
+  'Player not found': 'lobbies.errors.playerNotFound',
+  'Player is already in a lobby': 'lobbies.errors.playerAlreadyInLobby',
+  'Password is required for this lobby': 'lobbies.errors.passwordRequired',
+  'Invalid lobby password': 'lobbies.errors.invalidPassword',
+  'Lobby is full': 'lobbies.errors.full',
+  'Player is not in this lobby': 'lobbies.errors.playerNotInLobby',
+  'Player not found in lobby': 'lobbies.errors.playerNotInLobby',
+  'Only the lobby creator can start the game': 'lobbies.errors.onlyCreatorCanStart',
+  'Lobby is not ready to start a game': 'lobbies.errors.lobbyNotReady',
+  'Failed to start game': 'lobbies.errors.startFailed',
+  'Only the lobby creator can kick players': 'lobbies.errors.onlyCreatorCanKick',
+  'Target player is not in this lobby': 'lobbies.errors.targetNotInLobby',
+  'Cannot kick players from a game in progress': 'lobbies.errors.cannotKickInProgress',
+  'Cannot close a lobby while a game is starting': 'lobbies.errors.cannotCloseStarting',
+  'Lobby UUID is required': 'lobbies.errors.lobbyUuidRequired',
+  'User UUID is required': 'lobbies.errors.userUuidRequired',
+  'Closer user UUID is required': 'lobbies.errors.userUuidRequired',
 }
 
 @inject()
@@ -149,7 +178,7 @@ export default class EnhancedLobbiesController {
   /**
    * Create a new lobby with advanced features
    */
-  async store({ request, response, auth, session }: HttpContext) {
+  async store({ request, response, auth, session, i18n }: HttpContext) {
     const user = auth.user!
     try {
       const {
@@ -205,7 +234,7 @@ export default class EnhancedLobbiesController {
         throw new LobbyCreationException(result.error, `Use case execution failed: ${result.error}`)
       }
 
-      session.flash('success', 'Lobby created successfully!')
+      session.flash('success', i18n.t('lobbies.flash.created'))
       return response.redirect(`/lobbies/${result.value.uuid}`)
     } catch (error) {
       // Let validation errors bubble to the global handler
@@ -233,15 +262,15 @@ export default class EnhancedLobbiesController {
   /**
    * Display specific lobby
    */
-  async show({ params, inertia, auth }: HttpContext) {
+  async show({ params, inertia, auth, i18n }: HttpContext) {
     const user = auth.user!
-    const { uuid } = params
+    const { uuid } = await lobbyUuidParamValidator.validate(params)
 
     try {
       const result = await this.showLobbyUseCase.execute({ lobbyUuid: uuid })
       if (result.isFailure) {
         return inertia.render('errors/not_found', {
-          error: { message: 'Lobby not found' },
+          error: { message: i18n.t('lobbies.errors.notFound') },
         })
       }
 
@@ -260,7 +289,7 @@ export default class EnhancedLobbiesController {
     } catch (error) {
       logger.error({ error }, 'Failed to load lobby')
       return inertia.render('errors/server_error', {
-        error: { message: 'Failed to load lobby' },
+        error: { message: i18n.t('lobbies.errors.loadFailed') },
       })
     }
   }
@@ -268,15 +297,15 @@ export default class EnhancedLobbiesController {
   /**
    * Display join lobby page by invitation code
    */
-  async showJoinByInvite({ params, inertia, auth }: HttpContext) {
-    const { invitationCode } = params
+  async showJoinByInvite({ params, inertia, auth, i18n }: HttpContext) {
+    const { invitationCode } = await lobbyInvitationCodeParamValidator.validate(params)
     const user = auth.user
 
     try {
       const result = await this.showLobbyUseCase.execute({ lobbyUuid: invitationCode })
       if (result.isFailure) {
         return inertia.render('errors/not_found', {
-          error: { message: 'Lobby not found or invitation expired' },
+          error: { message: i18n.t('lobbies.errors.invitationInvalid') },
         })
       }
 
@@ -288,7 +317,7 @@ export default class EnhancedLobbiesController {
     } catch (error) {
       logger.error({ error }, 'Failed to load lobby for invitation')
       return inertia.render('errors/server_error', {
-        error: { message: 'Failed to load lobby' },
+        error: { message: i18n.t('lobbies.errors.loadFailed') },
       })
     }
   }
@@ -296,10 +325,10 @@ export default class EnhancedLobbiesController {
   /**
    * Join a lobby by invitation code
    */
-  async joinByInvite({ params, request, response, auth, session }: HttpContext) {
-    const { invitationCode } = params
+  async joinByInvite({ params, request, response, auth, session, i18n }: HttpContext) {
+    const { invitationCode } = await lobbyInvitationCodeParamValidator.validate(params)
     const user = auth.user!
-    const { password } = request.only(['password'])
+    const { password } = await request.validateUsing(lobbyJoinValidator)
 
     try {
       const result = await this.joinLobbyUseCase.execute({
@@ -309,7 +338,7 @@ export default class EnhancedLobbiesController {
       })
 
       if (result.isFailure) {
-        session.flash('error', result.error)
+        session.flash('error', this.translateUseCaseError(i18n, result.error))
         return response.redirect().back()
       }
 
@@ -318,11 +347,11 @@ export default class EnhancedLobbiesController {
         userUuid: user.userUuid,
       })
 
-      session.flash('success', 'Successfully joined the lobby!')
+      session.flash('success', i18n.t('lobbies.flash.joined'))
       return response.redirect(`/lobbies/${invitationCode}`)
     } catch (error) {
       logger.error({ error }, 'Failed to join lobby by invitation')
-      session.flash('error', 'Failed to join lobby. Please try again.')
+      session.flash('error', i18n.t('lobbies.flash.joinFailed'))
       return response.redirect().back()
     }
   }
@@ -330,10 +359,10 @@ export default class EnhancedLobbiesController {
   /**
    * Join a lobby (regular join)
    */
-  async join({ params, request, response, auth, session }: HttpContext) {
+  async join({ params, request, response, auth, session, i18n }: HttpContext) {
     const user = auth.user!
-    const { uuid } = params
-    const { password } = request.only(['password'])
+    const { uuid } = await lobbyUuidParamValidator.validate(params)
+    const { password } = await request.validateUsing(lobbyJoinValidator)
 
     try {
       const result = await this.joinLobbyUseCase.execute({
@@ -343,7 +372,13 @@ export default class EnhancedLobbiesController {
       })
 
       if (result.isFailure) {
-        return this.respondUseCaseFailure({ request, response, session, error: result.error })
+        return this.respondUseCaseFailure({
+          request,
+          response,
+          session,
+          i18n,
+          error: result.error,
+        })
       }
 
       this.lobbyPresenceService.markConnected({
@@ -352,13 +387,13 @@ export default class EnhancedLobbiesController {
       })
 
       if (request.accepts(['html'])) {
-        session.flash('success', 'Successfully joined the lobby!')
+        session.flash('success', i18n.t('lobbies.flash.joined'))
         return response.redirect(`/lobbies/${uuid}`)
       }
 
       return response.json({
         success: true,
-        message: 'Successfully joined lobby',
+        message: i18n.t('lobbies.api.joined'),
       })
     } catch (error) {
       return this.respondUnexpectedFailure({
@@ -367,8 +402,8 @@ export default class EnhancedLobbiesController {
         session,
         error,
         logMessage: 'Failed to join lobby',
-        userMessage: 'Failed to join lobby. Please try again.',
-        apiMessage: 'Failed to join lobby',
+        userMessage: i18n.t('lobbies.flash.joinFailed'),
+        apiMessage: i18n.t('lobbies.api.joinFailed'),
       })
     }
   }
@@ -376,9 +411,9 @@ export default class EnhancedLobbiesController {
   /**
    * Leave a lobby
    */
-  async leave({ params, request, response, auth, session }: HttpContext) {
+  async leave({ params, request, response, auth, session, i18n }: HttpContext) {
     const user = auth.user!
-    const { uuid } = params
+    const { uuid } = await lobbyUuidParamValidator.validate(params)
 
     try {
       this.lobbyPresenceService.cancelPendingLeave({
@@ -392,17 +427,23 @@ export default class EnhancedLobbiesController {
       })
 
       if (result.isFailure) {
-        return this.respondUseCaseFailure({ request, response, session, error: result.error })
+        return this.respondUseCaseFailure({
+          request,
+          response,
+          session,
+          i18n,
+          error: result.error,
+        })
       }
 
       if (request.accepts(['html'])) {
-        session.flash('success', 'Successfully left the lobby')
+        session.flash('success', i18n.t('lobbies.flash.left'))
         return response.redirect('/lobbies')
       }
 
       return response.status(200).json({
         success: true,
-        message: 'Successfully left lobby',
+        message: i18n.t('lobbies.api.left'),
       })
     } catch (error) {
       return this.respondUnexpectedFailure({
@@ -411,8 +452,8 @@ export default class EnhancedLobbiesController {
         session,
         error,
         logMessage: 'Failed to leave lobby',
-        userMessage: 'Failed to leave lobby. Please try again.',
-        apiMessage: 'Failed to leave lobby',
+        userMessage: i18n.t('lobbies.flash.leaveFailed'),
+        apiMessage: i18n.t('lobbies.api.leaveFailed'),
       })
     }
   }
@@ -420,9 +461,9 @@ export default class EnhancedLobbiesController {
   /**
    * Start a game from lobby
    */
-  async start({ params, request, response, auth, session }: HttpContext) {
+  async start({ params, request, response, auth, session, i18n }: HttpContext) {
     const user = auth.user!
-    const { uuid } = params
+    const { uuid } = await lobbyUuidParamValidator.validate(params)
 
     try {
       const result = await this.startGameUseCase.execute({
@@ -431,7 +472,13 @@ export default class EnhancedLobbiesController {
       })
 
       if (result.isFailure) {
-        return this.respondUseCaseFailure({ request, response, session, error: result.error })
+        return this.respondUseCaseFailure({
+          request,
+          response,
+          session,
+          i18n,
+          error: result.error,
+        })
       }
 
       const gameResponse = result.value
@@ -453,8 +500,8 @@ export default class EnhancedLobbiesController {
         session,
         error,
         logMessage: 'Failed to start game',
-        userMessage: 'Failed to start game. Please try again.',
-        apiMessage: 'Failed to start game',
+        userMessage: i18n.t('lobbies.flash.startFailed'),
+        apiMessage: i18n.t('lobbies.api.startFailed'),
       })
     }
   }
@@ -462,10 +509,10 @@ export default class EnhancedLobbiesController {
   /**
    * Kick a player from lobby (owner only)
    */
-  async kickPlayer({ params, request, response, auth }: HttpContext) {
+  async kickPlayer({ params, request, response, auth, i18n }: HttpContext) {
     const user = auth.user!
-    const { uuid } = params
-    const { playerUuid } = request.only(['playerUuid'])
+    const { uuid } = await lobbyUuidParamValidator.validate(params)
+    const { playerUuid } = await request.validateUsing(lobbyKickPlayerValidator)
 
     try {
       const result = await this.kickPlayerUseCase.execute({
@@ -476,18 +523,18 @@ export default class EnhancedLobbiesController {
 
       if (result.isFailure) {
         return response.status(400).json({
-          error: result.error,
+          error: this.translateUseCaseError(i18n, result.error),
         })
       }
 
       return response.json({
         success: true,
-        message: 'Player kicked successfully',
+        message: i18n.t('lobbies.api.kicked'),
       })
     } catch (error) {
       logger.error({ error }, 'Failed to kick player')
       return response.status(500).json({
-        error: 'Failed to kick player',
+        error: i18n.t('lobbies.api.kickFailed'),
       })
     }
   }
@@ -495,17 +542,17 @@ export default class EnhancedLobbiesController {
   /**
    * Transfer lobby ownership (owner only)
    */
-  async transferOwnership({ response }: HttpContext) {
-    return response.status(501).json({ error: 'Transfer ownership use case not implemented yet' })
+  async transferOwnership({ response, i18n }: HttpContext) {
+    return response.status(501).json({ error: i18n.t('lobbies.api.transferNotImplemented') })
   }
 
   /**
    * Close a lobby as moderator/admin
    */
-  async adminClose({ params, request, response, auth, session }: HttpContext) {
+  async adminClose({ params, request, response, auth, session, i18n }: HttpContext) {
     const user = auth.user!
-    const { uuid } = params
-    const { reason } = request.only(['reason'])
+    const { uuid } = await lobbyUuidParamValidator.validate(params)
+    const { reason } = await request.validateUsing(lobbyAdminCloseValidator)
 
     try {
       const result = await this.closeLobbyUseCase.execute({
@@ -518,10 +565,12 @@ export default class EnhancedLobbiesController {
       if (result.isFailure) {
         const status = result.error === 'Lobby not found' ? 404 : 400
         if (request.accepts(['html'])) {
-          session.flash('error', result.error)
+          session.flash('error', this.translateUseCaseError(i18n, result.error))
           return response.redirect('/lobbies')
         }
-        return response.status(status).json({ error: result.error })
+        return response.status(status).json({
+          error: this.translateUseCaseError(i18n, result.error),
+        })
       }
 
       logger.info(
@@ -535,7 +584,7 @@ export default class EnhancedLobbiesController {
       )
 
       if (request.accepts(['html'])) {
-        session.flash('success', 'Lobby closed successfully.')
+        session.flash('success', i18n.t('lobbies.flash.closed'))
         return response.redirect('/lobbies')
       }
 
@@ -550,21 +599,21 @@ export default class EnhancedLobbiesController {
         },
       })
     } catch (error) {
-      logger.error({ error, lobbyUuid: uuid, userUuid: user.userUuid }, 'Failed to close lobby')
-      return response.status(500).json({ error: 'Failed to close lobby' })
+      logger.error({ error, lobbyUuid: uuid }, 'Failed to close lobby')
+      return response.status(500).json({ error: i18n.t('lobbies.api.closeFailed') })
     }
   }
 
   /**
    * API endpoint to get lobby data
    */
-  async apiShow({ params, response }: HttpContext) {
-    const { uuid } = params
+  async apiShow({ params, response, i18n }: HttpContext) {
+    const { uuid } = await lobbyUuidParamValidator.validate(params)
 
     try {
       const result = await this.showLobbyUseCase.execute({ lobbyUuid: uuid })
       if (result.isFailure) {
-        return response.status(404).json({ error: 'Lobby not found' })
+        return response.status(404).json({ error: i18n.t('lobbies.errors.notFound') })
       }
 
       return response.json({
@@ -572,14 +621,14 @@ export default class EnhancedLobbiesController {
       })
     } catch (error) {
       logger.error({ error }, 'Failed to get lobby')
-      return response.status(500).json({ error: 'Failed to get lobby' })
+      return response.status(500).json({ error: i18n.t('lobbies.api.getFailed') })
     }
   }
 
   /**
    * API endpoint to get all lobbies
    */
-  async apiIndex({ response, auth }: HttpContext) {
+  async apiIndex({ response, auth, i18n }: HttpContext) {
     const user = auth.user
     const canModerate =
       user?.normalizedRole === 'MODERATOR' || user?.normalizedRole === 'ADMIN'
@@ -591,34 +640,36 @@ export default class EnhancedLobbiesController {
         viewerRole: user?.normalizedRole,
       })
       if (result.isFailure) {
-        return response.status(500).json({ error: result.error })
+        return response.status(500).json({ error: this.translateUseCaseError(i18n, result.error) })
       }
 
       return response.json({ lobbies: result.value.lobbies })
     } catch (error) {
       logger.error({ error }, 'Failed to get lobbies')
-      return response.status(500).json({ error: 'Failed to get lobbies' })
+      return response.status(500).json({ error: i18n.t('lobbies.api.listFailed') })
     }
   }
 
   /**
    * Handle leave lobby on page close/navigation (beacon requests)
    */
-  async leaveOnClose({ request, response, auth }: HttpContext) {
+  async leaveOnClose({ request, response, auth, i18n }: HttpContext) {
     try {
       const user = auth.user
       if (!user) {
-        return response.status(401).json({ error: 'Unauthorized' })
+        return response.status(401).json({ error: i18n.t('http.errors.unauthorized') })
       }
 
-      const { lobbyUuid, userUuid, clientSessionId } = this.parseBeaconPayload(request.body())
+      const { lobbyUuid, userUuid, clientSessionId } = await lobbyBeaconPayloadValidator.validate(
+        this.parseBeaconPayload(request.body())
+      )
       if (!lobbyUuid) {
-        return response.status(400).json({ error: 'lobbyUuid is required' })
+        return response.status(400).json({ error: i18n.t('lobbies.errors.lobbyUuidRequired') })
       }
 
       // Validate that the user can only leave their own sessions
       if (userUuid && userUuid !== user.userUuid) {
-        return response.status(403).json({ error: 'Forbidden' })
+        return response.status(403).json({ error: i18n.t('http.errors.forbidden') })
       }
 
       const scheduling = this.lobbyPresenceService.scheduleLeaveOnDisconnect(
@@ -639,7 +690,7 @@ export default class EnhancedLobbiesController {
               error.includes('Player is not in this lobby') || error.includes('not found')
             if (!isAlreadyLeft) {
               logger.warn(
-                { userUuid: delayedUserUuid, lobbyUuid: delayedLobbyUuid, error: result.error },
+                { lobbyUuid: delayedLobbyUuid, error: result.error },
                 'Delayed leave on close failed'
               )
             }
@@ -649,13 +700,17 @@ export default class EnhancedLobbiesController {
 
       return response.status(202).json({
         success: true,
-        message: 'Leave scheduled after disconnect grace period',
+        message: i18n.t('lobbies.api.leaveScheduled'),
         gracePeriodMs: scheduling.gracePeriodMs,
       })
     } catch (error) {
+      if ((error as any)?.code === 'E_VALIDATION_ERROR') {
+        return response.status(400).json({ error: i18n.t('http.errors.validationFailed') })
+      }
+
       logger.error({ error }, 'Failed to leave lobby on close')
       return response.status(500).json({
-        error: 'Failed to leave lobby on close',
+        error: i18n.t('lobbies.api.leaveOnCloseFailed'),
       })
     }
   }
@@ -663,21 +718,20 @@ export default class EnhancedLobbiesController {
   /**
    * Receive lobby heartbeat from clients to cancel delayed leave-on-close.
    */
-  async heartbeat({ params, request, response, auth }: HttpContext) {
+  async heartbeat({ params, request, response, auth, i18n }: HttpContext) {
     try {
       const user = auth.user
       if (!user) {
-        return response.status(401).json({ error: 'Unauthorized' })
+        return response.status(401).json({ error: i18n.t('http.errors.unauthorized') })
       }
 
-      const { uuid } = params
-      if (!uuid || typeof uuid !== 'string') {
-        return response.status(400).json({ error: 'Lobby UUID is required' })
-      }
+      const { uuid } = await lobbyUuidParamValidator.validate(params)
 
-      const { userUuid, clientSessionId } = this.parseBeaconPayload(request.body())
+      const { userUuid, clientSessionId } = await lobbyBeaconPayloadValidator.validate(
+        this.parseBeaconPayload(request.body())
+      )
       if (userUuid && userUuid !== user.userUuid) {
-        return response.status(403).json({ error: 'Forbidden' })
+        return response.status(403).json({ error: i18n.t('http.errors.forbidden') })
       }
 
       this.lobbyPresenceService.markConnected({
@@ -688,8 +742,12 @@ export default class EnhancedLobbiesController {
 
       return response.status(200).json({ success: true })
     } catch (error) {
+      if ((error as any)?.code === 'E_VALIDATION_ERROR') {
+        return response.status(400).json({ error: i18n.t('http.errors.validationFailed') })
+      }
+
       logger.error({ error }, 'Failed to process lobby heartbeat')
-      return response.status(500).json({ error: 'Failed to process lobby heartbeat' })
+      return response.status(500).json({ error: i18n.t('lobbies.api.heartbeatFailed') })
     }
   }
 
@@ -708,19 +766,23 @@ export default class EnhancedLobbiesController {
     request,
     response,
     session,
+    i18n,
     error,
   }: {
     request: HttpRequest
     response: HttpResponse
     session: Session
+    i18n: HttpContext['i18n']
     error: string
   }) {
+    const localizedError = this.translateUseCaseError(i18n, error)
+
     if (request.accepts(['html'])) {
-      session.flash('error', error)
+      session.flash('error', localizedError)
       return response.redirect().back()
     }
 
-    return response.status(400).json({ error })
+    return response.status(400).json({ error: localizedError })
   }
 
   private respondUnexpectedFailure({
@@ -748,6 +810,15 @@ export default class EnhancedLobbiesController {
     }
 
     return response.status(500).json({ error: apiMessage })
+  }
+
+  private translateUseCaseError(i18n: HttpContext['i18n'], error: string): string {
+    const translatedKey = LOBBY_ERROR_TRANSLATION_KEYS[error]
+    if (translatedKey) {
+      return i18n.t(translatedKey)
+    }
+
+    return error
   }
 
   private parseBeaconPayload(body: unknown): {

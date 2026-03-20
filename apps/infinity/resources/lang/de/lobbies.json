@@ -1,0 +1,50 @@
+{
+  "flash": {
+    "created": "Lobby erfolgreich erstellt!",
+    "joined": "Lobby erfolgreich beigetreten!",
+    "joinFailed": "Lobby-Beitritt fehlgeschlagen. Bitte versuche es erneut.",
+    "left": "Lobby erfolgreich verlassen",
+    "leaveFailed": "Lobby konnte nicht verlassen werden. Bitte versuche es erneut.",
+    "startFailed": "Spiel konnte nicht gestartet werden. Bitte versuche es erneut.",
+    "closed": "Lobby erfolgreich geschlossen."
+  },
+  "api": {
+    "joined": "Lobby erfolgreich beigetreten",
+    "joinFailed": "Lobby-Beitritt fehlgeschlagen",
+    "left": "Lobby erfolgreich verlassen",
+    "leaveFailed": "Lobby konnte nicht verlassen werden",
+    "startFailed": "Spiel konnte nicht gestartet werden",
+    "kicked": "Spieler erfolgreich entfernt",
+    "kickFailed": "Spieler konnte nicht entfernt werden",
+    "transferNotImplemented": "Eigentumsübertragung ist noch nicht implementiert",
+    "closeFailed": "Lobby konnte nicht geschlossen werden",
+    "getFailed": "Lobby konnte nicht geladen werden",
+    "listFailed": "Lobbys konnten nicht geladen werden",
+    "leaveScheduled": "Verlassen wurde nach der Trennungs-Übergangszeit geplant",
+    "leaveOnCloseFailed": "Lobby beim Schließen zu verlassen ist fehlgeschlagen",
+    "heartbeatFailed": "Lobby-Heartbeat konnte nicht verarbeitet werden"
+  },
+  "errors": {
+    "notFound": "Lobby nicht gefunden",
+    "loadFailed": "Lobby konnte nicht geladen werden",
+    "invitationInvalid": "Lobby nicht gefunden oder Einladung abgelaufen",
+    "playerNotFound": "Spieler nicht gefunden",
+    "playerAlreadyInLobby": "Spieler befindet sich bereits in einer Lobby",
+    "passwordRequired": "Für diese Lobby ist ein Passwort erforderlich",
+    "invalidPassword": "Ungültiges Lobby-Passwort",
+    "full": "Lobby ist voll",
+    "playerNotInLobby": "Spieler ist nicht in dieser Lobby",
+    "onlyCreatorCanStart": "Nur der Ersteller der Lobby kann das Spiel starten",
+    "lobbyNotReady": "Lobby ist nicht bereit, ein Spiel zu starten",
+    "startFailed": "Spiel konnte nicht gestartet werden",
+    "onlyCreatorCanKick": "Nur der Ersteller der Lobby kann Spieler entfernen",
+    "targetNotInLobby": "Der betroffene Spieler ist nicht in dieser Lobby",
+    "cannotKickInProgress": "Während eines laufenden Spiels können keine Spieler entfernt werden",
+    "cannotCloseStarting": "Eine Lobby kann nicht geschlossen werden, während ein Spiel startet",
+    "lobbyUuidRequired": "Lobby-ID ist erforderlich",
+    "userUuidRequired": "Benutzer-ID ist erforderlich",
+    "invalidLobbyUuid": "Lobby-ID fehlt oder ist ungültig",
+    "invalidUserUuid": "Benutzer-ID-Format ist ungültig",
+    "invalidClientSessionId": "Client-Session-ID-Format ist ungültig"
+  }
+}

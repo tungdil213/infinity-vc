@@ -7,6 +7,7 @@ import {
   LobbyDeletedEvent,
 } from '#domain/events/lobby_events'
 import type Lobby from '#domain/entities/lobby'
+import logger from '@adonisjs/core/services/logger'
 
 /**
  * Service pour gérer les événements liés aux lobbies
@@ -23,7 +24,7 @@ export class LobbyEventService {
   async emitLobbyCreated(lobby: Lobby): Promise<void> {
     const event = new LobbyCreatedEvent(lobby.uuid, lobby.name, lobby.createdBy, lobby.maxPlayers)
     await eventBus.publish(event)
-    console.log(`[LobbyEventService] Published LobbyCreated for ${lobby.uuid}`)
+    logger.debug({ lobbyUuid: lobby.uuid }, '[LobbyEventService] Published LobbyCreated')
   }
 
   /**
@@ -39,7 +40,7 @@ export class LobbyEventService {
       lobby.players
     )
     await eventBus.publish(event)
-    console.log(`[LobbyEventService] Published LobbyUpdated for ${lobby.uuid}`)
+    logger.debug({ lobbyUuid: lobby.uuid }, '[LobbyEventService] Published LobbyUpdated')
   }
 
   /**
@@ -48,7 +49,7 @@ export class LobbyEventService {
   async emitLobbyDeleted(lobbyUuid: string, reason: string = 'deleted'): Promise<void> {
     const event = new LobbyDeletedEvent(lobbyUuid, reason)
     await eventBus.publish(event)
-    console.log(`[LobbyEventService] Published LobbyDeleted for ${lobbyUuid}`)
+    logger.debug({ lobbyUuid }, '[LobbyEventService] Published LobbyDeleted')
   }
 
   /**
@@ -67,8 +68,9 @@ export class LobbyEventService {
       args.closedByRole
     )
     await eventBus.publish(event)
-    console.log(
-      `[LobbyEventService] Published LobbyModerationClosed for ${args.lobbyUuid} by ${args.closedByUserUuid}`
+    logger.debug(
+      { lobbyUuid: args.lobbyUuid, closedByUserUuid: args.closedByUserUuid },
+      '[LobbyEventService] Published LobbyModerationClosed'
     )
   }
 

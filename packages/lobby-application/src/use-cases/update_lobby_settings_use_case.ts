@@ -1,0 +1,116 @@
+import { Result } from '@infinity.dev/lobby-domain/shared'
+import { LobbyStatus } from '@infinity.dev/lobby-domain/value-objects'
+import { LobbyUpdatedEvent } from '@infinity.dev/lobby-domain/events'
+import type { LobbyRepository } from '../repositories/index.js'
+import type { DomainEventPublisher } from '../services/index.js'
+import { safeSystemError } from '../shared/error_sanitizer.js'
+
+export interface UpdateLobbySettingsRequest {
+  lobbyUuid: string
+  updaterUuid: string
+  settings: {
+    name?: string
+    maxPlayers?: number
+    isPrivate?: boolean
+  }
+}
+
+export interface UpdateLobbySettingsResponse {
+  success: boolean
+  lobbyState: unknown
+}
+
+export class UpdateLobbySettingsUseCase {
+  constructor(
+    private lobbyRepository: LobbyRepository,
+    private domainEventPublisher: DomainEventPublisher
+  ) {}
+
+  async execute(request: UpdateLobbySettingsRequest): Promise<Result<UpdateLobbySettingsResponse>> {
+    try {
+      if (!request.lobbyUuid || !request.updaterUuid) {
+        return Result.fail('Lobby UUID and updater UUID are required')
+      }
+
+      if (!request.settings || Object.keys(request.settings).length === 0) {
+        return Result.fail('At least one setting must be provided')
+      }
+
+      const lobby = await this.lobbyRepository.findByUuidOrFail(request.lobbyUuid)
+      if (!lobby) {
+        return Result.fail('Lobby not found')
+      }
+
+      if (lobby.createdBy !== request.updaterUuid) {
+        return Result.fail('Only the lobby creator can update settings')
+      }
+
+      const currentStatus = String(lobby.status)
+      if (currentStatus === LobbyStatus.STARTING || currentStatus === 'IN_PROGRESS') {
+        return Result.fail('Cannot update settings during a game')
+      }
+
+      const validationResult = this.validateSettings(request.settings, lobby)
+      if (validationResult.isFailure) {
+        return Result.fail(validationResult.error || 'Validation failed')
+      }
+
+      if (request.settings.name !== undefined) {
+        ;(lobby as any).name = request.settings.name
+      }
+
+      if (request.settings.maxPlayers !== undefined) {
+        ;(lobby as any).maxPlayers = request.settings.maxPlayers
+      }
+
+      if (request.settings.isPrivate !== undefined) {
+        ;(lobby as any).isPrivate = request.settings.isPrivate
+      }
+
+      await this.lobbyRepository.save(lobby)
+
+      await this.domainEventPublisher.publishEvents([
+        new LobbyUpdatedEvent(
+          lobby.uuid,
+          lobby.name,
+          lobby.playerCount,
+          lobby.maxPlayers,
+          lobby.status,
+          lobby.players
+        ),
+      ])
+
+      return Result.ok({
+        success: true,
+        lobbyState: lobby.serialize(),
+      })
+    } catch (error) {
+      return Result.fail(safeSystemError(error))
+    }
+  }
+
+  private validateSettings(
+    settings: UpdateLobbySettingsRequest['settings'],
+    lobby: { playerCount: number }
+  ): Result<void> {
+    if (settings.name !== undefined) {
+      if (!settings.name.trim()) {
+        return Result.fail('Lobby name cannot be empty')
+      }
+      if (settings.name.length > 50) {
+        return Result.fail('Lobby name cannot exceed 50 characters')
+      }
+    }
+
+    if (settings.maxPlayers !== undefined) {
+      if (settings.maxPlayers < 2 || settings.maxPlayers > 8) {
+        return Result.fail('Max players must be between 2 and 8')
+      }
+      if (settings.maxPlayers < lobby.playerCount) {
+        return Result.fail('Cannot reduce max players below current player count')
+      }
+    }
+
+    return Result.ok(undefined)
+  }
+}

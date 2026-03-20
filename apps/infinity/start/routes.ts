@@ -8,15 +8,18 @@
 */
 
 import router from '@adonisjs/core/services/router'
+import app from '@adonisjs/core/services/app'
 import { middleware } from './kernel.js'
 import transmit from '@adonisjs/transmit/services/main'
 import './transmit.js'
 
 // Public routes
-router.get('/', '#controllers/simple_lobbies_controller.welcome').as('home')
+router.get('/', '#controllers/enhanced_lobbies_controller.welcome').as('home')
 
-// Development routes (only in dev mode)
-router.get('/dev/routes', '#controllers/dev_routes_controller.index').as('dev.routes')
+// Development routes (registered only in dev mode)
+if (app.inDev) {
+  router.get('/dev/routes', '#controllers/dev_routes_controller.index').as('dev.routes')
+}
 
 // Authentication routes
 router

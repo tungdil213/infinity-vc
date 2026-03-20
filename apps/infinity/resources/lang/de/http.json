@@ -1,0 +1,18 @@
+{
+  "errors": {
+    "unauthorized": "Nicht autorisiert",
+    "forbidden": "Zugriff verweigert",
+    "validationFailed": "Validierung fehlgeschlagen"
+  },
+  "validation": {
+    "checkForm": "Bitte überprüfe das Formular und korrigiere alle Fehler."
+  },
+  "rateLimit": {
+    "loginRetryInSeconds": "Zu viele Anmeldeversuche. Bitte versuche es in {seconds} Sekunden erneut.",
+    "loginTryLater": "Zu viele Anmeldeversuche. Bitte versuche es später erneut."
+  },
+  "access": {
+    "adminRequired": "Administratorzugriff erforderlich",
+    "moderatorRequired": "Moderatorzugriff erforderlich"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "errors": {
+    "notFound": "Spiel nicht gefunden",
+    "notFoundOrFinished": "Spiel nicht gefunden oder bereits beendet",
+    "spectatorsCannotAct": "Zuschauer können keine Spielaktionen ausführen",
+    "unsupportedCapability": "Nicht unterstützte Fähigkeit '{capability}'",
+    "actionRequired": "Der Aktionstyp ist erforderlich",
+    "cardTypeRequired": "Der Kartentyp ist für diese Aktion erforderlich",
+    "moveRequired": "Der Zug ist für diese Aktion erforderlich",
+    "invalidAction": "Ungültige Spielaktionsdaten",
+    "actionRejected": "Spielaktion wurde abgelehnt",
+    "catalogUnavailable": "Der Spielekatalog ist vorübergehend nicht verfügbar"
+  }
+}

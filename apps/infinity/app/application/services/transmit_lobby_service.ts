@@ -1,4 +1,5 @@
 import { eventBus } from '#infrastructure/events/event_bus'
+import logger from '@adonisjs/core/services/logger'
 
 /**
  * Service de notification pour les événements de lobby
@@ -20,7 +21,7 @@ export class TransmitLobbyService {
         lobby,
       },
     })
-    console.log(`[TransmitLobbyService] Published LobbyCreated for ${lobbyUuid}`)
+    logger.debug({ lobbyUuid }, '[TransmitLobbyService] Published LobbyCreated')
   }
 
   /**
@@ -42,7 +43,7 @@ export class TransmitLobbyService {
         playerCount: lobby?.currentPlayers || 0,
       },
     })
-    console.log(`[TransmitLobbyService] Published PlayerJoinedLobby for ${lobbyUuid}`)
+    logger.debug({ lobbyUuid }, '[TransmitLobbyService] Published PlayerJoinedLobby')
   }
 
   /**
@@ -64,7 +65,7 @@ export class TransmitLobbyService {
         playerCount: lobby?.currentPlayers || 0,
       },
     })
-    console.log(`[TransmitLobbyService] Published PlayerLeftLobby for ${lobbyUuid}`)
+    logger.debug({ lobbyUuid }, '[TransmitLobbyService] Published PlayerLeftLobby')
   }
 
   /**
@@ -82,7 +83,7 @@ export class TransmitLobbyService {
         lobby,
       },
     })
-    console.log(`[TransmitLobbyService] Published LobbyStatusChanged for ${lobbyUuid}`)
+    logger.debug({ lobbyUuid }, '[TransmitLobbyService] Published LobbyStatusChanged')
   }
 
   /**
@@ -101,9 +102,9 @@ export class TransmitLobbyService {
           lobby,
         },
       })
-      console.log(`[TransmitLobbyService] Published GameStarted for ${lobbyUuid}`)
+      logger.debug({ lobbyUuid }, '[TransmitLobbyService] Published GameStarted')
     } catch (error) {
-      console.error(`[TransmitLobbyService] Failed to publish GameStarted for ${lobbyUuid}:`, error)
+      logger.error({ lobbyUuid, error }, '[TransmitLobbyService] Failed to publish GameStarted')
     }
   }
 
@@ -120,6 +121,6 @@ export class TransmitLobbyService {
         lobby,
       },
     })
-    console.log(`[TransmitLobbyService] Published LobbyDeleted for ${lobbyUuid}`)
+    logger.debug({ lobbyUuid }, '[TransmitLobbyService] Published LobbyDeleted')
   }
 }

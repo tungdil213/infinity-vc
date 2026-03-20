@@ -7,7 +7,6 @@ import { DatabaseGameRepository } from '#infrastructure/repositories/database_ga
 import { HybridLobbyService } from '#application/services/hybrid_lobby_service'
 import { TransmitLobbyService } from '#application/services/transmit_lobby_service'
 import { RegisterUserUseCase } from '#application/use_cases/register_user_use_case'
-import AuthenticateUserUseCase from '#application/use_cases/authenticate_user_use_case'
 import { CreateLobbyUseCase } from '#application/use_cases/create_lobby_use_case'
 import { JoinLobbyUseCase } from '#application/use_cases/join_lobby_use_case'
 import { LeaveLobbyUseCase } from '#application/use_cases/leave_lobby_use_case'
@@ -23,7 +22,9 @@ import { LobbyEventService } from '#application/services/lobby_event_service'
 import { EventBusDomainEventPublisher } from '#application/services/domain_event_publisher'
 import { eventBridgeService } from '#infrastructure/transcript/index'
 import { initializeAppGameLauncher } from '#infrastructure/game_engine/app_game_launcher'
+import { defaultGameCatalog } from '#infrastructure/game_engine/launcher_game_catalog'
 import { LobbyPresenceService } from '#application/services/lobby_presence_service'
+import logger from '@adonisjs/core/services/logger'
 
 export default class AppProvider {
   constructor(protected app: ApplicationService) {}
@@ -35,7 +36,7 @@ export default class AppProvider {
     await initializeAppGameLauncher()
     // Initialize EventBridge to connect domain events to Transmit
     await eventBridgeService.initialize()
-    console.log('[AppProvider] EventBridge initialized')
+    logger.info('[AppProvider] EventBridge initialized')
   }
 
   /**
@@ -43,7 +44,7 @@ export default class AppProvider {
    */
   async shutdown() {
     eventBridgeService.stop()
-    console.log('[AppProvider] EventBridge stopped')
+    logger.info('[AppProvider] EventBridge stopped')
   }
 
   async register() {
@@ -101,18 +102,17 @@ export default class AppProvider {
       return new RegisterUserUseCase(userRepository, playerRepository)
     })
 
-    this.app.container.singleton(AuthenticateUserUseCase, async (resolver) => {
-      const userRepository = await resolver.make(DatabaseUserRepository)
-      const playerRepository = await resolver.make(DatabasePlayerRepository)
-      return new AuthenticateUserUseCase(userRepository, playerRepository)
-    })
-
     // Register lobby use cases
     this.app.container.singleton(CreateLobbyUseCase, async (resolver) => {
       const playerRepository = await resolver.make(DatabasePlayerRepository)
       const hybridLobbyService = await resolver.make(HybridLobbyService)
       const notificationService = await resolver.make(TransmitLobbyService)
-      return new CreateLobbyUseCase(playerRepository, hybridLobbyService, notificationService)
+      return new CreateLobbyUseCase(
+        playerRepository,
+        hybridLobbyService,
+        notificationService,
+        defaultGameCatalog
+      )
     })
 
     this.app.container.singleton(JoinLobbyUseCase, async (resolver) => {

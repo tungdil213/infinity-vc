@@ -1,5 +1,172 @@
 import { type HttpContext } from '@adonisjs/core/http'
 import app from '@adonisjs/core/services/app'
+import router from '@adonisjs/core/services/router'
+
+type SerializedRoute = {
+  methods: string[]
+  pattern: string
+  name?: string
+}
+
+type SerializedRoutesByDomain = Record<string, SerializedRoute[]>
+
+export interface DevRoute {
+  method: string
+  path: string
+  name: string
+  description: string
+}
+
+export interface DevRouteGroup {
+  group: string
+  routes: DevRoute[]
+}
+
+const GROUP_ORDER = [
+  'Public Routes',
+  'Authentication Routes (Public)',
+  'Authentication Routes (Protected)',
+  'Lobbies Routes (Protected)',
+  'Invitation Routes (Public)',
+  'Games Routes (Protected)',
+  'API Routes',
+  'Admin API Routes',
+  'Transmit Routes (Protected)',
+  'Development Routes',
+  'Other Routes',
+] as const
+
+function getGroupName(path: string): string {
+  if (path === '/') {
+    return 'Public Routes'
+  }
+
+  if (path.startsWith('/dev/')) {
+    return 'Development Routes'
+  }
+
+  if (path === '/auth/logout') {
+    return 'Authentication Routes (Protected)'
+  }
+
+  if (path.startsWith('/auth/')) {
+    return 'Authentication Routes (Public)'
+  }
+
+  if (path.startsWith('/lobbies/join/')) {
+    return 'Invitation Routes (Public)'
+  }
+
+  if (path === '/lobbies' || path.startsWith('/lobbies/')) {
+    return 'Lobbies Routes (Protected)'
+  }
+
+  if (path.startsWith('/games/')) {
+    return 'Games Routes (Protected)'
+  }
+
+  if (path.startsWith('/admin/api/')) {
+    return 'Admin API Routes'
+  }
+
+  if (path.startsWith('/api/')) {
+    return 'API Routes'
+  }
+
+  if (path.startsWith('/__transmit/')) {
+    return 'Transmit Routes (Protected)'
+  }
+
+  return 'Other Routes'
+}
+
+function describeRoute(path: string): string {
+  if (path === '/') {
+    return 'Home page'
+  }
+  if (path.startsWith('/auth/')) {
+    return 'Authentication endpoint'
+  }
+  if (path === '/lobbies' || path.startsWith('/lobbies/')) {
+    return 'Lobby endpoint'
+  }
+  if (path.startsWith('/games/')) {
+    return 'Game endpoint'
+  }
+  if (path.startsWith('/api/')) {
+    return 'API endpoint'
+  }
+  if (path.startsWith('/admin/api/')) {
+    return 'Admin API endpoint'
+  }
+  if (path.startsWith('/__transmit/')) {
+    return 'Transmit endpoint'
+  }
+  if (path.startsWith('/dev/')) {
+    return 'Development endpoint'
+  }
+  return 'Application endpoint'
+}
+
+export function buildDevRoutesSnapshot(routesByDomain: SerializedRoutesByDomain): DevRouteGroup[] {
+  const groupedRoutes = new Map<string, DevRoute[]>()
+  const seenRoutes = new Set<string>()
+
+  for (const routes of Object.values(routesByDomain)) {
+    for (const route of routes) {
+      const filteredMethods = route.methods.filter((method) => method !== 'HEAD')
+      const methods = filteredMethods.length > 0 ? filteredMethods : route.methods
+
+      for (const method of methods) {
+        const normalizedMethod = method.toUpperCase()
+        const name = route.name || 'unnamed'
+        const dedupeKey = `${normalizedMethod}:${route.pattern}:${name}`
+
+        if (seenRoutes.has(dedupeKey)) {
+          continue
+        }
+        seenRoutes.add(dedupeKey)
+
+        const groupName = getGroupName(route.pattern)
+        const routeEntry: DevRoute = {
+          method: normalizedMethod,
+          path: route.pattern,
+          name,
+          description: describeRoute(route.pattern),
+        }
+
+        const existingGroup = groupedRoutes.get(groupName)
+        if (existingGroup) {
+          existingGroup.push(routeEntry)
+        } else {
+          groupedRoutes.set(groupName, [routeEntry])
+        }
+      }
+    }
+  }
+
+  const sortedGroups: DevRouteGroup[] = []
+  for (const groupName of GROUP_ORDER) {
+    const routes = groupedRoutes.get(groupName)
+    if (!routes || routes.length === 0) {
+      continue
+    }
+
+    routes.sort((left, right) => {
+      if (left.path === right.path) {
+        return left.method.localeCompare(right.method)
+      }
+      return left.path.localeCompare(right.path)
+    })
+
+    sortedGroups.push({
+      group: groupName,
+      routes,
+    })
+  }
+
+  return sortedGroups
+}
 
 export default class DevRoutesController {
   /**
@@ -11,228 +178,9 @@ export default class DevRoutesController {
       return inertia.render('errors/not_found', {})
     }
 
-    const routes = [
-      {
-        group: 'Public Routes',
-        routes: [{ method: 'GET', path: '/', name: 'home', description: 'Home page' }],
-      },
-      {
-        group: 'Authentication Routes (Public)',
-        routes: [
-          {
-            method: 'GET',
-            path: '/auth/login',
-            name: 'auth.login.show',
-            description: 'Login form',
-          },
-          {
-            method: 'POST',
-            path: '/auth/login',
-            name: 'auth.login',
-            description: 'User login',
-          },
-          {
-            method: 'GET',
-            path: '/auth/register',
-            name: 'auth.register.show',
-            description: 'Registration form',
-          },
-          {
-            method: 'POST',
-            path: '/auth/register',
-            name: 'auth.register',
-            description: 'User registration',
-          },
-        ],
-      },
-      {
-        group: 'Authentication Routes (Protected)',
-        routes: [
-          {
-            method: 'POST',
-            path: '/auth/logout',
-            name: 'auth.logout',
-            description: 'User logout',
-          },
-        ],
-      },
-      {
-        group: 'Lobbies Routes (Protected)',
-        routes: [
-          {
-            method: 'GET',
-            path: '/lobbies',
-            name: 'lobbies.index',
-            description: 'List lobbies',
-          },
-          {
-            method: 'GET',
-            path: '/lobbies/create',
-            name: 'lobbies.create',
-            description: 'Create lobby',
-          },
-          {
-            method: 'POST',
-            path: '/lobbies',
-            name: 'lobbies.store',
-            description: 'Save lobby',
-          },
-          {
-            method: 'GET',
-            path: '/lobbies/:uuid',
-            name: 'lobbies.show',
-            description: 'View lobby',
-          },
-          {
-            method: 'POST',
-            path: '/lobbies/:uuid/join',
-            name: 'lobbies.join',
-            description: 'Join lobby',
-          },
-          {
-            method: 'POST',
-            path: '/lobbies/:uuid/leave',
-            name: 'lobbies.leave',
-            description: 'Leave lobby',
-          },
-          {
-            method: 'POST',
-            path: '/lobbies/:uuid/start',
-            name: 'lobbies.start',
-            description: 'Start game',
-          },
-          {
-            method: 'POST',
-            path: '/lobbies/:uuid/kick',
-            name: 'lobbies.kick',
-            description: 'Kick player',
-          },
-          {
-            method: 'POST',
-            path: '/lobbies/:uuid/transfer',
-            name: 'lobbies.transfer',
-            description: 'Transfer ownership',
-          },
-        ],
-      },
-      {
-        group: 'Invitation Routes (Public)',
-        routes: [
-          {
-            method: 'GET',
-            path: '/lobbies/join/:invitationCode',
-            name: 'lobbies.join.invite.show',
-            description: 'Join via invitation',
-          },
-          {
-            method: 'POST',
-            path: '/lobbies/join/:invitationCode',
-            name: 'lobbies.join.invite',
-            description: 'Process invitation',
-          },
-        ],
-      },
-      {
-        group: 'Games Routes (Protected)',
-        routes: [
-          { method: 'GET', path: '/games/:uuid', name: 'games.show', description: 'View game' },
-          {
-            method: 'POST',
-            path: '/games/:uuid/leave',
-            name: 'games.leave',
-            description: 'Leave game',
-          },
-        ],
-      },
-      {
-        group: 'API Routes (Protected)',
-        routes: [
-          {
-            method: 'GET',
-            path: '/api/v1/auth/me',
-            name: 'api.auth.me',
-            description: 'User profile',
-          },
-          {
-            method: 'GET',
-            path: '/api/v1/auth/check',
-            name: 'api.auth.check',
-            description: 'Check auth',
-          },
-          {
-            method: 'GET',
-            path: '/api/v1/lobbies',
-            name: 'api.lobbies.index',
-            description: 'API list lobbies',
-          },
-          {
-            method: 'GET',
-            path: '/api/v1/lobbies/:uuid',
-            name: 'api.lobbies.show',
-            description: 'API view lobby',
-          },
-          {
-            method: 'GET',
-            path: '/api/v1/games/:uuid',
-            name: 'api.games.show',
-            description: 'API view game',
-          },
-          {
-            method: 'GET',
-            path: '/api/v1/games/catalog',
-            name: 'api.games.catalog',
-            description: 'Public OSS game catalog',
-          },
-          {
-            method: 'POST',
-            path: '/api/v1/games/:uuid/action',
-            name: 'api.games.action',
-            description: 'API game action',
-          },
-          {
-            method: 'GET',
-            path: '/admin/api/games/catalog',
-            name: 'admin.games.catalog',
-            description: 'Admin catalog including proprietary games',
-          },
-        ],
-      },
-      {
-        group: 'Transmit Routes (Protected)',
-        routes: [
-          {
-            method: 'GET',
-            path: '/__transmit/events?uid=<client_uid>',
-            name: 'transmit.events',
-            description: 'Transmit real-time stream',
-          },
-          {
-            method: 'POST',
-            path: '/__transmit/subscribe',
-            name: 'transmit.subscribe',
-            description: 'Subscribe to a Transmit channel',
-          },
-          {
-            method: 'POST',
-            path: '/__transmit/unsubscribe',
-            name: 'transmit.unsubscribe',
-            description: 'Unsubscribe from a Transmit channel',
-          },
-        ],
-      },
-      {
-        group: 'Development Routes',
-        routes: [
-          {
-            method: 'GET',
-            path: '/dev/routes',
-            name: 'dev.routes',
-            description: 'This page - route list',
-          },
-        ],
-      },
-    ]
+    const routesByDomain = router?.toJSON?.() as SerializedRoutesByDomain | undefined
+    const routes = buildDevRoutesSnapshot(routesByDomain ?? { root: [] })
 
-    return inertia.render('dev/routes', { routes })
+    return inertia.render('dev/routes', { routes } as any)
   }
 }

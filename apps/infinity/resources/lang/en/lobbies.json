@@ -1,0 +1,50 @@
+{
+  "flash": {
+    "created": "Lobby created successfully!",
+    "joined": "Successfully joined the lobby!",
+    "joinFailed": "Failed to join lobby. Please try again.",
+    "left": "Successfully left the lobby",
+    "leaveFailed": "Failed to leave lobby. Please try again.",
+    "startFailed": "Failed to start game. Please try again.",
+    "closed": "Lobby closed successfully."
+  },
+  "api": {
+    "joined": "Successfully joined lobby",
+    "joinFailed": "Failed to join lobby",
+    "left": "Successfully left lobby",
+    "leaveFailed": "Failed to leave lobby",
+    "startFailed": "Failed to start game",
+    "kicked": "Player kicked successfully",
+    "kickFailed": "Failed to kick player",
+    "transferNotImplemented": "Transfer ownership use case not implemented yet",
+    "closeFailed": "Failed to close lobby",
+    "getFailed": "Failed to get lobby",
+    "listFailed": "Failed to get lobbies",
+    "leaveScheduled": "Leave scheduled after disconnect grace period",
+    "leaveOnCloseFailed": "Failed to leave lobby on close",
+    "heartbeatFailed": "Failed to process lobby heartbeat"
+  },
+  "errors": {
+    "notFound": "Lobby not found",
+    "loadFailed": "Failed to load lobby",
+    "invitationInvalid": "Lobby not found or invitation expired",
+    "playerNotFound": "Player not found",
+    "playerAlreadyInLobby": "Player is already in a lobby",
+    "passwordRequired": "Password is required for this lobby",
+    "invalidPassword": "Invalid lobby password",
+    "full": "Lobby is full",
+    "playerNotInLobby": "Player is not in this lobby",
+    "onlyCreatorCanStart": "Only the lobby creator can start the game",
+    "lobbyNotReady": "Lobby is not ready to start a game",
+    "startFailed": "Failed to start game",
+    "onlyCreatorCanKick": "Only the lobby creator can kick players",
+    "targetNotInLobby": "Target player is not in this lobby",
+    "cannotKickInProgress": "Cannot kick players from a game in progress",
+    "cannotCloseStarting": "Cannot close a lobby while a game is starting",
+    "lobbyUuidRequired": "Lobby UUID is required",
+    "userUuidRequired": "User UUID is required",
+    "invalidLobbyUuid": "Lobby UUID is missing or invalid",
+    "invalidUserUuid": "User UUID format is invalid",
+    "invalidClientSessionId": "Client session id format is invalid"
+  }
+}

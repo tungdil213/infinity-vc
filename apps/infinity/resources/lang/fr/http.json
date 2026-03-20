@@ -1,0 +1,18 @@
+{
+  "errors": {
+    "unauthorized": "Non autorisé",
+    "forbidden": "Accès interdit",
+    "validationFailed": "Échec de la validation"
+  },
+  "validation": {
+    "checkForm": "Veuillez vérifier le formulaire et corriger les erreurs."
+  },
+  "rateLimit": {
+    "loginRetryInSeconds": "Trop de tentatives de connexion. Réessayez dans {seconds} secondes.",
+    "loginTryLater": "Trop de tentatives de connexion. Veuillez réessayer plus tard."
+  },
+  "access": {
+    "adminRequired": "Accès administrateur requis",
+    "moderatorRequired": "Accès modérateur requis"
+  }
+}

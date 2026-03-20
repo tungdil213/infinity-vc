@@ -87,12 +87,12 @@ docker compose down
 
 Le service `database` utilise l’image `postgres:16-alpine3.19` et expose le port `5432`.
 
-Les variables par défaut dans `compose.yml` :
+Les variables par défaut dans `compose.yml` (surchargées via ton environnement shell ou un fichier `.env` à la racine) :
 
 ```yaml
 environment:
-  - POSTGRES_USER=root
-  - POSTGRES_PASSWORD=root
+  - POSTGRES_USER=${POSTGRES_USER:-infinity}
+  - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-change_me_dev_only}
 ```
 
 Adapte ton `.env` d’infinity en conséquence :
@@ -100,8 +100,8 @@ Adapte ton `.env` d’infinity en conséquence :
 ```bash
 DB_HOST=database
 DB_PORT=5432
-DB_USER=root
-DB_PASSWORD=root
+DB_USER=infinity
+DB_PASSWORD=change_me_dev_only
 DB_DATABASE=infinity_gauntlet
 ```
 

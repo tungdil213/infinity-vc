@@ -52,6 +52,7 @@ export default defineConfig({
       file: () => import('adonisjs-server-stats/provider'),
       environment: ['web'],
     },
+    () => import('@adonisjs/i18n/i18n_provider')
   ],
 
   /*
@@ -112,6 +113,10 @@ export default defineConfig({
       pattern: 'public/**',
       reloadServer: false,
     },
+    {
+      pattern: 'resources/lang/**/*.{json,yaml,yml}',
+      reloadServer: false,
+    }
   ],
 
   hooks: {

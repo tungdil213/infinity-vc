@@ -1,5 +1,1 @@
-import { useI18nContext } from './provider'
-
-export const useI18n = () => {
-  return useI18nContext()
-}
+export * from '@infinity.dev/shared-i18n/use_i18n'

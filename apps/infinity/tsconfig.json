@@ -12,7 +12,6 @@
     "./releases/**/*",
     "./current/**/*",
     "./database/samples/**/*",
-    "./app/tests/**/*",
     "./tests/unit/inertia/**/*",
     "./.adonisjs/server/pages.d.ts",
     "node_modules",

@@ -1,0 +1,56 @@
+{
+  "name": "@infinity.dev/shared-i18n",
+  "version": "1.0.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "Shared frontend i18n catalogs and React provider/hooks",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./provider": {
+      "types": "./dist/provider.d.ts",
+      "import": "./dist/provider.js"
+    },
+    "./use_i18n": {
+      "types": "./dist/use_i18n.d.ts",
+      "import": "./dist/use_i18n.js"
+    },
+    "./messages/en": {
+      "types": "./dist/messages/en.d.ts",
+      "import": "./dist/messages/en.js"
+    },
+    "./messages/fr": {
+      "types": "./dist/messages/fr.d.ts",
+      "import": "./dist/messages/fr.js"
+    },
+    "./messages/de": {
+      "types": "./dist/messages/de.d.ts",
+      "import": "./dist/messages/de.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w",
+    "clean": "rm -rf dist .turbo node_modules",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@infinity.dev/typescript-config": "1.0.0",
+    "typescript": "~5.7.3"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": false
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

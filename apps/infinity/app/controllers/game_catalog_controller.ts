@@ -1,7 +1,9 @@
 import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
+import logger from '@adonisjs/core/services/logger'
 import type { GameCapability } from '@infinity.dev/game-engine'
 import { ListGameCatalogUseCase } from '#application/use_cases/list_game_catalog_use_case'
+import { gameCatalogQueryValidator } from '#validators/game_catalog_validator'
 
 const SUPPORTED_CAPABILITIES: readonly GameCapability[] = [
   'turn-based',
@@ -22,10 +24,15 @@ const SUPPORTED_CAPABILITY_SET = new Set<string>(SUPPORTED_CAPABILITIES)
 export default class GameCatalogController {
   constructor(private readonly listGameCatalogUseCase: ListGameCatalogUseCase) {}
 
-  async publicIndex({ request, response }: HttpContext) {
-    const capabilitiesResult = this.parseCapabilities(request.input('capabilities'))
+  async publicIndex({ request, response, i18n }: HttpContext) {
+    const { capabilities } = await request.validateUsing(gameCatalogQueryValidator)
+    const capabilitiesResult = this.parseCapabilities(capabilities)
     if (capabilitiesResult.error) {
-      return response.status(400).json({ error: capabilitiesResult.error })
+      return response.status(400).json({
+        error: i18n.t('games.errors.unsupportedCapability', {
+          capability: capabilitiesResult.error,
+        }),
+      })
     }
 
     const result = this.listGameCatalogUseCase.execute({
@@ -34,7 +41,8 @@ export default class GameCatalogController {
     })
 
     if (result.isFailure) {
-      return response.status(500).json({ error: result.error })
+      logger.error({ error: result.error }, 'Failed to list public game catalog')
+      return response.status(500).json({ error: i18n.t('games.errors.catalogUnavailable') })
     }
 
     return response.json({
@@ -46,10 +54,15 @@ export default class GameCatalogController {
     })
   }
 
-  async adminIndex({ request, response }: HttpContext) {
-    const capabilitiesResult = this.parseCapabilities(request.input('capabilities'))
+  async adminIndex({ request, response, i18n }: HttpContext) {
+    const { capabilities } = await request.validateUsing(gameCatalogQueryValidator)
+    const capabilitiesResult = this.parseCapabilities(capabilities)
     if (capabilitiesResult.error) {
-      return response.status(400).json({ error: capabilitiesResult.error })
+      return response.status(400).json({
+        error: i18n.t('games.errors.unsupportedCapability', {
+          capability: capabilitiesResult.error,
+        }),
+      })
     }
 
     const result = this.listGameCatalogUseCase.execute({
@@ -58,7 +71,8 @@ export default class GameCatalogController {
     })
 
     if (result.isFailure) {
-      return response.status(500).json({ error: result.error })
+      logger.error({ error: result.error }, 'Failed to list admin game catalog')
+      return response.status(500).json({ error: i18n.t('games.errors.catalogUnavailable') })
     }
 
     return response.json({
@@ -70,17 +84,15 @@ export default class GameCatalogController {
     })
   }
 
-  private parseCapabilities(rawValue: unknown): {
+  private parseCapabilities(rawValue: string | undefined): {
     value?: GameCapability[]
     error?: string
   } {
-    if (rawValue === undefined || rawValue === null || rawValue === '') {
+    if (rawValue === undefined || rawValue.length === 0) {
       return { value: [] }
     }
 
-    const rawCapabilities = Array.isArray(rawValue)
-      ? rawValue.flatMap((entry) => String(entry).split(','))
-      : String(rawValue).split(',')
+    const rawCapabilities = rawValue.split(',')
 
     const capabilities = rawCapabilities
       .map((value) => value.trim())
@@ -89,7 +101,7 @@ export default class GameCatalogController {
     for (const capability of capabilities) {
       if (!SUPPORTED_CAPABILITY_SET.has(capability)) {
         return {
-          error: `Unsupported capability '${capability}'`,
+          error: capability,
         }
       }
     }

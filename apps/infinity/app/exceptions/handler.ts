@@ -39,13 +39,20 @@ export default class HttpExceptionHandler extends ExceptionHandler {
 
     // Gestion des erreurs de validation avec toast d'erreur
     if (error instanceof errors.E_VALIDATION_ERROR) {
-      ctx.session.flash('error', 'Please check the form and correct any errors.')
+      ctx.session.flash(
+        'error',
+        this.translate(
+          ctx,
+          'http.validation.checkForm',
+          'Please check the form and correct any errors.'
+        )
+      )
       ctx.session.flashExcept(['_token'])
 
       if (ctx.request.accepts(['json'])) {
         return ctx.response.status(422).json({
           success: false,
-          message: 'Validation failed',
+          message: this.translate(ctx, 'http.errors.validationFailed', 'Validation failed'),
           errors: error.messages,
         })
       }
@@ -78,11 +85,23 @@ export default class HttpExceptionHandler extends ExceptionHandler {
     return {
       requestId: ctx.request.id(),
       userId: ctx.auth?.user?.id,
-      email: ctx.auth?.user?.email,
       ip: ctx.request.ip(),
       userAgent: ctx.request.header('user-agent'),
       method: ctx.request.method(),
       url: ctx.request.url(),
     }
+  }
+
+  private translate(ctx: HttpContext, key: string, fallback: string): string {
+    try {
+      const translated = ctx.i18n?.t(key)
+      if (typeof translated === 'string' && translated.length > 0) {
+        return translated
+      }
+    } catch {
+      // Ignore i18n failures and use fallback.
+    }
+
+    return fallback
   }
 }

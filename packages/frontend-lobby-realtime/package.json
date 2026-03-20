@@ -1,0 +1,59 @@
+{
+  "name": "@infinity.dev/frontend-lobby-realtime",
+  "version": "1.0.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "Realtime lobby frontend sync, store and Transmit React context",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./transmit-client": {
+      "types": "./dist/transmit_client.d.ts",
+      "import": "./dist/transmit_client.js"
+    },
+    "./transmit-context": {
+      "types": "./dist/TransmitContext.d.ts",
+      "import": "./dist/TransmitContext.js"
+    },
+    "./lobby-realtime-sync": {
+      "types": "./dist/lobby_realtime_sync.d.ts",
+      "import": "./dist/lobby_realtime_sync.js"
+    },
+    "./lobby-state-store": {
+      "types": "./dist/lobby_state_store.d.ts",
+      "import": "./dist/lobby_state_store.js"
+    },
+    "./lobby-types": {
+      "types": "./dist/lobby_types.d.ts",
+      "import": "./dist/lobby_types.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w",
+    "clean": "rm -rf dist .turbo node_modules",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@adonisjs/transmit-client": "^1.1.0"
+  },
+  "devDependencies": {
+    "@infinity.dev/typescript-config": "1.0.0",
+    "typescript": "~5.7.3"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": false
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

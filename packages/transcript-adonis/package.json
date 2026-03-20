@@ -1,0 +1,42 @@
+{
+  "name": "@infinity.dev/transcript-adonis",
+  "version": "1.0.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "AdonisJS integration for @infinity.dev/transcript",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./event-bridge-service": {
+      "types": "./dist/event_bridge_service.d.ts",
+      "import": "./dist/event_bridge_service.js"
+    },
+    "./transmit-adapter": {
+      "types": "./dist/transmit_adapter.d.ts",
+      "import": "./dist/transmit_adapter.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w",
+    "clean": "rm -rf dist .turbo node_modules",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@adonisjs/core": "^7.0.1",
+    "@adonisjs/transmit": "^3.0.1",
+    "@infinity.dev/events": "1.0.0",
+    "@infinity.dev/transcript": "1.0.0"
+  },
+  "devDependencies": {
+    "@infinity.dev/typescript-config": "1.0.0",
+    "typescript": "~5.7.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

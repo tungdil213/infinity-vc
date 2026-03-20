@@ -7,6 +7,7 @@
 /// <reference path="../../config/auth.ts" />
 /// <reference path="../../config/drive.ts" />
 /// <reference path="../../config/hash.ts" />
+/// <reference path="../../config/i18n.ts" />
 /// <reference path="../../config/logger.ts" />
 /// <reference path="../../config/server_stats.ts" />
 /// <reference path="../../config/transmit.ts" />

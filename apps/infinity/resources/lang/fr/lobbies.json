@@ -1,0 +1,50 @@
+{
+  "flash": {
+    "created": "Lobby créé avec succès !",
+    "joined": "Lobby rejoint avec succès !",
+    "joinFailed": "Impossible de rejoindre le lobby. Veuillez réessayer.",
+    "left": "Lobby quitté avec succès",
+    "leaveFailed": "Impossible de quitter le lobby. Veuillez réessayer.",
+    "startFailed": "Impossible de démarrer la partie. Veuillez réessayer.",
+    "closed": "Lobby fermé avec succès."
+  },
+  "api": {
+    "joined": "Lobby rejoint avec succès",
+    "joinFailed": "Impossible de rejoindre le lobby",
+    "left": "Lobby quitté avec succès",
+    "leaveFailed": "Impossible de quitter le lobby",
+    "startFailed": "Impossible de démarrer la partie",
+    "kicked": "Joueur expulsé avec succès",
+    "kickFailed": "Impossible d'expulser le joueur",
+    "transferNotImplemented": "Le transfert de propriété n'est pas encore implémenté",
+    "closeFailed": "Impossible de fermer le lobby",
+    "getFailed": "Impossible de récupérer le lobby",
+    "listFailed": "Impossible de récupérer les lobbies",
+    "leaveScheduled": "Sortie programmée après la période de grâce de déconnexion",
+    "leaveOnCloseFailed": "Impossible de quitter le lobby à la fermeture",
+    "heartbeatFailed": "Impossible de traiter le heartbeat du lobby"
+  },
+  "errors": {
+    "notFound": "Lobby introuvable",
+    "loadFailed": "Impossible de charger le lobby",
+    "invitationInvalid": "Lobby introuvable ou invitation expirée",
+    "playerNotFound": "Joueur introuvable",
+    "playerAlreadyInLobby": "Le joueur est déjà dans un lobby",
+    "passwordRequired": "Un mot de passe est requis pour ce lobby",
+    "invalidPassword": "Mot de passe du lobby invalide",
+    "full": "Le lobby est complet",
+    "playerNotInLobby": "Le joueur n'est pas dans ce lobby",
+    "onlyCreatorCanStart": "Seul le créateur du lobby peut démarrer la partie",
+    "lobbyNotReady": "Le lobby n'est pas prêt pour démarrer une partie",
+    "startFailed": "Impossible de démarrer la partie",
+    "onlyCreatorCanKick": "Seul le créateur du lobby peut expulser des joueurs",
+    "targetNotInLobby": "Le joueur ciblé n'est pas dans ce lobby",
+    "cannotKickInProgress": "Impossible d'expulser des joueurs pendant une partie en cours",
+    "cannotCloseStarting": "Impossible de fermer un lobby pendant le démarrage d'une partie",
+    "lobbyUuidRequired": "L'identifiant du lobby est requis",
+    "userUuidRequired": "L'identifiant de l'utilisateur est requis",
+    "invalidLobbyUuid": "L'identifiant du lobby est manquant ou invalide",
+    "invalidUserUuid": "Format d'identifiant utilisateur invalide",
+    "invalidClientSessionId": "Format d'identifiant de session client invalide"
+  }
+}

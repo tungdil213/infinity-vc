@@ -86,7 +86,7 @@ export default class BusinessException extends Exception {
       },
       user: {
         id: ctx.auth.user?.id,
-        email: ctx.auth.user?.email,
+        userUuid: ctx.auth.user?.userUuid,
       },
       context: this.metadata.context,
     }

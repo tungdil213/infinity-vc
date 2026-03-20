@@ -1,8 +1,6 @@
 import { HttpContext } from '@adonisjs/core/http'
 import { inject } from '@adonisjs/core'
 import { RegisterUserUseCase } from '#application/use_cases/register_user_use_case'
-// import AuthenticateUserUseCase from '#application/use_cases/authenticate_user_use_case' // TODO: Use
-// import { DatabaseUserRepository } from '#infrastructure/repositories/database_user_repository' // TODO: Use
 import User from '#models/user'
 import hash from '@adonisjs/core/services/hash'
 import app from '@adonisjs/core/services/app'
@@ -11,19 +9,19 @@ import { authRegisterValidator } from '#validators/auth_register_validator'
 import { authLoginValidator } from '#validators/auth_login_validator'
 import { generateUsernameFromEmail } from '#application/services/username_generator'
 
+const DEFAULT_REDIRECT_PATH = '/lobbies'
+const AUTH_ERROR_TRANSLATION_KEYS: Record<string, string> = {
+  'Failed to create account': 'auth.register.failure.createAccount',
+  'Invalid credentials': 'auth.login.failure.invalidCredentials',
+}
+
 @inject()
 export default class EnhancedAuthController {
-  // TODO: Inject these when needed
-  // constructor(
-  //   private userRepository: DatabaseUserRepository,
-  //   private authenticateUserUseCase: AuthenticateUserUseCase
-  // ) {}
-
   /**
    * Show login form
    */
   async showLogin({ inertia, request }: HttpContext) {
-    const redirect = request.input('redirect', '/lobbies')
+    const redirect = this.sanitizeRedirectTarget(request.input('redirect'))
 
     // Check if user is currently in a lobby
     // TODO: Implement findCurrentLobby in UserRepository
@@ -39,7 +37,7 @@ export default class EnhancedAuthController {
    * Show register form
    */
   async showRegister({ inertia, request }: HttpContext) {
-    const redirect = request.input('redirect', '/lobbies')
+    const redirect = this.sanitizeRedirectTarget(request.input('redirect'))
 
     return inertia.render('auth/register', {
       redirect,
@@ -49,8 +47,8 @@ export default class EnhancedAuthController {
   /**
    * Register new user
    */
-  async register({ request, response, auth, session }: HttpContext) {
-    const redirect = request.input('redirect', '/lobbies')
+  async register({ request, response, auth, session, i18n }: HttpContext) {
+    const redirect = this.sanitizeRedirectTarget(request.input('redirect'))
 
     try {
       const { fullName, email, password } = await request.validateUsing(authRegisterValidator)
@@ -74,7 +72,7 @@ export default class EnhancedAuthController {
       })
 
       if (result.isFailure) {
-        session.flash('error', result.error || 'Failed to create account')
+        session.flash('error', this.translateError(i18n, result.error, 'auth.register.failure.createAccount'))
         return response.redirect().back()
       }
 
@@ -84,15 +82,17 @@ export default class EnhancedAuthController {
         await auth.use('web').login(newUser)
         session.flash(
           'success',
-          `Account created successfully! Welcome to infinity Game, ${newUser.fullName}!`
+          i18n.t('auth.register.success.welcome', {
+            name: newUser.fullName,
+          })
         )
       } else {
-        session.flash('success', 'Account created successfully! Please log in.')
+        session.flash('success', i18n.t('auth.register.success.createdPleaseLogin'))
       }
       return response.redirect(redirect)
     } catch (error) {
       logger.error({ error }, 'Registration error')
-      session.flash('error', 'Failed to create account. Please try again.')
+      session.flash('error', i18n.t('auth.register.failure.tryAgain'))
       return response.redirect().back()
     }
   }
@@ -100,8 +100,8 @@ export default class EnhancedAuthController {
   /**
    * Authenticate user
    */
-  async login({ request, response, auth, session }: HttpContext) {
-    const redirect = request.input('redirect', '/lobbies')
+  async login({ request, response, auth, session, i18n }: HttpContext) {
+    const redirect = this.sanitizeRedirectTarget(request.input('redirect'))
 
     try {
       const { email, password } = await request.validateUsing(authLoginValidator)
@@ -109,25 +109,30 @@ export default class EnhancedAuthController {
       // Find user using Lucid model directly for auth
       const user = await User.query().where('email', email.trim().toLowerCase()).first()
       if (!user) {
-        session.flash('error', 'Invalid email or password')
+        session.flash('error', i18n.t('auth.login.failure.invalidCredentials'))
         return response.redirect().back()
       }
 
       // Verify password
       const isValidPassword = await hash.verify(user.password, password)
       if (!isValidPassword) {
-        session.flash('error', 'Invalid email or password')
+        session.flash('error', i18n.t('auth.login.failure.invalidCredentials'))
         return response.redirect().back()
       }
 
       // Log the user in
       await auth.use('web').login(user)
 
-      session.flash('success', `Welcome back, ${user.fullName}!`)
+      session.flash(
+        'success',
+        i18n.t('auth.login.success.welcomeBack', {
+          name: user.fullName,
+        })
+      )
       return response.redirect(redirect)
     } catch (error) {
       logger.error({ error }, 'Login error')
-      session.flash('error', 'Login failed. Please try again.')
+      session.flash('error', i18n.t('auth.login.failure.tryAgain'))
       return response.redirect().back()
     }
   }
@@ -135,14 +140,14 @@ export default class EnhancedAuthController {
   /**
    * Logout user
    */
-  async logout({ response, auth, session }: HttpContext) {
+  async logout({ response, auth, session, i18n }: HttpContext) {
     try {
       await auth.use('web').logout()
-      session.flash('success', 'You have been logged out successfully')
+      session.flash('success', i18n.t('auth.logout.success'))
       return response.redirect('/')
     } catch (error) {
-      console.error('Logout error:', error)
-      session.flash('error', 'Logout failed')
+      logger.error({ error }, 'Logout error')
+      session.flash('error', i18n.t('auth.logout.failure'))
       return response.redirect().back()
     }
   }
@@ -174,7 +179,10 @@ export default class EnhancedAuthController {
         },
       })
     } catch (error) {
-      logger.error({ error }, 'Profile error')
+      if ((error as any)?.code !== 'E_UNAUTHORIZED_ACCESS') {
+        logger.error({ error }, 'Profile error')
+      }
+
       return response.status(200).json({
         authenticated: false,
         user: null,
@@ -203,11 +211,48 @@ export default class EnhancedAuthController {
             : null,
       })
     } catch (error) {
-      logger.error({ error }, 'Auth check error')
+      if ((error as any)?.code !== 'E_UNAUTHORIZED_ACCESS') {
+        logger.error({ error }, 'Auth check error')
+      }
+
       return response.status(200).json({
         authenticated: false,
         user: null,
       })
     }
+  }
+
+  /**
+   * Prevent open redirects by accepting only safe internal paths.
+   */
+  private sanitizeRedirectTarget(rawValue: unknown): string {
+    if (typeof rawValue !== 'string') {
+      return DEFAULT_REDIRECT_PATH
+    }
+
+    const value = rawValue.trim()
+    if (!value) {
+      return DEFAULT_REDIRECT_PATH
+    }
+
+    // Must stay relative to this app and avoid protocol-relative or control chars.
+    if (!value.startsWith('/') || value.startsWith('//') || /[\r\n]/.test(value)) {
+      return DEFAULT_REDIRECT_PATH
+    }
+
+    return value
+  }
+
+  private translateError(i18n: HttpContext['i18n'], error: string | undefined, fallbackKey: string): string {
+    if (!error) {
+      return i18n.t(fallbackKey)
+    }
+
+    const translatedKey = AUTH_ERROR_TRANSLATION_KEYS[error]
+    if (translatedKey) {
+      return i18n.t(translatedKey)
+    }
+
+    return error
   }
 }

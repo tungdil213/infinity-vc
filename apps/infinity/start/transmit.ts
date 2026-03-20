@@ -1,5 +1,9 @@
 import transmit from '@adonisjs/transmit/services/main'
 import type { HttpContext } from '@adonisjs/core/http'
+import app from '@adonisjs/core/services/app'
+import logger from '@adonisjs/core/services/logger'
+import { HybridLobbyService } from '#application/services/hybrid_lobby_service'
+import { canModerateLobbies } from '#domain/value_objects/user_role'
 
 /**
  * Authorization rules for Transmit channels
@@ -15,15 +19,38 @@ transmit.authorize('lobbies', (ctx: HttpContext) => {
 transmit.authorize<{ lobbyUuid: string }>(
   'lobbies/:lobbyUuid',
   async (ctx: HttpContext, { lobbyUuid }) => {
-    // User must be authenticated
-    if (!ctx.auth.user) {
+    const user = ctx.auth.user
+    if (!user) {
       return false
     }
 
-    // TODO: Add explicit membership/access checks for private lobbies.
-    // For now, authenticated users are allowed.
-    console.log(`User ${ctx.auth.user.userUuid} accessing lobby ${lobbyUuid}`)
-    return true
+    if (canModerateLobbies(user.role)) {
+      return true
+    }
+
+    try {
+      const lobbyRepository = await app.container.make(HybridLobbyService)
+      const lobby = await lobbyRepository.findByUuid(lobbyUuid)
+
+      if (!lobby) {
+        return false
+      }
+
+      if (!lobby.isPrivate) {
+        return true
+      }
+
+      return lobby.hasPlayer(user.userUuid)
+    } catch (error) {
+      logger.warn(
+        {
+          channel: 'lobbies/:lobbyUuid',
+          reason: error instanceof Error ? error.message : 'unknown_error',
+        },
+        '[Transmit] Failed to verify lobby channel authorization'
+      )
+      return false
+    }
   }
 )
 

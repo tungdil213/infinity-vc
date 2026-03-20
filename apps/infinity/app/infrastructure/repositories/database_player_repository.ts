@@ -1,4 +1,4 @@
-import type Player from '#domain/entities/player'
+import Player from '#domain/entities/player'
 import { type PlayerInterface } from '#domain/interfaces/player_interface'
 import { type PlayerRepository } from '#application/repositories/player_repository'
 import { EntityNotFoundException } from '#exceptions/domain_exceptions'
@@ -29,15 +29,29 @@ export class DatabasePlayerRepository implements PlayerRepository {
   }
 
   async findByUuid(uuid: string): Promise<Player | null> {
-    // TODO: Implement database find
-    console.log('Finding player by uuid:', uuid)
-    return null
+    const model = await PlayerModel.query()
+      .where('player_uuid', uuid)
+      .whereNull('deleted_at')
+      .first()
+
+    if (!model) {
+      return null
+    }
+
+    return this.toDomainEntity(model)
   }
 
   async findByUserUuid(userUuid: string): Promise<Player | null> {
-    // TODO: Implement database find by user uuid
-    console.log('Finding player by user uuid:', userUuid)
-    return null
+    const model = await PlayerModel.query()
+      .where('user_uuid', userUuid)
+      .whereNull('deleted_at')
+      .first()
+
+    if (!model) {
+      return null
+    }
+
+    return this.toDomainEntity(model)
   }
 
   async findByUserUuidOrFail(userUuid: string): Promise<Player> {
@@ -49,9 +63,17 @@ export class DatabasePlayerRepository implements PlayerRepository {
   }
 
   async findByNickName(nickName: string): Promise<Player | null> {
-    // TODO: Implement database find by nickname
-    console.log('Finding player by nickname:', nickName)
-    return null
+    const normalizedNickName = nickName.trim().toLowerCase()
+    const model = await PlayerModel.query()
+      .whereRaw('LOWER(nick_name) = ?', [normalizedNickName])
+      .whereNull('deleted_at')
+      .first()
+
+    if (!model) {
+      return null
+    }
+
+    return this.toDomainEntity(model)
   }
 
   async existsByNickName(nickName: string): Promise<boolean> {
@@ -60,8 +82,18 @@ export class DatabasePlayerRepository implements PlayerRepository {
   }
 
   async delete(uuid: string): Promise<void> {
-    // TODO: Implement database delete
-    console.log('Deleting player:', uuid)
+    const model = await PlayerModel.query()
+      .whereNull('deleted_at')
+      .where((query) => {
+        query.where('player_uuid', uuid).orWhere('user_uuid', uuid)
+      })
+      .first()
+
+    if (!model) {
+      return
+    }
+
+    await model.softDelete()
   }
 
   async findByUuidOrFail(uuid: string): Promise<Player> {
@@ -73,9 +105,8 @@ export class DatabasePlayerRepository implements PlayerRepository {
   }
 
   async findAll(): Promise<Player[]> {
-    // TODO: Implement database findAll
-    console.log('Finding all players')
-    return []
+    const models = await PlayerModel.query().whereNull('deleted_at').orderBy('created_at', 'desc')
+    return models.map((model) => this.toDomainEntity(model))
   }
 
   async findPlayerInterfaceByUuid(userUuid: string): Promise<PlayerInterface | null> {
@@ -96,5 +127,16 @@ export class DatabasePlayerRepository implements PlayerRepository {
       throw new EntityNotFoundException('PlayerInterface', userUuid)
     }
     return playerInterface
+  }
+
+  private toDomainEntity(model: PlayerModel): Player {
+    return Player.reconstitute(
+      model.playerUuid,
+      model.userUuid,
+      model.nickName,
+      0,
+      0,
+      model.createdAt.toJSDate()
+    )
   }
 }

@@ -1,0 +1,42 @@
+{
+  "shared": {
+    "fields": {
+      "fullName": "nom complet",
+      "email": "adresse e-mail",
+      "password": "mot de passe",
+      "password_confirmation": "confirmation du mot de passe",
+      "name": "nom",
+      "description": "description",
+      "maxPlayers": "nombre maximum de joueurs",
+      "isPrivate": "mode privé",
+      "hasPassword": "protection par mot de passe",
+      "gameType": "type de jeu",
+      "gameSettings": "paramètres de jeu",
+      "roundsToWin": "manches pour gagner",
+      "allowDrawReplay": "option de rejouer en cas d'égalité",
+      "playerUuid": "identifiant joueur",
+      "reason": "raison",
+      "lobbyUuid": "identifiant lobby",
+      "userUuid": "identifiant utilisateur",
+      "clientSessionId": "identifiant de session client",
+      "capabilities": "capacités",
+      "limit": "limite",
+      "status": "statut"
+    },
+    "messages": {
+      "required": "Le champ {field} est requis",
+      "string": "Le champ {field} doit être une chaîne de caractères",
+      "email": "Le champ {field} doit être une adresse e-mail valide",
+      "minLength": "Le champ {field} doit contenir au moins {min} caractères",
+      "maxLength": "Le champ {field} ne doit pas dépasser {max} caractères",
+      "confirmed": "Le champ {field} et sa confirmation doivent correspondre",
+      "number": "Le champ {field} doit être un nombre",
+      "boolean": "Le champ {field} doit être un booléen",
+      "object": "Le champ {field} doit être un objet",
+      "min": "Le champ {field} doit être supérieur ou égal à {min}",
+      "range": "Le champ {field} doit être compris entre {min} et {max}",
+      "uuid": "Le champ {field} doit être un UUID valide",
+      "regex": "Le format du champ {field} est invalide"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "errors": {
+    "notFound": "Partie introuvable",
+    "notFoundOrFinished": "Partie introuvable ou terminée",
+    "spectatorsCannotAct": "Les spectateurs ne peuvent pas effectuer d'actions de jeu",
+    "unsupportedCapability": "Capacité non prise en charge '{capability}'",
+    "actionRequired": "Le type d'action est requis",
+    "cardTypeRequired": "Le type de carte est requis pour cette action",
+    "moveRequired": "Le coup est requis pour cette action",
+    "invalidAction": "La charge utile de l'action de jeu est invalide",
+    "actionRejected": "L'action de jeu a été refusée",
+    "catalogUnavailable": "Le catalogue des jeux est temporairement indisponible"
+  }
+}
