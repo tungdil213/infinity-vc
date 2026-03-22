@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from '@infinity.dev/ui/primitives/alert'
 import { Badge } from '@infinity.dev/ui/primitives/badge'
 import { AlertCircle, CheckCircle2, Lock, Key, Users } from 'lucide-react'
 import { useI18n } from '../i18n/use_i18n'
+import Layout from '../layouts/layout'
 
 interface JoinLobbyProps {
   lobby: {
@@ -73,10 +74,10 @@ export default function JoinLobby({
 
   if (!user) {
     return (
-      <>
+      <Layout>
         <Head title={t('joinLobby.pageTitle', { lobbyName: lobby.name })} />
 
-        <div className="min-h-screen bg-secondary-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-1 items-center justify-center bg-secondary-background py-12 px-4 sm:px-6 lg:px-8">
           <div className="max-w-md w-full space-y-8">
             <div className="text-center">
               <Link href="/">
@@ -142,15 +143,15 @@ export default function JoinLobby({
             </div>
           </div>
         </div>
-      </>
+      </Layout>
     )
   }
 
   return (
-    <>
+    <Layout>
       <Head title={t('joinLobby.pageTitle', { lobbyName: lobby.name })} />
 
-      <div className="min-h-screen bg-secondary-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-1 items-center justify-center bg-secondary-background py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           {/* Header */}
           <div className="text-center">
@@ -271,6 +272,6 @@ export default function JoinLobby({
           </div>
         </div>
       </div>
-    </>
+    </Layout>
   )
 }

@@ -3,8 +3,6 @@ import { Head, router } from '@inertiajs/react'
 import { LobbyList } from '@infinity.dev/ui/components/lobby-list'
 import { LobbyData } from '@infinity.dev/ui/components/lobby-card'
 import { LobbyPasswordDialog } from '@infinity.dev/ui/components/lobby-password-dialog'
-import { HeaderWrapper } from '../layouts/HeaderWrapper'
-import { Footer } from '@infinity.dev/ui/components/footer'
 import { toast } from 'sonner'
 import { useLobbyService } from '../hooks/use_lobby_service'
 import { LobbyListState } from '../services/lobby_service'
@@ -44,13 +42,6 @@ interface LobbiesProps {
     fullName?: string
     role?: 'PLAYER' | 'MODERATOR' | 'ADMIN'
   }
-  currentLobby?: {
-    uuid: string
-    name: string
-    status: string
-    currentPlayers: number
-    maxPlayers: number
-  }
 }
 
 // Transform backend payload into LobbyData format
@@ -76,7 +67,7 @@ const transformLobbyData = (
   })),
 })
 
-function LobbiesPage({ lobbies: initialLobbies, user, currentLobby }: LobbiesProps) {
+function LobbiesPage({ lobbies: initialLobbies, user }: LobbiesProps) {
   const { t } = useI18n()
   const [loading, setLoading] = useState(false)
   const { service: lobbyService } = useLobbyService()
@@ -386,42 +377,14 @@ function LobbiesPage({ lobbies: initialLobbies, user, currentLobby }: LobbiesPro
     router.reload()
   }
 
-  const headerUser = user.fullName
-    ? {
-        uuid: user.uuid,
-        fullName: user.fullName,
-        email: user.nickName,
-      }
-    : undefined
-
   const transformedLobbies = lobbies.map((lobby) => transformLobbyData(lobby as Lobby, t))
   const isRealTimeLoading = lobbyListState.loading
-  const footerSections = [
-    {
-      title: t('footer.quickLinks'),
-      links: [
-        { href: '/lobbies', label: t('footer.browseLobbies') },
-        { href: '/auth/register', label: t('footer.signUp') },
-        { href: '/auth/login', label: t('footer.login') },
-      ],
-    },
-    {
-      title: t('footer.support'),
-      links: [
-        { href: '#', label: t('footer.helpCenter') },
-        { href: '#', label: t('footer.contactUs') },
-        { href: '#', label: t('footer.privacyPolicy') },
-      ],
-    },
-  ]
 
   return (
     <>
       <Head title={t('lobbies.pageTitle')} />
 
-      <div className="min-h-screen bg-secondary-background">
-        <HeaderWrapper user={headerUser} currentLobby={currentLobby} />
-
+      <div className="flex-1 bg-secondary-background">
         <div className="container mx-auto px-4 py-8">
           <LobbyList
             lobbies={transformedLobbies}
@@ -501,12 +464,6 @@ function LobbiesPage({ lobbies: initialLobbies, user, currentLobby }: LobbiesPro
             }}
           />
         </div>
-
-        <Footer
-          description={t('footer.description')}
-          sections={footerSections}
-          copyright={t('footer.copyright')}
-        />
       </div>
 
       <LobbyPasswordDialog

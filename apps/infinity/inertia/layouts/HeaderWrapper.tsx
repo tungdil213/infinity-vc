@@ -85,13 +85,11 @@ export function HeaderWrapper({ user, currentLobby, className }: HeaderWrapperPr
   }
 
   const handleProfile = () => {
-    // TODO: Implement profile page
-    console.log('Profile clicked')
+    router.visit('/profile')
   }
 
   const handleSettings = () => {
-    // TODO: Implement settings page
-    console.log('Settings clicked')
+    router.visit('/settings')
   }
 
   return (

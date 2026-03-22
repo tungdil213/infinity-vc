@@ -42,6 +42,18 @@ router
     // Auth actions
     router.post('/auth/logout', '#controllers/enhanced_auth_controller.logout').as('auth.logout')
 
+    // Profile & settings
+    router.get('/profile', '#controllers/profile_settings_controller.showProfile').as('profile.show')
+    router
+      .get('/settings', '#controllers/profile_settings_controller.showSettings')
+      .as('settings.show')
+    router
+      .post('/settings/profile', '#controllers/profile_settings_controller.updateProfile')
+      .as('settings.profile.update')
+    router
+      .post('/settings/password', '#controllers/profile_settings_controller.updatePassword')
+      .as('settings.password.update')
+
     // Lobbies routes
     router.get('/lobbies', '#controllers/enhanced_lobbies_controller.index').as('lobbies.index')
     router

@@ -23,6 +23,8 @@ declare module '@adonisjs/inertia/types' {
     'join-lobby': ExtractProps<(typeof import('../../inertia/pages/join-lobby.tsx'))['default']>
     'lobbies': ExtractProps<(typeof import('../../inertia/pages/lobbies.tsx'))['default']>
     'lobby': ExtractProps<(typeof import('../../inertia/pages/lobby.tsx'))['default']>
+    'profile': ExtractProps<(typeof import('../../inertia/pages/profile.tsx'))['default']>
+    'settings': ExtractProps<(typeof import('../../inertia/pages/settings.tsx'))['default']>
     'welcome': ExtractProps<(typeof import('../../inertia/pages/welcome.tsx'))['default']>
   }
 }

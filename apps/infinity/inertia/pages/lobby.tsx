@@ -1,5 +1,5 @@
 import React from 'react'
-import { Head, router } from '@inertiajs/react'
+import { Head } from '@inertiajs/react'
 import GameLobby from '../features/GameLobby'
 import Layout from '../layouts/layout'
 
@@ -43,7 +43,7 @@ export default function Lobby({ lobby, user }: LobbyProps) {
     <Layout>
       <Head title={`Lobby - ${lobby.name}`} />
 
-      <div className="min-h-screen bg-secondary-background">
+      <div className="flex-1 bg-secondary-background">
         <GameLobby
           lobbyUuid={lobby.uuid}
           lobbyName={lobby.name}

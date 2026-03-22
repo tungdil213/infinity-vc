@@ -63,7 +63,7 @@ export default function Register({ errors = {}, flash = {} }: RegisterProps) {
     <Layout>
       <Head title={t('auth.register.pageTitle')} />
 
-      <div className="min-h-screen bg-secondary-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-1 items-center justify-center bg-secondary-background py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           {/* Header */}
           <div className="text-center">

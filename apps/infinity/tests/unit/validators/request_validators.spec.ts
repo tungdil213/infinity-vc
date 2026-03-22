@@ -2,6 +2,10 @@ import { test } from '@japa/runner'
 import { authLoginValidator } from '../../../app/validators/auth_login_validator.js'
 import { authRegisterValidator } from '../../../app/validators/auth_register_validator.js'
 import {
+  settingsPasswordValidator,
+  settingsProfileValidator,
+} from '../../../app/validators/account_settings_validator.js'
+import {
   gameActionBodyValidator,
   gameUuidParamValidator,
 } from '../../../app/validators/game_action_validator.js'
@@ -42,6 +46,28 @@ test.group('Request validators', () => {
         email: 'player@example.com',
         password: 'Password123',
         password_confirmation: 'Different123',
+      })
+    )
+
+    assert.isTrue(hasFailed)
+  })
+
+  test('settings profile validator trims and validates account updates', async ({ assert }) => {
+    const payload = await settingsProfileValidator.validate({
+      fullName: '  Player One  ',
+      email: '  player.one@example.com  ',
+    })
+
+    assert.equal(payload.fullName, 'Player One')
+    assert.equal(payload.email, 'player.one@example.com')
+  })
+
+  test('settings password validator rejects mismatched confirmation', async ({ assert }) => {
+    const hasFailed = await throwsValidationError(() =>
+      settingsPasswordValidator.validate({
+        currentPassword: 'OldPassword123',
+        password: 'NewPassword123',
+        password_confirmation: 'DifferentPassword123',
       })
     )
 

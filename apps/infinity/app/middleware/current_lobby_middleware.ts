@@ -9,6 +9,9 @@ export default class CurrentLobbyMiddleware {
   constructor(private lobbyRepository: HybridLobbyService) {}
 
   async handle({ auth, inertia }: HttpContext, next: NextFn) {
+    // Hydrate auth.user from session even on public routes.
+    await auth.check()
+
     // Only run for authenticated users
     if (auth.user) {
       try {

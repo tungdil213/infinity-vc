@@ -7,9 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@infinity.dev/ui/primitives/card'
-import { Footer } from '@infinity.dev/ui/components/footer'
 import Layout from '../layouts/layout'
-import { HeaderWrapper } from '../layouts/HeaderWrapper'
 import { Zap, Users, Globe, Shield, Heart, TrendingUp } from 'lucide-react'
 import { useI18n } from '../i18n/use_i18n'
 
@@ -19,44 +17,16 @@ interface WelcomeProps {
     fullName: string
     email: string
   }
-  currentLobby?: {
-    uuid: string
-    name: string
-    status: string
-    currentPlayers: number
-    maxPlayers: number
-  }
 }
 
-export default function Welcome({ user, currentLobby }: WelcomeProps) {
+export default function Welcome({ user }: WelcomeProps) {
   const { t } = useI18n()
-  const footerSections = [
-    {
-      title: t('footer.quickLinks'),
-      links: [
-        { href: '/lobbies', label: t('footer.browseLobbies') },
-        { href: '/auth/register', label: t('footer.signUp') },
-        { href: '/auth/login', label: t('footer.login') },
-      ],
-    },
-    {
-      title: t('footer.support'),
-      links: [
-        { href: '#', label: t('footer.helpCenter') },
-        { href: '#', label: t('footer.contactUs') },
-        { href: '#', label: t('footer.privacyPolicy') },
-      ],
-    },
-  ]
 
   return (
     <Layout>
       <Head title={t('welcome.pageTitle')} />
 
-      <div className="min-h-screen bg-background text-foreground font-mono">
-        {/* Enhanced Navigation */}
-        <HeaderWrapper user={user} currentLobby={currentLobby} />
-
+      <div className="flex-1 bg-background text-foreground font-mono">
         {/* Hero Section */}
         <div className="relative overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
@@ -229,13 +199,6 @@ export default function Welcome({ user, currentLobby }: WelcomeProps) {
             )}
           </div>
         </div>
-
-        {/* Footer */}
-        <Footer
-          description={t('footer.description')}
-          sections={footerSections}
-          copyright={t('footer.copyright')}
-        />
       </div>
     </Layout>
   )

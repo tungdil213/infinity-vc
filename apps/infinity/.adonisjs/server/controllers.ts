@@ -9,6 +9,7 @@ export const controllers = {
   EnhancedLobbies: () => import('#controllers/enhanced_lobbies_controller'),
   GameCatalog: () => import('#controllers/game_catalog_controller'),
   Games: () => import('#controllers/games_controller'),
+  ProfileSettings: () => import('#controllers/profile_settings_controller'),
   support: {
     GameControllerGuard: () => import('#controllers/support/game_controller_guard'),
   },

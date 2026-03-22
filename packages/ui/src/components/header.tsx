@@ -191,7 +191,7 @@ export function Header({
 						</div>
 
 						{/* Navigation */}
-						<div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:gap-3">
+						<div className="flex w-full flex-nowrap items-center justify-end gap-2 overflow-x-auto pb-1 sm:w-auto sm:gap-3 sm:overflow-visible sm:pb-0">
 							{/* Connection Status */}
 							<div
 								className="flex shrink-0 items-center gap-2"
@@ -208,7 +208,7 @@ export function Header({
 								<DropdownMenu>
 									<DropdownMenuTrigger
 										className={cn(
-											buttonVariants({ variant: 'noShadow', size: 'sm' }),
+											buttonVariants({ variant: 'neutral', size: 'sm' }),
 											'flex items-center gap-2'
 										)}
 									>
@@ -240,10 +240,10 @@ export function Header({
 											onClick={onGoToCurrentLobby}
 											variant="neutral"
 											size="sm"
-											className="flex min-w-0 max-w-full items-center gap-2"
+											className="flex min-w-0 max-w-full shrink-0 items-center gap-2"
 										>
 											<div className={`w-2 h-2 rounded-full ${getStatusColor(currentLobby.status)}`} />
-											<span className="hidden max-w-40 truncate sm:inline md:max-w-56">{currentLobby.name}</span>
+											<span className="hidden max-w-40 truncate md:inline md:max-w-56">{currentLobby.name}</span>
 											<Badge variant="secondary" className="shrink-0 text-xs">
 												{currentLobby.currentPlayers}/{currentLobby.maxPlayers}
 											</Badge>
@@ -254,7 +254,7 @@ export function Header({
 									<div className="flex shrink-0 items-center gap-2">
 										<Button onClick={onCreateLobby} size="sm" className="flex items-center gap-2">
 											<Plus className="w-4 h-4" />
-											<span className="hidden sm:inline">{ui.createAction}</span>
+											<span className="hidden md:inline">{ui.createAction}</span>
 										</Button>
 
 										<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -265,7 +265,7 @@ export function Header({
 												)}
 											>
 												<Hash className="w-4 h-4" />
-												<span className="hidden sm:inline">{ui.joinAction}</span>
+												<span className="hidden md:inline">{ui.joinAction}</span>
 											</DialogTrigger>
 											<DialogContent className="sm:max-w-md">
 												<DialogHeader>
@@ -301,14 +301,15 @@ export function Header({
 									<Button
 										onClick={onGoToLobbies}
 										variant="neutral"
+										size="sm"
 										className="flex shrink-0 items-center gap-2"
 									>
 										<Gamepad2 className="w-4 h-4" />
-										<span className="hidden sm:inline">{ui.lobbiesAction}</span>
+										<span className="hidden md:inline">{ui.lobbiesAction}</span>
 									</Button>
 
 									{/* Notifications */}
-									<Button variant="noShadow" size="sm" className="relative shrink-0">
+									<Button variant="neutral" size="sm" className="relative shrink-0">
 										<Bell className="w-4 h-4" />
 									</Button>
 
@@ -316,8 +317,8 @@ export function Header({
 									<DropdownMenu>
 										<DropdownMenuTrigger
 											className={cn(
-												buttonVariants({ variant: 'noShadow', size: 'sm' }),
-												'flex max-w-full items-center gap-2'
+												buttonVariants({ variant: 'neutral', size: 'sm' }),
+												'flex max-w-full shrink-0 items-center gap-2'
 											)}
 										>
 											<User className="w-4 h-4" />
@@ -346,23 +347,26 @@ export function Header({
 									</DropdownMenu>
 								</>
 							) : (
-								<div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
+								<div className="flex w-full flex-nowrap items-center justify-end gap-2 overflow-x-auto pb-1 sm:w-auto sm:overflow-visible sm:pb-0">
 									{/* Public Lobbies Preview */}
 									<Button
 										onClick={onGoToLobbies}
-										variant="noShadow"
-										className="flex items-center gap-2"
+										variant="neutral"
+										size="sm"
+										className="flex shrink-0 items-center gap-2"
 									>
 										<Users className="w-4 h-4" />
-										<span className="hidden sm:inline">{ui.browseLobbies}</span>
-										<span className="sm:hidden">{ui.lobbiesShort}</span>
+										<span className="hidden md:inline">{ui.browseLobbies}</span>
+										<span className="md:hidden">{ui.lobbiesShort}</span>
 									</Button>
 
 									{/* Auth Buttons */}
-									<Button onClick={onLogin} variant="neutral">
+									<Button onClick={onLogin} variant="neutral" size="sm">
 										{ui.login}
 									</Button>
-									<Button onClick={onRegister}>{ui.signup}</Button>
+									<Button onClick={onRegister} size="sm">
+										{ui.signup}
+									</Button>
 								</div>
 							)}
 						</div>

@@ -4,6 +4,7 @@
       "fullName": "vollständiger Name",
       "email": "E-Mail-Adresse",
       "password": "Passwort",
+      "currentPassword": "aktuelles Passwort",
       "password_confirmation": "Passwortbestätigung",
       "name": "Name",
       "description": "Beschreibung",

@@ -3,6 +3,7 @@ import { RegisterUserUseCase } from '../../../app/application/use_cases/register
 import { InMemoryUserRepository } from '../../../app/infrastructure/repositories/in_memory_user_repository.js'
 import { InMemoryPlayerRepository } from '../../../app/infrastructure/repositories/in_memory_player_repository.js'
 import User from '../../../app/domain/entities/user.js'
+import Player from '../../../app/domain/entities/player.js'
 
 test.group('RegisterUserUseCase', (group) => {
   let useCase: RegisterUserUseCase
@@ -116,6 +117,70 @@ test.group('RegisterUserUseCase', (group) => {
     assert.include(result.error, 'must be between 3 and 30 characters')
   })
 
+  test('should sanitize generated nickname from full name when no nickname is provided', async ({
+    assert,
+  }) => {
+    const userData = {
+      firstName: 'eric.monnier',
+      lastName: '',
+      username: 'eric_monnier',
+      email: 'eric@example.com',
+      password: 'password123',
+    }
+
+    const result = await useCase.execute(userData)
+
+    assert.isTrue(result.isSuccess)
+    assert.equal(result.value!.player.nickName, 'eric monnier')
+  })
+
+  test('should fallback to username when generated nickname becomes too short after sanitization', async ({
+    assert,
+  }) => {
+    const userData = {
+      firstName: '!!',
+      lastName: '@@',
+      username: 'valid_fallback_user',
+      email: 'fallback@example.com',
+      password: 'password123',
+    }
+
+    const result = await useCase.execute(userData)
+
+    assert.isTrue(result.isSuccess)
+    assert.equal(result.value!.player.nickName, 'valid_fallback_user')
+  })
+
+  test('should check uniqueness against sanitized generated nickname', async ({ assert }) => {
+    const existingUser = User.create({
+      firstName: 'Existing',
+      lastName: 'User',
+      username: 'existingnicknameowner',
+      email: 'existing-nickname@example.com',
+      password: 'password123',
+    })
+    await userRepository.save(existingUser)
+    await playerRepository.save(
+      Player.create({
+        userUuid: existingUser.uuid,
+        nickName: 'eric monnier',
+      })
+    )
+
+    const userData = {
+      firstName: 'eric.monnier',
+      lastName: '',
+      username: 'eric_monnier',
+      email: 'eric2@example.com',
+      password: 'password123',
+    }
+
+    const result = await useCase.execute(userData)
+
+    assert.isTrue(result.isFailure)
+    assert.equal(result.error, 'This name combination is already taken as a nickname')
+  })
+
   test('should save both user and player to repositories', async ({ assert }) => {
     const userData = {
       firstName: 'John',
@@ -134,6 +199,25 @@ test.group('RegisterUserUseCase', (group) => {
     assert.exists(savedUser)
     assert.exists(savedPlayer)
     assert.equal(savedPlayer!.userUuid, savedUser!.uuid)
+  })
+
+  test('should fail fast when explicit nickname contains forbidden characters', async ({ assert }) => {
+    const userData = {
+      firstName: 'John',
+      lastName: 'Doe',
+      username: 'johndoe2',
+      email: 'john2@example.com',
+      password: 'password123',
+      nickName: 'john.doe',
+    }
+
+    const result = await useCase.execute(userData)
+
+    assert.isTrue(result.isFailure)
+    assert.equal(
+      result.error,
+      'Nickname can only contain letters, numbers, spaces, underscores and hyphens'
+    )
   })
 
   test('should handle repository save errors', async ({ assert }) => {

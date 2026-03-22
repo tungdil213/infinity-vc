@@ -98,6 +98,7 @@ export default class EnhancedLobbiesController {
    * Display welcome page
    */
   async welcome({ inertia, auth }: HttpContext) {
+    await auth.check()
     const user = auth.user
 
     return inertia.render('welcome', {
@@ -315,6 +316,7 @@ export default class EnhancedLobbiesController {
    * Display join lobby page by invitation code
    */
   async showJoinByInvite({ params, inertia, auth, i18n }: HttpContext) {
+    await auth.check()
     const { invitationCode } = await lobbyInvitationCodeParamValidator.validate(params)
     const user = auth.user
 

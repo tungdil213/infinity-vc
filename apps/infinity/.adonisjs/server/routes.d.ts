@@ -24,6 +24,10 @@ export type ScannedRoutes = {
     'auth.register.show': { paramsTuple?: []; params?: {} }
     'auth.register': { paramsTuple?: []; params?: {} }
     'auth.logout': { paramsTuple?: []; params?: {} }
+    'profile.show': { paramsTuple?: []; params?: {} }
+    'settings.show': { paramsTuple?: []; params?: {} }
+    'settings.profile.update': { paramsTuple?: []; params?: {} }
+    'settings.password.update': { paramsTuple?: []; params?: {} }
     'lobbies.index': { paramsTuple?: []; params?: {} }
     'lobbies.create': { paramsTuple?: []; params?: {} }
     'lobbies.store': { paramsTuple?: []; params?: {} }
@@ -82,6 +86,8 @@ export type ScannedRoutes = {
     'dev.routes': { paramsTuple?: []; params?: {} }
     'auth.login.show': { paramsTuple?: []; params?: {} }
     'auth.register.show': { paramsTuple?: []; params?: {} }
+    'profile.show': { paramsTuple?: []; params?: {} }
+    'settings.show': { paramsTuple?: []; params?: {} }
     'lobbies.index': { paramsTuple?: []; params?: {} }
     'lobbies.create': { paramsTuple?: []; params?: {} }
     'lobbies.show': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
@@ -119,6 +125,8 @@ export type ScannedRoutes = {
     'dev.routes': { paramsTuple?: []; params?: {} }
     'auth.login.show': { paramsTuple?: []; params?: {} }
     'auth.register.show': { paramsTuple?: []; params?: {} }
+    'profile.show': { paramsTuple?: []; params?: {} }
+    'settings.show': { paramsTuple?: []; params?: {} }
     'lobbies.index': { paramsTuple?: []; params?: {} }
     'lobbies.create': { paramsTuple?: []; params?: {} }
     'lobbies.show': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
@@ -142,6 +150,8 @@ export type ScannedRoutes = {
     'auth.login': { paramsTuple?: []; params?: {} }
     'auth.register': { paramsTuple?: []; params?: {} }
     'auth.logout': { paramsTuple?: []; params?: {} }
+    'settings.profile.update': { paramsTuple?: []; params?: {} }
+    'settings.password.update': { paramsTuple?: []; params?: {} }
     'lobbies.store': { paramsTuple?: []; params?: {} }
     'lobbies.join': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'lobbies.leave': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }

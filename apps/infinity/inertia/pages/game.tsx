@@ -732,7 +732,7 @@ export default function Game({
     return (
       <Layout>
         <Head title="Game Over" />
-        <div className="min-h-screen bg-main flex items-center justify-center p-4">
+        <div className="flex flex-1 items-center justify-center bg-main p-4">
           <UICard className="max-w-2xl w-full text-center">
             <CardHeader>
               <div className="text-6xl mb-4">🎮</div>
@@ -889,7 +889,7 @@ export default function Game({
     return (
       <Layout>
         <Head title={`${gameTitle} - Round ${gameState?.state?.round || 1}`} />
-        <div className="min-h-screen bg-main p-4">
+        <div className="flex-1 bg-main p-4">
           <div className="max-w-4xl mx-auto space-y-4">
             <UICard>
               <CardContent className="p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1202,7 +1202,7 @@ export default function Game({
   return (
     <Layout>
       <Head title={`${gameTitle} - Round ${gameState?.state?.round || 1}`} />
-      <div className="min-h-screen bg-main p-4">
+      <div className="flex-1 bg-main p-4">
         <div className="max-w-6xl mx-auto mb-4">
           <UICard>
             <CardContent className="p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

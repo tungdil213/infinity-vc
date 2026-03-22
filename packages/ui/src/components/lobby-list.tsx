@@ -273,6 +273,11 @@ export function LobbyList({
 		[moderationTargets]
 	);
 	const selectedCount = selectedLobbyUuids.length;
+	const activeQuickFilter: 'all' | 'sensitive' | 'joinable' = filters.isPrivate
+		? 'sensitive'
+		: filters.hasSlots
+			? 'joinable'
+			: 'all';
 
 	useEffect(() => {
 		setSelectedLobbyUuids((prev) => {
@@ -399,7 +404,7 @@ export function LobbyList({
 						</Button>
 					</div>
 					{onCreateLobby && (
-						<Button onClick={onCreateLobby} className="w-full sm:w-auto">
+						<Button onClick={onCreateLobby} size="sm" className="w-full sm:w-auto">
 							<Plus className="h-4 w-4 mr-2" />
 							{ui.createLobby}
 						</Button>
@@ -504,13 +509,25 @@ export function LobbyList({
 					</CardHeader>
 					<CardContent className="space-y-4">
 						<div className="flex flex-wrap items-center gap-2">
-							<Button variant="neutral" size="sm" onClick={() => applyQuickFilter('all')}>
+							<Button
+								variant={activeQuickFilter === 'all' ? 'default' : 'neutral'}
+								size="sm"
+								onClick={() => applyQuickFilter('all')}
+							>
 								{ui.showAll}
 							</Button>
-							<Button variant="neutral" size="sm" onClick={() => applyQuickFilter('sensitive')}>
+							<Button
+								variant={activeQuickFilter === 'sensitive' ? 'default' : 'neutral'}
+								size="sm"
+								onClick={() => applyQuickFilter('sensitive')}
+							>
 								{ui.showSensitive}
 							</Button>
-							<Button variant="neutral" size="sm" onClick={() => applyQuickFilter('joinable')}>
+							<Button
+								variant={activeQuickFilter === 'joinable' ? 'default' : 'neutral'}
+								size="sm"
+								onClick={() => applyQuickFilter('joinable')}
+							>
 								{ui.showJoinable}
 							</Button>
 						</div>
@@ -520,10 +537,10 @@ export function LobbyList({
 								<div className="flex items-center justify-between">
 									<p className="text-sm font-medium">{ui.sensitiveLobbies}</p>
 									<div className="flex items-center gap-2">
-										<Button variant="noShadow" size="sm" onClick={selectAllModerationTargets}>
+										<Button variant="neutral" size="sm" onClick={selectAllModerationTargets}>
 											{ui.selectAll}
 										</Button>
-										<Button variant="noShadow" size="sm" onClick={clearModerationSelection}>
+										<Button variant="neutral" size="sm" onClick={clearModerationSelection}>
 											{ui.clear}
 										</Button>
 									</div>

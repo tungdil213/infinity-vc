@@ -20,16 +20,11 @@ import {
   CardTitle,
 } from '@infinity.dev/ui/primitives/card'
 import { Alert, AlertDescription } from '@infinity.dev/ui/primitives/alert'
-import { HeaderWrapper } from '../layouts/HeaderWrapper'
 import Layout from '../layouts/layout'
 import { AlertCircle, CheckCircle2, Lightbulb } from 'lucide-react'
 import { useI18n } from '../i18n/use_i18n'
 
 interface CreateLobbyProps {
-  user: {
-    uuid: string
-    fullName: string
-  }
   availableGames: Array<{
     id: string
     displayName: string
@@ -51,7 +46,6 @@ interface CreateLobbyProps {
 }
 
 export default function CreateLobby({
-  user,
   availableGames,
   errors = {},
   flash = {},
@@ -129,9 +123,7 @@ export default function CreateLobby({
     <Layout>
       <Head title={t('createLobby.pageTitle')} />
 
-      <div className="min-h-screen bg-secondary-background">
-        <HeaderWrapper user={{ uuid: user.uuid, fullName: user.fullName, email: '' }} />
-
+      <div className="flex-1 bg-secondary-background">
         <div className="max-w-2xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
           {/* Flash Messages */}
           {flash.error && (
