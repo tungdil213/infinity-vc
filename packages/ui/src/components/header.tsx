@@ -54,6 +54,27 @@ interface LocaleOption {
 	label: string;
 }
 
+interface HeaderLabels {
+	connectionConnected: string;
+	connectionDisconnected: string;
+	createAction: string;
+	joinAction: string;
+	joinDialogTitle: string;
+	joinDialogDescription: string;
+	joinCodeLabel: string;
+	joinCodePlaceholder: string;
+	joinSubmit: string;
+	joining: string;
+	lobbiesAction: string;
+	profile: string;
+	settings: string;
+	logout: string;
+	browseLobbies: string;
+	lobbiesShort: string;
+	login: string;
+	signup: string;
+}
+
 interface HeaderProps {
 	user?: User;
 	currentLobby?: CurrentLobby;
@@ -74,7 +95,29 @@ interface HeaderProps {
 	localeLabel?: string;
 	logoHref?: string;
 	logoText?: string;
+	labels?: Partial<HeaderLabels>;
 }
+
+const defaultLabels: HeaderLabels = {
+	connectionConnected: 'Connected',
+	connectionDisconnected: 'Disconnected',
+	createAction: 'Create',
+	joinAction: 'Join',
+	joinDialogTitle: 'Join a lobby',
+	joinDialogDescription: 'Enter the lobby code to join.',
+	joinCodeLabel: 'Lobby code',
+	joinCodePlaceholder: 'Enter lobby code',
+	joinSubmit: 'Join',
+	joining: 'Joining...',
+	lobbiesAction: 'Lobbies',
+	profile: 'Profile',
+	settings: 'Settings',
+	logout: 'Log out',
+	browseLobbies: 'Browse lobbies',
+	lobbiesShort: 'Lobbies',
+	login: 'Log in',
+	signup: 'Sign up',
+};
 
 export function Header({
 	user,
@@ -96,7 +139,9 @@ export function Header({
 	localeLabel = 'Language',
 	logoHref = '/',
 	logoText = '♾️ Infinity Game',
+	labels,
 }: HeaderProps) {
+	const ui = { ...defaultLabels, ...labels };
 	const [lobbyCode, setLobbyCode] = useState('');
 	const [isJoining, setIsJoining] = useState(false);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -148,7 +193,10 @@ export function Header({
 						{/* Navigation */}
 						<div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:gap-3">
 							{/* Connection Status */}
-							<div className="flex shrink-0 items-center gap-2" title={isConnected ? 'Connected' : 'Disconnected'}>
+							<div
+								className="flex shrink-0 items-center gap-2"
+								title={isConnected ? ui.connectionConnected : ui.connectionDisconnected}
+							>
 								{isConnected ? (
 									<Wifi className="w-4 h-4 text-green-500" />
 								) : (
@@ -206,7 +254,7 @@ export function Header({
 									<div className="flex shrink-0 items-center gap-2">
 										<Button onClick={onCreateLobby} size="sm" className="flex items-center gap-2">
 											<Plus className="w-4 h-4" />
-											<span className="hidden sm:inline">Create</span>
+											<span className="hidden sm:inline">{ui.createAction}</span>
 										</Button>
 
 										<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -217,21 +265,21 @@ export function Header({
 												)}
 											>
 												<Hash className="w-4 h-4" />
-												<span className="hidden sm:inline">Join</span>
+												<span className="hidden sm:inline">{ui.joinAction}</span>
 											</DialogTrigger>
 											<DialogContent className="sm:max-w-md">
 												<DialogHeader>
-													<DialogTitle>Join a lobby</DialogTitle>
-													<DialogDescription>Enter the lobby code to join.</DialogDescription>
+													<DialogTitle>{ui.joinDialogTitle}</DialogTitle>
+													<DialogDescription>{ui.joinDialogDescription}</DialogDescription>
 												</DialogHeader>
 												<div className="grid gap-4 py-4">
 													<div className="grid gap-2">
-														<Label htmlFor="lobby-code">Lobby code</Label>
+														<Label htmlFor="lobby-code">{ui.joinCodeLabel}</Label>
 														<Input
 															id="lobby-code"
 															value={lobbyCode}
 															onChange={(e) => setLobbyCode(e.target.value)}
-															placeholder="Enter lobby code"
+															placeholder={ui.joinCodePlaceholder}
 															onKeyDown={(e) => e.key === 'Enter' && handleJoinByCode()}
 														/>
 													</div>
@@ -242,7 +290,7 @@ export function Header({
 														disabled={!lobbyCode.trim() || isJoining}
 														className="w-full"
 													>
-														{isJoining ? 'Joining...' : 'Join'}
+														{isJoining ? ui.joining : ui.joinSubmit}
 													</Button>
 												</DialogFooter>
 											</DialogContent>
@@ -256,7 +304,7 @@ export function Header({
 										className="flex shrink-0 items-center gap-2"
 									>
 										<Gamepad2 className="w-4 h-4" />
-										<span className="hidden sm:inline">Lobbies</span>
+										<span className="hidden sm:inline">{ui.lobbiesAction}</span>
 									</Button>
 
 									{/* Notifications */}
@@ -283,16 +331,16 @@ export function Header({
 											<DropdownMenuSeparator />
 											<DropdownMenuItem onClick={onProfile}>
 												<User className="w-4 h-4 mr-2" />
-												Profile
+												{ui.profile}
 											</DropdownMenuItem>
 											<DropdownMenuItem onClick={onSettings}>
 												<Settings className="w-4 h-4 mr-2" />
-												Settings
+												{ui.settings}
 											</DropdownMenuItem>
 											<DropdownMenuSeparator />
 											<DropdownMenuItem onClick={onLogout}>
 												<LogOut className="w-4 h-4 mr-2" />
-												Log out
+												{ui.logout}
 											</DropdownMenuItem>
 										</DropdownMenuContent>
 									</DropdownMenu>
@@ -306,15 +354,15 @@ export function Header({
 										className="flex items-center gap-2"
 									>
 										<Users className="w-4 h-4" />
-										<span className="hidden sm:inline">Browse lobbies</span>
-										<span className="sm:hidden">Lobbies</span>
+										<span className="hidden sm:inline">{ui.browseLobbies}</span>
+										<span className="sm:hidden">{ui.lobbiesShort}</span>
 									</Button>
 
 									{/* Auth Buttons */}
 									<Button onClick={onLogin} variant="neutral">
-										Log in
+										{ui.login}
 									</Button>
-									<Button onClick={onRegister}>Sign up</Button>
+									<Button onClick={onRegister}>{ui.signup}</Button>
 								</div>
 							)}
 						</div>

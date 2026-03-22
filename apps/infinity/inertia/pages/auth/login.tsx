@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from '@infinity.dev/ui/primitives/alert'
 import { Separator } from '@infinity.dev/ui/primitives/separator'
 import Layout from '../../layouts/layout'
 import { AlertCircle, CheckCircle2 } from 'lucide-react'
+import { useI18n } from '../../i18n/use_i18n'
 
 interface LoginProps {
   redirect?: string
@@ -29,6 +30,7 @@ interface LoginProps {
 }
 
 export default function Login({ errors = {}, flash = {}, redirect = '/lobbies' }: LoginProps) {
+  const { t } = useI18n()
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -57,7 +59,7 @@ export default function Login({ errors = {}, flash = {}, redirect = '/lobbies' }
 
   return (
     <Layout>
-      <Head title="Login - infinity Game" />
+      <Head title={t('auth.login.pageTitle')} />
 
       <div className="min-h-screen bg-secondary-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
@@ -86,14 +88,14 @@ export default function Login({ errors = {}, flash = {}, redirect = '/lobbies' }
           {/* Login Form */}
           <Card>
             <CardHeader>
-              <CardTitle>Welcome back!</CardTitle>
-              <CardDescription>Sign in to your account to continue playing</CardDescription>
+              <CardTitle>{t('auth.login.title')}</CardTitle>
+              <CardDescription>{t('auth.login.subtitle')}</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Email Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
+                  <Label htmlFor="email">{t('auth.common.emailLabel')}</Label>
                   <Input
                     id="email"
                     name="email"
@@ -101,7 +103,7 @@ export default function Login({ errors = {}, flash = {}, redirect = '/lobbies' }
                     required
                     value={formData.email}
                     onChange={handleChange}
-                    placeholder="Enter your email"
+                    placeholder={t('auth.common.emailPlaceholder')}
                     className={errors.email ? 'border-destructive' : ''}
                   />
                   {errors.email && <p className="text-sm text-destructive">{errors.email[0]}</p>}
@@ -109,7 +111,7 @@ export default function Login({ errors = {}, flash = {}, redirect = '/lobbies' }
 
                 {/* Password Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">{t('auth.common.passwordLabel')}</Label>
                   <Input
                     id="password"
                     name="password"
@@ -117,7 +119,7 @@ export default function Login({ errors = {}, flash = {}, redirect = '/lobbies' }
                     required
                     value={formData.password}
                     onChange={handleChange}
-                    placeholder="Enter your password"
+                    placeholder={t('auth.common.passwordPlaceholder')}
                     className={errors.password ? 'border-destructive' : ''}
                   />
                   {errors.password && (
@@ -135,21 +137,21 @@ export default function Login({ errors = {}, flash = {}, redirect = '/lobbies' }
 
                 {/* Submit Button */}
                 <Button type="submit" disabled={isLoading} className="w-full">
-                  {isLoading ? 'Signing in...' : 'Sign In'}
+                  {isLoading ? t('auth.login.submitting') : t('auth.login.submit')}
                 </Button>
               </form>
 
               {/* Divider */}
               <div className="my-6 flex items-center">
                 <Separator className="flex-1" />
-                <span className="px-4 text-sm text-muted-foreground">Don't have an account?</span>
+                <span className="px-4 text-sm text-muted-foreground">{t('auth.login.noAccount')}</span>
                 <Separator className="flex-1" />
               </div>
 
               {/* Sign Up Link */}
               <Link href="/auth/register">
                 <Button variant="neutral" className="w-full">
-                  Create New Account
+                  {t('auth.login.createAccount')}
                 </Button>
               </Link>
             </CardContent>
@@ -158,15 +160,15 @@ export default function Login({ errors = {}, flash = {}, redirect = '/lobbies' }
           {/* Footer Links */}
           <div className="text-center space-y-2">
             <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
-              ← Back to Homepage
+              {t('auth.common.backHome')}
             </Link>
             <div className="text-sm text-muted-foreground">
               <a href="#" className="hover:text-foreground">
-                Forgot Password?
+                {t('auth.login.forgotPassword')}
               </a>
               {' • '}
               <a href="#" className="hover:text-foreground">
-                Help
+                {t('auth.common.help')}
               </a>
             </div>
           </div>

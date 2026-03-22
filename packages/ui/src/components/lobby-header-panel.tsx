@@ -21,7 +21,33 @@ export interface LobbyHeaderPanelProps {
 	onJoinLobby: () => void;
 	onStartGame: () => void;
 	onLeaveLobby: () => void;
+	labels?: Partial<LobbyHeaderPanelLabels>;
+	statusLabels?: Partial<Record<string, string>>;
 }
+
+interface LobbyHeaderPanelLabels {
+	playersSuffix: string;
+	privateBadge: string;
+	protectedBadge: string;
+	joining: string;
+	joinLobby: string;
+	starting: string;
+	startGame: string;
+	leaving: string;
+	leaveLobby: string;
+}
+
+const defaultLabels: LobbyHeaderPanelLabels = {
+	playersSuffix: 'players',
+	privateBadge: 'Private',
+	protectedBadge: 'Protected',
+	joining: 'Joining...',
+	joinLobby: 'Join Lobby',
+	starting: 'Starting...',
+	startGame: 'Start Game',
+	leaving: 'Leaving...',
+	leaveLobby: 'Leave Lobby',
+};
 
 export function LobbyHeaderPanel({
 	name,
@@ -40,7 +66,10 @@ export function LobbyHeaderPanel({
 	onJoinLobby,
 	onStartGame,
 	onLeaveLobby,
+	labels,
+	statusLabels,
 }: LobbyHeaderPanelProps) {
+	const ui = { ...defaultLabels, ...labels };
 	const statusClass =
 		status === 'READY'
 			? 'bg-green-100 text-green-800'
@@ -58,16 +87,16 @@ export function LobbyHeaderPanel({
 						<CardTitle className="truncate text-2xl">{name}</CardTitle>
 						{description && <p className="mt-1 text-sm text-gray-600">{description}</p>}
 						<div className="mt-2 flex flex-wrap items-center gap-3">
-							<Badge className={statusClass}>{status}</Badge>
+							<Badge className={statusClass}>{statusLabels?.[status] ?? status}</Badge>
 							<span className="text-sm text-gray-600 flex items-center gap-1">
 								<Users className="w-4 h-4" />
-								{currentPlayers}/{maxPlayers} players
+								{currentPlayers}/{maxPlayers} {ui.playersSuffix}
 							</span>
-							{isPrivate && <Badge variant="secondary">Private</Badge>}
+							{isPrivate && <Badge variant="secondary">{ui.privateBadge}</Badge>}
 							{hasPassword && (
 								<Badge variant="secondary">
 									<Lock className="w-3 h-3 mr-1" />
-									Protected
+									{ui.protectedBadge}
 								</Badge>
 							)}
 						</div>
@@ -77,21 +106,21 @@ export function LobbyHeaderPanel({
 						{canJoinLobby && (
 							<Button onClick={onJoinLobby} disabled={isJoiningLobby} className="bg-blue-600 hover:bg-blue-700">
 								<UserPlus className="w-4 h-4 mr-2" />
-								{isJoiningLobby ? 'Joining...' : 'Join Lobby'}
+								{isJoiningLobby ? ui.joining : ui.joinLobby}
 							</Button>
 						)}
 
 						{canStartGame && (
 							<Button onClick={onStartGame} disabled={isStartingGame} className="bg-green-600 hover:bg-green-700">
 								<Play className="w-4 h-4 mr-2" />
-								{isStartingGame ? 'Starting...' : 'Start Game'}
+								{isStartingGame ? ui.starting : ui.startGame}
 							</Button>
 						)}
 
 						{isUserInLobby && (
 							<Button onClick={onLeaveLobby} disabled={isLeavingLobby} variant="neutral">
 								<LogOut className="w-4 h-4 mr-2" />
-								{isLeavingLobby ? 'Leaving...' : 'Leave Lobby'}
+								{isLeavingLobby ? ui.leaving : ui.leaveLobby}
 							</Button>
 						)}
 					</div>

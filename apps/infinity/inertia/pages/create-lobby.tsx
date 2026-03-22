@@ -23,6 +23,7 @@ import { Alert, AlertDescription } from '@infinity.dev/ui/primitives/alert'
 import { HeaderWrapper } from '../layouts/HeaderWrapper'
 import Layout from '../layouts/layout'
 import { AlertCircle, CheckCircle2, Lightbulb } from 'lucide-react'
+import { useI18n } from '../i18n/use_i18n'
 
 interface CreateLobbyProps {
   user: {
@@ -55,6 +56,7 @@ export default function CreateLobby({
   errors = {},
   flash = {},
 }: CreateLobbyProps) {
+  const { t } = useI18n()
   const defaultGame = availableGames[0]
   const [formData, setFormData] = useState({
     name: '',
@@ -125,7 +127,7 @@ export default function CreateLobby({
 
   return (
     <Layout>
-      <Head title="Create Lobby - infinity Game" />
+      <Head title={t('createLobby.pageTitle')} />
 
       <div className="min-h-screen bg-secondary-background">
         <HeaderWrapper user={{ uuid: user.uuid, fullName: user.fullName, email: '' }} />
@@ -149,16 +151,16 @@ export default function CreateLobby({
           {/* Create Lobby Form */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl">Create New Lobby</CardTitle>
+              <CardTitle className="text-2xl">{t('createLobby.heading')}</CardTitle>
               <CardDescription>
-                Set up your gaming session and invite friends to play
+                {t('createLobby.subtitle')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Lobby Name */}
                 <div className="space-y-2">
-                  <Label htmlFor="name">Lobby Name *</Label>
+                  <Label htmlFor="name">{t('createLobby.nameLabel')}</Label>
                   <Input
                     id="name"
                     name="name"
@@ -166,7 +168,7 @@ export default function CreateLobby({
                     required
                     value={formData.name}
                     onChange={handleChange}
-                    placeholder="Enter a catchy lobby name"
+                    placeholder={t('createLobby.namePlaceholder')}
                     className={errors.name ? 'border-destructive' : ''}
                   />
                   {errors.name && <p className="text-sm text-destructive">{errors.name[0]}</p>}
@@ -174,20 +176,20 @@ export default function CreateLobby({
 
                 {/* Description */}
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description (Optional)</Label>
+                  <Label htmlFor="description">{t('createLobby.descriptionLabel')}</Label>
                   <Textarea
                     id="description"
                     name="description"
                     rows={3}
                     value={formData.description}
                     onChange={handleChange}
-                    placeholder="Describe your lobby or add any special rules..."
+                    placeholder={t('createLobby.descriptionPlaceholder')}
                   />
                 </div>
 
                 {/* Game Type */}
                 <div className="space-y-2">
-                  <Label>Game Type</Label>
+                  <Label>{t('createLobby.gameTypeLabel')}</Label>
                   <Select
                     value={formData.gameType}
                     onValueChange={(value) => {
@@ -205,7 +207,7 @@ export default function CreateLobby({
                     }}
                   >
                     <SelectTrigger className={errors.gameType ? 'border-destructive' : ''}>
-                      <SelectValue placeholder="Select a game" />
+                      <SelectValue placeholder={t('createLobby.gameTypePlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
                       {availableGames.map((game) => (
@@ -221,14 +223,14 @@ export default function CreateLobby({
                   {selectedGame && (
                     <p className="text-sm text-muted-foreground">
                       {selectedGame.description} ({selectedGame.minPlayers}-
-                      {selectedGame.maxPlayers} players)
+                      {selectedGame.maxPlayers} {t('createLobby.playersSuffix')})
                     </p>
                   )}
                 </div>
 
                 {/* Max Players */}
                 <div className="space-y-2">
-                  <Label>Maximum Players</Label>
+                  <Label>{t('createLobby.maxPlayersLabel')}</Label>
                   <Select
                     value={String(formData.maxPlayers)}
                     onValueChange={(value) =>
@@ -236,12 +238,12 @@ export default function CreateLobby({
                     }
                   >
                     <SelectTrigger className={errors.maxPlayers ? 'border-destructive' : ''}>
-                      <SelectValue placeholder="Select max players" />
+                      <SelectValue placeholder={t('createLobby.maxPlayersPlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
                       {playerOptions.map((count) => (
                         <SelectItem key={count} value={String(count)}>
-                          {count} Players
+                          {count} {t('createLobby.playersSuffix')}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -253,10 +255,10 @@ export default function CreateLobby({
 
                 {isRpsSelected && (
                   <div className="space-y-4">
-                    <Label className="text-base font-heading">Game Settings</Label>
+                    <Label className="text-base font-heading">{t('createLobby.gameSettingsTitle')}</Label>
 
                     <div className="space-y-2">
-                      <Label htmlFor="roundsToWin">Rounds to win</Label>
+                      <Label htmlFor="roundsToWin">{t('createLobby.roundsToWinLabel')}</Label>
                       <Input
                         id="roundsToWin"
                         name="roundsToWin"
@@ -278,7 +280,7 @@ export default function CreateLobby({
                         }}
                       />
                       <p className="text-sm text-muted-foreground">
-                        Number of won rounds needed to win the match (1-10).
+                        {t('createLobby.roundsToWinHelp')}
                       </p>
                     </div>
 
@@ -298,10 +300,10 @@ export default function CreateLobby({
                       />
                       <div>
                         <Label htmlFor="allowDrawReplay" className="cursor-pointer">
-                          Replay draw rounds
+                          {t('createLobby.allowDrawReplayLabel')}
                         </Label>
                         <p className="text-sm text-muted-foreground">
-                          If disabled, draw rounds still advance the match.
+                          {t('createLobby.allowDrawReplayHelp')}
                         </p>
                       </div>
                     </div>
@@ -310,7 +312,7 @@ export default function CreateLobby({
 
                 {/* Privacy Settings */}
                 <div className="space-y-4">
-                  <Label className="text-base font-heading">Privacy Settings</Label>
+                  <Label className="text-base font-heading">{t('createLobby.privacyTitle')}</Label>
 
                   {/* Private Lobby */}
                   <div className="flex items-center space-x-3">
@@ -323,10 +325,10 @@ export default function CreateLobby({
                     />
                     <div>
                       <Label htmlFor="isPrivate" className="cursor-pointer">
-                        Private Lobby
+                        {t('createLobby.privateLabel')}
                       </Label>
                       <p className="text-sm text-muted-foreground">
-                        Only people with the invitation link can join
+                        {t('createLobby.privateHelp')}
                       </p>
                     </div>
                   </div>
@@ -342,10 +344,10 @@ export default function CreateLobby({
                     />
                     <div>
                       <Label htmlFor="hasPassword" className="cursor-pointer">
-                        Password Protection
+                        {t('createLobby.passwordProtectionLabel')}
                       </Label>
                       <p className="text-sm text-muted-foreground">
-                        Require a password to join the lobby
+                        {t('createLobby.passwordProtectionHelp')}
                       </p>
                     </div>
                   </div>
@@ -359,7 +361,7 @@ export default function CreateLobby({
                         type="password"
                         value={formData.password}
                         onChange={handleChange}
-                        placeholder="Enter lobby password"
+                        placeholder={t('createLobby.passwordPlaceholder')}
                         className={errors.password ? 'border-destructive' : ''}
                       />
                       {errors.password && (
@@ -380,12 +382,12 @@ export default function CreateLobby({
                 {/* Submit Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4 pt-6">
                   <Button type="submit" disabled={isLoading} className="flex-1">
-                    {isLoading ? 'Creating Lobby...' : '🎮 Create Lobby'}
+                    {isLoading ? t('createLobby.creating') : t('createLobby.createCta')}
                   </Button>
 
                   <Link href="/lobbies" className="flex-1">
                     <Button variant="neutral" className="w-full">
-                      Cancel
+                      {t('createLobby.cancel')}
                     </Button>
                   </Link>
                 </div>
@@ -397,9 +399,7 @@ export default function CreateLobby({
           <Alert className="mt-8">
             <Lightbulb className="h-4 w-4" />
             <AlertDescription>
-              <strong>Pro Tips:</strong> Choose a descriptive name to attract the right players.
-              Private lobbies are great for playing with friends. You'll get a shareable invitation
-              link after creating the lobby.
+              {t('createLobby.proTips')}
             </AlertDescription>
           </Alert>
         </div>

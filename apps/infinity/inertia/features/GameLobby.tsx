@@ -8,6 +8,7 @@ import { LobbyPlayersPanel } from '@infinity.dev/ui/components/lobby-players-pan
 import { LobbyHeaderPanel } from '@infinity.dev/ui/components/lobby-header-panel'
 import { ConnectionStatusIndicator } from '@infinity.dev/ui/components/connection-status-indicator'
 import { LobbyPasswordDialog } from '@infinity.dev/ui/components/lobby-password-dialog'
+import { useI18n } from '../i18n/use_i18n'
 
 interface GameLobbyProps {
   lobbyUuid: string
@@ -27,6 +28,7 @@ export default function GameLobby({
   hasPassword = false,
   currentUser,
 }: GameLobbyProps) {
+  const { t } = useI18n()
   const { lobby, loading, error, leaveLobby, startGame, isServiceReady } = useLobbyDetail(lobbyUuid)
   const [isStartingGame, setIsStartingGame] = useState(false)
   const [isLeavingLobby, setIsLeavingLobby] = useState(false)
@@ -43,9 +45,9 @@ export default function GameLobby({
 
     hasNavigatedToGame.current = true
     setIsStartingGame(true)
-    toast.success('Game is starting!')
+    toast.success(t('gameLobby.gameStarting'))
     router.visit(`/games/${gameUuid}`)
-  }, [])
+  }, [t])
 
   // Detect whether current user is in the lobby
   const isUserInLobby = lobby?.players?.some((player) => player.uuid === currentUser.uuid) || false
@@ -73,7 +75,7 @@ export default function GameLobby({
         }, 2000)
       }
     } catch (error) {
-      toast.error('Failed to start game')
+      toast.error(t('gameLobby.failedStart'))
       setIsStartingGame(false)
     }
   }
@@ -94,10 +96,10 @@ export default function GameLobby({
 
     try {
       await leaveLobby(currentUser.uuid)
-      toast.success('Left lobby successfully')
+      toast.success(t('gameLobby.leftLobby'))
       router.visit('/lobbies')
     } catch {
-      toast.error('Failed to leave lobby')
+      toast.error(t('gameLobby.failedLeave'))
     } finally {
       setIsLeavingLobby(false)
     }
@@ -139,7 +141,7 @@ export default function GameLobby({
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) {
         const errorMessage =
-          typeof payload?.error === 'string' ? payload.error : 'Unable to join lobby'
+          typeof payload?.error === 'string' ? payload.error : t('lobbies.unableJoin')
         if (isPasswordDialogOpen) {
           setPasswordDialogError(errorMessage)
           return
@@ -149,10 +151,10 @@ export default function GameLobby({
 
       setIsPasswordDialogOpen(false)
       setPasswordDialogError(null)
-      toast.success('Successfully joined lobby')
+      toast.success(t('lobbies.joined'))
       router.reload()
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred'
+      const errorMessage = error instanceof Error ? error.message : t('lobbies.unexpectedError')
       if (isPasswordDialogOpen) {
         setPasswordDialogError(errorMessage)
         return
@@ -192,11 +194,11 @@ export default function GameLobby({
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Error loading lobby</h3>
-              <div className="mt-2 text-sm text-red-700">{error || 'Lobby not found'}</div>
+              <h3 className="text-sm font-medium text-red-800">{t('gameLobby.errorLoadingLobby')}</h3>
+              <div className="mt-2 text-sm text-red-700">{error || t('gameLobby.lobbyNotFound')}</div>
               <div className="mt-4">
                 <Button onClick={() => router.visit('/lobbies')} variant="neutral" size="sm">
-                  Back to Lobbies
+                  {t('gameLobby.backToLobbies')}
                 </Button>
               </div>
             </div>
@@ -214,7 +216,11 @@ export default function GameLobby({
     <div className="max-w-4xl mx-auto p-6">
       {/* Connection Status */}
       <div className="mb-4">
-        <ConnectionStatusIndicator isConnected={!!isServiceReady} />
+        <ConnectionStatusIndicator
+          isConnected={!!isServiceReady}
+          labelConnected={t('header.connected')}
+          labelDisconnected={t('header.disconnected')}
+        />
       </div>
 
       {/* Lobby Header */}
@@ -235,6 +241,23 @@ export default function GameLobby({
         onJoinLobby={handleJoinLobby}
         onStartGame={handleStartGame}
         onLeaveLobby={handleLeaveLobby}
+        statusLabels={{
+          WAITING: t('lobbyList.statusWaiting'),
+          READY: t('lobbyList.statusReady'),
+          FULL: t('lobbyList.statusFull'),
+          IN_GAME: t('lobbyList.statusInGame'),
+        }}
+        labels={{
+          playersSuffix: t('gameLobby.playersSuffix'),
+          privateBadge: t('joinLobby.privateBadge'),
+          protectedBadge: t('joinLobby.protectedBadge'),
+          joining: t('header.joining'),
+          joinLobby: t('gameLobby.joinLobby'),
+          starting: t('common.starting'),
+          startGame: t('common.startGame'),
+          leaving: t('sidebar.leaving'),
+          leaveLobby: t('sidebar.leaveLobby'),
+        }}
       />
 
       {/* Players List */}
@@ -246,6 +269,15 @@ export default function GameLobby({
         currentPlayers={lobby.currentPlayers}
         hasAvailableSlots={lobby.hasAvailableSlots}
         createdAt={lobby.createdAt}
+        labels={{
+          title: t('gameLobby.playersTitle'),
+          creatorBadge: t('gameLobby.creatorBadge'),
+          youBadge: t('gameLobby.youBadge'),
+          waitingForPlayer: t('gameLobby.waitingForPlayer'),
+          createdAtPrefix: t('gameLobby.createdAtPrefix'),
+          openForNewPlayers: t('gameLobby.openForNewPlayers'),
+          lobbyIsFull: t('gameLobby.lobbyIsFull'),
+        }}
       />
 
       <LobbyPasswordDialog
@@ -260,6 +292,17 @@ export default function GameLobby({
           }
         }}
         onSubmit={handleSubmitPassword}
+        labels={{
+          title: t('passwordDialog.title'),
+          descriptionWithLobby: t('passwordDialog.descriptionWithLobby'),
+          descriptionWithoutLobby: t('passwordDialog.descriptionWithoutLobby'),
+          passwordLabel: t('passwordDialog.passwordLabel'),
+          passwordPlaceholder: t('passwordDialog.passwordPlaceholder'),
+          passwordRequired: t('passwordDialog.passwordRequired'),
+          cancel: t('passwordDialog.cancel'),
+          join: t('passwordDialog.join'),
+          joining: t('passwordDialog.joining'),
+        }}
       />
     </div>
   )

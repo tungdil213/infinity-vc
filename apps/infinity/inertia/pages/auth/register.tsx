@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from '@infinity.dev/ui/primitives/alert'
 import { Separator } from '@infinity.dev/ui/primitives/separator'
 import Layout from '../../layouts/layout'
 import { AlertCircle, CheckCircle2 } from 'lucide-react'
+import { useI18n } from '../../i18n/use_i18n'
 
 interface RegisterProps {
   errors?: {
@@ -30,6 +31,7 @@ interface RegisterProps {
 }
 
 export default function Register({ errors = {}, flash = {} }: RegisterProps) {
+  const { t } = useI18n()
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -59,7 +61,7 @@ export default function Register({ errors = {}, flash = {} }: RegisterProps) {
 
   return (
     <Layout>
-      <Head title="Sign Up - infinity Game" />
+      <Head title={t('auth.register.pageTitle')} />
 
       <div className="min-h-screen bg-secondary-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
@@ -88,14 +90,14 @@ export default function Register({ errors = {}, flash = {} }: RegisterProps) {
           {/* Register Form */}
           <Card>
             <CardHeader>
-              <CardTitle>Create your account</CardTitle>
-              <CardDescription>Join thousands of players and start gaming!</CardDescription>
+              <CardTitle>{t('auth.register.title')}</CardTitle>
+              <CardDescription>{t('auth.register.subtitle')}</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Full Name Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
+                  <Label htmlFor="fullName">{t('auth.register.fullNameLabel')}</Label>
                   <Input
                     id="fullName"
                     name="fullName"
@@ -103,7 +105,7 @@ export default function Register({ errors = {}, flash = {} }: RegisterProps) {
                     required
                     value={formData.fullName}
                     onChange={handleChange}
-                    placeholder="Enter your full name"
+                    placeholder={t('auth.register.fullNamePlaceholder')}
                     className={errors.fullName ? 'border-destructive' : ''}
                   />
                   {errors.fullName && (
@@ -113,7 +115,7 @@ export default function Register({ errors = {}, flash = {} }: RegisterProps) {
 
                 {/* Email Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
+                  <Label htmlFor="email">{t('auth.common.emailLabel')}</Label>
                   <Input
                     id="email"
                     name="email"
@@ -121,7 +123,7 @@ export default function Register({ errors = {}, flash = {} }: RegisterProps) {
                     required
                     value={formData.email}
                     onChange={handleChange}
-                    placeholder="Enter your email"
+                    placeholder={t('auth.common.emailPlaceholder')}
                     className={errors.email ? 'border-destructive' : ''}
                   />
                   {errors.email && <p className="text-sm text-destructive">{errors.email[0]}</p>}
@@ -129,7 +131,7 @@ export default function Register({ errors = {}, flash = {} }: RegisterProps) {
 
                 {/* Password Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">{t('auth.common.passwordLabel')}</Label>
                   <Input
                     id="password"
                     name="password"
@@ -137,20 +139,20 @@ export default function Register({ errors = {}, flash = {} }: RegisterProps) {
                     required
                     value={formData.password}
                     onChange={handleChange}
-                    placeholder="Create a password"
+                    placeholder={t('auth.register.passwordPlaceholder')}
                     className={errors.password ? 'border-destructive' : ''}
                   />
                   {errors.password && (
                     <p className="text-sm text-destructive">{errors.password[0]}</p>
                   )}
                   <p className="text-xs text-muted-foreground">
-                    Must be at least 8 characters long
+                    {t('auth.register.passwordHint')}
                   </p>
                 </div>
 
                 {/* Password Confirmation Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="password_confirmation">Confirm Password</Label>
+                  <Label htmlFor="password_confirmation">{t('auth.register.confirmPasswordLabel')}</Label>
                   <Input
                     id="password_confirmation"
                     name="password_confirmation"
@@ -158,7 +160,7 @@ export default function Register({ errors = {}, flash = {} }: RegisterProps) {
                     required
                     value={formData.password_confirmation}
                     onChange={handleChange}
-                    placeholder="Confirm your password"
+                    placeholder={t('auth.register.confirmPasswordPlaceholder')}
                     className={errors.password_confirmation ? 'border-destructive' : ''}
                   />
                   {errors.password_confirmation && (
@@ -176,33 +178,35 @@ export default function Register({ errors = {}, flash = {} }: RegisterProps) {
 
                 {/* Terms and Privacy */}
                 <div className="text-sm text-muted-foreground">
-                  By creating an account, you agree to our{' '}
+                  {t('auth.register.termsPrefix')}{' '}
                   <a href="#" className="text-main hover:underline">
-                    Terms of Service
+                    {t('auth.register.termsOfService')}
                   </a>{' '}
-                  and{' '}
+                  {t('auth.register.termsAnd')}{' '}
                   <a href="#" className="text-main hover:underline">
-                    Privacy Policy
+                    {t('auth.register.privacyPolicy')}
                   </a>
                 </div>
 
                 {/* Submit Button */}
                 <Button type="submit" disabled={isLoading} className="w-full">
-                  {isLoading ? 'Creating account...' : 'Create Account'}
+                  {isLoading ? t('auth.register.submitting') : t('auth.register.submit')}
                 </Button>
               </form>
 
               {/* Divider */}
               <div className="my-6 flex items-center">
                 <Separator className="flex-1" />
-                <span className="px-4 text-sm text-muted-foreground">Already have an account?</span>
+                <span className="px-4 text-sm text-muted-foreground">
+                  {t('auth.register.alreadyHaveAccount')}
+                </span>
                 <Separator className="flex-1" />
               </div>
 
               {/* Sign In Link */}
               <Link href="/auth/login">
                 <Button variant="neutral" className="w-full">
-                  Sign In Instead
+                  {t('auth.register.signInInstead')}
                 </Button>
               </Link>
             </CardContent>
@@ -211,15 +215,15 @@ export default function Register({ errors = {}, flash = {} }: RegisterProps) {
           {/* Footer Links */}
           <div className="text-center space-y-2">
             <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
-              ← Back to Homepage
+              {t('auth.common.backHome')}
             </Link>
             <div className="text-sm text-muted-foreground">
               <a href="#" className="hover:text-foreground">
-                Need Help?
+                {t('auth.register.needHelp')}
               </a>
               {' • '}
               <a href="#" className="hover:text-foreground">
-                Contact Support
+                {t('auth.register.contactSupport')}
               </a>
             </div>
           </div>

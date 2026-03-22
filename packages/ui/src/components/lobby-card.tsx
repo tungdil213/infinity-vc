@@ -51,14 +51,49 @@ export interface LobbyCardProps {
 	onKick?: (lobbyUuid: string, playerUuid: string) => void;
 	onSettings?: (lobbyUuid: string) => void;
 	className?: string;
+	labels?: Partial<LobbyCardLabels>;
 }
 
-const statusConfig = {
-	WAITING: { color: 'bg-blue-100 text-blue-800', label: 'Waiting' },
-	READY: { color: 'bg-green-100 text-green-800', label: 'Ready' },
-	FULL: { color: 'bg-yellow-100 text-yellow-800', label: 'Full' },
-	IN_GAME: { color: 'bg-purple-100 text-purple-800', label: 'In game' },
-	PRIVATE: { color: 'bg-gray-100 text-gray-800', label: 'Private' },
+interface LobbyCardLabels {
+	statusWaiting: string;
+	statusReady: string;
+	statusFull: string;
+	statusInGame: string;
+	statusPrivate: string;
+	privateBadge: string;
+	protectedBadge: string;
+	playersSuffix: string;
+	join: string;
+	closeLobby: string;
+	close: string;
+	start: string;
+	leave: string;
+	hostLabel: string;
+	hostFallback: string;
+	createdOnLabel: string;
+	playersLabel: string;
+	viewDetails: string;
+}
+
+const defaultLabels: LobbyCardLabels = {
+	statusWaiting: 'Waiting',
+	statusReady: 'Ready',
+	statusFull: 'Full',
+	statusInGame: 'In game',
+	statusPrivate: 'Private',
+	privateBadge: 'Private',
+	protectedBadge: 'Protected',
+	playersSuffix: 'players',
+	join: 'Join',
+	closeLobby: 'Close lobby',
+	close: 'Close',
+	start: 'Start',
+	leave: 'Leave',
+	hostLabel: 'Host',
+	hostFallback: 'Host',
+	createdOnLabel: 'Created on',
+	playersLabel: 'Players',
+	viewDetails: 'View details',
 };
 
 export function LobbyCard({
@@ -74,7 +109,16 @@ export function LobbyCard({
 	onKick,
 	onSettings,
 	className,
+	labels,
 }: LobbyCardProps) {
+	const ui = { ...defaultLabels, ...labels };
+	const statusConfig = {
+		WAITING: { color: 'bg-blue-100 text-blue-800', label: ui.statusWaiting },
+		READY: { color: 'bg-green-100 text-green-800', label: ui.statusReady },
+		FULL: { color: 'bg-yellow-100 text-yellow-800', label: ui.statusFull },
+		IN_GAME: { color: 'bg-purple-100 text-purple-800', label: ui.statusInGame },
+		PRIVATE: { color: 'bg-gray-100 text-gray-800', label: ui.statusPrivate },
+	};
 	const isCreator = currentUser?.uuid === lobby.creatorUuid;
 	const userInLobby = lobby.players?.some((p) => p.uuid === currentUser?.uuid);
 	const canJoin = !userInLobby && lobby.hasAvailableSlots && lobby.status !== 'IN_GAME';
@@ -106,7 +150,7 @@ export function LobbyCard({
 									</Badge>
 								{(lobby.isPrivate || lobby.hasPassword) && (
 									<Badge className={cn('text-xs', isModerationSensitiveLobby ? 'bg-slate-200 text-slate-800' : 'bg-blue-100 text-blue-800')}>
-										{lobby.hasPassword ? 'Protected' : 'Private'}
+										{lobby.hasPassword ? ui.protectedBadge : ui.privateBadge}
 									</Badge>
 								)}
 									<span className="text-xs text-gray-500 flex items-center gap-1">
@@ -124,7 +168,7 @@ export function LobbyCard({
 							)}
 							{canJoin && (
 								<Button size="sm" onClick={() => onJoin?.(lobby.uuid)}>
-									Join
+									{ui.join}
 								</Button>
 							)}
 							<Button variant="neutral" size="sm" onClick={() => onView?.(lobby.uuid)}>
@@ -162,7 +206,7 @@ export function LobbyCard({
 								</Badge>
 								<span className="text-sm text-gray-600 flex items-center gap-1">
 									<Users className="h-4 w-4" />
-									{lobby.currentPlayers}/{lobby.maxPlayers} players
+									{lobby.currentPlayers}/{lobby.maxPlayers} {ui.playersSuffix}
 								</span>
 							</div>
 						</div>
@@ -170,19 +214,19 @@ export function LobbyCard({
 							{canCloseLobby && (
 								<Button variant="destructive" onClick={() => onClose?.(lobby.uuid)}>
 									<UserMinus className="h-4 w-4 mr-2" />
-									Close lobby
+									{ui.closeLobby}
 								</Button>
 							)}
 							{canStart && (
 								<Button onClick={() => onStart?.(lobby.uuid)} className="bg-green-600 hover:bg-green-700">
 									<Play className="h-4 w-4 mr-2" />
-									Start
+									{ui.start}
 								</Button>
 							)}
-							{canJoin && <Button onClick={() => onJoin?.(lobby.uuid)}>Join</Button>}
+							{canJoin && <Button onClick={() => onJoin?.(lobby.uuid)}>{ui.join}</Button>}
 							{userInLobby && !isCreator && (
 								<Button variant="neutral" onClick={() => onLeave?.(lobby.uuid)}>
-									Leave
+									{ui.leave}
 								</Button>
 							)}
 						</div>
@@ -191,7 +235,7 @@ export function LobbyCard({
 				<CardContent>
 					<div className="grid grid-cols-2 gap-4">
 						<div>
-							<h4 className="text-sm font-medium mb-2">Host</h4>
+							<h4 className="text-sm font-medium mb-2">{ui.hostLabel}</h4>
 							<div className="flex items-center gap-2">
 								<Avatar className="h-6 w-6">
 									<AvatarImage src={lobby.players?.find((p) => p.uuid === lobby.creatorUuid)?.avatar} />
@@ -199,17 +243,17 @@ export function LobbyCard({
 										{lobby.players
 											?.find((p) => p.uuid === lobby.creatorUuid)
 											?.nickName?.charAt(0)
-											.toUpperCase() || 'C'}
+											.toUpperCase() || ui.hostFallback.charAt(0).toUpperCase()}
 									</AvatarFallback>
 								</Avatar>
 								<span className="text-sm">
-									{lobby.players?.find((p) => p.uuid === lobby.creatorUuid)?.nickName || 'Host'}
+									{lobby.players?.find((p) => p.uuid === lobby.creatorUuid)?.nickName || ui.hostFallback}
 								</span>
 								<Crown className="h-3 w-3 text-yellow-500" />
 							</div>
 						</div>
 						<div>
-							<h4 className="text-sm font-medium mb-2">Created on</h4>
+							<h4 className="text-sm font-medium mb-2">{ui.createdOnLabel}</h4>
 							<span className="text-sm text-gray-600">{new Date(lobby.createdAt).toLocaleDateString()}</span>
 						</div>
 					</div>
@@ -241,12 +285,12 @@ export function LobbyCard({
 							<Badge className={cn(statusConfig[lobby.status].color)}>{statusConfig[lobby.status].label}</Badge>
 							{(lobby.isPrivate || lobby.hasPassword) && (
 								<Badge className={cn('text-xs', isModerationSensitiveLobby ? 'bg-slate-200 text-slate-800' : 'bg-blue-100 text-blue-800')}>
-									{lobby.hasPassword ? 'Protected' : 'Private'}
+									{lobby.hasPassword ? ui.protectedBadge : ui.privateBadge}
 								</Badge>
 							)}
 							<span className="text-sm text-gray-600 flex items-center gap-1">
 								<Users className="h-4 w-4" />
-								{lobby.currentPlayers}/{lobby.maxPlayers} players
+								{lobby.currentPlayers}/{lobby.maxPlayers} {ui.playersSuffix}
 							</span>
 						</div>
 					</div>
@@ -274,17 +318,17 @@ export function LobbyCard({
 								{lobby.players
 									?.find((p) => p.uuid === lobby.creatorUuid)
 									?.nickName?.charAt(0)
-									.toUpperCase() || 'C'}
+									.toUpperCase() || ui.hostFallback.charAt(0).toUpperCase()}
 							</AvatarFallback>
 						</Avatar>
 						<div>
 							<div className="flex items-center gap-1">
 								<span className="text-sm font-medium">
-									{lobby.players?.find((p) => p.uuid === lobby.creatorUuid)?.nickName || 'Host'}
+									{lobby.players?.find((p) => p.uuid === lobby.creatorUuid)?.nickName || ui.hostFallback}
 								</span>
 								<Crown className="h-3 w-3 text-yellow-500" />
 							</div>
-							<span className="text-xs text-gray-500">Host</span>
+							<span className="text-xs text-gray-500">{ui.hostLabel}</span>
 						</div>
 					</div>
 
@@ -292,7 +336,7 @@ export function LobbyCard({
 					{lobby.players && lobby.players.length > 0 && (
 						<div>
 							<div className="flex items-center gap-2 mb-2">
-								<span className="text-sm font-medium">Players</span>
+								<span className="text-sm font-medium">{ui.playersLabel}</span>
 								<Badge variant="neutral" className="text-xs">
 									{lobby.players.length}
 								</Badge>
@@ -318,24 +362,24 @@ export function LobbyCard({
 						{canCloseLobby && (
 							<Button className="w-full sm:w-auto" variant="destructive" onClick={() => onClose?.(lobby.uuid)}>
 								<UserMinus className="h-4 w-4 mr-2" />
-								Close
+								{ui.close}
 							</Button>
 						)}
 						{canStart && (
 							<Button onClick={() => onStart?.(lobby.uuid)} className="w-full sm:w-auto bg-green-600 hover:bg-green-700">
 								<Play className="h-4 w-4 mr-2" />
-								Start
+								{ui.start}
 							</Button>
 						)}
-						{canJoin && <Button className="w-full sm:w-auto" onClick={() => onJoin?.(lobby.uuid)}>Join</Button>}
+						{canJoin && <Button className="w-full sm:w-auto" onClick={() => onJoin?.(lobby.uuid)}>{ui.join}</Button>}
 						{userInLobby && !isCreator && (
 							<Button className="w-full sm:w-auto" variant="neutral" onClick={() => onLeave?.(lobby.uuid)}>
-								Leave
+								{ui.leave}
 							</Button>
 						)}
 						<Button className="w-full sm:w-auto" variant="neutral" onClick={() => onView?.(lobby.uuid)}>
 							<Eye className="h-4 w-4 mr-2" />
-							View details
+							{ui.viewDetails}
 						</Button>
 					</div>
 				</div>

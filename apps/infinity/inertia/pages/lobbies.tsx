@@ -54,10 +54,13 @@ interface LobbiesProps {
 }
 
 // Transform backend payload into LobbyData format
-const transformLobbyData = (lobby: Lobby): LobbyData => ({
+const transformLobbyData = (
+  lobby: Lobby,
+  t: (key: string, values?: Record<string, string | number>) => string
+): LobbyData => ({
   uuid: lobby.uuid,
   name: lobby.name,
-  description: lobby.description || `Lobby created by ${lobby.createdBy}`,
+  description: lobby.description || t('lobbies.createdByDescription', { createdBy: lobby.createdBy }),
   status: lobby.status,
   currentPlayers: lobby.currentPlayers,
   maxPlayers: lobby.maxPlayers,
@@ -128,7 +131,8 @@ function LobbiesPage({ lobbies: initialLobbies, user, currentLobby }: LobbiesPro
     return headers
   }
 
-  const lobbyNoun = (count: number) => (count === 1 ? 'lobby' : 'lobbies')
+  const lobbyNoun = (count: number) =>
+    count === 1 ? t('lobbies.lobbySingular') : t('lobbies.lobbyPlural')
 
   const handleCreateLobby = () => {
     router.get('/lobbies/create')
@@ -293,7 +297,9 @@ function LobbiesPage({ lobbies: initialLobbies, user, currentLobby }: LobbiesPro
       return
     }
 
-    const reason = window.prompt(t('lobbies.closeReasonPrompt'), 'manual moderation cleanup')?.trim()
+    const reason = window
+      .prompt(t('lobbies.closeReasonPrompt'), t('lobbies.defaultModerationReason'))
+      ?.trim()
 
     try {
       setLoading(true)
@@ -349,11 +355,21 @@ function LobbiesPage({ lobbies: initialLobbies, user, currentLobby }: LobbiesPro
       const failedResults = closeResults.filter((result) => !result.ok)
 
       if (successCount > 0) {
-        toast.success(`${successCount} ${lobbyNoun(successCount)} closed`)
+        toast.success(
+          t('lobbies.bulkClosedCount', {
+            count: successCount,
+            lobbyNoun: lobbyNoun(successCount),
+          })
+        )
       }
       if (failedResults.length > 0) {
         const firstError = failedResults[0]?.error ?? t('lobbies.unableCloseSome')
-        toast.error(`${failedResults.length} failed: ${firstError}`)
+        toast.error(
+          t('lobbies.bulkFailedCount', {
+            count: failedResults.length,
+            error: firstError,
+          })
+        )
       }
 
       if (successCount > 0) {
@@ -378,12 +394,30 @@ function LobbiesPage({ lobbies: initialLobbies, user, currentLobby }: LobbiesPro
       }
     : undefined
 
-  const transformedLobbies = lobbies.map((lobby) => transformLobbyData(lobby as Lobby))
+  const transformedLobbies = lobbies.map((lobby) => transformLobbyData(lobby as Lobby, t))
   const isRealTimeLoading = lobbyListState.loading
+  const footerSections = [
+    {
+      title: t('footer.quickLinks'),
+      links: [
+        { href: '/lobbies', label: t('footer.browseLobbies') },
+        { href: '/auth/register', label: t('footer.signUp') },
+        { href: '/auth/login', label: t('footer.login') },
+      ],
+    },
+    {
+      title: t('footer.support'),
+      links: [
+        { href: '#', label: t('footer.helpCenter') },
+        { href: '#', label: t('footer.contactUs') },
+        { href: '#', label: t('footer.privacyPolicy') },
+      ],
+    },
+  ]
 
   return (
     <>
-      <Head title="Game Lobbies" />
+      <Head title={t('lobbies.pageTitle')} />
 
       <div className="min-h-screen bg-secondary-background">
         <HeaderWrapper user={headerUser} currentLobby={currentLobby} />
@@ -405,10 +439,74 @@ function LobbiesPage({ lobbies: initialLobbies, user, currentLobby }: LobbiesPro
             onCreateLobby={handleCreateLobby}
             onRefresh={handleRefresh}
             onBulkClose={handleBulkCloseLobbies}
+            labels={{
+              loadingErrorTitle: t('lobbyList.loadingErrorTitle'),
+              retry: t('lobbyList.retry'),
+              heading: t('lobbyList.heading'),
+              totalSummary: t('lobbyList.totalSummary'),
+              createLobby: t('lobbyList.createLobby'),
+              filtersTitle: t('lobbyList.filtersTitle'),
+              searchLabel: t('lobbyList.searchLabel'),
+              searchPlaceholder: t('lobbyList.searchPlaceholder'),
+              statusLabel: t('lobbyList.statusLabel'),
+              statusAll: t('lobbyList.statusAll'),
+              statusWaiting: t('lobbyList.statusWaiting'),
+              statusReady: t('lobbyList.statusReady'),
+              statusFull: t('lobbyList.statusFull'),
+              statusInGame: t('lobbyList.statusInGame'),
+              sortByLabel: t('lobbyList.sortByLabel'),
+              sortCreated: t('lobbyList.sortCreated'),
+              sortName: t('lobbyList.sortName'),
+              sortPlayers: t('lobbyList.sortPlayers'),
+              availableSlots: t('lobbyList.availableSlots'),
+              playersSuffix: t('createLobby.playersSuffix'),
+              privateProtectedOnly: t('lobbyList.privateProtectedOnly'),
+              privateBadge: t('joinLobby.privateBadge'),
+              protectedBadge: t('joinLobby.protectedBadge'),
+              moderationViewTitle: t('lobbyList.moderationViewTitle'),
+              moderationBadgeSuffix: t('lobbyList.moderationBadgeSuffix'),
+              showAll: t('lobbyList.showAll'),
+              showSensitive: t('lobbyList.showSensitive'),
+              showJoinable: t('lobbyList.showJoinable'),
+              sensitiveLobbies: t('lobbyList.sensitiveLobbies'),
+              selectAll: t('lobbyList.selectAll'),
+              clear: t('lobbyList.clear'),
+              noSensitiveLobbies: t('lobbyList.noSensitiveLobbies'),
+              bulkAction: t('lobbyList.bulkAction'),
+              selectedSummary: t('lobbyList.selectedSummary'),
+              reasonLabel: t('lobbyList.reasonLabel'),
+              reasonPlaceholder: t('lobbyList.reasonPlaceholder'),
+              closing: t('lobbyList.closing'),
+              closeSelection: t('lobbyList.closeSelection'),
+              bulkCloseConfirm: t('lobbyList.bulkCloseConfirm'),
+              noLobbyFoundTitle: t('lobbyList.noLobbyFoundTitle'),
+              noLobbiesCreated: t('lobbyList.noLobbiesCreated'),
+              noLobbyMatches: t('lobbyList.noLobbyMatches'),
+              createFirstLobby: t('lobbyList.createFirstLobby'),
+              showingSummary: t('lobbyList.showingSummary'),
+              withOpenSlots: t('lobbyList.withOpenSlots'),
+              readyToStart: t('lobbyList.readyToStart'),
+              hostLabel: t('lobbyList.hostLabel'),
+              hostFallback: t('lobbyList.hostFallback'),
+              playersLabel: t('lobbyList.playersLabel'),
+              viewDetails: t('lobbyList.viewDetails'),
+              joinActionLabel: t('lobbyList.joinActionLabel'),
+              startLabel: t('lobbyList.startLabel'),
+              leaveLabel: t('lobbyList.leaveLabel'),
+              closeLabel: t('lobbyList.closeLabel'),
+              closeLobbyLabel: t('lobbyList.closeLobbyLabel'),
+              lobbySingular: t('lobbies.lobbySingular'),
+              lobbyPlural: t('lobbies.lobbyPlural'),
+              defaultBulkReason: t('lobbies.defaultModerationReason'),
+            }}
           />
         </div>
 
-        <Footer />
+        <Footer
+          description={t('footer.description')}
+          sections={footerSections}
+          copyright={t('footer.copyright')}
+        />
       </div>
 
       <LobbyPasswordDialog
@@ -424,6 +522,17 @@ function LobbiesPage({ lobbies: initialLobbies, user, currentLobby }: LobbiesPro
           setPasswordDialog((prev) => ({ ...prev, open: true }))
         }}
         onSubmit={handleSubmitPassword}
+        labels={{
+          title: t('passwordDialog.title'),
+          descriptionWithLobby: t('passwordDialog.descriptionWithLobby'),
+          descriptionWithoutLobby: t('passwordDialog.descriptionWithoutLobby'),
+          passwordLabel: t('passwordDialog.passwordLabel'),
+          passwordPlaceholder: t('passwordDialog.passwordPlaceholder'),
+          passwordRequired: t('passwordDialog.passwordRequired'),
+          cancel: t('passwordDialog.cancel'),
+          join: t('passwordDialog.join'),
+          joining: t('passwordDialog.joining'),
+        }}
       />
     </>
   )

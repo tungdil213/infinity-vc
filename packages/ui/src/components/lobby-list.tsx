@@ -34,6 +34,7 @@ export interface LobbyListProps {
 	onBulkClose?: (lobbyUuids: string[], reason?: string) => Promise<void> | void;
 	onFilterChange?: (filters: LobbyFilters) => void;
 	className?: string;
+	labels?: Partial<LobbyListLabels>;
 }
 
 export interface LobbyFilters {
@@ -45,7 +46,130 @@ export interface LobbyFilters {
 	sortOrder?: 'asc' | 'desc';
 }
 
-const lobbyNoun = (count: number) => (count === 1 ? 'lobby' : 'lobbies');
+interface LobbyListLabels {
+	loadingErrorTitle: string;
+	retry: string;
+	heading: string;
+	totalSummary: string;
+	createLobby: string;
+	filtersTitle: string;
+	searchLabel: string;
+	searchPlaceholder: string;
+	statusLabel: string;
+	statusAll: string;
+	statusWaiting: string;
+	statusReady: string;
+	statusFull: string;
+	statusInGame: string;
+	sortByLabel: string;
+	sortCreated: string;
+	sortName: string;
+	sortPlayers: string;
+	availableSlots: string;
+	playersSuffix: string;
+	privateProtectedOnly: string;
+	privateBadge: string;
+	protectedBadge: string;
+	moderationViewTitle: string;
+	moderationBadgeSuffix: string;
+	showAll: string;
+	showSensitive: string;
+	showJoinable: string;
+	sensitiveLobbies: string;
+	selectAll: string;
+	clear: string;
+	noSensitiveLobbies: string;
+	bulkAction: string;
+	selectedSummary: string;
+	reasonLabel: string;
+	reasonPlaceholder: string;
+	closing: string;
+	closeSelection: string;
+	bulkCloseConfirm: string;
+	noLobbyFoundTitle: string;
+	noLobbiesCreated: string;
+	noLobbyMatches: string;
+	createFirstLobby: string;
+	showingSummary: string;
+	withOpenSlots: string;
+	readyToStart: string;
+	hostLabel: string;
+	hostFallback: string;
+	playersLabel: string;
+	viewDetails: string;
+	joinActionLabel: string;
+	startLabel: string;
+	leaveLabel: string;
+	closeLabel: string;
+	closeLobbyLabel: string;
+	lobbySingular: string;
+	lobbyPlural: string;
+	defaultBulkReason: string;
+}
+
+const defaultLabels: LobbyListLabels = {
+	loadingErrorTitle: 'Loading error',
+	retry: 'Retry',
+	heading: 'Lobbies',
+	totalSummary: '{filtered} of {total} lobbies',
+	createLobby: 'Create lobby',
+	filtersTitle: 'Filters',
+	searchLabel: 'Search',
+	searchPlaceholder: 'Lobby name...',
+	statusLabel: 'Status',
+	statusAll: 'All',
+	statusWaiting: 'Waiting',
+	statusReady: 'Ready',
+	statusFull: 'Full',
+	statusInGame: 'In game',
+	sortByLabel: 'Sort by',
+	sortCreated: 'Creation date',
+	sortName: 'Name',
+	sortPlayers: 'Player count',
+	availableSlots: 'Available slots',
+	playersSuffix: 'players',
+	privateProtectedOnly: 'Private / protected only',
+	privateBadge: 'Private',
+	protectedBadge: 'Protected',
+	moderationViewTitle: 'Moderation View',
+	moderationBadgeSuffix: 'private/protected',
+	showAll: 'Show all',
+	showSensitive: 'Private / Protected',
+	showJoinable: 'Available slots',
+	sensitiveLobbies: 'Sensitive lobbies',
+	selectAll: 'Select all',
+	clear: 'Clear',
+	noSensitiveLobbies: 'No private or protected lobbies in current filters.',
+	bulkAction: 'Bulk action',
+	selectedSummary: '{count} {lobbyNoun} selected.',
+	reasonLabel: 'Reason',
+	reasonPlaceholder: 'moderation reason',
+	closing: 'Closing...',
+	closeSelection: 'Close selection',
+	bulkCloseConfirm: 'Close {count} selected {lobbyNoun}?',
+	noLobbyFoundTitle: 'No lobby found',
+	noLobbiesCreated: 'No lobbies created yet.',
+	noLobbyMatches: 'No lobby matches your current filters.',
+	createFirstLobby: 'Create the first lobby',
+	showingSummary: 'Showing {count} {lobbyNoun}',
+	withOpenSlots: '{count} with open slots',
+	readyToStart: '{count} ready to start',
+	hostLabel: 'Host',
+	hostFallback: 'Host',
+	playersLabel: 'Players',
+	viewDetails: 'View details',
+	joinActionLabel: 'Join',
+	startLabel: 'Start',
+	leaveLabel: 'Leave',
+	closeLabel: 'Close',
+	closeLobbyLabel: 'Close lobby',
+	lobbySingular: 'lobby',
+	lobbyPlural: 'lobbies',
+	defaultBulkReason: 'manual moderation cleanup',
+};
+
+const interpolateLabel = (template: string, values: Record<string, string | number>) =>
+	template.replace(/\{(\w+)\}/g, (_, key: string) => String(values[key] ?? `{${key}}`));
 
 export function LobbyList({
 	lobbies,
@@ -66,10 +190,13 @@ export function LobbyList({
 	onBulkClose,
 	onFilterChange,
 	className,
+	labels,
 }: LobbyListProps) {
+	const ui = { ...defaultLabels, ...labels };
+	const lobbyNoun = (count: number) => (count === 1 ? ui.lobbySingular : ui.lobbyPlural);
 	const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 	const [selectedLobbyUuids, setSelectedLobbyUuids] = useState<string[]>([]);
-	const [bulkReason, setBulkReason] = useState('manual moderation cleanup');
+	const [bulkReason, setBulkReason] = useState(ui.defaultBulkReason);
 	const [isBulkClosing, setIsBulkClosing] = useState(false);
 	const [filters, setFilters] = useState<LobbyFilters>({
 		search: '',
@@ -198,7 +325,10 @@ export function LobbyList({
 		}
 
 		const confirmed = window.confirm(
-			`Close ${selectedLobbyUuids.length} selected ${lobbyNoun(selectedLobbyUuids.length)}?`
+			interpolateLabel(ui.bulkCloseConfirm, {
+				count: selectedLobbyUuids.length,
+				lobbyNoun: lobbyNoun(selectedLobbyUuids.length),
+			})
 		);
 		if (!confirmed) {
 			return;
@@ -218,13 +348,13 @@ export function LobbyList({
 			<Card className={cn('border-red-200', className)}>
 				<CardContent className="p-6 text-center">
 					<div className="text-red-600 mb-4">
-						<h3 className="text-lg font-medium">Loading error</h3>
+						<h3 className="text-lg font-medium">{ui.loadingErrorTitle}</h3>
 						<p className="text-sm">{error}</p>
 					</div>
 					{onRefresh && (
 						<Button onClick={onRefresh} variant="neutral">
 							<RefreshCw className="h-4 w-4 mr-2" />
-							Retry
+							{ui.retry}
 						</Button>
 					)}
 				</CardContent>
@@ -237,8 +367,12 @@ export function LobbyList({
 			{/* Header */}
 			<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
 				<div>
-					<h2 className="text-2xl font-bold">Lobbies</h2>
-					{total !== undefined && <p className="text-sm text-gray-600">{filteredLobbies.length} of {total} lobbies</p>}
+					<h2 className="text-2xl font-bold">{ui.heading}</h2>
+					{total !== undefined && (
+						<p className="text-sm text-gray-600">
+							{interpolateLabel(ui.totalSummary, { filtered: filteredLobbies.length, total })}
+						</p>
+					)}
 				</div>
 				<div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
 					{onRefresh && (
@@ -267,7 +401,7 @@ export function LobbyList({
 					{onCreateLobby && (
 						<Button onClick={onCreateLobby} className="w-full sm:w-auto">
 							<Plus className="h-4 w-4 mr-2" />
-							Create lobby
+							{ui.createLobby}
 						</Button>
 					)}
 				</div>
@@ -278,19 +412,19 @@ export function LobbyList({
 				<CardHeader>
 					<CardTitle className="flex items-center gap-2 text-lg">
 						<Filter className="h-5 w-5" />
-						Filters
+						{ui.filtersTitle}
 					</CardTitle>
 				</CardHeader>
 				<CardContent>
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 						{/* Search */}
 						<div className="space-y-2">
-							<Label htmlFor="search">Search</Label>
+							<Label htmlFor="search">{ui.searchLabel}</Label>
 							<div className="relative">
 								<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
 								<Input
 									id="search"
-									placeholder="Lobby name..."
+									placeholder={ui.searchPlaceholder}
 									value={filters.search}
 									onChange={(e) => handleFilterChange({ search: e.target.value })}
 									className="pl-10"
@@ -300,32 +434,32 @@ export function LobbyList({
 
 						{/* Status */}
 						<div className="space-y-2">
-							<Label>Status</Label>
+							<Label>{ui.statusLabel}</Label>
 							<Select value={filters.status} onValueChange={(value) => handleFilterChange({ status: value as any })}>
 								<SelectTrigger>
 									<SelectValue />
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value="all">All</SelectItem>
-									<SelectItem value="WAITING">Waiting</SelectItem>
-									<SelectItem value="READY">Ready</SelectItem>
-									<SelectItem value="FULL">Full</SelectItem>
-									<SelectItem value="IN_GAME">In game</SelectItem>
+									<SelectItem value="all">{ui.statusAll}</SelectItem>
+									<SelectItem value="WAITING">{ui.statusWaiting}</SelectItem>
+									<SelectItem value="READY">{ui.statusReady}</SelectItem>
+									<SelectItem value="FULL">{ui.statusFull}</SelectItem>
+									<SelectItem value="IN_GAME">{ui.statusInGame}</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
 
 						{/* Sort */}
 						<div className="space-y-2">
-							<Label>Sort by</Label>
+							<Label>{ui.sortByLabel}</Label>
 							<Select value={filters.sortBy} onValueChange={(value) => handleFilterChange({ sortBy: value as any })}>
 								<SelectTrigger>
 									<SelectValue />
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value="created">Creation date</SelectItem>
-									<SelectItem value="name">Name</SelectItem>
-									<SelectItem value="players">Player count</SelectItem>
+									<SelectItem value="created">{ui.sortCreated}</SelectItem>
+									<SelectItem value="name">{ui.sortName}</SelectItem>
+									<SelectItem value="players">{ui.sortPlayers}</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
@@ -339,7 +473,7 @@ export function LobbyList({
 									onCheckedChange={(checked) => handleFilterChange({ hasSlots: checked })}
 								/>
 								<Label htmlFor="hasSlots" className="text-sm">
-									Available slots
+									{ui.availableSlots}
 								</Label>
 							</div>
 							<div className="flex items-center space-x-2">
@@ -349,7 +483,7 @@ export function LobbyList({
 									onCheckedChange={(checked) => handleFilterChange({ isPrivate: checked })}
 								/>
 								<Label htmlFor="isPrivate" className="text-sm">
-									Private / protected only
+									{ui.privateProtectedOnly}
 								</Label>
 							</div>
 						</div>
@@ -362,33 +496,35 @@ export function LobbyList({
 				<Card className="border-slate-300 bg-slate-50">
 					<CardHeader>
 						<CardTitle className="flex flex-wrap items-center gap-2 text-lg">
-							Moderation View
-							<Badge variant="neutral">{moderationTargets.length} private/protected</Badge>
+							{ui.moderationViewTitle}
+							<Badge variant="neutral">
+								{moderationTargets.length} {ui.moderationBadgeSuffix}
+							</Badge>
 						</CardTitle>
 					</CardHeader>
 					<CardContent className="space-y-4">
 						<div className="flex flex-wrap items-center gap-2">
 							<Button variant="neutral" size="sm" onClick={() => applyQuickFilter('all')}>
-								Show all
+								{ui.showAll}
 							</Button>
 							<Button variant="neutral" size="sm" onClick={() => applyQuickFilter('sensitive')}>
-								Private / Protected
+								{ui.showSensitive}
 							</Button>
 							<Button variant="neutral" size="sm" onClick={() => applyQuickFilter('joinable')}>
-								Available slots
+								{ui.showJoinable}
 							</Button>
 						</div>
 
 						<div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr,1fr]">
 							<div className="space-y-2">
 								<div className="flex items-center justify-between">
-									<p className="text-sm font-medium">Sensitive lobbies</p>
+									<p className="text-sm font-medium">{ui.sensitiveLobbies}</p>
 									<div className="flex items-center gap-2">
 										<Button variant="noShadow" size="sm" onClick={selectAllModerationTargets}>
-											Select all
+											{ui.selectAll}
 										</Button>
 										<Button variant="noShadow" size="sm" onClick={clearModerationSelection}>
-											Clear
+											{ui.clear}
 										</Button>
 									</div>
 								</div>
@@ -396,7 +532,7 @@ export function LobbyList({
 								<div className="max-h-56 space-y-2 overflow-auto rounded-base border-2 border-slate-200 bg-white p-2">
 									{moderationTargets.length === 0 ? (
 										<p className="p-2 text-sm text-muted-foreground">
-											No private or protected lobbies in current filters.
+											{ui.noSensitiveLobbies}
 										</p>
 									) : (
 										moderationTargets.map((lobby) => {
@@ -414,7 +550,7 @@ export function LobbyList({
 													<div className="min-w-0">
 														<p className="truncate font-medium">{lobby.name}</p>
 														<p className="text-xs text-muted-foreground">
-															{lobby.currentPlayers}/{lobby.maxPlayers} players
+															{lobby.currentPlayers}/{lobby.maxPlayers} {ui.playersSuffix}
 														</p>
 													</div>
 													<div className="ml-3 flex items-center gap-2">
@@ -435,17 +571,20 @@ export function LobbyList({
 							</div>
 
 							<div className="space-y-2 rounded-base border-2 border-slate-200 bg-white p-3">
-								<p className="text-sm font-medium">Bulk action</p>
+								<p className="text-sm font-medium">{ui.bulkAction}</p>
 								<p className="text-xs text-muted-foreground">
-									{selectedCount} {lobbyNoun(selectedCount)} selected.
+									{interpolateLabel(ui.selectedSummary, {
+										count: selectedCount,
+										lobbyNoun: lobbyNoun(selectedCount),
+									})}
 								</p>
 								<div className="space-y-1">
-									<Label htmlFor="bulk-reason">Reason</Label>
+									<Label htmlFor="bulk-reason">{ui.reasonLabel}</Label>
 									<Input
 										id="bulk-reason"
 										value={bulkReason}
 										onChange={(event) => setBulkReason(event.target.value)}
-										placeholder="moderation reason"
+										placeholder={ui.reasonPlaceholder}
 									/>
 								</div>
 								<Button
@@ -454,7 +593,7 @@ export function LobbyList({
 									disabled={!onBulkClose || selectedCount === 0 || isBulkClosing}
 									onClick={handleBulkCloseSelected}
 								>
-									{isBulkClosing ? 'Closing...' : 'Close selection'}
+									{isBulkClosing ? ui.closing : ui.closeSelection}
 								</Button>
 							</div>
 						</div>
@@ -499,17 +638,17 @@ export function LobbyList({
 				<Card>
 					<CardContent className="p-12 text-center">
 						<div className="text-gray-500 mb-4">
-							<h3 className="text-lg font-medium">No lobby found</h3>
+							<h3 className="text-lg font-medium">{ui.noLobbyFoundTitle}</h3>
 							<p className="text-sm">
 								{lobbies.length === 0
-									? 'No lobbies created yet.'
-									: 'No lobby matches your current filters.'}
+									? ui.noLobbiesCreated
+									: ui.noLobbyMatches}
 							</p>
 						</div>
 						{onCreateLobby && (
 							<Button onClick={onCreateLobby}>
 								<Plus className="h-4 w-4 mr-2" />
-								Create the first lobby
+								{ui.createFirstLobby}
 							</Button>
 						)}
 					</CardContent>
@@ -538,6 +677,26 @@ export function LobbyList({
 							onClose={onClose}
 							onKick={onKick}
 							onSettings={onSettings}
+							labels={{
+								statusWaiting: ui.statusWaiting,
+								statusReady: ui.statusReady,
+								statusFull: ui.statusFull,
+								statusInGame: ui.statusInGame,
+								statusPrivate: ui.privateBadge,
+								privateBadge: ui.privateBadge,
+								protectedBadge: ui.protectedBadge,
+								playersSuffix: ui.playersSuffix,
+								join: ui.joinActionLabel,
+								closeLobby: ui.closeLobbyLabel,
+								close: ui.closeLabel,
+								start: ui.startLabel,
+								leave: ui.leaveLabel,
+								hostLabel: ui.hostLabel,
+								hostFallback: ui.hostFallback,
+								createdOnLabel: ui.sortCreated,
+								playersLabel: ui.playersLabel,
+								viewDetails: ui.viewDetails,
+							}}
 						/>
 					))}
 				</div>
@@ -547,14 +706,21 @@ export function LobbyList({
 			{!loading && sortedLobbies.length > 0 && (
 				<div className="flex flex-col gap-2 text-sm text-gray-600 sm:flex-row sm:items-center sm:justify-between">
 					<span>
-						Showing {sortedLobbies.length} {lobbyNoun(sortedLobbies.length)}
+						{interpolateLabel(ui.showingSummary, {
+							count: sortedLobbies.length,
+							lobbyNoun: lobbyNoun(sortedLobbies.length),
+						})}
 					</span>
 					<div className="flex flex-wrap items-center gap-2">
 						<Badge variant="neutral">
-							{sortedLobbies.filter((l) => l.hasAvailableSlots).length} with open slots
+							{interpolateLabel(ui.withOpenSlots, {
+								count: sortedLobbies.filter((l) => l.hasAvailableSlots).length,
+							})}
 						</Badge>
 						<Badge variant="neutral">
-							{sortedLobbies.filter((l) => l.status === 'READY').length} ready to start
+							{interpolateLabel(ui.readyToStart, {
+								count: sortedLobbies.filter((l) => l.status === 'READY').length,
+							})}
 						</Badge>
 					</div>
 				</div>

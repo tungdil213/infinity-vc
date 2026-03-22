@@ -18,7 +18,32 @@ export interface LobbyPasswordDialogProps {
 	error?: string | null;
 	onOpenChange: (open: boolean) => void;
 	onSubmit: (password: string) => void;
+	labels?: Partial<LobbyPasswordDialogLabels>;
 }
+
+interface LobbyPasswordDialogLabels {
+	title: string;
+	descriptionWithLobby: string;
+	descriptionWithoutLobby: string;
+	passwordLabel: string;
+	passwordPlaceholder: string;
+	passwordRequired: string;
+	cancel: string;
+	join: string;
+	joining: string;
+}
+
+const defaultLabels: LobbyPasswordDialogLabels = {
+	title: 'Protected lobby',
+	descriptionWithLobby: 'Enter the password to join "{lobbyName}".',
+	descriptionWithoutLobby: 'Enter the password to join this lobby.',
+	passwordLabel: 'Password',
+	passwordPlaceholder: 'Enter lobby password',
+	passwordRequired: 'Password is required.',
+	cancel: 'Cancel',
+	join: 'Join',
+	joining: 'Joining...',
+};
 
 export function LobbyPasswordDialog({
 	open,
@@ -27,7 +52,9 @@ export function LobbyPasswordDialog({
 	error,
 	onOpenChange,
 	onSubmit,
+	labels,
 }: LobbyPasswordDialogProps) {
+	const ui = { ...defaultLabels, ...labels };
 	const [password, setPassword] = useState('');
 	const [localError, setLocalError] = useState<string | null>(null);
 
@@ -41,7 +68,7 @@ export function LobbyPasswordDialog({
 	const handleSubmit = (event: React.FormEvent) => {
 		event.preventDefault();
 		if (!password.trim()) {
-			setLocalError('Password is required.');
+			setLocalError(ui.passwordRequired);
 			return;
 		}
 
@@ -51,18 +78,19 @@ export function LobbyPasswordDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="sm:max-w-md">
-				<DialogHeader>
-					<DialogTitle>Protected lobby</DialogTitle>
-					<DialogDescription>
-						Enter the password to join
-						{lobbyName ? ` "${lobbyName}"` : ' this lobby'}.
-					</DialogDescription>
-				</DialogHeader>
+				<DialogContent className="sm:max-w-md">
+					<DialogHeader>
+						<DialogTitle>{ui.title}</DialogTitle>
+						<DialogDescription>
+							{lobbyName
+								? ui.descriptionWithLobby.replace('{lobbyName}', lobbyName)
+								: ui.descriptionWithoutLobby}
+						</DialogDescription>
+					</DialogHeader>
 
 				<form onSubmit={handleSubmit} className="space-y-4">
 					<div className="space-y-2">
-						<Label htmlFor="lobby-password">Password</Label>
+						<Label htmlFor="lobby-password">{ui.passwordLabel}</Label>
 						<Input
 							id="lobby-password"
 							type="password"
@@ -73,7 +101,7 @@ export function LobbyPasswordDialog({
 									setLocalError(null);
 								}
 							}}
-							placeholder="Enter lobby password"
+							placeholder={ui.passwordPlaceholder}
 							disabled={loading}
 							className={error || localError ? 'border-destructive' : ''}
 						/>
@@ -89,10 +117,10 @@ export function LobbyPasswordDialog({
 							onClick={() => onOpenChange(false)}
 							disabled={loading}
 						>
-							Cancel
+							{ui.cancel}
 						</Button>
 						<Button type="submit" disabled={loading}>
-							{loading ? 'Joining...' : 'Join'}
+							{loading ? ui.joining : ui.join}
 						</Button>
 					</DialogFooter>
 				</form>

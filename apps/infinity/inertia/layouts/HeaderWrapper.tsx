@@ -48,7 +48,7 @@ export function HeaderWrapper({ user, currentLobby, className }: HeaderWrapperPr
             const errorMessage =
               typeof errors === 'object' && errors !== null && 'error' in errors
                 ? String((errors as { error: string }).error)
-                : 'Unable to join lobby'
+                : t('lobbies.unableJoin')
 
             reject(new Error(errorMessage))
           },
@@ -106,6 +106,26 @@ export function HeaderWrapper({ user, currentLobby, className }: HeaderWrapperPr
         label: t(`language.${value}`),
       }))}
       localeLabel={t('common.language')}
+      labels={{
+        connectionConnected: t('header.connected'),
+        connectionDisconnected: t('header.disconnected'),
+        createAction: t('header.create'),
+        joinAction: t('header.join'),
+        joinDialogTitle: t('header.joinDialogTitle'),
+        joinDialogDescription: t('header.joinDialogDescription'),
+        joinCodeLabel: t('header.joinCodeLabel'),
+        joinCodePlaceholder: t('header.joinCodePlaceholder'),
+        joinSubmit: t('header.join'),
+        joining: t('header.joining'),
+        lobbiesAction: t('header.lobbies'),
+        profile: t('header.profile'),
+        settings: t('header.settings'),
+        logout: t('header.logout'),
+        browseLobbies: t('header.browseLobbies'),
+        lobbiesShort: t('header.lobbies'),
+        login: t('header.login'),
+        signup: t('header.signup'),
+      }}
       onLocaleChange={(nextLocale) => {
         const matchedLocale = supportedLocales.find((value) => value === nextLocale)
         if (matchedLocale) {
