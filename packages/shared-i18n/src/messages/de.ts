@@ -1,5 +1,7 @@
 export const deMessages = {
   'common.language': 'Sprache',
+  'common.startGame': 'Spiel starten',
+  'common.starting': 'Startet...',
   'language.en': 'Englisch',
   'language.fr': 'Französisch',
   'language.de': 'Deutsch',
@@ -56,4 +58,12 @@ export const deMessages = {
   'lobbies.unknownError': 'Unbekannter Fehler',
   'lobbies.unableCloseSome': 'Einige Lobbys konnten nicht geschlossen werden',
   'lobbies.bulkCloseFailed': 'Massen-Schließen fehlgeschlagen',
+
+  'notifications.lobbyFullTitle': 'Lobby ist voll: {lobbyName}',
+  'notifications.lobbyFullDescription':
+    'Deine Lobby "{lobbyName}" ist jetzt voll ({current}/{max}). Du kannst das Spiel starten.',
+  'notifications.lobbyFullDescriptionWithPlayer':
+    '{playerName} ist "{lobbyName}" beigetreten ({current}/{max}). Du kannst das Spiel starten.',
+  'notifications.openLobby': 'Öffnen',
+  'notifications.lobbyFallbackName': 'Lobby',
 } as const

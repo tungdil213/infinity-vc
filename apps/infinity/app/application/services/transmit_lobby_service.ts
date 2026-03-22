@@ -44,6 +44,8 @@ export class TransmitLobbyService {
       },
     })
     logger.debug({ lobbyUuid }, '[TransmitLobbyService] Published PlayerJoinedLobby')
+
+    this.notifyLobbyOwnerWhenFull(lobbyUuid, player, lobby)
   }
 
   /**
@@ -122,5 +124,46 @@ export class TransmitLobbyService {
       },
     })
     logger.debug({ lobbyUuid }, '[TransmitLobbyService] Published LobbyDeleted')
+  }
+
+  private notifyLobbyOwnerWhenFull(
+    lobbyUuid: string,
+    player: { uuid: string; nickName: string },
+    lobby: any
+  ): void {
+    const ownerUuid = typeof lobby?.createdBy === 'string' ? lobby.createdBy : null
+    const lobbyName = typeof lobby?.name === 'string' ? lobby.name : 'Lobby'
+    const currentPlayers =
+      typeof lobby?.currentPlayers === 'number' ? Math.max(0, lobby.currentPlayers) : null
+    const maxPlayers = typeof lobby?.maxPlayers === 'number' ? Math.max(0, lobby.maxPlayers) : null
+
+    const isLobbyFull =
+      typeof currentPlayers === 'number' &&
+      typeof maxPlayers === 'number' &&
+      maxPlayers > 0 &&
+      currentPlayers >= maxPlayers
+
+    if (!ownerUuid || ownerUuid === player.uuid || !isLobbyFull) {
+      return
+    }
+
+    eventBus.publish({
+      id: crypto.randomUUID(),
+      type: 'LobbyOwnerLobbyFull',
+      timestamp: new Date(),
+      payload: {
+        lobbyUuid,
+        ownerUuid,
+        lobbyName,
+        currentPlayers,
+        maxPlayers,
+        triggeredBy: player,
+      },
+    })
+
+    logger.debug(
+      { lobbyUuid, ownerUuid, currentPlayers, maxPlayers },
+      '[TransmitLobbyService] Published LobbyOwnerLobbyFull'
+    )
   }
 }

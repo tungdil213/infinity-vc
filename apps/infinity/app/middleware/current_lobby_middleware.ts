@@ -23,12 +23,20 @@ export default class CurrentLobbyMiddleware {
                 status: currentLobby.status,
                 currentPlayers: currentLobby.players.length,
                 maxPlayers: currentLobby.maxPlayers,
+                createdBy: currentLobby.createdBy,
+                canStart: currentLobby.canStart,
+                isOwner: currentLobby.createdBy === auth.user.userUuid,
+                isPrivate: currentLobby.isPrivate,
+                hasPassword: currentLobby.hasPassword,
               }
             : (null as any),
         })
       } catch (error) {
         logger.warn(
-          { operation: 'current_lobby_fetch', reason: error instanceof Error ? error.message : 'unknown' },
+          {
+            operation: 'current_lobby_fetch',
+            reason: error instanceof Error ? error.message : 'unknown',
+          },
           'Failed to resolve current lobby, continuing request'
         )
         // Don't block the request if lobby fetch fails

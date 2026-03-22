@@ -15,6 +15,8 @@ interface LobbyStatusSidebarProps {
     status: string
     currentPlayers: number
     maxPlayers: number
+    canStart?: boolean
+    isOwner?: boolean
   } | null
   currentUser?: {
     uuid: string
@@ -38,6 +40,8 @@ interface LobbyStatusSidebarConnectedProps {
     status: string
     currentPlayers: number
     maxPlayers: number
+    canStart?: boolean
+    isOwner?: boolean
   }
   currentUser?: {
     uuid: string
@@ -52,6 +56,7 @@ function LobbyStatusSidebarConnected({
   const { service: lobbyService, isConnected } = useLobbyService()
   const { t } = useI18n()
   const [isLeavingLobby, setIsLeavingLobby] = useState(false)
+  const [isStartingGame, setIsStartingGame] = useState(false)
 
   const handleLeaveLobby = async () => {
     if (!currentUser || !isConnected || !lobbyService) return
@@ -71,6 +76,38 @@ function LobbyStatusSidebarConnected({
 
   const handleGoToLobby = () => {
     router.visit(`/lobbies/${currentLobby.uuid}`)
+  }
+
+  const handleStartGame = async () => {
+    if (
+      !currentUser ||
+      !isConnected ||
+      !lobbyService ||
+      !currentLobby.isOwner ||
+      !currentLobby.canStart
+    ) {
+      return
+    }
+
+    setIsStartingGame(true)
+    try {
+      const result = (await lobbyService.startGame(currentLobby.uuid, currentUser.uuid)) as
+        | { gameUuid?: string }
+        | undefined
+      toast.success(t('lobbies.gameStarted'))
+
+      if (result && typeof result.gameUuid === 'string' && result.gameUuid.length > 0) {
+        router.visit(`/games/${result.gameUuid}`)
+        return
+      }
+
+      router.visit(`/lobbies/${currentLobby.uuid}`)
+    } catch (error) {
+      console.error('Failed to start game from sidebar:', error)
+      toast.error(t('lobbies.unableStartGame'))
+    } finally {
+      setIsStartingGame(false)
+    }
   }
 
   const getStatusColor = (status: string) => {
@@ -105,6 +142,10 @@ function LobbyStatusSidebarConnected({
     }
   }
 
+  const canStartFromSidebar = Boolean(
+    currentUser && isConnected && currentLobby.isOwner && currentLobby.canStart
+  )
+
   return (
     <div className="fixed top-20 left-4 right-4 z-50 sm:left-auto sm:w-80">
       <Card className="border-l-4 border-l-blue-500 shadow-lg">
@@ -134,6 +175,13 @@ function LobbyStatusSidebarConnected({
           </div>
 
           <div className="flex flex-col gap-2">
+            {canStartFromSidebar && (
+              <Button onClick={handleStartGame} className="w-full" disabled={isStartingGame}>
+                <Play className="h-4 w-4 mr-2" />
+                {isStartingGame ? t('common.starting') : t('common.startGame')}
+              </Button>
+            )}
+
             <Button
               onClick={handleGoToLobby}
               className="w-full"

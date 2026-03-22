@@ -8,6 +8,7 @@ import {
 } from '@infinity.dev/transcript/server'
 
 type LobbyPayload = { lobbyUuid?: string }
+type LobbyOwnerNotificationPayload = LobbyPayload & { ownerUuid?: string }
 type GamePayload = { gameId?: string }
 type GameStartedPayload = { gameUuid?: string; gameId?: string } & LobbyPayload
 
@@ -75,6 +76,20 @@ export const registerDefaultInfinityMappings = (builder: EventBridgeBuilder): vo
     .toChannels((event) => lobbyChannels(event.payload as LobbyPayload))
     .transformWith((event) => ({
       type: 'lobby.status.changed',
+      ...(event.payload as Record<string, unknown>),
+    }))
+    .and()
+
+  builder
+    .map('LobbyOwnerLobbyFull')
+    .toChannels((event) => {
+      const payload = event.payload as LobbyOwnerNotificationPayload
+      return typeof payload.ownerUuid === 'string' && payload.ownerUuid.length > 0
+        ? [`users/${payload.ownerUuid}`]
+        : []
+    })
+    .transformWith((event) => ({
+      type: 'lobby.owner.full',
       ...(event.payload as Record<string, unknown>),
     }))
     .and()

@@ -1,5 +1,7 @@
 export const enMessages = {
   'common.language': 'Language',
+  'common.startGame': 'Start game',
+  'common.starting': 'Starting...',
   'language.en': 'English',
   'language.fr': 'French',
   'language.de': 'German',
@@ -55,4 +57,12 @@ export const enMessages = {
   'lobbies.unknownError': 'Unknown error',
   'lobbies.unableCloseSome': 'Unable to close some lobbies',
   'lobbies.bulkCloseFailed': 'Bulk close failed',
+
+  'notifications.lobbyFullTitle': 'Lobby is full: {lobbyName}',
+  'notifications.lobbyFullDescription':
+    'Your lobby "{lobbyName}" is now full ({current}/{max}). You can start the game.',
+  'notifications.lobbyFullDescriptionWithPlayer':
+    '{playerName} joined "{lobbyName}" ({current}/{max}). You can start the game.',
+  'notifications.openLobby': 'Open',
+  'notifications.lobbyFallbackName': 'Lobby',
 } as const

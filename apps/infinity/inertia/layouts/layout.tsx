@@ -5,6 +5,7 @@ import { Toaster } from '@infinity.dev/ui/primitives/sonner'
 import { ToastHandler } from './toast_handler'
 import { LobbyStatusSidebar } from './LobbyStatusSidebar'
 import { AutoLeaveLobby } from './AutoLeaveLobby'
+import { LobbyOwnerNotifications } from './LobbyOwnerNotifications'
 import { TransmitProvider } from '../contexts/TransmitContext'
 import { disposeLobbyService } from '../hooks/use_lobby_service'
 
@@ -32,7 +33,7 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const { props } = usePage()
-  const user = props.user as { uuid?: string } | null | undefined
+  const user = props.user as { uuid?: string; fullName?: string } | null | undefined
   const isRealtimeEnabled = Boolean(user?.uuid)
   const currentLobby = props.currentLobby as {
     uuid: string
@@ -40,6 +41,11 @@ export default function Layout({ children }: LayoutProps) {
     status: string
     currentPlayers: number
     maxPlayers: number
+    canStart?: boolean
+    isOwner?: boolean
+    createdBy?: string
+    isPrivate?: boolean
+    hasPassword?: boolean
   } | null
 
   useEffect(() => {
@@ -53,7 +59,18 @@ export default function Layout({ children }: LayoutProps) {
       {children}
       <FlashMessages />
       <ToastHandler />
-      <LobbyStatusSidebar currentLobby={currentLobby} />
+      <LobbyStatusSidebar
+        currentLobby={currentLobby}
+        currentUser={
+          user?.uuid
+            ? {
+                uuid: user.uuid,
+                fullName: user.fullName ?? '',
+              }
+            : undefined
+        }
+      />
+      <LobbyOwnerNotifications userUuid={user?.uuid} />
       <AutoLeaveLobby currentLobby={currentLobby} enabled={true} />
       <Toaster />
     </TransmitProvider>

@@ -1,5 +1,7 @@
 export const frMessages = {
   'common.language': 'Langue',
+  'common.startGame': 'Lancer la partie',
+  'common.starting': 'Démarrage...',
   'language.en': 'Anglais',
   'language.fr': 'Français',
   'language.de': 'Allemand',
@@ -56,4 +58,12 @@ export const frMessages = {
   'lobbies.unknownError': 'Erreur inconnue',
   'lobbies.unableCloseSome': 'Impossible de fermer certains lobbies',
   'lobbies.bulkCloseFailed': 'Échec de la fermeture groupée',
+
+  'notifications.lobbyFullTitle': 'Lobby complet: {lobbyName}',
+  'notifications.lobbyFullDescription':
+    'Ton lobby "{lobbyName}" est complet ({current}/{max}). Tu peux lancer la partie.',
+  'notifications.lobbyFullDescriptionWithPlayer':
+    '{playerName} vient de rejoindre "{lobbyName}" ({current}/{max}). Tu peux lancer la partie.',
+  'notifications.openLobby': 'Ouvrir',
+  'notifications.lobbyFallbackName': 'Lobby',
 } as const

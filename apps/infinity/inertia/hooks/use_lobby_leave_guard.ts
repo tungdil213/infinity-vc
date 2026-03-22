@@ -7,6 +7,7 @@ interface UseLobbyLeaveGuardOptions {
   lobbyUuid?: string
   userUuid?: string
   onLeaveLobby?: (userUuid: string) => Promise<void>
+  leaveOnNavigation?: boolean
 }
 
 const HEARTBEAT_INTERVAL_MS = 5_000
@@ -73,6 +74,7 @@ export function useLobbyLeaveGuard({
   lobbyUuid,
   userUuid,
   onLeaveLobby,
+  leaveOnNavigation = true,
 }: UseLobbyLeaveGuardOptions) {
   const { t } = useI18n()
   const isLeavingRef = useRef(false)
@@ -203,6 +205,10 @@ export function useLobbyLeaveGuard({
           return
         }
 
+        if (!leaveOnNavigation) {
+          return
+        }
+
         event.preventDefault()
 
         // Mark as intentionally leaving to prevent duplicate requests
@@ -237,7 +243,7 @@ export function useLobbyLeaveGuard({
       window.removeEventListener('pagehide', handlePageHide)
       document.removeEventListener('inertia:before', handleInertiaBefore)
     }
-  }, [isInLobby, lobbyUuid, userUuid, onLeaveLobby, t])
+  }, [isInLobby, lobbyUuid, userUuid, onLeaveLobby, t, leaveOnNavigation])
 
   // Mark explicit leave to skip confirmation dialogs
   const markAsLeaving = () => {

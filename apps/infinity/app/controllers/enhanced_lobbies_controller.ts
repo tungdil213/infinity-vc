@@ -68,6 +68,18 @@ const LOBBY_ERROR_TRANSLATION_KEYS: Record<string, string> = {
   'Closer user UUID is required': 'lobbies.errors.userUuidRequired',
 }
 
+const PRIVATE_LOBBY_PRESENCE_GRACE_MS = resolvePrivateLobbyPresenceGraceMs()
+
+function resolvePrivateLobbyPresenceGraceMs(): number {
+  const configuredValue = Number(process.env.LOBBY_PRIVATE_DISCONNECT_GRACE_MS ?? 172_800_000)
+  if (!Number.isFinite(configuredValue)) {
+    return 172_800_000
+  }
+
+  // Private async lobbies can stay alive up to 7 days.
+  return Math.min(604_800_000, Math.max(60_000, Math.floor(configuredValue)))
+}
+
 @inject()
 export default class EnhancedLobbiesController {
   constructor(
@@ -283,6 +295,7 @@ export default class EnhancedLobbiesController {
         this.markLobbyPresenceConnected({
           lobbyUuid: uuid,
           userUuid: user.userUuid,
+          gracePeriodMs: this.resolvePresenceGracePeriodMs(result.value),
         })
       }
 
@@ -349,6 +362,7 @@ export default class EnhancedLobbiesController {
       this.markLobbyPresenceConnected({
         lobbyUuid: invitationCode,
         userUuid: user.userUuid,
+        gracePeriodMs: this.resolvePresenceGracePeriodMs(result.value.lobby),
       })
 
       session.flash('success', i18n.t('lobbies.flash.joined'))
@@ -388,6 +402,7 @@ export default class EnhancedLobbiesController {
       this.markLobbyPresenceConnected({
         lobbyUuid: uuid,
         userUuid: user.userUuid,
+        gracePeriodMs: this.resolvePresenceGracePeriodMs(result.value.lobby),
       })
 
       if (request.accepts(['html'])) {
@@ -818,6 +833,16 @@ export default class EnhancedLobbiesController {
     this.lobbyPresenceService.markConnected(payload, async (stalePayload) => {
       await this.executePresenceLeave(stalePayload, 'Stale heartbeat leave execution failed')
     })
+  }
+
+  private resolvePresenceGracePeriodMs(
+    lobby?: {
+      isPrivate?: boolean
+      hasPassword?: boolean
+    } | null
+  ): number | undefined {
+    const shouldKeepAsync = Boolean(lobby?.isPrivate || lobby?.hasPassword)
+    return shouldKeepAsync ? PRIVATE_LOBBY_PRESENCE_GRACE_MS : undefined
   }
 
   private async executePresenceLeave(

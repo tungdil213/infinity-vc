@@ -49,6 +49,7 @@ export default function GameLobby({
 
   // Detect whether current user is in the lobby
   const isUserInLobby = lobby?.players?.some((player) => player.uuid === currentUser.uuid) || false
+  const shouldKeepLobbySessionOnNavigation = Boolean(lobby?.isPrivate || lobby?.hasPassword)
 
   // Hook used to manage leave confirmation
   const { markAsLeaving } = useLobbyLeaveGuard({
@@ -56,6 +57,7 @@ export default function GameLobby({
     lobbyUuid,
     userUuid: currentUser.uuid,
     onLeaveLobby: leaveLobby,
+    leaveOnNavigation: !shouldKeepLobbySessionOnNavigation,
   })
 
   const handleStartGame = async () => {
@@ -117,7 +119,7 @@ export default function GameLobby({
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      Accept: 'application/json',
+      'Accept': 'application/json',
     }
     if (csrfToken) {
       headers['X-CSRF-TOKEN'] = csrfToken

@@ -202,4 +202,47 @@ test.group('LobbyPresenceService', (group) => {
     assert.isTrue(wasCleared)
     assert.lengthOf(staleExecuted, 0)
   })
+
+  test('uses custom grace period for stale heartbeat timeout', async ({ assert }) => {
+    const staleExecuted: Array<{ lobbyUuid: string; userUuid: string }> = []
+
+    service.markConnected(
+      {
+        lobbyUuid: 'lobby-9',
+        userUuid: 'user-9',
+        gracePeriodMs: 80,
+      },
+      async (leavePayload) => {
+        staleExecuted.push(leavePayload)
+      }
+    )
+
+    await wait(50)
+    assert.lengthOf(staleExecuted, 0)
+
+    await wait(45)
+    assert.lengthOf(staleExecuted, 1)
+  })
+
+  test('uses custom grace period for delayed disconnect leave', async ({ assert }) => {
+    const disconnectExecuted: Array<{ lobbyUuid: string; userUuid: string }> = []
+    const scheduling = service.scheduleLeaveOnDisconnect(
+      {
+        lobbyUuid: 'lobby-10',
+        userUuid: 'user-10',
+        gracePeriodMs: 80,
+      },
+      async (leavePayload) => {
+        disconnectExecuted.push(leavePayload)
+      }
+    )
+
+    assert.equal(scheduling.gracePeriodMs, 80)
+
+    await wait(50)
+    assert.lengthOf(disconnectExecuted, 0)
+
+    await wait(45)
+    assert.lengthOf(disconnectExecuted, 1)
+  })
 })
