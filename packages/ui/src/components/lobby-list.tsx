@@ -8,6 +8,7 @@ import { Switch } from './primitives/switch';
 import { Label } from './primitives/label';
 import { Badge } from './primitives/badge';
 import { Skeleton } from './primitives/skeleton';
+import { ToggleGroup, ToggleGroupItem } from './primitives/toggle-group';
 import { LobbyCard, LobbyData } from './lobby-card';
 import { Search, Filter, Grid, List, Plus, RefreshCw } from 'lucide-react';
 
@@ -169,7 +170,7 @@ const defaultLabels: LobbyListLabels = {
 };
 
 const interpolateLabel = (template: string, values: Record<string, string | number>) =>
-	template.replace(/\{(\w+)\}/g, (_, key: string) => String(values[key] ?? `{${key}}`));
+	template.replace(/{(\w+)}/g, (_, key: string) => String(values[key] ?? `{${key}}`));
 
 export function LobbyList({
 	lobbies,
@@ -385,24 +386,25 @@ export function LobbyList({
 							<RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
 						</Button>
 					)}
-					<div className="flex items-center border rounded-md">
-						<Button
-							variant={viewMode === 'grid' ? 'default' : 'noShadow'}
-							size="sm"
-							onClick={() => setViewMode('grid')}
-							className="rounded-r-none"
-						>
+					<ToggleGroup
+						type="single"
+						value={viewMode}
+						onValueChange={(value) => {
+							if (value === 'grid' || value === 'list') {
+								setViewMode(value);
+							}
+						}}
+						variant="outline"
+						size="sm"
+						aria-label="Lobby display mode"
+					>
+						<ToggleGroupItem value="grid" aria-label="Grid view">
 							<Grid className="h-4 w-4" />
-						</Button>
-						<Button
-							variant={viewMode === 'list' ? 'default' : 'noShadow'}
-							size="sm"
-							onClick={() => setViewMode('list')}
-							className="rounded-l-none"
-						>
+						</ToggleGroupItem>
+						<ToggleGroupItem value="list" aria-label="List view">
 							<List className="h-4 w-4" />
-						</Button>
-					</div>
+						</ToggleGroupItem>
+					</ToggleGroup>
 					{onCreateLobby && (
 						<Button onClick={onCreateLobby} size="sm" className="w-full sm:w-auto">
 							<Plus className="h-4 w-4 mr-2" />
@@ -548,9 +550,7 @@ export function LobbyList({
 
 								<div className="max-h-56 space-y-2 overflow-auto rounded-base border-2 border-slate-200 bg-white p-2">
 									{moderationTargets.length === 0 ? (
-										<p className="p-2 text-sm text-muted-foreground">
-											{ui.noSensitiveLobbies}
-										</p>
+										<p className="p-2 text-sm text-muted-foreground">{ui.noSensitiveLobbies}</p>
 									) : (
 										moderationTargets.map((lobby) => {
 											const isSelected = selectedLobbyUuids.includes(lobby.uuid);
@@ -559,9 +559,7 @@ export function LobbyList({
 													key={`moderation-target-${lobby.uuid}`}
 													className={cn(
 														'flex cursor-pointer items-center justify-between rounded-base border px-3 py-2 text-sm',
-														isSelected
-															? 'border-slate-400 bg-slate-100'
-															: 'border-slate-200 bg-white'
+														isSelected ? 'border-slate-400 bg-slate-100' : 'border-slate-200 bg-white'
 													)}
 												>
 													<div className="min-w-0">
@@ -575,9 +573,7 @@ export function LobbyList({
 														<input
 															type="checkbox"
 															checked={isSelected}
-															onChange={(event) =>
-																toggleLobbySelection(lobby.uuid, event.target.checked)
-															}
+															onChange={(event) => toggleLobbySelection(lobby.uuid, event.target.checked)}
 														/>
 													</div>
 												</label>
@@ -656,11 +652,7 @@ export function LobbyList({
 					<CardContent className="p-12 text-center">
 						<div className="text-gray-500 mb-4">
 							<h3 className="text-lg font-medium">{ui.noLobbyFoundTitle}</h3>
-							<p className="text-sm">
-								{lobbies.length === 0
-									? ui.noLobbiesCreated
-									: ui.noLobbyMatches}
-							</p>
+							<p className="text-sm">{lobbies.length === 0 ? ui.noLobbiesCreated : ui.noLobbyMatches}</p>
 						</div>
 						{onCreateLobby && (
 							<Button onClick={onCreateLobby}>

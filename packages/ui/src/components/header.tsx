@@ -23,6 +23,7 @@ import {
 	Users,
 	Plus,
 	Bell,
+	Menu,
 	User,
 	Settings,
 	LogOut,
@@ -162,12 +163,15 @@ export function Header({
 	};
 
 	const getStatusColor = (status: string) => {
-		switch (status) {
-			case 'waiting':
+		switch (status.toUpperCase()) {
+			case 'WAITING':
+			case 'READY':
+			case 'OPEN':
 				return 'bg-yellow-500';
-			case 'playing':
+			case 'PLAYING':
+			case 'IN_GAME':
 				return 'bg-green-500';
-			case 'finished':
+			case 'FINISHED':
 				return 'bg-gray-500';
 			default:
 				return 'bg-blue-500';
@@ -191,7 +195,7 @@ export function Header({
 						</div>
 
 						{/* Navigation */}
-						<div className="flex w-full flex-nowrap items-center justify-end gap-2 overflow-x-auto pb-1 sm:w-auto sm:gap-3 sm:overflow-visible sm:pb-0">
+						<div className="flex w-full items-center justify-end gap-2 sm:w-auto sm:gap-3">
 							{/* Connection Status */}
 							<div
 								className="flex shrink-0 items-center gap-2"
@@ -207,10 +211,7 @@ export function Header({
 							{availableLocales.length > 0 && onLocaleChange && (
 								<DropdownMenu>
 									<DropdownMenuTrigger
-										className={cn(
-											buttonVariants({ variant: 'neutral', size: 'sm' }),
-											'flex items-center gap-2'
-										)}
+										className={cn(buttonVariants({ variant: 'neutral', size: 'sm' }), 'flex items-center gap-2')}
 									>
 										<Globe className="w-4 h-4" />
 										<span className="hidden sm:inline">{selectedLocale?.label ?? locale.toUpperCase()}</span>
@@ -234,140 +235,206 @@ export function Header({
 
 							{user ? (
 								<>
-									{/* Current Lobby Indicator */}
-									{currentLobby && (
-										<Button
-											onClick={onGoToCurrentLobby}
-											variant="neutral"
-											size="sm"
-											className="flex min-w-0 max-w-full shrink-0 items-center gap-2"
-										>
-											<div className={`w-2 h-2 rounded-full ${getStatusColor(currentLobby.status)}`} />
-											<span className="hidden max-w-40 truncate md:inline md:max-w-56">{currentLobby.name}</span>
-											<Badge variant="secondary" className="shrink-0 text-xs">
-												{currentLobby.currentPlayers}/{currentLobby.maxPlayers}
-											</Badge>
-										</Button>
-									)}
+									<div className="hidden md:flex md:items-center md:gap-2">
+										{/* Current Lobby Indicator */}
+										{currentLobby && (
+											<Button
+												onClick={onGoToCurrentLobby}
+												variant="neutral"
+												size="sm"
+												className="flex min-w-0 max-w-full shrink-0 items-center gap-2"
+											>
+												<div className={`w-2 h-2 rounded-full ${getStatusColor(currentLobby.status)}`} />
+												<span className="hidden max-w-40 truncate md:inline md:max-w-56">{currentLobby.name}</span>
+												<Badge variant="secondary" className="shrink-0 text-xs">
+													{currentLobby.currentPlayers}/{currentLobby.maxPlayers}
+												</Badge>
+											</Button>
+										)}
 
-									{/* Quick Actions */}
-									<div className="flex shrink-0 items-center gap-2">
-										<Button onClick={onCreateLobby} size="sm" className="flex items-center gap-2">
-											<Plus className="w-4 h-4" />
-											<span className="hidden md:inline">{ui.createAction}</span>
-										</Button>
-
-										<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-											<DialogTrigger
-												className={cn(
-													buttonVariants({ variant: 'neutral', size: 'sm' }),
-													'flex items-center gap-2'
-												)}
+										{/* Quick Actions */}
+										<div className="flex shrink-0 items-center gap-2">
+											<Button onClick={onCreateLobby} size="sm" className="flex items-center gap-2">
+												<Plus className="w-4 h-4" />
+												<span className="hidden md:inline">{ui.createAction}</span>
+											</Button>
+											<Button
+												variant="neutral"
+												size="sm"
+												className="flex items-center gap-2"
+												onClick={() => setIsDialogOpen(true)}
 											>
 												<Hash className="w-4 h-4" />
 												<span className="hidden md:inline">{ui.joinAction}</span>
-											</DialogTrigger>
-											<DialogContent className="sm:max-w-md">
-												<DialogHeader>
-													<DialogTitle>{ui.joinDialogTitle}</DialogTitle>
-													<DialogDescription>{ui.joinDialogDescription}</DialogDescription>
-												</DialogHeader>
-												<div className="grid gap-4 py-4">
-													<div className="grid gap-2">
-														<Label htmlFor="lobby-code">{ui.joinCodeLabel}</Label>
-														<Input
-															id="lobby-code"
-															value={lobbyCode}
-															onChange={(e) => setLobbyCode(e.target.value)}
-															placeholder={ui.joinCodePlaceholder}
-															onKeyDown={(e) => e.key === 'Enter' && handleJoinByCode()}
-														/>
-													</div>
+											</Button>
+										</div>
+
+										{/* Browse Lobbies */}
+										<Button
+											onClick={onGoToLobbies}
+											variant="neutral"
+											size="sm"
+											className="flex shrink-0 items-center gap-2"
+										>
+											<Gamepad2 className="w-4 h-4" />
+											<span className="hidden md:inline">{ui.lobbiesAction}</span>
+										</Button>
+
+										{/* Notifications */}
+										<Button variant="neutral" size="sm" className="relative shrink-0">
+											<Bell className="w-4 h-4" />
+										</Button>
+
+										{/* User Menu */}
+										<DropdownMenu>
+											<DropdownMenuTrigger
+												className={cn(
+													buttonVariants({ variant: 'neutral', size: 'sm' }),
+													'flex max-w-full shrink-0 items-center gap-2'
+												)}
+											>
+												<User className="w-4 h-4" />
+												<span className="hidden max-w-32 truncate md:inline">{user.fullName}</span>
+											</DropdownMenuTrigger>
+											<DropdownMenuContent align="end" className="w-56">
+												<div className="px-2 py-1.5">
+													<p className="text-sm font-medium">{user.fullName}</p>
+													<p className="text-xs text-muted-foreground">{user.email}</p>
 												</div>
-												<DialogFooter>
-													<Button
-														onClick={handleJoinByCode}
-														disabled={!lobbyCode.trim() || isJoining}
-														className="w-full"
-													>
-														{isJoining ? ui.joining : ui.joinSubmit}
-													</Button>
-												</DialogFooter>
-											</DialogContent>
-										</Dialog>
+												<DropdownMenuSeparator />
+												<DropdownMenuItem onClick={onProfile}>
+													<User className="w-4 h-4 mr-2" />
+													{ui.profile}
+												</DropdownMenuItem>
+												<DropdownMenuItem onClick={onSettings}>
+													<Settings className="w-4 h-4 mr-2" />
+													{ui.settings}
+												</DropdownMenuItem>
+												<DropdownMenuSeparator />
+												<DropdownMenuItem onClick={onLogout}>
+													<LogOut className="w-4 h-4 mr-2" />
+													{ui.logout}
+												</DropdownMenuItem>
+											</DropdownMenuContent>
+										</DropdownMenu>
 									</div>
 
-									{/* Browse Lobbies */}
-									<Button
-										onClick={onGoToLobbies}
-										variant="neutral"
-										size="sm"
-										className="flex shrink-0 items-center gap-2"
-									>
-										<Gamepad2 className="w-4 h-4" />
-										<span className="hidden md:inline">{ui.lobbiesAction}</span>
-									</Button>
+									<div className="flex md:hidden md:items-center md:gap-2">
+										<DropdownMenu>
+											<DropdownMenuTrigger className={buttonVariants({ variant: 'neutral', size: 'sm' })}>
+												<Menu className="h-4 w-4" />
+											</DropdownMenuTrigger>
+											<DropdownMenuContent align="end" className="w-56">
+												{currentLobby && (
+													<>
+														<DropdownMenuItem onClick={onGoToCurrentLobby}>
+															<Gamepad2 className="w-4 h-4 mr-2" />
+															<span className="truncate">{currentLobby.name}</span>
+															<Badge variant="secondary" className="ml-auto text-xs">
+																{currentLobby.currentPlayers}/{currentLobby.maxPlayers}
+															</Badge>
+														</DropdownMenuItem>
+														<DropdownMenuSeparator />
+													</>
+												)}
 
-									{/* Notifications */}
-									<Button variant="neutral" size="sm" className="relative shrink-0">
-										<Bell className="w-4 h-4" />
-									</Button>
+												<DropdownMenuItem onClick={onCreateLobby}>
+													<Plus className="w-4 h-4 mr-2" />
+													{ui.createAction}
+												</DropdownMenuItem>
+												<DropdownMenuItem onClick={() => setIsDialogOpen(true)}>
+													<Hash className="w-4 h-4 mr-2" />
+													{ui.joinAction}
+												</DropdownMenuItem>
+												<DropdownMenuItem onClick={onGoToLobbies}>
+													<Gamepad2 className="w-4 h-4 mr-2" />
+													{ui.lobbiesAction}
+												</DropdownMenuItem>
+												<DropdownMenuSeparator />
+												<DropdownMenuItem onClick={onProfile}>
+													<User className="w-4 h-4 mr-2" />
+													{ui.profile}
+												</DropdownMenuItem>
+												<DropdownMenuItem onClick={onSettings}>
+													<Settings className="w-4 h-4 mr-2" />
+													{ui.settings}
+												</DropdownMenuItem>
+												<DropdownMenuItem onClick={onLogout}>
+													<LogOut className="w-4 h-4 mr-2" />
+													{ui.logout}
+												</DropdownMenuItem>
+											</DropdownMenuContent>
+										</DropdownMenu>
+									</div>
 
-									{/* User Menu */}
-									<DropdownMenu>
-										<DropdownMenuTrigger
-											className={cn(
-												buttonVariants({ variant: 'neutral', size: 'sm' }),
-												'flex max-w-full shrink-0 items-center gap-2'
-											)}
-										>
-											<User className="w-4 h-4" />
-											<span className="hidden max-w-32 truncate md:inline">{user.fullName}</span>
-										</DropdownMenuTrigger>
-										<DropdownMenuContent align="end" className="w-56">
-											<div className="px-2 py-1.5">
-												<p className="text-sm font-medium">{user.fullName}</p>
-												<p className="text-xs text-muted-foreground">{user.email}</p>
+									<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+										<DialogTrigger className="hidden" />
+										<DialogContent className="sm:max-w-md">
+											<DialogHeader>
+												<DialogTitle>{ui.joinDialogTitle}</DialogTitle>
+												<DialogDescription>{ui.joinDialogDescription}</DialogDescription>
+											</DialogHeader>
+											<div className="grid gap-4 py-4">
+												<div className="grid gap-2">
+													<Label htmlFor="lobby-code">{ui.joinCodeLabel}</Label>
+													<Input
+														id="lobby-code"
+														value={lobbyCode}
+														onChange={(e) => setLobbyCode(e.target.value)}
+														placeholder={ui.joinCodePlaceholder}
+														onKeyDown={(e) => e.key === 'Enter' && handleJoinByCode()}
+													/>
+												</div>
 											</div>
-											<DropdownMenuSeparator />
-											<DropdownMenuItem onClick={onProfile}>
-												<User className="w-4 h-4 mr-2" />
-												{ui.profile}
-											</DropdownMenuItem>
-											<DropdownMenuItem onClick={onSettings}>
-												<Settings className="w-4 h-4 mr-2" />
-												{ui.settings}
-											</DropdownMenuItem>
-											<DropdownMenuSeparator />
-											<DropdownMenuItem onClick={onLogout}>
-												<LogOut className="w-4 h-4 mr-2" />
-												{ui.logout}
-											</DropdownMenuItem>
-										</DropdownMenuContent>
-									</DropdownMenu>
+											<DialogFooter>
+												<Button onClick={handleJoinByCode} disabled={!lobbyCode.trim() || isJoining} className="w-full">
+													{isJoining ? ui.joining : ui.joinSubmit}
+												</Button>
+											</DialogFooter>
+										</DialogContent>
+									</Dialog>
 								</>
 							) : (
-								<div className="flex w-full flex-nowrap items-center justify-end gap-2 overflow-x-auto pb-1 sm:w-auto sm:overflow-visible sm:pb-0">
+								<>
 									{/* Public Lobbies Preview */}
-									<Button
-										onClick={onGoToLobbies}
-										variant="neutral"
-										size="sm"
-										className="flex shrink-0 items-center gap-2"
-									>
-										<Users className="w-4 h-4" />
-										<span className="hidden md:inline">{ui.browseLobbies}</span>
-										<span className="md:hidden">{ui.lobbiesShort}</span>
-									</Button>
+									<div className="hidden md:flex md:items-center md:gap-2">
+										<Button
+											onClick={onGoToLobbies}
+											variant="neutral"
+											size="sm"
+											className="flex shrink-0 items-center gap-2"
+										>
+											<Users className="w-4 h-4" />
+											<span className="hidden md:inline">{ui.browseLobbies}</span>
+											<span className="md:hidden">{ui.lobbiesShort}</span>
+										</Button>
 
-									{/* Auth Buttons */}
-									<Button onClick={onLogin} variant="neutral" size="sm">
-										{ui.login}
-									</Button>
-									<Button onClick={onRegister} size="sm">
-										{ui.signup}
-									</Button>
-								</div>
+										{/* Auth Buttons */}
+										<Button onClick={onLogin} variant="neutral" size="sm">
+											{ui.login}
+										</Button>
+										<Button onClick={onRegister} size="sm">
+											{ui.signup}
+										</Button>
+									</div>
+
+									<div className="flex md:hidden">
+										<DropdownMenu>
+											<DropdownMenuTrigger className={buttonVariants({ variant: 'neutral', size: 'sm' })}>
+												<Menu className="h-4 w-4" />
+											</DropdownMenuTrigger>
+											<DropdownMenuContent align="end" className="w-48">
+												<DropdownMenuItem onClick={onGoToLobbies}>
+													<Users className="w-4 h-4 mr-2" />
+													{ui.browseLobbies}
+												</DropdownMenuItem>
+												<DropdownMenuSeparator />
+												<DropdownMenuItem onClick={onLogin}>{ui.login}</DropdownMenuItem>
+												<DropdownMenuItem onClick={onRegister}>{ui.signup}</DropdownMenuItem>
+											</DropdownMenuContent>
+										</DropdownMenu>
+									</div>
+								</>
 							)}
 						</div>
 					</div>

@@ -1,5 +1,4 @@
-import { Head } from '@inertiajs/react'
-import { Link } from '@adonisjs/inertia/react'
+import { Head, router } from '@inertiajs/react'
 import { Button } from '@infinity.dev/ui/primitives/button'
 import { Badge } from '@infinity.dev/ui/primitives/badge'
 import {
@@ -143,16 +142,21 @@ export default function ProfilePage({ user, stats, recentGames }: ProfilePagePro
             </div>
 
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-              <Link href="/settings" className="w-full sm:w-auto">
-                <Button size="sm" variant="neutral" className="w-full sm:w-auto">
-                  {t('profile.goToSettings')}
-                </Button>
-              </Link>
-              <Link href="/lobbies" className="w-full sm:w-auto">
-                <Button size="sm" className="w-full sm:w-auto">
-                  {t('profile.browseLobbies')}
-                </Button>
-              </Link>
+              <Button
+                size="sm"
+                variant="neutral"
+                className="w-full sm:w-auto"
+                onClick={() => router.visit('/settings')}
+              >
+                {t('profile.goToSettings')}
+              </Button>
+              <Button
+                size="sm"
+                className="w-full sm:w-auto"
+                onClick={() => router.visit('/lobbies')}
+              >
+                {t('profile.browseLobbies')}
+              </Button>
             </div>
           </section>
 

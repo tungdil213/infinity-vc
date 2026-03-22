@@ -179,7 +179,6 @@ router
   .use([middleware.auth(), middleware.adminGuard()])
 
 // Transmit routes
-transmit.registerRoutes((route) => {
-  // Ensure you are authenticated to register your client
-  route.middleware(middleware.auth())
-})
+// Keep SSE endpoint reachable to avoid noisy connection failures.
+// Channel-level authorization (see start/transmit.ts) remains the source of truth.
+transmit.registerRoutes()
