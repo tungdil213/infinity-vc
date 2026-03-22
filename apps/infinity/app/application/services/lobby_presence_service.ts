@@ -21,6 +21,8 @@ type ActiveConnectionEntry = {
   clientSessionId?: string
   connectedAt: number
   lastHeartbeatAt: number
+  staleLeaveTimeout?: NodeJS.Timeout
+  onStaleLeave?: PendingLeaveHandler
 }
 
 const DEFAULT_GRACE_PERIOD_MS = resolveDefaultGracePeriodMs()
@@ -48,6 +50,7 @@ export class LobbyPresenceService {
 
     const key = this.buildKey(payload)
     const activeConnection = LobbyPresenceService.activeConnections.get(key)
+    this.clearStaleLeaveTimeout(activeConnection)
     const disconnectSessionId = payload.clientSessionId ?? activeConnection?.clientSessionId
 
     const timeout = setTimeout(async () => {
@@ -82,7 +85,7 @@ export class LobbyPresenceService {
           lobbyUuid: payload.lobbyUuid,
           userUuid: payload.userUuid,
         })
-        LobbyPresenceService.activeConnections.delete(key)
+        this.clearConnection(payload)
       } catch (error) {
         logger.warn(
           { error, lobbyUuid: payload.lobbyUuid, userUuid: payload.userUuid },
@@ -103,18 +106,47 @@ export class LobbyPresenceService {
     }
   }
 
-  markConnected(payload: LobbyConnectionPayload): void {
+  markConnected(payload: LobbyConnectionPayload, onStaleLeave?: PendingLeaveHandler): void {
     const key = this.buildKey(payload)
     const now = Date.now()
     const current = LobbyPresenceService.activeConnections.get(key)
+    const staleLeaveHandler = onStaleLeave ?? current?.onStaleLeave
+    this.clearStaleLeaveTimeout(current)
 
-    LobbyPresenceService.activeConnections.set(key, {
+    const connectionEntry: ActiveConnectionEntry = {
       clientSessionId: payload.clientSessionId ?? current?.clientSessionId,
       connectedAt: current?.connectedAt ?? now,
       lastHeartbeatAt: now,
-    })
+      onStaleLeave: staleLeaveHandler,
+    }
+
+    if (staleLeaveHandler) {
+      connectionEntry.staleLeaveTimeout = this.scheduleStaleLeaveTimeout(
+        {
+          lobbyUuid: payload.lobbyUuid,
+          userUuid: payload.userUuid,
+        },
+        now,
+        staleLeaveHandler
+      )
+    }
+
+    LobbyPresenceService.activeConnections.set(key, connectionEntry)
 
     this.cancelPendingLeave(payload)
+  }
+
+  clearConnection(payload: PendingLeavePayload): boolean {
+    const key = this.buildKey(payload)
+    const activeConnection = LobbyPresenceService.activeConnections.get(key)
+    if (!activeConnection) {
+      return false
+    }
+
+    this.clearStaleLeaveTimeout(activeConnection)
+    LobbyPresenceService.activeConnections.delete(key)
+    this.cancelPendingLeave(payload)
+    return true
   }
 
   cancelPendingLeave(payload: PendingLeavePayload): boolean {
@@ -141,6 +173,11 @@ export class LobbyPresenceService {
     for (const pendingLeave of LobbyPresenceService.pendingLeaves.values()) {
       clearTimeout(pendingLeave.timeout)
     }
+
+    for (const activeConnection of LobbyPresenceService.activeConnections.values()) {
+      this.clearStaleLeaveTimeout(activeConnection)
+    }
+
     LobbyPresenceService.pendingLeaves.clear()
     LobbyPresenceService.activeConnections.clear()
   }
@@ -151,5 +188,48 @@ export class LobbyPresenceService {
 
   private buildKey(payload: PendingLeavePayload): string {
     return `${payload.lobbyUuid}:${payload.userUuid}`
+  }
+
+  private scheduleStaleLeaveTimeout(
+    payload: PendingLeavePayload,
+    expectedHeartbeatAt: number,
+    onStaleLeave: PendingLeaveHandler
+  ): NodeJS.Timeout {
+    return setTimeout(async () => {
+      const key = this.buildKey(payload)
+      const latestConnection = LobbyPresenceService.activeConnections.get(key)
+      if (!latestConnection) {
+        return
+      }
+
+      // A newer heartbeat already refreshed this connection.
+      if (latestConnection.lastHeartbeatAt !== expectedHeartbeatAt) {
+        return
+      }
+
+      try {
+        await onStaleLeave(payload)
+        this.clearConnection(payload)
+      } catch (error) {
+        logger.warn(
+          { error, lobbyUuid: payload.lobbyUuid, userUuid: payload.userUuid },
+          '[LobbyPresence] Stale heartbeat leave execution failed'
+        )
+
+        latestConnection.staleLeaveTimeout = this.scheduleStaleLeaveTimeout(
+          payload,
+          latestConnection.lastHeartbeatAt,
+          onStaleLeave
+        )
+        LobbyPresenceService.activeConnections.set(key, latestConnection)
+      }
+    }, this.gracePeriodMs)
+  }
+
+  private clearStaleLeaveTimeout(connection?: ActiveConnectionEntry): void {
+    if (connection?.staleLeaveTimeout) {
+      clearTimeout(connection.staleLeaveTimeout)
+      connection.staleLeaveTimeout = undefined
+    }
   }
 }

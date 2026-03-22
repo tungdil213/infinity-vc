@@ -28,7 +28,11 @@ import { toUserSummary } from '#presenters/lobby_presenter'
 import type { HttpRequest, HttpResponse } from '@adonisjs/core/http'
 import type { Session } from '@adonisjs/session'
 import { defaultGameCatalog } from '#infrastructure/game_engine/launcher_game_catalog'
-import { LobbyPresenceService } from '#application/services/lobby_presence_service'
+import {
+  LobbyPresenceService,
+  type LobbyConnectionPayload,
+  type PendingLeavePayload,
+} from '#application/services/lobby_presence_service'
 
 type AvailableGameViewModel = {
   id: string
@@ -276,7 +280,7 @@ export default class EnhancedLobbiesController {
 
       const isUserInLobby = result.value.players.some((player) => player.uuid === user.userUuid)
       if (isUserInLobby) {
-        this.lobbyPresenceService.markConnected({
+        this.markLobbyPresenceConnected({
           lobbyUuid: uuid,
           userUuid: user.userUuid,
         })
@@ -342,7 +346,7 @@ export default class EnhancedLobbiesController {
         return response.redirect().back()
       }
 
-      this.lobbyPresenceService.markConnected({
+      this.markLobbyPresenceConnected({
         lobbyUuid: invitationCode,
         userUuid: user.userUuid,
       })
@@ -381,7 +385,7 @@ export default class EnhancedLobbiesController {
         })
       }
 
-      this.lobbyPresenceService.markConnected({
+      this.markLobbyPresenceConnected({
         lobbyUuid: uuid,
         userUuid: user.userUuid,
       })
@@ -435,6 +439,11 @@ export default class EnhancedLobbiesController {
           error: result.error,
         })
       }
+
+      this.lobbyPresenceService.clearConnection({
+        lobbyUuid: uuid,
+        userUuid: user.userUuid,
+      })
 
       if (request.accepts(['html'])) {
         session.flash('success', i18n.t('lobbies.flash.left'))
@@ -630,8 +639,7 @@ export default class EnhancedLobbiesController {
    */
   async apiIndex({ response, auth, i18n }: HttpContext) {
     const user = auth.user
-    const canModerate =
-      user?.normalizedRole === 'MODERATOR' || user?.normalizedRole === 'ADMIN'
+    const canModerate = user?.normalizedRole === 'MODERATOR' || user?.normalizedRole === 'ADMIN'
 
     try {
       const result = await this.listLobbiesUseCase.execute({
@@ -678,23 +686,8 @@ export default class EnhancedLobbiesController {
           userUuid: user.userUuid,
           clientSessionId,
         },
-        async ({ lobbyUuid: delayedLobbyUuid, userUuid: delayedUserUuid }) => {
-          const result = await this.leaveLobbyUseCase.execute({
-            lobbyUuid: delayedLobbyUuid,
-            userUuid: delayedUserUuid,
-          })
-
-          if (result.isFailure) {
-            const error = result.error || ''
-            const isAlreadyLeft =
-              error.includes('Player is not in this lobby') || error.includes('not found')
-            if (!isAlreadyLeft) {
-              logger.warn(
-                { lobbyUuid: delayedLobbyUuid, error: result.error },
-                'Delayed leave on close failed'
-              )
-            }
-          }
+        async (payload) => {
+          await this.executePresenceLeave(payload, 'Delayed leave on close failed')
         }
       )
 
@@ -734,7 +727,7 @@ export default class EnhancedLobbiesController {
         return response.status(403).json({ error: i18n.t('http.errors.forbidden') })
       }
 
-      this.lobbyPresenceService.markConnected({
+      this.markLobbyPresenceConnected({
         lobbyUuid: uuid,
         userUuid: user.userUuid,
         clientSessionId,
@@ -752,7 +745,7 @@ export default class EnhancedLobbiesController {
   }
 
   private toLobbyViewModel<
-    T extends { uuid: string; hasPassword?: boolean; description?: string | null }
+    T extends { uuid: string; hasPassword?: boolean; description?: string | null },
   >(lobby: T, invitationCode?: string) {
     return {
       ...lobby,
@@ -819,6 +812,37 @@ export default class EnhancedLobbiesController {
     }
 
     return error
+  }
+
+  private markLobbyPresenceConnected(payload: LobbyConnectionPayload): void {
+    this.lobbyPresenceService.markConnected(payload, async (stalePayload) => {
+      await this.executePresenceLeave(stalePayload, 'Stale heartbeat leave execution failed')
+    })
+  }
+
+  private async executePresenceLeave(
+    payload: PendingLeavePayload,
+    logMessage: string
+  ): Promise<void> {
+    const result = await this.leaveLobbyUseCase.execute(payload)
+    if (result.isFailure) {
+      if (this.isAlreadyLeftError(result.error)) {
+        this.lobbyPresenceService.clearConnection(payload)
+        return
+      }
+
+      logger.warn(
+        { lobbyUuid: payload.lobbyUuid, userUuid: payload.userUuid, error: result.error },
+        logMessage
+      )
+      throw new Error(result.error)
+    }
+
+    this.lobbyPresenceService.clearConnection(payload)
+  }
+
+  private isAlreadyLeftError(error: string): boolean {
+    return error.includes('Player is not in this lobby') || error.includes('not found')
   }
 
   private parseBeaconPayload(body: unknown): {

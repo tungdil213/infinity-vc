@@ -6,7 +6,7 @@ interface UseLobbyLeaveGuardOptions {
   isInLobby: boolean
   lobbyUuid?: string
   userUuid?: string
-  onLeaveLobby?: (lobbyUuid: string, userUuid: string) => Promise<void>
+  onLeaveLobby?: (userUuid: string) => Promise<void>
 }
 
 const HEARTBEAT_INTERVAL_MS = 5_000
@@ -176,8 +176,8 @@ export function useLobbyLeaveGuard({
       }
     }
 
-    // Handle Inertia navigation transitions
-    const handleInertiaStart = (event: any) => {
+    // Handle Inertia navigation transitions before they start.
+    const handleInertiaBefore = (event: any) => {
       if (isLeavingRef.current) {
         return
       }
@@ -209,9 +209,10 @@ export function useLobbyLeaveGuard({
         isLeavingRef.current = true
 
         // Leave lobby before navigation to avoid ghost lobbies.
-        onLeaveLobby(lobbyUuid, userUuid)
+        onLeaveLobby(userUuid)
           .catch((error) => {
             console.error(t('guard.leaveLobbyError'), error)
+            sendLeaveBeacon()
           })
           .finally(() => {
             router.visit(nextHref)
@@ -225,7 +226,7 @@ export function useLobbyLeaveGuard({
     // Register listeners
     window.addEventListener('beforeunload', handleBeforeUnload)
     window.addEventListener('pagehide', handlePageHide)
-    document.addEventListener('inertia:start', handleInertiaStart)
+    document.addEventListener('inertia:before', handleInertiaBefore)
 
     // Cleanup
     return () => {
@@ -234,7 +235,7 @@ export function useLobbyLeaveGuard({
       }
       window.removeEventListener('beforeunload', handleBeforeUnload)
       window.removeEventListener('pagehide', handlePageHide)
-      document.removeEventListener('inertia:start', handleInertiaStart)
+      document.removeEventListener('inertia:before', handleInertiaBefore)
     }
   }, [isInLobby, lobbyUuid, userUuid, onLeaveLobby, t])
 

@@ -119,4 +119,87 @@ test.group('LobbyPresenceService', (group) => {
     assert.lengthOf(executed, 0)
     assert.equal(service.getPendingCount(), 0)
   })
+
+  test('auto-leaves when heartbeat expires without disconnect beacon', async ({ assert }) => {
+    const staleExecuted: Array<{ lobbyUuid: string; userUuid: string }> = []
+
+    service.markConnected(
+      {
+        lobbyUuid: 'lobby-5',
+        userUuid: 'user-5',
+      },
+      async (payload) => {
+        staleExecuted.push(payload)
+      }
+    )
+
+    await wait(50)
+
+    assert.lengthOf(staleExecuted, 1)
+    assert.equal(staleExecuted[0].lobbyUuid, 'lobby-5')
+    assert.equal(staleExecuted[0].userUuid, 'user-5')
+  })
+
+  test('refreshes stale heartbeat timeout when a new heartbeat arrives', async ({ assert }) => {
+    const staleExecuted: Array<{ lobbyUuid: string; userUuid: string }> = []
+    const payload = {
+      lobbyUuid: 'lobby-6',
+      userUuid: 'user-6',
+    }
+
+    service.markConnected(payload, async (leavePayload) => {
+      staleExecuted.push(leavePayload)
+    })
+
+    await wait(15)
+    service.markConnected(payload)
+
+    await wait(20)
+    assert.lengthOf(staleExecuted, 0)
+
+    await wait(25)
+    assert.lengthOf(staleExecuted, 1)
+  })
+
+  test('prefers disconnect timer over stale timeout when beacon is received', async ({
+    assert,
+  }) => {
+    const staleExecuted: Array<{ lobbyUuid: string; userUuid: string }> = []
+    const disconnectExecuted: Array<{ lobbyUuid: string; userUuid: string }> = []
+    const payload = {
+      lobbyUuid: 'lobby-7',
+      userUuid: 'user-7',
+    }
+
+    service.markConnected(payload, async (leavePayload) => {
+      staleExecuted.push(leavePayload)
+    })
+
+    service.scheduleLeaveOnDisconnect(payload, async (leavePayload) => {
+      disconnectExecuted.push(leavePayload)
+    })
+
+    await wait(50)
+
+    assert.lengthOf(disconnectExecuted, 1)
+    assert.lengthOf(staleExecuted, 0)
+  })
+
+  test('clearConnection cancels stale heartbeat timeout', async ({ assert }) => {
+    const staleExecuted: Array<{ lobbyUuid: string; userUuid: string }> = []
+    const payload = {
+      lobbyUuid: 'lobby-8',
+      userUuid: 'user-8',
+    }
+
+    service.markConnected(payload, async (leavePayload) => {
+      staleExecuted.push(leavePayload)
+    })
+
+    const wasCleared = service.clearConnection(payload)
+    await wait(50)
+
+    assert.isTrue(wasCleared)
+    assert.lengthOf(staleExecuted, 0)
+  })
 })
