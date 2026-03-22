@@ -91,10 +91,13 @@ cmd_deploy() {
     # Step 8: Link shared directories (logs, uploads, etc.)
     cmd_link_shared
     
-    # Step 9: Atomic symlink swap
+    # Step 9: Run database migrations using production build console
+    cmd_run_migrations
+    
+    # Step 10: Atomic symlink swap
     cmd_swap
     
-    # Step 10: Cleanup old releases
+    # Step 11: Cleanup old releases
     cmd_cleanup
     
     log_ok "Deploy completed successfully!"
@@ -141,6 +144,24 @@ cmd_link_shared() {
     ln -sf "$SHARED_DIR/tmp" "$build_dir/tmp"
     
     log_ok "Shared directories linked"
+}
+
+cmd_run_migrations() {
+    log_info "Running database migrations..."
+    
+    local build_dir="$RELEASE_DIR/apps/infinity/build"
+    
+    if [[ ! -f "$build_dir/bin/console.js" ]]; then
+        log_error "Migration entrypoint not found: $build_dir/bin/console.js"
+        exit 1
+    fi
+    
+    (
+        cd "$build_dir"
+        NODE_ENV=production node bin/console.js migration:run --force
+    )
+    
+    log_ok "Database migrations completed"
 }
 
 cmd_rollback() {
