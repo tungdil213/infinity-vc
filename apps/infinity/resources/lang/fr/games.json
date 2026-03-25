@@ -9,6 +9,8 @@
     "moveRequired": "Le coup est requis pour cette action",
     "invalidAction": "La charge utile de l'action de jeu est invalide",
     "actionRejected": "L'action de jeu a été refusée",
+    "resumeUnauthorized": "Vous n'êtes pas autorisé à reprendre cette partie",
+    "resumeUnavailable": "Cette partie n'est plus active",
     "catalogUnavailable": "Le catalogue des jeux est temporairement indisponible"
   }
 }

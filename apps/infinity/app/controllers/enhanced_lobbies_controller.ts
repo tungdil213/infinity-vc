@@ -28,11 +28,14 @@ import { toUserSummary } from '#presenters/lobby_presenter'
 import type { HttpRequest, HttpResponse } from '@adonisjs/core/http'
 import type { Session } from '@adonisjs/session'
 import { defaultGameCatalog } from '#infrastructure/game_engine/launcher_game_catalog'
+import type Game from '#domain/entities/game'
+import { DatabaseGameRepository } from '#infrastructure/repositories/database_game_repository'
 import {
   LobbyPresenceService,
   type LobbyConnectionPayload,
   type PendingLeavePayload,
 } from '#application/services/lobby_presence_service'
+import { projectActiveGames, type GameProjectionInput } from '@infinity.dev/game-runtime-session'
 
 type AvailableGameViewModel = {
   id: string
@@ -91,7 +94,8 @@ export default class EnhancedLobbiesController {
     private showLobbyUseCase: ShowLobbyUseCase,
     private kickPlayerUseCase: KickPlayerUseCase,
     private closeLobbyUseCase: CloseLobbyUseCase,
-    private lobbyPresenceService: LobbyPresenceService
+    private lobbyPresenceService: LobbyPresenceService,
+    private gameRepository: DatabaseGameRepository
   ) {}
 
   /**
@@ -146,6 +150,7 @@ export default class EnhancedLobbiesController {
   async index({ inertia, auth }: HttpContext) {
     const user = auth.user!
     const canModerate = user.normalizedRole === 'MODERATOR' || user.normalizedRole === 'ADMIN'
+    const activeGames = await this.loadActiveGames(user.userUuid)
 
     try {
       const result = await this.listLobbiesUseCase.execute({
@@ -159,6 +164,7 @@ export default class EnhancedLobbiesController {
         return inertia.render('lobbies', {
           lobbies: [],
           user: toUserSummary(user, { includeEmail: true }),
+          activeGames: activeGames as any,
           currentLobby: null,
         })
       }
@@ -166,6 +172,7 @@ export default class EnhancedLobbiesController {
       return inertia.render('lobbies', {
         lobbies: result.value.lobbies,
         user: toUserSummary(user, { includeEmail: true }),
+        activeGames: activeGames as any,
         currentLobby: null,
       })
     } catch (error) {
@@ -173,6 +180,7 @@ export default class EnhancedLobbiesController {
       return inertia.render('lobbies', {
         lobbies: [],
         user: toUserSummary(user, { includeEmail: true }),
+        activeGames: activeGames as any,
         currentLobby: null,
       })
     }
@@ -870,6 +878,28 @@ export default class EnhancedLobbiesController {
 
   private isAlreadyLeftError(error: string): boolean {
     return error.includes('Player is not in this lobby') || error.includes('not found')
+  }
+
+  private async loadActiveGames(userUuid: string) {
+    try {
+      const games = await this.gameRepository.findActiveByPlayer(userUuid)
+      return projectActiveGames(games.map((game) => this.toGameProjectionInput(game)))
+    } catch (error) {
+      logger.warn({ error, userUuid }, 'Failed to load active games for lobby index')
+      return []
+    }
+  }
+
+  private toGameProjectionInput(game: Game): GameProjectionInput {
+    return {
+      uuid: game.uuid,
+      status: game.status,
+      players: game.players,
+      gameData: game.gameData,
+      startedAt: game.startedAt,
+      finishedAt: game.finishedAt ?? null,
+      durationMs: game.duration,
+    }
   }
 
   private parseBeaconPayload(body: unknown): {

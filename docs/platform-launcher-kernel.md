@@ -1,4 +1,4 @@
-# Plateforme BGA-like: noyau open source + jeux proprietaires
+# Plateforme multi-jeux: noyau open source + jeux proprietaires
 
 Ce document decrit le socle ajoute pour separer la plateforme (open source) des modules de jeux (open source ou proprietaires).
 

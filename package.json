@@ -11,7 +11,7 @@
 	"license": "MIT",
 	"scripts": {
 		"build": "yarn build:deps && yarn workspace @infinity/app build && cp -r apps/infinity/.env apps/infinity/build/ && test -f apps/infinity/build/public/assets/.vite/manifest.json",
-		"build:deps": "yarn workspace @infinity.dev/ui build && yarn workspace @infinity.dev/events build && yarn workspace @infinity.dev/lobby-domain build && yarn workspace @infinity.dev/lobby-application build && yarn workspace @infinity.dev/game-engine build && yarn workspace @infinity.dev/game-runtime-session build && yarn workspace @infinity.dev/frontend-lobby-realtime build && yarn workspace @infinity.dev/shared-i18n build && yarn workspace @infinity.dev/transcript build && yarn workspace @infinity.dev/transcript-adonis build",
+		"build:deps": "yarn workspace @infinity.dev/ui build && yarn workspace @infinity.dev/events build && yarn workspace @infinity.dev/lobby-domain build && yarn workspace @infinity.dev/lobby-application build && yarn workspace @infinity.dev/game-engine build && yarn workspace @infinity.dev/game-runtime-session build && yarn workspace @infinity.dev/frontend-lobby-realtime build && yarn workspace @infinity.dev/shared-i18n build && yarn workspace @infinity.dev/transcript build && yarn workspace @infinity.dev/transcript-adonis build && yarn workspace @infinity.dev/boardgame-toolkit build",
 		"build:all": "turbo run build && yarn build",
 		"start": "NODE_ENV=production yarn --cwd apps/infinity/build node bin/server.js",
 		"deploy": "./scripts/deploy.sh deploy",

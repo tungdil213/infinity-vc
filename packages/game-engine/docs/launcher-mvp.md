@@ -1,6 +1,6 @@
 # Launcher MVP multi-jeux
 
-Ce document décrit le socle technique ajouté dans `@infinity.dev/game-engine` pour un launcher type BGA.
+Ce document décrit le socle technique ajouté dans `@infinity.dev/game-engine` pour un launcher multi-jeux.
 
 ## Objectif
 

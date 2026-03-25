@@ -3,6 +3,15 @@ import { Head, router } from '@inertiajs/react'
 import { LobbyList } from '@infinity.dev/ui/components/lobby-list'
 import { LobbyData } from '@infinity.dev/ui/components/lobby-card'
 import { LobbyPasswordDialog } from '@infinity.dev/ui/components/lobby-password-dialog'
+import { Badge } from '@infinity.dev/ui/primitives/badge'
+import { Button } from '@infinity.dev/ui/primitives/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@infinity.dev/ui/primitives/card'
 import { toast } from 'sonner'
 import { useLobbyService } from '../hooks/use_lobby_service'
 import { LobbyListState } from '../services/lobby_service'
@@ -34,8 +43,20 @@ interface Lobby {
   createdAt: string
 }
 
+interface ActiveGame {
+  gameUuid: string
+  status: 'IN_PROGRESS' | 'PAUSED'
+  gameType: string
+  playerCount: number
+  startedAt: string
+  durationMs: number
+  lobbyUuid: string | null
+  persistedAt: string | null
+}
+
 interface LobbiesProps {
   lobbies: Lobby[]
+  activeGames: ActiveGame[]
   user: {
     uuid: string
     nickName: string
@@ -51,7 +72,8 @@ const transformLobbyData = (
 ): LobbyData => ({
   uuid: lobby.uuid,
   name: lobby.name,
-  description: lobby.description || t('lobbies.createdByDescription', { createdBy: lobby.createdBy }),
+  description:
+    lobby.description || t('lobbies.createdByDescription', { createdBy: lobby.createdBy }),
   status: lobby.status,
   currentPlayers: lobby.currentPlayers,
   maxPlayers: lobby.maxPlayers,
@@ -67,7 +89,31 @@ const transformLobbyData = (
   })),
 })
 
-function LobbiesPage({ lobbies: initialLobbies, user }: LobbiesProps) {
+function formatDuration(durationMs: number): string {
+  const totalSeconds = Math.max(0, Math.floor(durationMs / 1000))
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`
+  }
+  if (minutes > 0) {
+    return `${minutes}m ${seconds}s`
+  }
+  return `${seconds}s`
+}
+
+function toReadableDate(rawDate: string): string {
+  const parsed = new Date(rawDate)
+  if (Number.isNaN(parsed.getTime())) {
+    return '-'
+  }
+
+  return parsed.toLocaleString()
+}
+
+function LobbiesPage({ lobbies: initialLobbies, activeGames, user }: LobbiesProps) {
   const { t } = useI18n()
   const [loading, setLoading] = useState(false)
   const { service: lobbyService } = useLobbyService()
@@ -112,7 +158,7 @@ function LobbiesPage({ lobbies: initialLobbies, user }: LobbiesProps) {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      Accept: 'application/json',
+      'Accept': 'application/json',
     }
 
     if (csrfToken) {
@@ -156,8 +202,7 @@ function LobbiesPage({ lobbies: initialLobbies, user }: LobbiesProps) {
       toast.success(t('lobbies.joined'))
       router.visit(`/lobbies/${lobbyUuid}`)
     } catch (error) {
-      const fallbackMessage =
-        error instanceof Error ? error.message : t('lobbies.unexpectedError')
+      const fallbackMessage = error instanceof Error ? error.message : t('lobbies.unexpectedError')
       if (options?.inlineError) {
         setPasswordDialog((prev) => ({ ...prev, error: fallbackMessage }))
         return
@@ -240,7 +285,7 @@ function LobbiesPage({ lobbies: initialLobbies, user }: LobbiesProps) {
         `/lobbies/${lobbyUuid}/start`,
         {},
         {
-          onSuccess: (page) => {
+          onSuccess: () => {
             toast.success(t('lobbies.gameStarted'))
             // Controller redirects to /games/{gameUuid}
           },
@@ -377,6 +422,19 @@ function LobbiesPage({ lobbies: initialLobbies, user }: LobbiesProps) {
     router.reload()
   }
 
+  const handleResumeGame = (gameUuid: string) => {
+    router.visit(`/games/${gameUuid}/resume`)
+  }
+
+  const activeGameStatusClasses: Record<ActiveGame['status'], string> = {
+    IN_PROGRESS: 'bg-blue-100 text-blue-800',
+    PAUSED: 'bg-amber-100 text-amber-800',
+  }
+  const activeGameStatusLabels: Record<ActiveGame['status'], string> = {
+    IN_PROGRESS: t('profile.status.inProgress'),
+    PAUSED: t('profile.status.paused'),
+  }
+
   const transformedLobbies = lobbies.map((lobby) => transformLobbyData(lobby as Lobby, t))
   const isRealTimeLoading = lobbyListState.loading
 
@@ -385,7 +443,52 @@ function LobbiesPage({ lobbies: initialLobbies, user }: LobbiesProps) {
       <Head title={t('lobbies.pageTitle')} />
 
       <div className="flex-1 bg-secondary-background">
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-8 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('lobbies.activeGamesTitle')}</CardTitle>
+              <CardDescription>{t('lobbies.activeGamesSubtitle')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {activeGames.length === 0 ? (
+                <p className="text-sm text-muted-foreground">{t('lobbies.noActiveGames')}</p>
+              ) : (
+                <div className="space-y-3">
+                  {activeGames.map((game) => (
+                    <div
+                      key={game.gameUuid}
+                      className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-medium text-foreground truncate">
+                          {t('profile.gameTypeLabel')}: {game.gameType}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {t('profile.startedAtLabel')}: {toReadableDate(game.startedAt)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {t('profile.durationLabel')}: {formatDuration(game.durationMs)}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge className={activeGameStatusClasses[game.status]}>
+                          {activeGameStatusLabels[game.status]}
+                        </Badge>
+                        <Badge variant="neutral">
+                          {game.playerCount} {t('createLobby.playersSuffix')}
+                        </Badge>
+                        <Button size="sm" onClick={() => handleResumeGame(game.gameUuid)}>
+                          {t('lobbies.resumeGameAction')}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <LobbyList
             lobbies={transformedLobbies}
             currentUser={user}
@@ -405,7 +508,7 @@ function LobbiesPage({ lobbies: initialLobbies, user }: LobbiesProps) {
             labels={{
               loadingErrorTitle: t('lobbyList.loadingErrorTitle'),
               retry: t('lobbyList.retry'),
-              heading: t('lobbyList.heading'),
+              heading: t('lobbyList.availableHeading'),
               totalSummary: t('lobbyList.totalSummary'),
               createLobby: t('lobbyList.createLobby'),
               filtersTitle: t('lobbyList.filtersTitle'),

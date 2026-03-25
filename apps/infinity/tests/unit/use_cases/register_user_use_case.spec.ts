@@ -170,7 +170,7 @@ test.group('RegisterUserUseCase', (group) => {
     const userData = {
       firstName: 'eric.monnier',
       lastName: '',
-      username: 'eric_monnier',
+      username: 'eric_monnier_2',
       email: 'eric2@example.com',
       password: 'password123',
     }
@@ -201,7 +201,9 @@ test.group('RegisterUserUseCase', (group) => {
     assert.equal(savedPlayer!.userUuid, savedUser!.uuid)
   })
 
-  test('should fail fast when explicit nickname contains forbidden characters', async ({ assert }) => {
+  test('should fail fast when explicit nickname contains forbidden characters', async ({
+    assert,
+  }) => {
     const userData = {
       firstName: 'John',
       lastName: 'Doe',

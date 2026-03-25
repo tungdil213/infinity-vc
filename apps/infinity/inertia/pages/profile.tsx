@@ -35,6 +35,17 @@ interface ProfileHistoryItem {
   durationMs: number
 }
 
+interface ActiveGameItem {
+  gameUuid: string
+  status: 'IN_PROGRESS' | 'PAUSED'
+  gameType: string
+  playerCount: number
+  startedAt: string
+  durationMs: number
+  lobbyUuid: string | null
+  persistedAt: string | null
+}
+
 interface ProfilePageProps {
   user: {
     uuid: string
@@ -45,6 +56,7 @@ interface ProfilePageProps {
   }
   stats: ProfileStats
   recentGames: ProfileHistoryItem[]
+  activeGames: ActiveGameItem[]
 }
 
 function formatPercent(rate: number): string {
@@ -111,7 +123,7 @@ function toResultBadgeClass(result: ProfileHistoryItem['result']): string {
   }
 }
 
-export default function ProfilePage({ user, stats, recentGames }: ProfilePageProps) {
+export default function ProfilePage({ user, stats, recentGames, activeGames }: ProfilePageProps) {
   const { t } = useI18n()
 
   const statusLabelByKey: Record<ProfileHistoryItem['status'], string> = {
@@ -158,6 +170,53 @@ export default function ProfilePage({ user, stats, recentGames }: ProfilePagePro
                 {t('profile.browseLobbies')}
               </Button>
             </div>
+          </section>
+
+          <section>
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('profile.activeGamesTitle')}</CardTitle>
+                <CardDescription>{t('profile.activeGamesSubtitle')}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {activeGames.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">{t('profile.noActiveGames')}</p>
+                ) : (
+                  <div className="space-y-3">
+                    {activeGames.map((game) => (
+                      <div
+                        key={game.gameUuid}
+                        className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div className="min-w-0">
+                          <p className="font-medium text-foreground truncate">
+                            {t('profile.gameTypeLabel')}: {game.gameType}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {t('profile.startedAtLabel')}: {toReadableDate(game.startedAt)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {t('profile.durationLabel')}: {formatDuration(game.durationMs)}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge className={toStatusBadgeClass(game.status)}>
+                            {statusLabelByKey[game.status]}
+                          </Badge>
+                          <Badge variant="neutral">
+                            {game.playerCount} {t('createLobby.playersSuffix')}
+                          </Badge>
+                          <Button size="sm" onClick={() => router.visit(`/games/${game.gameUuid}/resume`)}>
+                            {t('profile.resumeGame')}
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </section>
 
           <section>
@@ -275,6 +334,15 @@ export default function ProfilePage({ user, stats, recentGames }: ProfilePagePro
                           <Badge className={toResultBadgeClass(game.result)}>
                             {resultLabelByKey[game.result]}
                           </Badge>
+                          {(game.status === 'IN_PROGRESS' || game.status === 'PAUSED') && (
+                            <Button
+                              size="sm"
+                              variant="neutral"
+                              onClick={() => router.visit(`/games/${game.gameUuid}/resume`)}
+                            >
+                              {t('profile.resumeGame')}
+                            </Button>
+                          )}
                         </div>
                       </div>
                     ))}

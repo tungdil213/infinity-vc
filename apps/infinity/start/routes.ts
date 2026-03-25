@@ -43,7 +43,9 @@ router
     router.post('/auth/logout', '#controllers/enhanced_auth_controller.logout').as('auth.logout')
 
     // Profile & settings
-    router.get('/profile', '#controllers/profile_settings_controller.showProfile').as('profile.show')
+    router
+      .get('/profile', '#controllers/profile_settings_controller.showProfile')
+      .as('profile.show')
     router
       .get('/settings', '#controllers/profile_settings_controller.showSettings')
       .as('settings.show')
@@ -92,6 +94,7 @@ router
       .as('lobbies.close')
 
     // Games routes
+    router.get('/games/:uuid/resume', '#controllers/games_controller.resume').as('games.resume')
     router.get('/games/:uuid', '#controllers/games_controller.show').as('games.show')
     router.post('/games/:uuid/leave', '#controllers/games_controller.leave').as('games.leave')
   })
@@ -110,7 +113,9 @@ router
   .group(() => {
     router.get('/auth/me', '#controllers/enhanced_auth_controller.me').as('api.auth.me')
     router.get('/auth/check', '#controllers/enhanced_auth_controller.check').as('api.auth.check')
-    router.get('/games/catalog', '#controllers/game_catalog_controller.publicIndex').as('api.games.catalog')
+    router
+      .get('/games/catalog', '#controllers/game_catalog_controller.publicIndex')
+      .as('api.games.catalog')
   })
   .prefix('/api/v1')
 
@@ -145,7 +150,12 @@ router
       .as('api.lobbies.close')
 
     // Games API
-    router.get('/games/me/history', '#controllers/games_controller.myHistory').as('api.games.my.history')
+    router
+      .get('/games/me/active', '#controllers/games_controller.myActive')
+      .as('api.games.my.active')
+    router
+      .get('/games/me/history', '#controllers/games_controller.myHistory')
+      .as('api.games.my.history')
     router.get('/games/me/stats', '#controllers/games_controller.myStats').as('api.games.my.stats')
     router.get('/games/:uuid', '#controllers/games_controller.apiShow').as('api.games.show')
     router.get('/games/:uuid/replay', '#controllers/games_controller.replay').as('api.games.replay')
@@ -165,7 +175,9 @@ router
 // Admin API routes - includes proprietary game modules in catalog
 router
   .group(() => {
-    router.post('/lobbies/:uuid/close', '#controllers/enhanced_lobbies_controller.adminClose').as('admin.lobbies.close')
+    router
+      .post('/lobbies/:uuid/close', '#controllers/enhanced_lobbies_controller.adminClose')
+      .as('admin.lobbies.close')
   })
   .prefix('/admin/api')
   .use([middleware.auth(), middleware.moderationGuard()])
@@ -173,7 +185,9 @@ router
 // Admin API routes - includes proprietary game modules in catalog
 router
   .group(() => {
-    router.get('/games/catalog', '#controllers/game_catalog_controller.adminIndex').as('admin.games.catalog')
+    router
+      .get('/games/catalog', '#controllers/game_catalog_controller.adminIndex')
+      .as('admin.games.catalog')
   })
   .prefix('/admin/api')
   .use([middleware.auth(), middleware.adminGuard()])

@@ -4,7 +4,7 @@ Abstract game engine with state machine, rules, and actions for building board g
 
 ## Launcher MVP (multi-games)
 
-Le package inclut maintenant un socle launcher type BGA pour orchestrer plusieurs jeux.
+Le package inclut maintenant un socle launcher multi-jeux pour orchestrer plusieurs jeux.
 
 - Contrats: `GameModule`, `GameDefinition`, `GameSettingsDefinition`
 - Orchestration launcher: `idle -> game_selected -> configured -> running -> finished`

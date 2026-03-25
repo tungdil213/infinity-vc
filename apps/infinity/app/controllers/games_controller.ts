@@ -23,6 +23,12 @@ import {
 } from '#presenters/game_presenter'
 import { gameActionBodyValidator, gameUuidParamValidator } from '#validators/game_action_validator'
 import { gameHistoryQueryValidator } from '#validators/game_history_validator'
+import {
+  projectActiveGames,
+  projectGameHistoryItem,
+  projectGameStats,
+  type GameProjectionInput,
+} from '@infinity.dev/game-runtime-session'
 
 const GAME_ACTION_ERROR_TRANSLATION_KEYS: Record<string, string> = {
   'Game not found': 'games.errors.notFound',
@@ -30,6 +36,8 @@ const GAME_ACTION_ERROR_TRANSLATION_KEYS: Record<string, string> = {
   'cardType is required': 'games.errors.cardTypeRequired',
   'move is required': 'games.errors.moveRequired',
 }
+
+const RESUMABLE_STATUSES = new Set<GameStatus>([GameStatus.IN_PROGRESS, GameStatus.PAUSED])
 
 @inject()
 export default class GamesController {
@@ -57,7 +65,9 @@ export default class GamesController {
     const playerView = isSpectator
       ? toSpectatorPlayerView({ session, currentUserUuid: user.userUuid })
       : gameEngineService.getPlayerView(uuid, user.userUuid)
-    const availableActions = isSpectator ? [] : gameEngineService.getAvailableActions(uuid, user.userUuid)
+    const availableActions = isSpectator
+      ? []
+      : gameEngineService.getAvailableActions(uuid, user.userUuid)
 
     return inertia.render(
       'game',
@@ -85,6 +95,32 @@ export default class GamesController {
   }
 
   /**
+   * Resume an active game for the current player.
+   */
+  async resume({ params, auth, response, session, i18n }: HttpContext) {
+    const user = auth.user!
+    const { uuid } = await gameUuidParamValidator.validate(params)
+    const game = await this.gameRepository.findByUuid(uuid)
+
+    if (!game) {
+      session.flash('error', i18n.t('games.errors.notFoundOrFinished'))
+      return response.redirect('/lobbies')
+    }
+
+    if (!game.hasPlayer(user.userUuid)) {
+      session.flash('error', i18n.t('games.errors.resumeUnauthorized'))
+      return response.redirect('/lobbies')
+    }
+
+    if (!RESUMABLE_STATUSES.has(game.status)) {
+      session.flash('error', i18n.t('games.errors.resumeUnavailable'))
+      return response.redirect('/profile')
+    }
+
+    return response.redirect(`/games/${uuid}`)
+  }
+
+  /**
    * Get game state (API endpoint)
    */
   async apiShow({ params, response, auth, i18n }: HttpContext) {
@@ -102,7 +138,9 @@ export default class GamesController {
     const playerView = isSpectator
       ? toSpectatorPlayerView({ session, currentUserUuid: user.userUuid })
       : gameEngineService.getPlayerView(uuid, user.userUuid)
-    const availableActions = isSpectator ? [] : gameEngineService.getAvailableActions(uuid, user.userUuid)
+    const availableActions = isSpectator
+      ? []
+      : gameEngineService.getAvailableActions(uuid, user.userUuid)
 
     return response.json(
       toGameApiPayload({
@@ -137,7 +175,9 @@ export default class GamesController {
     const { session } = resolvedSession
 
     const isSpectator = !isUserInGameSession(session, user.userUuid)
-    const availableActions = isSpectator ? [] : gameEngineService.getAvailableActions(uuid, user.userUuid)
+    const availableActions = isSpectator
+      ? []
+      : gameEngineService.getAvailableActions(uuid, user.userUuid)
 
     return response.json(
       toGameActionsPayload({
@@ -169,7 +209,11 @@ export default class GamesController {
     const parsedAction = parseGameActionInput(body)
     if (!parsedAction.ok) {
       return response.status(400).json({
-        error: this.translateGameActionError(i18n, parsedAction.error, 'games.errors.invalidAction'),
+        error: this.translateGameActionError(
+          i18n,
+          parsedAction.error,
+          'games.errors.invalidAction'
+        ),
       })
     }
 
@@ -280,22 +324,39 @@ export default class GamesController {
   }
 
   /**
+   * Get current user's active games.
+   */
+  async myActive({ auth, response }: HttpContext) {
+    const user = auth.user!
+    const games = await this.gameRepository.findActiveByPlayer(user.userUuid)
+    const activeGames = projectActiveGames(games.map((game) => this.toGameProjectionInput(game)))
+
+    return response.json({
+      userUuid: user.userUuid,
+      activeGames,
+      total: activeGames.length,
+    })
+  }
+
+  /**
    * Get current user's game history
    */
   async myHistory({ auth, request, response }: HttpContext) {
     const user = auth.user!
-    const { limit: rawLimit, status: rawStatus } = await request.validateUsing(
-      gameHistoryQueryValidator
-    )
+    const { limit: rawLimit, status: rawStatus } =
+      await request.validateUsing(gameHistoryQueryValidator)
     const limit = rawLimit ? Math.min(Math.max(Number.parseInt(rawLimit, 10), 1), 100) : 20
     const statusFilter = this.normalizeStatusFilter(rawStatus)
 
     const allGames = await this.gameRepository.findByPlayer(user.userUuid)
+    const projectedGames = allGames.map((game) => this.toGameProjectionInput(game))
     const filteredGames = statusFilter
-      ? allGames.filter((game) => game.status === statusFilter)
-      : allGames
+      ? projectedGames.filter((game) => game.status === statusFilter)
+      : projectedGames
 
-    const history = filteredGames.slice(0, limit).map((game) => this.toHistoryItem(game, user.userUuid))
+    const history = filteredGames
+      .slice(0, limit)
+      .map((game) => projectGameHistoryItem(game, user.userUuid))
 
     return response.json({
       history,
@@ -313,51 +374,12 @@ export default class GamesController {
   async myStats({ auth, response }: HttpContext) {
     const user = auth.user!
     const games = await this.gameRepository.findByPlayer(user.userUuid)
-
-    const byStatus = games.reduce<Record<string, number>>((acc, game) => {
-      const status = String(game.status)
-      acc[status] = (acc[status] || 0) + 1
-      return acc
-    }, {})
-
-    const wins = games.filter(
-      (game) =>
-        game.status === GameStatus.FINISHED &&
-        typeof game.gameData.winner === 'string' &&
-        game.gameData.winner === user.userUuid
-    ).length
-    const losses = games.filter(
-      (game) =>
-        game.status === GameStatus.FINISHED &&
-        typeof game.gameData.winner === 'string' &&
-        game.gameData.winner !== user.userUuid
-    ).length
-    const draws = games.filter(
-      (game) => game.status === GameStatus.FINISHED && typeof game.gameData.winner !== 'string'
-    ).length
-    const abandoned = games.filter((game) => game.status === GameStatus.ABANDONED).length
-    const completed = games.filter((game) =>
-      [GameStatus.FINISHED, GameStatus.ABANDONED, GameStatus.ARCHIVED].includes(game.status)
-    ).length
-    const active = games.filter((game) =>
-      [GameStatus.IN_PROGRESS, GameStatus.PAUSED].includes(game.status)
-    ).length
-    const totalDurationMs = games.reduce((sum, game) => sum + game.duration, 0)
-    const averageDurationMs = games.length > 0 ? Math.round(totalDurationMs / games.length) : 0
-    const winRate = completed > 0 ? Number((wins / completed).toFixed(3)) : 0
+    const projectedGames = games.map((game) => this.toGameProjectionInput(game))
+    const stats = projectGameStats(projectedGames, user.userUuid)
 
     return response.json({
       userUuid: user.userUuid,
-      totalGames: games.length,
-      activeGames: active,
-      completedGames: completed,
-      wins,
-      losses,
-      draws,
-      abandoned,
-      winRate,
-      averageDurationMs,
-      byStatus,
+      ...stats,
     })
   }
 
@@ -531,13 +553,16 @@ export default class GamesController {
       : undefined
 
     const scoresSource = this.asRecord(snapshot?.scores) ?? {}
-    const scores = Object.entries(scoresSource).reduce<Record<string, number>>((acc, [key, value]) => {
-      const numericValue = Number(value)
-      if (Number.isFinite(numericValue)) {
-        acc[key] = numericValue
-      }
-      return acc
-    }, {})
+    const scores = Object.entries(scoresSource).reduce<Record<string, number>>(
+      (acc, [key, value]) => {
+        const numericValue = Number(value)
+        if (Number.isFinite(numericValue)) {
+          acc[key] = numericValue
+        }
+        return acc
+      },
+      {}
+    )
 
     const roundChoicesSource = this.asRecord(snapshot?.roundChoices) ?? {}
     const roundChoices = Object.entries(roundChoicesSource).reduce<Record<string, string>>(
@@ -671,34 +696,16 @@ export default class GamesController {
     }
   }
 
-  private toHistoryItem(game: Game, currentUserUuid: string) {
-    const winnerUuid = typeof game.gameData.winner === 'string' ? game.gameData.winner : null
-    const result =
-      game.status === GameStatus.ABANDONED
-        ? 'abandoned'
-        : winnerUuid === currentUserUuid
-          ? 'win'
-          : winnerUuid
-            ? 'loss'
-            : 'draw'
-
+  private toGameProjectionInput(game: Game): GameProjectionInput {
     return {
-      gameUuid: game.uuid,
+      uuid: game.uuid,
       status: game.status,
-      result,
-      gameType: this.getGameType(game),
-      playerCount: game.players.length,
-      winnerUuid,
+      players: game.players,
+      gameData: game.gameData,
       startedAt: game.startedAt,
       finishedAt: game.finishedAt ?? null,
       durationMs: game.duration,
     }
-  }
-
-  private getGameType(game: Game): string {
-    const gameData = this.asRecord(game.gameData)
-    const runtime = gameData ? this.asRecord(gameData.runtime) : null
-    return typeof runtime?.gameType === 'string' ? runtime.gameType : 'unknown'
   }
 
   private normalizeStatusFilter(rawStatus: unknown): GameStatus | null {

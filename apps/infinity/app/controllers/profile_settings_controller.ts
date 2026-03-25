@@ -3,9 +3,14 @@ import type { HttpContext } from '@adonisjs/core/http'
 import hash from '@adonisjs/core/services/hash'
 import logger from '@adonisjs/core/services/logger'
 import type Game from '#domain/entities/game'
-import { GameStatus } from '#domain/value_objects/game_status'
 import { DatabaseGameRepository } from '#infrastructure/repositories/database_game_repository'
 import UserModel from '#models/user'
+import {
+  projectActiveGames,
+  projectGameHistoryItem,
+  projectGameStats,
+  type GameProjectionInput,
+} from '@infinity.dev/game-runtime-session'
 import {
   settingsPasswordValidator,
   settingsProfileValidator,
@@ -18,12 +23,16 @@ export default class ProfileSettingsController {
   async showProfile({ inertia, auth }: HttpContext) {
     const user = auth.user!
     const games = await this.gameRepository.findByPlayer(user.userUuid)
+    const projectedGames = games.map((game) => this.toGameProjectionInput(game))
 
     return inertia.render('profile', {
       user: this.toPageUser(user),
-      stats: this.toStatsPayload(games, user.userUuid),
-      recentGames: games.slice(0, 10).map((game) => this.toHistoryItem(game, user.userUuid)),
-    })
+      stats: projectGameStats(projectedGames, user.userUuid),
+      recentGames: projectedGames
+        .slice(0, 10)
+        .map((game) => projectGameHistoryItem(game, user.userUuid)),
+      activeGames: projectActiveGames(projectedGames),
+    } as any)
   }
 
   async showSettings({ inertia, auth }: HttpContext) {
@@ -49,7 +58,11 @@ export default class ProfileSettingsController {
       if (conflictingUser) {
         session.flash(
           'error',
-          this.translate(i18n, 'auth.settings.failure.emailTaken', 'This email address is already in use')
+          this.translate(
+            i18n,
+            'auth.settings.failure.emailTaken',
+            'This email address is already in use'
+          )
         )
         return response.redirect().back()
       }
@@ -67,7 +80,11 @@ export default class ProfileSettingsController {
       logger.error({ error, userUuid: user.userUuid }, 'Profile update failed')
       session.flash(
         'error',
-        this.translate(i18n, 'auth.settings.failure.profileUpdate', 'Failed to update profile. Please try again.')
+        this.translate(
+          i18n,
+          'auth.settings.failure.profileUpdate',
+          'Failed to update profile. Please try again.'
+        )
       )
       return response.redirect().back()
     }
@@ -82,7 +99,11 @@ export default class ProfileSettingsController {
       if (!hasValidCurrentPassword) {
         session.flash(
           'error',
-          this.translate(i18n, 'auth.settings.failure.invalidCurrentPassword', 'Current password is incorrect')
+          this.translate(
+            i18n,
+            'auth.settings.failure.invalidCurrentPassword',
+            'Current password is incorrect'
+          )
         )
         return response.redirect().back()
       }
@@ -105,7 +126,11 @@ export default class ProfileSettingsController {
 
       session.flash(
         'success',
-        this.translate(i18n, 'auth.settings.success.passwordUpdated', 'Password updated successfully')
+        this.translate(
+          i18n,
+          'auth.settings.success.passwordUpdated',
+          'Password updated successfully'
+        )
       )
       return response.redirect().back()
     } catch (error) {
@@ -141,81 +166,15 @@ export default class ProfileSettingsController {
     }
   }
 
-  private toStatsPayload(games: Game[], userUuid: string) {
-    const wins = games.filter(
-      (game) =>
-        game.status === GameStatus.FINISHED &&
-        typeof game.gameData.winner === 'string' &&
-        game.gameData.winner === userUuid
-    ).length
-    const losses = games.filter(
-      (game) =>
-        game.status === GameStatus.FINISHED &&
-        typeof game.gameData.winner === 'string' &&
-        game.gameData.winner !== userUuid
-    ).length
-    const draws = games.filter(
-      (game) => game.status === GameStatus.FINISHED && typeof game.gameData.winner !== 'string'
-    ).length
-    const abandoned = games.filter((game) => game.status === GameStatus.ABANDONED).length
-    const completed = games.filter((game) =>
-      [GameStatus.FINISHED, GameStatus.ABANDONED, GameStatus.ARCHIVED].includes(game.status)
-    ).length
-    const active = games.filter((game) =>
-      [GameStatus.IN_PROGRESS, GameStatus.PAUSED].includes(game.status)
-    ).length
-    const totalDurationMs = games.reduce((sum, game) => sum + game.duration, 0)
-    const averageDurationMs = games.length > 0 ? Math.round(totalDurationMs / games.length) : 0
-    const winRate = completed > 0 ? Number((wins / completed).toFixed(3)) : 0
-
+  private toGameProjectionInput(game: Game): GameProjectionInput {
     return {
-      totalGames: games.length,
-      activeGames: active,
-      completedGames: completed,
-      wins,
-      losses,
-      draws,
-      abandoned,
-      winRate,
-      averageDurationMs,
-    }
-  }
-
-  private toHistoryItem(game: Game, currentUserUuid: string) {
-    const winnerUuid = typeof game.gameData.winner === 'string' ? game.gameData.winner : null
-    const result =
-      game.status === GameStatus.ABANDONED
-        ? 'abandoned'
-        : winnerUuid === currentUserUuid
-          ? 'win'
-          : winnerUuid
-            ? 'loss'
-            : 'draw'
-
-    return {
-      gameUuid: game.uuid,
+      uuid: game.uuid,
       status: game.status,
-      result,
-      gameType: this.getGameType(game),
-      playerCount: game.players.length,
-      winnerUuid,
+      players: game.players,
+      gameData: game.gameData,
       startedAt: game.startedAt,
       finishedAt: game.finishedAt ?? null,
       durationMs: game.duration,
     }
-  }
-
-  private getGameType(game: Game): string {
-    const gameData = this.asRecord(game.gameData)
-    const runtime = gameData ? this.asRecord(gameData.runtime) : null
-    return typeof runtime?.gameType === 'string' ? runtime.gameType : 'unknown'
-  }
-
-  private asRecord(value: unknown): Record<string, unknown> | null {
-    if (value && typeof value === 'object' && !Array.isArray(value)) {
-      return value as Record<string, unknown>
-    }
-
-    return null
   }
 }

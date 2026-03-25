@@ -9,6 +9,8 @@
     "moveRequired": "Move is required for this action",
     "invalidAction": "Invalid game action payload",
     "actionRejected": "Game action was rejected",
+    "resumeUnauthorized": "You are not allowed to resume this game",
+    "resumeUnavailable": "This game is no longer active",
     "catalogUnavailable": "Game catalog is temporarily unavailable"
   }
 }
