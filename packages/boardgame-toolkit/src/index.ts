@@ -27,3 +27,6 @@ export * from './voting/index.js';
 export * from './fog/index.js';
 export * from './validation/index.js';
 export * from './scripting/index.js';
+export * from './triggers/index.js';
+export * from './serialization/index.js';
+export * from './audit/index.js';

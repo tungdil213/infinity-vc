@@ -67,4 +67,32 @@ describe('StructuredLog', () => {
 		expect(restored.listForViewer('p1').map((entry) => entry.key)).toEqual(['a']);
 		expect(restored.listForViewer('p2').map((entry) => entry.key)).toEqual(['a', 'b']);
 	});
+
+	it('supports schema versioning and stable serialization', () => {
+		const left = new StructuredLog<'p1'>();
+		const right = new StructuredLog<'p1'>();
+
+		left.append({
+			key: 'event.a',
+			schemaVersion: 2,
+			params: { z: 1, a: { y: 2, x: 1 } },
+			createdAt: '2026-01-01T00:00:00.000Z',
+		});
+
+		right.append({
+			key: 'event.a',
+			schemaVersion: 2,
+			params: { a: { x: 1, y: 2 }, z: 1 },
+			createdAt: '2026-01-01T00:00:00.000Z',
+		});
+
+		expect(left.listAll()[0]?.schemaVersion).toBe(2);
+		expect(left.toStableJson()).toBe(right.toStableJson());
+		expect(() =>
+			left.append({
+				key: 'bad',
+				schemaVersion: 0,
+			})
+		).toThrow('schemaVersion');
+	});
 });

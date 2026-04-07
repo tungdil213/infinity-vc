@@ -136,6 +136,18 @@
 		"./scripting": {
 			"types": "./dist/scripting/index.d.ts",
 			"import": "./dist/scripting/index.js"
+		},
+		"./triggers": {
+			"types": "./dist/triggers/index.d.ts",
+			"import": "./dist/triggers/index.js"
+		},
+		"./serialization": {
+			"types": "./dist/serialization/index.d.ts",
+			"import": "./dist/serialization/index.js"
+		},
+		"./audit": {
+			"types": "./dist/audit/index.d.ts",
+			"import": "./dist/audit/index.js"
 		}
 	},
 	"scripts": {

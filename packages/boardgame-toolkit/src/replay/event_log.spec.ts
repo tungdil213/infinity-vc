@@ -10,6 +10,8 @@ describe('MatchEventLog', () => {
 
 		expect(log.getAll()).toHaveLength(2);
 		expect(log.filterByType('coin.gain')).toHaveLength(1);
+		expect(log.getAll()[0]?.id).toBe(1);
+		expect(log.getAll()[0]?.schemaVersion).toBe(1);
 	});
 
 	test('replays events through reducer', () => {
@@ -29,5 +31,27 @@ describe('MatchEventLog', () => {
 		});
 
 		expect(final.score).toBe(3);
+	});
+
+	test('supports snapshot roundtrip and stable serialization', () => {
+		const left = new MatchEventLog();
+		const right = new MatchEventLog();
+
+		left.append({
+			type: 'state.patch',
+			payload: { z: 1, a: { y: 2, x: 1 } },
+			timestamp: '2026-01-01T00:00:00.000Z',
+		});
+
+		right.append({
+			type: 'state.patch',
+			payload: { a: { x: 1, y: 2 }, z: 1 },
+			timestamp: '2026-01-01T00:00:00.000Z',
+		});
+
+		expect(left.toStableJson()).toBe(right.toStableJson());
+
+		const restored = MatchEventLog.fromSnapshot(left.toSnapshot());
+		expect(restored.getAll()).toEqual(left.getAll());
 	});
 });

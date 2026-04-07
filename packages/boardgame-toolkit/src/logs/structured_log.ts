@@ -1,3 +1,5 @@
+import { stableJsonStringify } from '../serialization/stable_json.js';
+
 export type LogLevel = 'info' | 'action' | 'warning' | 'error';
 
 export type LogAudience<TPlayerId extends string> =
@@ -7,6 +9,7 @@ export type LogAudience<TPlayerId extends string> =
 
 export interface StructuredLogEntry<TPlayerId extends string, TParams = unknown> {
 	readonly id: number;
+	readonly schemaVersion?: number;
 	readonly key: string;
 	readonly params: TParams;
 	readonly audience: LogAudience<TPlayerId>;
@@ -21,6 +24,7 @@ export interface StructuredLogSnapshot<TPlayerId extends string> {
 
 export interface StructuredLogAppendInput<TPlayerId extends string, TParams> {
 	readonly key: string;
+	readonly schemaVersion?: number;
 	readonly params?: TParams;
 	readonly audience?: LogAudience<TPlayerId>;
 	readonly level?: LogLevel;
@@ -45,8 +49,14 @@ export class StructuredLog<TPlayerId extends string> {
 			throw new TypeError('Structured log timestamp must be non-empty');
 		}
 
+		const schemaVersion = input.schemaVersion ?? 1;
+		if (!Number.isInteger(schemaVersion) || schemaVersion < 1) {
+			throw new TypeError('Structured log schemaVersion must be a positive integer');
+		}
+
 		const entry: StructuredLogEntry<TPlayerId, TParams> = {
 			id: this.sequence,
+			schemaVersion,
 			key: input.key,
 			params: (input.params ?? {}) as TParams,
 			audience: input.audience ?? 'all',
@@ -95,6 +105,13 @@ export class StructuredLog<TPlayerId extends string> {
 			entries: this.listAll(),
 			sequence: this.sequence,
 		};
+	}
+
+	toStableJson(): string {
+		return stableJsonStringify({
+			schemaVersion: 1,
+			entries: this.entries,
+		});
 	}
 
 	static fromSnapshot<TPlayerId extends string>(snapshot: StructuredLogSnapshot<TPlayerId>): StructuredLog<TPlayerId> {

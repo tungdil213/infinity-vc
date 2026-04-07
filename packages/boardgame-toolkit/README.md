@@ -78,6 +78,8 @@ Boardgame domain toolkit inspired by modern online tabletop engines, focused on 
 - Structured Logs
   - Localized key + params entries
   - Audience-aware visibility filtering (all/targeted/excluded)
+  - Versioned log entries (`schemaVersion`)
+  - Deterministic stable JSON serialization
   - Viewer-specific rendering helpers
 - Rules / Validation
   - Rule engine for command validation (errors/warnings)
@@ -114,10 +116,20 @@ Boardgame domain toolkit inspired by modern online tabletop engines, focused on 
   - Declarative effect operations with handler registry
   - DSL-gated execution (`when`) with skip reasons
   - Deterministic stack resolution with chained enqueue
+- Triggers / Replacement / Prevention
+  - Deterministic event pipeline for replacement -> prevention -> trigger effects
+  - Priority-based conflict resolution for rules
+  - Loop protection on replacement chains
 - Replay / Event Sourcing
   - Typed append/filter event log
+  - Versioned events (`schemaVersion`) + stable event ids
+  - Stable JSON serialization for storage/transport
   - Reducer-based replay from initial state
   - Replay timeline builder (state + logs + highlights + duration)
+- Audit Trail
+  - Sensitive action auditing (`appendSensitive`)
+  - Filtering by actor/action
+  - Snapshot/restore and deterministic stable JSON serialization
 - Accessibility
   - Normalized accessibility profile (contrast, motion, color vision, text scale)
   - UI hint generation for motion/tap-target/contrast adaptations
@@ -149,7 +161,7 @@ These can be built on top using adapters around this package.
 
 - Hex-tile board utilities (axial coords, rings, terrain production tables).
 - Trick-taking toolkit (lead/follow/trump/winner evaluator).
-- Advanced trigger/replacement/prevention semantics on top of scripted effects.
+- Advanced interrupt windows and response stacks for highly interactive games.
 - Public/private projection for full game state trees (not only hands/zones).
 
 ## Quick Start
@@ -214,7 +226,19 @@ import { VoteSession } from '@infinity.dev/boardgame-toolkit/voting';
 import { FogOfWar } from '@infinity.dev/boardgame-toolkit/fog';
 import { ScriptedEffectEngine } from '@infinity.dev/boardgame-toolkit/scripting';
 import { dslRule } from '@infinity.dev/boardgame-toolkit/validation';
+import { EventPipeline } from '@infinity.dev/boardgame-toolkit/triggers';
+import { AuditTrail } from '@infinity.dev/boardgame-toolkit/audit';
+import { MatchEventLog } from '@infinity.dev/boardgame-toolkit/replay';
 ```
+
+## Production Wiring (Concise)
+
+1. On every gameplay command, append a structured log entry with audience scope (`all`, `players`, `allExcept`).
+2. Emit a versioned replay event (`schemaVersion`) to `MatchEventLog`.
+3. For sensitive operations (resume, role change, override), write `appendSensitive` in `AuditTrail`.
+4. Persist snapshots (`toSnapshot`) for fast restore, and persist stable JSON (`toStableJson`) for deterministic exports/signing.
+5. Use `ReplayTimelineBuilder` in read-side tooling to inspect, step, seek and render playback.
+6. Apply `AccessibilityProfile` hints at render time to adapt motion/contrast/text scale safely.
 
 ## Test
 
