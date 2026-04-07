@@ -11,6 +11,7 @@
     "clean": "rm -rf .turbo node_modules build",
     "dev": "DEV_MODE=true node ace serve --hmr",
     "game:demo:rps": "node ace game:demo:rps",
+    "game:replay:backfill-signatures": "node ace game:replay:backfill-signatures",
     "test": "node ace test",
     "test:watch": "node ace test --watch",
     "test:coverage": "c8 --include=app/** --exclude=app/**/*.spec.ts node ace test",

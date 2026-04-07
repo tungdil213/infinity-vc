@@ -132,9 +132,32 @@ Recommended phased rollout for `REPLAY_REQUIRE_SIGNATURES=true`:
 
 1. Keep strict mode disabled.
 2. Let runtime persistence progressively write `replayEnvelope` on active games.
-3. Backfill old persisted games (or accept that old unsigned replays will be unavailable).
+3. Backfill old persisted games.
 4. Enable strict mode.
 5. Monitor `replay_verification_audits` and metrics after activation.
+
+## Snapshot Backfill Command
+
+The command below signs persisted replay timelines that do not yet have an envelope:
+
+- `node ace game:replay:backfill-signatures` (dry-run)
+- `node ace game:replay:backfill-signatures --apply`
+- `node ace game:replay:backfill-signatures --apply --limit=500` (chunked rollout)
+- `node ace game:replay:backfill-signatures --apply --force-resign` (rotation rescue only)
+
+Dry-run and apply output includes:
+
+- `scanned`: total games scanned
+- `updateCandidates`: snapshots that can be signed
+- `updated`: persisted updates (apply mode only)
+- `skippedByReason`: counters for every skip reason
+
+Success criteria before enabling strict mode:
+
+1. Dry-run reports `updateCandidates = 0`.
+2. Apply run reports `signing_unavailable = 0`.
+3. Post-apply dry-run still reports `updateCandidates = 0`.
+4. After strict mode activation, no sustained increase in audit rejects for `missing_envelope`.
 
 ## Production Checklist
 
@@ -142,6 +165,7 @@ Recommended phased rollout for `REPLAY_REQUIRE_SIGNATURES=true`:
 - [ ] `REPLAY_SIGNING_KEY_ID` set and documented.
 - [ ] `REPLAY_SIGNING_PREVIOUS_KEYS` configured during rotations.
 - [ ] Database migration `1734210500000_create_replay_verification_audits_table` applied.
+- [ ] Replay signature backfill executed and validated with dry-run criteria.
 - [ ] Admin access to metrics and reset endpoints validated.
 - [ ] Replay import endpoint authorization verified (admin scope).
 - [ ] Alerting set up on spikes in `rejected` and `invalid_signature`.
