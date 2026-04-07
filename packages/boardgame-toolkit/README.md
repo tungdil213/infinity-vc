@@ -134,6 +134,7 @@ Boardgame domain toolkit inspired by modern online tabletop engines, focused on 
   - Canonical JSON serialization
   - HMAC signatures over stable JSON (`sha256` / `sha512`)
   - Constant-time signature verification
+  - Signed envelopes with key ids for key rotation
 - Audit Trail
   - Sensitive action auditing (`appendSensitive`)
   - Filtering by actor/action
@@ -239,6 +240,8 @@ import { AuditTrail } from '@infinity.dev/boardgame-toolkit/audit';
 import { MatchEventLog } from '@infinity.dev/boardgame-toolkit/replay';
 import { VersionedSchemaRegistry } from '@infinity.dev/boardgame-toolkit/schema';
 import { signStableValue, verifyStableValueSignature } from '@infinity.dev/boardgame-toolkit/serialization';
+import { StableEnvelopeSigner } from '@infinity.dev/boardgame-toolkit/serialization';
+import { VersionedEventProjector } from '@infinity.dev/boardgame-toolkit/replay';
 ```
 
 ## Production Wiring (Concise)
@@ -248,8 +251,9 @@ import { signStableValue, verifyStableValueSignature } from '@infinity.dev/board
 3. For sensitive operations (resume, role change, override), write `appendSensitive` in `AuditTrail`.
 4. Persist snapshots (`toSnapshot`) for fast restore, and persist stable JSON (`toStableJson`) for deterministic exports/signing.
 5. Use `ReplayTimelineBuilder` in read-side tooling to inspect, step, seek and render playback.
-6. If needed, sign payloads with `signStableValue` and verify with `verifyStableValueSignature` before import/replay.
-7. Apply `AccessibilityProfile` hints at render time to adapt motion/contrast/text scale safely.
+6. Use `VersionedSchemaRegistry` + `VersionedEventProjector` to normalize old events before replay/import.
+7. If needed, sign payloads with `signStableValue` or sign envelopes with `StableEnvelopeSigner` (key id + rotation).
+8. Apply `AccessibilityProfile` hints at render time to adapt motion/contrast/text scale safely.
 
 ## Test
 

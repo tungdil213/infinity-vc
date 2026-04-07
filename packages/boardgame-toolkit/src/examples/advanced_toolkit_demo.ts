@@ -2,8 +2,10 @@ import { SealedAuction } from '../auction/sealed_auction.js';
 import { AuditTrail } from '../audit/audit_trail.js';
 import { FogOfWar } from '../fog/fog_of_war.js';
 import { MatchEventLog } from '../replay/event_log.js';
+import { VersionedEventProjector } from '../replay/versioned_event_projector.js';
 import { VersionedSchemaRegistry } from '../schema/versioned_schema_registry.js';
 import { ScriptedEffectEngine } from '../scripting/scripted_effect_engine.js';
+import { StableEnvelopeSigner } from '../serialization/stable_envelope_signer.js';
 import { signStableValue, verifyStableValueSignature } from '../serialization/stable_signature.js';
 import { EventPipeline, type PipelineEvent } from '../triggers/event_pipeline.js';
 import { dslRule } from '../validation/validation_dsl.js';
@@ -261,11 +263,39 @@ const runSchemaAndSignatureDemo = () => {
 		},
 	});
 
+	const projector = new VersionedEventProjector(registry);
+	const projectedEvent = projector.projectEvent({
+		id: 1,
+		type: 'session.resumed',
+		schemaVersion: 1,
+		payload: {
+			sessionId: 'session-42',
+			by: 'manual_reconnect',
+		},
+		timestamp: '2026-01-01T00:00:00.000Z',
+	});
+
 	const signature = signStableValue(migrated.record, 'demo-secret');
 	const verified = verifyStableValueSignature(migrated.record, 'demo-secret', signature);
 
+	const envelopeSigner = new StableEnvelopeSigner(
+		[
+			{ id: 'k1', secret: 'demo-secret-1' },
+			{ id: 'k2', secret: 'demo-secret-2' },
+		],
+		{ activeKeyId: 'k2' }
+	);
+	const envelope = envelopeSigner.sign(projectedEvent.event, {
+		signedAt: '2026-01-01T00:00:00.000Z',
+	});
+
 	print('Schema migration result', migrated);
 	print('Stable signature', { signature, verified });
+	print('Projected replay event', projectedEvent);
+	print('Signed envelope', {
+		envelope,
+		verified: envelopeSigner.verify(envelope),
+	});
 };
 
 runAuctionDemo();
