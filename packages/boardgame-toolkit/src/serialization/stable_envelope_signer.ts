@@ -1,4 +1,5 @@
 import { signStableValue, type StableSignatureAlgorithm, verifyStableValueSignature } from './stable_signature.js';
+import type { KeyRingPolicy } from './key_ring_policy.js';
 
 export interface StableEnvelopeSignerKey {
 	readonly id: string;
@@ -18,6 +19,7 @@ export interface StableSignedEnvelope<TPayload = unknown> {
 export interface StableEnvelopeSignerOptions {
 	readonly activeKeyId?: string;
 	readonly envelopeSchemaVersion?: number;
+	readonly keyPolicy?: KeyRingPolicy;
 }
 
 interface NormalizedSignerKey {
@@ -69,6 +71,7 @@ export class StableEnvelopeSigner {
 	private readonly keys: readonly NormalizedSignerKey[];
 	private readonly activeKeyId: string;
 	private readonly envelopeSchemaVersion: number;
+	private readonly keyPolicy: KeyRingPolicy | null;
 
 	constructor(keys: readonly StableEnvelopeSignerKey[], options: StableEnvelopeSignerOptions = {}) {
 		this.keys = normalizeKeys(keys);
@@ -86,6 +89,7 @@ export class StableEnvelopeSigner {
 		const envelopeSchemaVersion = options.envelopeSchemaVersion ?? 1;
 		assertPositiveInteger(envelopeSchemaVersion, 'Envelope schemaVersion');
 		this.envelopeSchemaVersion = envelopeSchemaVersion;
+		this.keyPolicy = options.keyPolicy ?? null;
 	}
 
 	listKeyIds(): readonly string[] {
@@ -100,6 +104,7 @@ export class StableEnvelopeSigner {
 		return new StableEnvelopeSigner(this.keys, {
 			activeKeyId: nextActiveKeyId,
 			envelopeSchemaVersion: this.envelopeSchemaVersion,
+			keyPolicy: this.keyPolicy ?? undefined,
 		});
 	}
 
@@ -119,6 +124,10 @@ export class StableEnvelopeSigner {
 		const signedAt = options.signedAt ?? new Date().toISOString();
 		if (!signedAt) {
 			throw new TypeError('signedAt must be non-empty');
+		}
+
+		if (this.keyPolicy && !this.keyPolicy.canSign(key.id, signedAt)) {
+			throw new Error(`Key ${key.id} is not allowed for signing at ${signedAt}`);
 		}
 
 		const signature = signStableValue(payload, key.secret, {
@@ -148,6 +157,15 @@ export class StableEnvelopeSigner {
 		}
 
 		if (key.algorithm !== envelope.algorithm) {
+			return false;
+		}
+
+		if (
+			this.keyPolicy &&
+			!this.keyPolicy.canVerify(key.id, {
+				signedAt: envelope.signedAt,
+			})
+		) {
 			return false;
 		}
 

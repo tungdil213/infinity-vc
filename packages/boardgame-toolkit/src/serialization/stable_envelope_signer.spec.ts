@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { KeyRingPolicy } from './key_ring_policy.js';
 import { StableEnvelopeSigner } from './stable_envelope_signer.js';
 
 describe('StableEnvelopeSigner', () => {
@@ -59,5 +60,55 @@ describe('StableEnvelopeSigner', () => {
 				{ id: 'k1', secret: 'b' },
 			]);
 		}).toThrow('Duplicate signer key id');
+	});
+
+	it('enforces key policy for signing and verification', () => {
+		const keyPolicy = new KeyRingPolicy([
+			{
+				keyId: 'k1',
+				status: 'deprecated',
+				signWindow: {
+					notBefore: '2025-01-01T00:00:00.000Z',
+					notAfter: '2026-01-01T00:00:00.000Z',
+				},
+				verifyWindow: {
+					notAfter: '2027-01-01T00:00:00.000Z',
+				},
+			},
+			{
+				keyId: 'k2',
+				status: 'active',
+				signWindow: {
+					notBefore: '2026-01-01T00:00:00.000Z',
+					notAfter: '2028-01-01T00:00:00.000Z',
+				},
+			},
+		]);
+
+		const signer = new StableEnvelopeSigner(
+			[
+				{ id: 'k1', secret: 'secret-1' },
+				{ id: 'k2', secret: 'secret-2' },
+			],
+			{
+				activeKeyId: 'k2',
+				keyPolicy,
+			}
+		);
+
+		expect(() =>
+			signer.sign(
+				{
+					value: 1,
+				},
+				{
+					keyId: 'k1',
+					signedAt: '2026-06-01T00:00:00.000Z',
+				}
+			)
+		).toThrow('not allowed for signing');
+
+		const envelope = signer.sign({ value: 1 }, { signedAt: '2026-06-01T00:00:00.000Z' });
+		expect(signer.verify(envelope)).toBe(true);
 	});
 });

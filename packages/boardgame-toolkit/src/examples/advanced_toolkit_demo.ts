@@ -5,6 +5,7 @@ import { MatchEventLog } from '../replay/event_log.js';
 import { VersionedEventProjector } from '../replay/versioned_event_projector.js';
 import { VersionedSchemaRegistry } from '../schema/versioned_schema_registry.js';
 import { ScriptedEffectEngine } from '../scripting/scripted_effect_engine.js';
+import { KeyRingPolicy } from '../serialization/key_ring_policy.js';
 import { StableEnvelopeSigner } from '../serialization/stable_envelope_signer.js';
 import { signStableValue, verifyStableValueSignature } from '../serialization/stable_signature.js';
 import { EventPipeline, type PipelineEvent } from '../triggers/event_pipeline.js';
@@ -278,12 +279,37 @@ const runSchemaAndSignatureDemo = () => {
 	const signature = signStableValue(migrated.record, 'demo-secret');
 	const verified = verifyStableValueSignature(migrated.record, 'demo-secret', signature);
 
+	const keyPolicy = new KeyRingPolicy([
+		{
+			keyId: 'k1',
+			status: 'deprecated',
+			signWindow: {
+				notBefore: '2025-01-01T00:00:00.000Z',
+				notAfter: '2026-01-01T00:00:00.000Z',
+			},
+			verifyWindow: {
+				notAfter: '2027-01-01T00:00:00.000Z',
+			},
+		},
+		{
+			keyId: 'k2',
+			status: 'active',
+			signWindow: {
+				notBefore: '2026-01-01T00:00:00.000Z',
+				notAfter: '2028-01-01T00:00:00.000Z',
+			},
+		},
+	]);
+
 	const envelopeSigner = new StableEnvelopeSigner(
 		[
 			{ id: 'k1', secret: 'demo-secret-1' },
 			{ id: 'k2', secret: 'demo-secret-2' },
 		],
-		{ activeKeyId: 'k2' }
+		{
+			activeKeyId: 'k2',
+			keyPolicy,
+		}
 	);
 	const envelope = envelopeSigner.sign(projectedEvent.event, {
 		signedAt: '2026-01-01T00:00:00.000Z',

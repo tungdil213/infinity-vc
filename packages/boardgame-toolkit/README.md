@@ -135,6 +135,7 @@ Boardgame domain toolkit inspired by modern online tabletop engines, focused on 
   - HMAC signatures over stable JSON (`sha256` / `sha512`)
   - Constant-time signature verification
   - Signed envelopes with key ids for key rotation
+  - Key lifecycle policy (`active` / `deprecated` / `revoked`) with signing/verification windows
 - Audit Trail
   - Sensitive action auditing (`appendSensitive`)
   - Filtering by actor/action
@@ -253,7 +254,8 @@ import { VersionedEventProjector } from '@infinity.dev/boardgame-toolkit/replay'
 5. Use `ReplayTimelineBuilder` in read-side tooling to inspect, step, seek and render playback.
 6. Use `VersionedSchemaRegistry` + `VersionedEventProjector` to normalize old events before replay/import.
 7. If needed, sign payloads with `signStableValue` or sign envelopes with `StableEnvelopeSigner` (key id + rotation).
-8. Apply `AccessibilityProfile` hints at render time to adapt motion/contrast/text scale safely.
+8. Enforce key lifecycle using `KeyRingPolicy` to block old keys from signing while keeping controlled verification.
+9. Apply `AccessibilityProfile` hints at render time to adapt motion/contrast/text scale safely.
 
 ## Test
 
