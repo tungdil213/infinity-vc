@@ -22,3 +22,8 @@ export * from './privacy/index.js';
 export * from './logs/index.js';
 export * from './accessibility/index.js';
 export * from './visibility/index.js';
+export * from './auction/index.js';
+export * from './voting/index.js';
+export * from './fog/index.js';
+export * from './validation/index.js';
+export * from './scripting/index.js';

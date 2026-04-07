@@ -116,6 +116,26 @@
 		"./visibility": {
 			"types": "./dist/visibility/index.d.ts",
 			"import": "./dist/visibility/index.js"
+		},
+		"./auction": {
+			"types": "./dist/auction/index.d.ts",
+			"import": "./dist/auction/index.js"
+		},
+		"./voting": {
+			"types": "./dist/voting/index.d.ts",
+			"import": "./dist/voting/index.js"
+		},
+		"./fog": {
+			"types": "./dist/fog/index.d.ts",
+			"import": "./dist/fog/index.js"
+		},
+		"./validation": {
+			"types": "./dist/validation/index.d.ts",
+			"import": "./dist/validation/index.js"
+		},
+		"./scripting": {
+			"types": "./dist/scripting/index.d.ts",
+			"import": "./dist/scripting/index.js"
 		}
 	},
 	"scripts": {
@@ -126,7 +146,7 @@
 		"typecheck": "tsc --noEmit",
 		"test": "vitest run",
 		"test:watch": "vitest",
-		"docs:run": "yarn build && node ./dist/examples/visibility_demo.js"
+		"docs:run": "yarn build && node ./dist/examples/visibility_demo.js && node ./dist/examples/advanced_toolkit_demo.js"
 	},
 	"devDependencies": {
 		"@infinity.dev/typescript-config": "1.0.0",

@@ -95,6 +95,25 @@ Boardgame domain toolkit inspired by modern online tabletop engines, focused on 
   - Player-to-player offers (targeted or public)
   - Accept/cancel lifecycle
   - Bank trade ratios (4:1 default, resource overrides)
+- Auctions
+  - Sealed-bid auction sessions
+  - Deterministic tie-breakers (earliest/latest/player order)
+  - Audience-safe projections (public/spectator/player)
+- Voting
+  - Secret/open ballot sessions
+  - Weighted votes, revote policy, turnout/tally computation
+  - Audience-safe projections + optional ballot reveal on close
+- Fog of War
+  - Per-player explored/visible memory
+  - Public visibility layer for shared information
+  - Audience projections without private leak
+- Validation DSL
+  - Composable validation trees (`all` / `any` / `not` / guarded `rule`)
+  - Compilable validators for runtime checks
+- Scripted Effects
+  - Declarative effect operations with handler registry
+  - DSL-gated execution (`when`) with skip reasons
+  - Deterministic stack resolution with chained enqueue
 - Replay / Event Sourcing
   - Typed append/filter event log
   - Reducer-based replay from initial state
@@ -130,8 +149,7 @@ These can be built on top using adapters around this package.
 
 - Hex-tile board utilities (axial coords, rings, terrain production tables).
 - Trick-taking toolkit (lead/follow/trump/winner evaluator).
-- Auction/voting helpers (sealed bids, tie-break strategies).
-- Event-trigger DSL (trigger/replacement/prevention semantics).
+- Advanced trigger/replacement/prevention semantics on top of scripted effects.
 - Public/private projection for full game state trees (not only hands/zones).
 
 ## Quick Start
@@ -186,6 +204,16 @@ const projected = projectVisibilityForAudience({
 		},
 	},
 });
+```
+
+## Advanced Toolkit Example
+
+```ts
+import { SealedAuction } from '@infinity.dev/boardgame-toolkit/auction';
+import { VoteSession } from '@infinity.dev/boardgame-toolkit/voting';
+import { FogOfWar } from '@infinity.dev/boardgame-toolkit/fog';
+import { ScriptedEffectEngine } from '@infinity.dev/boardgame-toolkit/scripting';
+import { dslRule } from '@infinity.dev/boardgame-toolkit/validation';
 ```
 
 ## Test
