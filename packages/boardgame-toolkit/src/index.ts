@@ -30,3 +30,4 @@ export * from './scripting/index.js';
 export * from './triggers/index.js';
 export * from './serialization/index.js';
 export * from './audit/index.js';
+export * from './schema/index.js';

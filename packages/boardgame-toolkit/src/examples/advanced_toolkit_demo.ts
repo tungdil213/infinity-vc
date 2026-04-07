@@ -2,7 +2,9 @@ import { SealedAuction } from '../auction/sealed_auction.js';
 import { AuditTrail } from '../audit/audit_trail.js';
 import { FogOfWar } from '../fog/fog_of_war.js';
 import { MatchEventLog } from '../replay/event_log.js';
+import { VersionedSchemaRegistry } from '../schema/versioned_schema_registry.js';
 import { ScriptedEffectEngine } from '../scripting/scripted_effect_engine.js';
+import { signStableValue, verifyStableValueSignature } from '../serialization/stable_signature.js';
 import { EventPipeline, type PipelineEvent } from '../triggers/event_pipeline.js';
 import { dslRule } from '../validation/validation_dsl.js';
 import { VoteSession } from '../voting/vote_session.js';
@@ -226,9 +228,50 @@ const runAuditAndReplayDemo = () => {
 	print('Replay stable json', eventLog.toStableJson());
 };
 
+const runSchemaAndSignatureDemo = () => {
+	type DemoType = 'session.resumed';
+
+	const registry = new VersionedSchemaRegistry<DemoType>();
+	registry.registerMigration({
+		type: 'session.resumed',
+		fromVersion: 1,
+		toVersion: 2,
+		upcast: (payload) => {
+			const value = payload as { sessionId: string; by: string };
+			return {
+				sessionId: value.sessionId,
+				reason: value.by,
+			};
+		},
+		downcast: (payload) => {
+			const value = payload as { sessionId: string; reason: string };
+			return {
+				sessionId: value.sessionId,
+				by: value.reason,
+			};
+		},
+	});
+
+	const migrated = registry.migrate({
+		type: 'session.resumed',
+		schemaVersion: 1,
+		payload: {
+			sessionId: 'session-42',
+			by: 'manual_reconnect',
+		},
+	});
+
+	const signature = signStableValue(migrated.record, 'demo-secret');
+	const verified = verifyStableValueSignature(migrated.record, 'demo-secret', signature);
+
+	print('Schema migration result', migrated);
+	print('Stable signature', { signature, verified });
+};
+
 runAuctionDemo();
 runVotingDemo();
 runFogDemo();
 runScriptedEffectsDemo();
 runTriggerPipelineDemo();
 runAuditAndReplayDemo();
+runSchemaAndSignatureDemo();

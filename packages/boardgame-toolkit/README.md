@@ -126,6 +126,14 @@ Boardgame domain toolkit inspired by modern online tabletop engines, focused on 
   - Stable JSON serialization for storage/transport
   - Reducer-based replay from initial state
   - Replay timeline builder (state + logs + highlights + duration)
+- Schema Registry
+  - Versioned payload migration (`upcast` / `downcast`)
+  - Deterministic, step-based migration chains
+  - Strong validation for migration graph consistency
+- Serialization Integrity
+  - Canonical JSON serialization
+  - HMAC signatures over stable JSON (`sha256` / `sha512`)
+  - Constant-time signature verification
 - Audit Trail
   - Sensitive action auditing (`appendSensitive`)
   - Filtering by actor/action
@@ -229,6 +237,8 @@ import { dslRule } from '@infinity.dev/boardgame-toolkit/validation';
 import { EventPipeline } from '@infinity.dev/boardgame-toolkit/triggers';
 import { AuditTrail } from '@infinity.dev/boardgame-toolkit/audit';
 import { MatchEventLog } from '@infinity.dev/boardgame-toolkit/replay';
+import { VersionedSchemaRegistry } from '@infinity.dev/boardgame-toolkit/schema';
+import { signStableValue, verifyStableValueSignature } from '@infinity.dev/boardgame-toolkit/serialization';
 ```
 
 ## Production Wiring (Concise)
@@ -238,7 +248,8 @@ import { MatchEventLog } from '@infinity.dev/boardgame-toolkit/replay';
 3. For sensitive operations (resume, role change, override), write `appendSensitive` in `AuditTrail`.
 4. Persist snapshots (`toSnapshot`) for fast restore, and persist stable JSON (`toStableJson`) for deterministic exports/signing.
 5. Use `ReplayTimelineBuilder` in read-side tooling to inspect, step, seek and render playback.
-6. Apply `AccessibilityProfile` hints at render time to adapt motion/contrast/text scale safely.
+6. If needed, sign payloads with `signStableValue` and verify with `verifyStableValueSignature` before import/replay.
+7. Apply `AccessibilityProfile` hints at render time to adapt motion/contrast/text scale safely.
 
 ## Test
 
