@@ -25,6 +25,9 @@ export interface GameStateData {
     settings?: Record<string, unknown>
     engineState?: Record<string, unknown>
     replayTimeline?: unknown[]
+    replayEnvelope?: unknown
+    importedAt?: string
+    importedBy?: string
     persistedAt?: string
     runtimeStatus?: 'HOT' | 'RESTORED'
     abandonedBy?: string

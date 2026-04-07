@@ -1,5 +1,6 @@
 import { SealedAuction } from '../auction/sealed_auction.js';
 import { AuditTrail } from '../audit/audit_trail.js';
+import { recordEnvelopeVerificationAudit } from '../audit/envelope_verification_audit.js';
 import { FogOfWar } from '../fog/fog_of_war.js';
 import { MatchEventLog } from '../replay/event_log.js';
 import { VersionedEventProjector } from '../replay/versioned_event_projector.js';
@@ -315,6 +316,26 @@ const runSchemaAndSignatureDemo = () => {
 		signedAt: '2026-01-01T00:00:00.000Z',
 	});
 
+	const tamperedEnvelope = {
+		...envelope,
+		payload: {
+			...envelope.payload,
+			payload: {
+				...(envelope.payload.payload as Record<string, unknown>),
+				reason: 'tampered',
+			},
+		},
+	};
+	const verificationResult = envelopeSigner.verifyWithResult(tamperedEnvelope);
+	const verificationAudit = new AuditTrail<'system'>();
+	recordEnvelopeVerificationAudit({
+		auditTrail: verificationAudit,
+		actorId: 'system',
+		result: verificationResult,
+		targetType: 'import',
+		targetId: 'demo-envelope',
+	});
+
 	print('Schema migration result', migrated);
 	print('Stable signature', { signature, verified });
 	print('Projected replay event', projectedEvent);
@@ -322,6 +343,8 @@ const runSchemaAndSignatureDemo = () => {
 		envelope,
 		verified: envelopeSigner.verify(envelope),
 	});
+	print('Envelope verification result (tampered)', verificationResult);
+	print('Envelope verification audit', verificationAudit.listAll());
 };
 
 runAuctionDemo();

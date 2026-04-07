@@ -138,6 +138,7 @@ Boardgame domain toolkit inspired by modern online tabletop engines, focused on 
   - Key lifecycle policy (`active` / `deprecated` / `revoked`) with signing/verification windows
 - Audit Trail
   - Sensitive action auditing (`appendSensitive`)
+  - Signed envelope verification audit helper (`recordEnvelopeVerificationAudit`)
   - Filtering by actor/action
   - Snapshot/restore and deterministic stable JSON serialization
 - Accessibility
@@ -255,7 +256,8 @@ import { VersionedEventProjector } from '@infinity.dev/boardgame-toolkit/replay'
 6. Use `VersionedSchemaRegistry` + `VersionedEventProjector` to normalize old events before replay/import.
 7. If needed, sign payloads with `signStableValue` or sign envelopes with `StableEnvelopeSigner` (key id + rotation).
 8. Enforce key lifecycle using `KeyRingPolicy` to block old keys from signing while keeping controlled verification.
-9. Apply `AccessibilityProfile` hints at render time to adapt motion/contrast/text scale safely.
+9. On verification failure, log a sensitive audit entry via `recordEnvelopeVerificationAudit`.
+10. Apply `AccessibilityProfile` hints at render time to adapt motion/contrast/text scale safely.
 
 ## Test
 

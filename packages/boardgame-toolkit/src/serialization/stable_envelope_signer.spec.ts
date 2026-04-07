@@ -50,6 +50,20 @@ describe('StableEnvelopeSigner', () => {
 				payload: { score: 11 },
 			})
 		).toBe(false);
+
+		expect(
+			signer.verifyWithResult({
+				...envelope,
+				keyId: 'unknown',
+			}).reason
+		).toBe('unknown_key');
+
+		expect(
+			signer.verifyWithResult({
+				...envelope,
+				payload: { score: 11 },
+			}).reason
+		).toBe('invalid_signature');
 	});
 
 	it('validates key set consistency', () => {
@@ -60,6 +74,19 @@ describe('StableEnvelopeSigner', () => {
 				{ id: 'k1', secret: 'b' },
 			]);
 		}).toThrow('Duplicate signer key id');
+	});
+
+	it('returns invalid_envelope_schema reason for malformed envelope', () => {
+		const signer = new StableEnvelopeSigner([{ id: 'k1', secret: 'secret-1' }]);
+		const envelope = signer.sign({ ok: true });
+
+		const result = signer.verifyWithResult({
+			...envelope,
+			schemaVersion: 0,
+		});
+
+		expect(result.valid).toBe(false);
+		expect(result.reason).toBe('invalid_envelope_schema');
 	});
 
 	it('enforces key policy for signing and verification', () => {
@@ -110,5 +137,12 @@ describe('StableEnvelopeSigner', () => {
 
 		const envelope = signer.sign({ value: 1 }, { signedAt: '2026-06-01T00:00:00.000Z' });
 		expect(signer.verify(envelope)).toBe(true);
+
+		const denied = signer.verifyWithResult({
+			...envelope,
+			signedAt: '2028-06-01T00:00:00.000Z',
+		});
+		expect(denied.valid).toBe(false);
+		expect(denied.reason).toBe('key_policy_rejected');
 	});
 });

@@ -16,6 +16,20 @@ export interface StableSignedEnvelope<TPayload = unknown> {
 	readonly signature: string;
 }
 
+export type StableEnvelopeVerificationReason =
+	| 'invalid_envelope_schema'
+	| 'missing_key_id'
+	| 'unknown_key'
+	| 'algorithm_mismatch'
+	| 'key_policy_rejected'
+	| 'invalid_signature';
+
+export interface StableEnvelopeVerificationResult<TPayload = unknown> {
+	readonly valid: boolean;
+	readonly reason?: StableEnvelopeVerificationReason;
+	readonly envelope: StableSignedEnvelope<TPayload>;
+}
+
 export interface StableEnvelopeSignerOptions {
 	readonly activeKeyId?: string;
 	readonly envelopeSchemaVersion?: number;
@@ -146,35 +160,85 @@ export class StableEnvelopeSigner {
 	}
 
 	verify<TPayload>(envelope: StableSignedEnvelope<TPayload>): boolean {
-		assertPositiveInteger(envelope.schemaVersion, 'Envelope schemaVersion');
+		return this.verifyWithResult(envelope).valid;
+	}
+
+	verifyWithResult<TPayload>(
+		envelope: StableSignedEnvelope<TPayload>,
+		options: {
+			readonly verifiedAt?: string;
+		} = {}
+	): StableEnvelopeVerificationResult<TPayload> {
+		if (!Number.isInteger(envelope.schemaVersion) || envelope.schemaVersion < 1) {
+			return {
+				valid: false,
+				reason: 'invalid_envelope_schema',
+				envelope,
+			};
+		}
+
 		if (!envelope.keyId || !envelope.keyId.trim()) {
-			return false;
+			return {
+				valid: false,
+				reason: 'missing_key_id',
+				envelope,
+			};
 		}
 
 		const key = this.keysById.get(envelope.keyId);
 		if (!key) {
-			return false;
+			return {
+				valid: false,
+				reason: 'unknown_key',
+				envelope,
+			};
 		}
 
 		if (key.algorithm !== envelope.algorithm) {
-			return false;
+			return {
+				valid: false,
+				reason: 'algorithm_mismatch',
+				envelope,
+			};
 		}
 
 		if (
 			this.keyPolicy &&
 			!this.keyPolicy.canVerify(key.id, {
 				signedAt: envelope.signedAt,
+				verifiedAt: options.verifiedAt,
 			})
 		) {
-			return false;
+			return {
+				valid: false,
+				reason: 'key_policy_rejected',
+				envelope,
+			};
 		}
 
 		try {
-			return verifyStableValueSignature(envelope.payload, key.secret, envelope.signature, {
+			const valid = verifyStableValueSignature(envelope.payload, key.secret, envelope.signature, {
 				algorithm: envelope.algorithm,
 			});
+
+			if (!valid) {
+				return {
+					valid: false,
+					reason: 'invalid_signature',
+					envelope,
+				};
+			}
+
+			return {
+				valid: true,
+				envelope,
+			};
 		} catch {
-			return false;
+			return {
+				valid: false,
+				reason: 'invalid_signature',
+				envelope,
+			};
 		}
 	}
 }

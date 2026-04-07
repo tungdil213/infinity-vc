@@ -104,6 +104,7 @@
     "@infinity.dev/frontend-lobby-realtime": "1.0.0",
     "@infinity.dev/game-engine": "1.0.0",
     "@infinity.dev/game-runtime-session": "1.0.0",
+    "@infinity.dev/boardgame-toolkit": "1.0.0",
     "@infinity.dev/lobby-application": "1.0.0",
     "@infinity.dev/lobby-domain": "1.0.0",
     "@infinity.dev/shared-i18n": "1.0.0",

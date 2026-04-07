@@ -48,4 +48,8 @@ export default await Env.create(new URL('../', import.meta.url), {
   ADMIN_EMAILS: Env.schema.string.optional(),
   MODERATOR_EMAILS: Env.schema.string.optional(),
   LOBBY_DISCONNECT_GRACE_MS: Env.schema.number.optional(),
+  REPLAY_SIGNING_KEY: Env.schema.string.optional(),
+  REPLAY_SIGNING_KEY_ID: Env.schema.string.optional(),
+  REPLAY_SIGNING_PREVIOUS_KEYS: Env.schema.string.optional(),
+  REPLAY_REQUIRE_SIGNATURES: Env.schema.boolean.optional(),
 })

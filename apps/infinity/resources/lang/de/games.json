@@ -11,6 +11,9 @@
     "actionRejected": "Spielaktion wurde abgelehnt",
     "resumeUnauthorized": "Du bist nicht berechtigt, dieses Spiel fortzusetzen",
     "resumeUnavailable": "Dieses Spiel ist nicht mehr aktiv",
-    "catalogUnavailable": "Der Spielekatalog ist vorübergehend nicht verfügbar"
+    "catalogUnavailable": "Der Spielekatalog ist vorübergehend nicht verfügbar",
+    "replayVerificationFailed": "Replay kann nicht geladen werden, da die Integritätsprüfung fehlgeschlagen ist",
+    "importVerificationFailed": "Replay-Import wurde wegen fehlgeschlagener Integritätsprüfung abgelehnt",
+    "replayImportPayloadInvalid": "Replay-Import-Payload ist ungültig"
   }
 }

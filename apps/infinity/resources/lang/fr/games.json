@@ -11,6 +11,9 @@
     "actionRejected": "L'action de jeu a été refusée",
     "resumeUnauthorized": "Vous n'êtes pas autorisé à reprendre cette partie",
     "resumeUnavailable": "Cette partie n'est plus active",
-    "catalogUnavailable": "Le catalogue des jeux est temporairement indisponible"
+    "catalogUnavailable": "Le catalogue des jeux est temporairement indisponible",
+    "replayVerificationFailed": "Impossible de charger le replay (échec de vérification d'intégrité)",
+    "importVerificationFailed": "Import replay rejeté (échec de vérification d'intégrité)",
+    "replayImportPayloadInvalid": "Le payload d'import replay est invalide"
   }
 }

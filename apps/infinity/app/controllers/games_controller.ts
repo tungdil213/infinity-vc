@@ -3,6 +3,7 @@ import { type HttpContext } from '@adonisjs/core/http'
 import logger from '@adonisjs/core/services/logger'
 import { gameEngineService } from '#application/services/game_engine_service'
 import type { GameReplayStep, GameSession } from '#application/services/game_engine_types'
+import { replayImportGuardService } from '#application/services/replay_import_guard_service'
 import {
   executeParsedGameAction,
   getGameSession,
@@ -10,7 +11,7 @@ import {
   parseGameActionInput,
   type RawGameActionInput,
 } from '#controllers/support/game_controller_guard'
-import Game from '#domain/entities/game'
+import Game, { type GameStateData } from '#domain/entities/game'
 import { GameStatus } from '#domain/value_objects/game_status'
 import { DatabaseGameRepository } from '#infrastructure/repositories/database_game_repository'
 import {
@@ -23,12 +24,14 @@ import {
 } from '#presenters/game_presenter'
 import { gameActionBodyValidator, gameUuidParamValidator } from '#validators/game_action_validator'
 import { gameHistoryQueryValidator } from '#validators/game_history_validator'
+import { gameReplayImportBodyValidator } from '#validators/game_replay_import_validator'
 import {
   projectActiveGames,
   projectGameHistoryItem,
   projectGameStats,
   type GameProjectionInput,
 } from '@infinity.dev/game-runtime-session'
+import type { StableSignedEnvelope } from '@infinity.dev/boardgame-toolkit/serialization'
 
 const GAME_ACTION_ERROR_TRANSLATION_KEYS: Record<string, string> = {
   'Game not found': 'games.errors.notFound',
@@ -269,17 +272,32 @@ export default class GamesController {
   async replay({ params, response, auth, i18n }: HttpContext) {
     const user = auth.user
     const { uuid } = await gameUuidParamValidator.validate(params)
+    const actorId = user?.userUuid ?? 'anonymous'
     const canViewDebugPayload = this.canViewDebugPayload(user?.normalizedRole)
 
     const resolvedSession = await this.resolveRuntimeSession(uuid)
     if (resolvedSession) {
+      const replayTimeline = gameEngineService.getReplayTimeline(uuid)
+      const persistedGameForGuard =
+        resolvedSession.source === 'restored' ? await this.gameRepository.findByUuid(uuid) : null
+      const guardDecision = await this.verifyReplayTimelineIntegrity({
+        gameUuid: uuid,
+        actorId,
+        source: resolvedSession.source,
+        replayTimeline,
+        persistedGame: persistedGameForGuard,
+      })
+      if (!guardDecision.allowed) {
+        return response.status(422).json({
+          error: i18n.t('games.errors.replayVerificationFailed'),
+          reason: guardDecision.reason,
+        })
+      }
+
       return response.json({
         gameId: uuid,
         source: resolvedSession.source,
-        replayTimeline: this.sanitizeReplayTimelineForViewer(
-          gameEngineService.getReplayTimeline(uuid),
-          canViewDebugPayload
-        ),
+        replayTimeline: this.sanitizeReplayTimelineForViewer(replayTimeline, canViewDebugPayload),
       })
     }
 
@@ -288,13 +306,25 @@ export default class GamesController {
       return response.status(404).json({ error: i18n.t('games.errors.notFound') })
     }
 
+    const replayTimeline = this.extractPersistedReplayTimeline(persistedGame)
+    const guardDecision = await this.verifyReplayTimelineIntegrity({
+      gameUuid: uuid,
+      actorId,
+      source: 'persistence',
+      replayTimeline,
+      persistedGame,
+    })
+    if (!guardDecision.allowed) {
+      return response.status(422).json({
+        error: i18n.t('games.errors.replayVerificationFailed'),
+        reason: guardDecision.reason,
+      })
+    }
+
     return response.json({
       gameId: uuid,
       source: 'persistence',
-      replayTimeline: this.sanitizeReplayTimelineForViewer(
-        this.extractPersistedReplayTimeline(persistedGame),
-        canViewDebugPayload
-      ),
+      replayTimeline: this.sanitizeReplayTimelineForViewer(replayTimeline, canViewDebugPayload),
     })
   }
 
@@ -380,6 +410,88 @@ export default class GamesController {
     return response.json({
       userUuid: user.userUuid,
       ...stats,
+    })
+  }
+
+  async verificationMetrics({ response }: HttpContext) {
+    return response.json(replayImportGuardService.exportMetrics())
+  }
+
+  async resetVerificationMetrics({ response }: HttpContext) {
+    replayImportGuardService.resetMetrics()
+    return response.json({
+      ok: true,
+      metrics: replayImportGuardService.exportMetrics(),
+    })
+  }
+
+  async importReplay({ params, request, response, auth, i18n }: HttpContext) {
+    const actorId = auth.user?.userUuid ?? 'anonymous'
+    const { uuid } = await gameUuidParamValidator.validate(params)
+    const body = (await request.validateUsing(gameReplayImportBodyValidator)) as {
+      replayTimeline: unknown[]
+      envelope?: Record<string, unknown>
+    }
+
+    const persistedGame = await this.gameRepository.findByUuid(uuid)
+    if (!persistedGame) {
+      return response.status(404).json({ error: i18n.t('games.errors.notFound') })
+    }
+
+    const normalizedReplayTimeline = body.replayTimeline
+      .map((rawStep, index) => this.normalizeReplayStep(rawStep, index))
+      .filter((step): step is GameReplayStep => step !== null)
+
+    if (normalizedReplayTimeline.length !== body.replayTimeline.length) {
+      return response.status(422).json({
+        error: i18n.t('games.errors.replayImportPayloadInvalid'),
+      })
+    }
+
+    const guardDecision = await replayImportGuardService.verifyImport({
+      payload: {
+        gameId: uuid,
+        replayTimeline: normalizedReplayTimeline,
+      },
+      actorId,
+      targetId: uuid,
+      source: 'external',
+      envelope: (body.envelope ?? null) as StableSignedEnvelope<Record<string, unknown>> | null,
+    })
+    if (!guardDecision.allowed) {
+      return response.status(422).json({
+        error: i18n.t('games.errors.importVerificationFailed'),
+        reason: guardDecision.reason,
+      })
+    }
+
+    const currentGameData = this.asRecord(persistedGame.gameData) ?? {}
+    const currentRuntime = this.asRecord(currentGameData.runtime) ?? {}
+    const nextGameData = {
+      ...currentGameData,
+      runtime: {
+        ...currentRuntime,
+        replayTimeline: normalizedReplayTimeline,
+        replayEnvelope: body.envelope ?? currentRuntime.replayEnvelope ?? null,
+        importedAt: new Date().toISOString(),
+        importedBy: actorId,
+      },
+    }
+
+    await this.gameRepository.save(
+      Game.reconstitute(
+        persistedGame.uuid,
+        persistedGame.status,
+        persistedGame.players,
+        nextGameData as GameStateData,
+        persistedGame.startedAt,
+        persistedGame.finishedAt
+      )
+    )
+
+    return response.json({
+      gameId: uuid,
+      importedSteps: normalizedReplayTimeline.length,
     })
   }
 
@@ -497,6 +609,20 @@ export default class GamesController {
     return runtime.replayTimeline
       .map((rawStep, index) => this.normalizeReplayStep(rawStep, index))
       .filter((step): step is GameReplayStep => step !== null)
+  }
+
+  private extractPersistedReplayEnvelope(game: Game): Record<string, unknown> | null {
+    const gameData = this.asRecord(game.gameData)
+    if (!gameData) {
+      return null
+    }
+
+    const runtime = this.asRecord(gameData.runtime)
+    if (!runtime) {
+      return null
+    }
+
+    return this.asRecord(runtime.replayEnvelope)
   }
 
   private normalizeReplayStep(rawStep: unknown, index: number): GameReplayStep | null {
@@ -654,6 +780,11 @@ export default class GamesController {
     const resolvedStatus =
       options?.statusOverride ??
       (session.state.isFinished ? GameStatus.FINISHED : GameStatus.IN_PROGRESS)
+    const replayTimeline = Array.isArray(session.timeline) ? session.timeline : []
+    const replayEnvelope = replayImportGuardService.signReplayPayload({
+      gameId: session.gameId,
+      replayTimeline,
+    })
 
     const persistedGame = Game.reconstitute(
       session.gameId,
@@ -677,7 +808,8 @@ export default class GamesController {
           lobbyId: session.lobbyId,
           settings: (gameState.settings as Record<string, unknown>) ?? {},
           engineState: gameState,
-          replayTimeline: Array.isArray(session.timeline) ? session.timeline : [],
+          replayTimeline,
+          replayEnvelope: replayEnvelope ?? undefined,
           persistedAt: new Date().toISOString(),
           runtimeStatus,
           abandonReason: options?.abandonReason,
@@ -742,6 +874,27 @@ export default class GamesController {
         payload: undefined,
       })),
     }))
+  }
+
+  private async verifyReplayTimelineIntegrity(options: {
+    gameUuid: string
+    actorId: string
+    source: 'memory' | 'restored' | 'persistence'
+    replayTimeline: GameReplayStep[]
+    persistedGame?: Game | null
+  }) {
+    const replayEnvelope =
+      options.persistedGame && options.source !== 'memory'
+        ? this.extractPersistedReplayEnvelope(options.persistedGame)
+        : null
+
+    return replayImportGuardService.verifyReplay({
+      gameId: options.gameUuid,
+      actorId: options.actorId,
+      source: options.source,
+      replayTimeline: options.replayTimeline,
+      envelope: replayEnvelope,
+    })
   }
 
   private translateGameActionError(

@@ -188,6 +188,18 @@ router
     router
       .get('/games/catalog', '#controllers/game_catalog_controller.adminIndex')
       .as('admin.games.catalog')
+    router
+      .post('/games/:uuid/replay/import', '#controllers/games_controller.importReplay')
+      .as('admin.games.replay.import')
+    router
+      .get('/games/verification/metrics', '#controllers/games_controller.verificationMetrics')
+      .as('admin.games.verification.metrics')
+    router
+      .post(
+        '/games/verification/metrics/reset',
+        '#controllers/games_controller.resetVerificationMetrics'
+      )
+      .as('admin.games.verification.metrics.reset')
   })
   .prefix('/admin/api')
   .use([middleware.auth(), middleware.adminGuard()])
