@@ -1,5 +1,6 @@
 import type { GameActionResponse, GameSession } from '#application/services/game_engine_service'
 import type { GameReplayStep } from '#application/services/game_engine_types'
+import type { GamePresentationDefinition } from '@infinity.dev/game-engine'
 
 export function toGamePagePayload(args: {
   session: GameSession
@@ -13,6 +14,7 @@ export function toGamePagePayload(args: {
     persisted: boolean
     inMemory: boolean
   }
+  gamePresentation?: GamePresentationDefinition
 }) {
   const {
     session,
@@ -22,12 +24,13 @@ export function toGamePagePayload(args: {
     isSpectator = false,
     replayTimeline = [],
     runtimeStatus,
+    gamePresentation,
   } = args
 
   return {
     gameId: session.gameId,
     gameType: session.gameType,
-    playerView,
+    playerView: normalizePlayerViewForFrontend(playerView, gamePresentation),
     availableActions,
     replayTimeline,
     user,
@@ -48,6 +51,7 @@ export function toGameApiPayload(args: {
     persisted: boolean
     inMemory: boolean
   }
+  gamePresentation?: GamePresentationDefinition
 }) {
   const {
     session,
@@ -56,12 +60,13 @@ export function toGameApiPayload(args: {
     isSpectator = false,
     replayTimeline = [],
     runtimeStatus,
+    gamePresentation,
   } = args
 
   return {
     gameId: session.gameId,
     gameType: session.gameType,
-    playerView,
+    playerView: normalizePlayerViewForFrontend(playerView, gamePresentation),
     availableActions,
     replayTimeline,
     isFinished: session.state.isFinished,
@@ -91,8 +96,15 @@ export function toActionResponsePayload(args: {
   playerView: unknown
   availableActions: string[]
   includeDebugPayload?: boolean
+  gamePresentation?: GamePresentationDefinition
 }) {
-  const { actionResult, playerView, availableActions, includeDebugPayload = false } = args
+  const {
+    actionResult,
+    playerView,
+    availableActions,
+    includeDebugPayload = false,
+    gamePresentation,
+  } = args
   const events = Array.isArray(actionResult.events)
     ? actionResult.events.map((event) => ({
         type: event.type,
@@ -102,7 +114,7 @@ export function toActionResponsePayload(args: {
 
   return {
     success: true,
-    playerView,
+    playerView: normalizePlayerViewForFrontend(playerView, gamePresentation),
     availableActions,
     events,
     isFinished: actionResult.newState?.isFinished ?? false,
@@ -152,8 +164,78 @@ export function toSpectatorPlayerView(args: { session: GameSession; currentUserU
       isFinished: session.state.isFinished,
       winnerId: session.state.winnerId ?? null,
       deckCount: publicPayload.deckCount,
+      myHand: [] as string[],
     },
   }
+}
+
+function normalizePlayerViewForFrontend(
+  playerView: unknown,
+  gamePresentation?: GamePresentationDefinition
+) {
+  if (gamePresentation?.playerView !== 'hidden-hand-player-list') {
+    return playerView
+  }
+
+  const playerViewRecord = asRecord(playerView)
+  if (!playerViewRecord) {
+    return playerView
+  }
+
+  const state = asRecord(playerViewRecord.state)
+  if (!state) {
+    return playerView
+  }
+
+  const currentUserUuid =
+    typeof playerViewRecord.playerId === 'string' ? playerViewRecord.playerId : ''
+  const currentPlayerId = typeof state.currentPlayerId === 'string' ? state.currentPlayerId : null
+  const statePlayers = Array.isArray(state.players) ? state.players : []
+  const alreadyNormalized = statePlayers.every((player) => {
+    const record = asRecord(player)
+    return record !== null && 'handCount' in record
+  })
+
+  return {
+    ...playerViewRecord,
+    state: {
+      ...state,
+      players: alreadyNormalized
+        ? statePlayers
+        : statePlayers.map((player) =>
+            toPublicPlayerView(asRecord(player) ?? {}, currentPlayerId, currentUserUuid)
+          ),
+      myHand: Array.isArray(state.myHand)
+        ? state.myHand
+        : extractMyHand(statePlayers, currentUserUuid),
+      deckCount:
+        typeof state.deckCount === 'number'
+          ? state.deckCount
+          : Array.isArray(state.deck)
+            ? state.deck.length
+            : 0,
+    },
+  }
+}
+
+function extractMyHand(players: unknown[], currentUserUuid: string): string[] {
+  const currentPlayer = players
+    .map((player) => asRecord(player))
+    .find((player) => player && String(player.id ?? '') === currentUserUuid)
+
+  if (!currentPlayer || !Array.isArray(currentPlayer.hand)) {
+    return []
+  }
+
+  return currentPlayer.hand.filter((card): card is string => typeof card === 'string')
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value as Record<string, unknown>
+  }
+
+  return null
 }
 
 export function toPublicPlayerView(

@@ -12,6 +12,7 @@ describe('rockPaperScissorsModule', () => {
 		expect(rockPaperScissorsModule.definition.id).toBe('rock-paper-scissors');
 		expect(rockPaperScissorsModule.definition.settings.fields.length).toBe(2);
 		expect(rockPaperScissorsModule.definition.metadata.minPlayers).toBe(2);
+		expect(rockPaperScissorsModule.definition.presentation?.playerView).toBe('raw');
 	});
 
 	it('plays a full match and reaches a winner', () => {

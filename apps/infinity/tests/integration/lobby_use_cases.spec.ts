@@ -200,6 +200,67 @@ test.group('Lobby Use Cases Integration', (group) => {
     gameEngineService.endGame(gameUuid)
   })
 
+  test('should start a Love Letter Infinity Gauntlet session with hidden player views', async ({
+    assert,
+  }) => {
+    const player1 = createPlayer({ nickName: 'LL_Player_1' })
+    const player2 = createPlayer({ nickName: 'LL_Player_2' })
+
+    await playerRepository.save(player1)
+    await playerRepository.save(player2)
+
+    const createResult = await createLobbyUseCase.execute({
+      name: 'Love Letter Infinity Match',
+      userUuid: player1.userUuid,
+      maxPlayers: 2,
+      isPrivate: false,
+      gameType: 'love-letter-infinity-gauntlet',
+    })
+
+    assert.isTrue(createResult.isSuccess)
+    const lobbyUuid = createResult.value.uuid
+
+    const joinResult = await joinLobbyUseCase.execute({
+      lobbyUuid,
+      userUuid: player2.userUuid,
+    })
+    assert.isTrue(joinResult.isSuccess)
+
+    const startResult = await startGameUseCase.execute({
+      lobbyUuid,
+      userUuid: player1.userUuid,
+    })
+    assert.isTrue(startResult.isSuccess)
+
+    const gameUuid = startResult.value!.game.uuid
+    const session = gameEngineService.getSession(gameUuid)
+    assert.exists(session)
+    assert.equal(session!.gameType, 'love-letter-infinity-gauntlet')
+
+    const currentPlayerId = session!.state.currentPlayerId
+    const opponentId = session!.players.find((player) => player.id !== currentPlayerId)?.id
+    const currentPlayerView = gameEngineService.getPlayerView(gameUuid, currentPlayerId!)
+    const rawPlayers = Array.isArray(currentPlayerView?.state.players)
+      ? (currentPlayerView?.state.players as unknown as Array<Record<string, unknown>>)
+      : []
+
+    assert.deepEqual(gameEngineService.getAvailableActions(gameUuid, currentPlayerId!), [
+      'draw_card',
+    ])
+    assert.equal(
+      (rawPlayers.find((player) => player.id === currentPlayerId)?.hand as unknown[] | undefined)
+        ?.length ?? 0,
+      1
+    )
+    assert.equal(
+      (rawPlayers.find((player) => player.id === opponentId)?.hand as unknown[] | undefined)
+        ?.length ?? 0,
+      0
+    )
+
+    gameEngineService.endGame(gameUuid)
+  })
+
   test('should handle player leaving and rejoining', async ({ assert }) => {
     // Créer des joueurs
     const player1 = createPlayer()

@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Head, Link, router } from '@inertiajs/react'
+import { Head, router } from '@inertiajs/react'
+import { Link } from '@adonisjs/inertia/react'
 import { Button } from '@infinity.dev/ui/primitives/button'
 import { Input } from '@infinity.dev/ui/primitives/input'
 import { Textarea } from '@infinity.dev/ui/primitives/textarea'
@@ -23,20 +24,20 @@ import { Alert, AlertDescription } from '@infinity.dev/ui/primitives/alert'
 import Layout from '../layouts/layout'
 import { AlertCircle, CheckCircle2, Lightbulb } from 'lucide-react'
 import { useI18n } from '../i18n/use_i18n'
+import type { AvailableGameViewModel } from '../../shared/game_definition_helpers'
+
+function buildDefaultGameSettings(availableGame: AvailableGameViewModel | null | undefined) {
+  return Object.fromEntries((availableGame?.settings ?? []).map((field) => [field.key, field.defaultValue]))
+}
 
 interface CreateLobbyProps {
-  availableGames: Array<{
-    id: string
-    displayName: string
-    description: string
-    minPlayers: number
-    maxPlayers: number
-  }>
+  availableGames: AvailableGameViewModel[]
   errors?: {
     name?: string[]
     gameType?: string[]
     maxPlayers?: string[]
     password?: string[]
+    gameSettings?: string[]
     general?: string[]
   }
   flash?: {
@@ -60,16 +61,14 @@ export default function CreateLobby({
     password: '',
     description: '',
     gameType: defaultGame?.id ?? '',
-    gameSettings: {
-      roundsToWin: 3,
-      allowDrawReplay: true,
-    },
+    gameSettings: buildDefaultGameSettings(defaultGame),
   })
   const [isLoading, setIsLoading] = useState(false)
 
   const selectedGame =
     availableGames.find((game) => game.id === formData.gameType) ?? availableGames[0] ?? null
-  const isRpsSelected = formData.gameType === 'rock-paper-scissors'
+  const selectedGameSettings = selectedGame?.settings ?? []
+  const hasConfigurableSettings = selectedGameSettings.length > 0
   const playerOptions = selectedGame
     ? Array.from(
         { length: selectedGame.maxPlayers - selectedGame.minPlayers + 1 },
@@ -84,7 +83,7 @@ export default function CreateLobby({
     const submitData = {
       ...formData,
       password: formData.hasPassword ? formData.password : undefined,
-      gameSettings: isRpsSelected ? formData.gameSettings : undefined,
+      gameSettings: hasConfigurableSettings ? formData.gameSettings : undefined,
     }
 
     router.post('/lobbies', submitData, {
@@ -195,6 +194,9 @@ export default function CreateLobby({
                               nextGame.maxPlayers
                             )
                           : prev.maxPlayers,
+                        gameSettings: nextGame
+                          ? buildDefaultGameSettings(nextGame)
+                          : prev.gameSettings,
                       }))
                     }}
                   >
@@ -245,60 +247,117 @@ export default function CreateLobby({
                   )}
                 </div>
 
-                {isRpsSelected && (
+                {hasConfigurableSettings && (
                   <div className="space-y-4">
                     <Label className="text-base font-heading">{t('createLobby.gameSettingsTitle')}</Label>
+                    {selectedGameSettings.map((field) => {
+                      const fieldValue = formData.gameSettings[field.key] ?? field.defaultValue
 
-                    <div className="space-y-2">
-                      <Label htmlFor="roundsToWin">{t('createLobby.roundsToWinLabel')}</Label>
-                      <Input
-                        id="roundsToWin"
-                        name="roundsToWin"
-                        type="number"
-                        min={1}
-                        max={10}
-                        value={formData.gameSettings.roundsToWin}
-                        onChange={(event) => {
-                          const roundsToWin = Number.parseInt(event.target.value, 10)
-                          setFormData((prev) => ({
-                            ...prev,
-                            gameSettings: {
-                              ...prev.gameSettings,
-                              roundsToWin: Number.isNaN(roundsToWin)
-                                ? prev.gameSettings.roundsToWin
-                                : roundsToWin,
-                            },
-                          }))
-                        }}
-                      />
-                      <p className="text-sm text-muted-foreground">
-                        {t('createLobby.roundsToWinHelp')}
-                      </p>
-                    </div>
+                      if (field.type === 'boolean') {
+                        return (
+                          <div key={field.key} className="flex items-center space-x-3">
+                            <Checkbox
+                              id={field.key}
+                              checked={Boolean(fieldValue)}
+                              onCheckedChange={(checked) =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  gameSettings: {
+                                    ...prev.gameSettings,
+                                    [field.key]: !!checked,
+                                  },
+                                }))
+                              }
+                            />
+                            <div>
+                              <Label htmlFor={field.key} className="cursor-pointer">
+                                {field.label}
+                              </Label>
+                              {field.description && (
+                                <p className="text-sm text-muted-foreground">
+                                  {field.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      }
 
-                    <div className="flex items-center space-x-3">
-                      <Checkbox
-                        id="allowDrawReplay"
-                        checked={formData.gameSettings.allowDrawReplay}
-                        onCheckedChange={(checked) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            gameSettings: {
-                              ...prev.gameSettings,
-                              allowDrawReplay: !!checked,
-                            },
-                          }))
-                        }
-                      />
-                      <div>
-                        <Label htmlFor="allowDrawReplay" className="cursor-pointer">
-                          {t('createLobby.allowDrawReplayLabel')}
-                        </Label>
-                        <p className="text-sm text-muted-foreground">
-                          {t('createLobby.allowDrawReplayHelp')}
-                        </p>
-                      </div>
-                    </div>
+                      if (field.type === 'select') {
+                        return (
+                          <div key={field.key} className="space-y-2">
+                            <Label htmlFor={field.key}>{field.label}</Label>
+                            <Select
+                              value={String(fieldValue ?? '')}
+                              onValueChange={(value) =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  gameSettings: {
+                                    ...prev.gameSettings,
+                                    [field.key]: value,
+                                  },
+                                }))
+                              }
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder={field.label} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {(field.options ?? []).map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {field.description && (
+                              <p className="text-sm text-muted-foreground">{field.description}</p>
+                            )}
+                          </div>
+                        )
+                      }
+
+                      return (
+                        <div key={field.key} className="space-y-2">
+                          <Label htmlFor={field.key}>{field.label}</Label>
+                          <Input
+                            id={field.key}
+                            name={field.key}
+                            type={field.type === 'number' ? 'number' : 'text'}
+                            min={field.type === 'number' ? field.min : undefined}
+                            max={field.type === 'number' ? field.max : undefined}
+                            value={
+                              field.type === 'number'
+                                ? typeof fieldValue === 'number'
+                                  ? fieldValue
+                                  : String(fieldValue ?? '')
+                                : String(fieldValue ?? '')
+                            }
+                            onChange={(event) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                gameSettings: {
+                                  ...prev.gameSettings,
+                                  [field.key]:
+                                    field.type === 'number'
+                                      ? event.target.value === ''
+                                        ? ''
+                                        : Number(event.target.value)
+                                      : event.target.value,
+                                },
+                              }))
+                            }
+                          />
+                          {field.description && (
+                            <p className="text-sm text-muted-foreground">{field.description}</p>
+                          )}
+                        </div>
+                      )
+                    })}
+
+                    {errors.gameSettings && (
+                      <p className="text-sm text-destructive">{errors.gameSettings[0]}</p>
+                    )}
                   </div>
                 )}
 

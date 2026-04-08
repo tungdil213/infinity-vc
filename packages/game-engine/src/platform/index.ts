@@ -10,6 +10,8 @@ export type {
 	GameLicensing,
 	GameModule,
 	GamePlayerConstraints,
+	GamePlayerViewMode,
+	GamePresentationDefinition,
 	GameSecurityPolicy,
 	GameSettingField,
 	GameSettingFieldType,

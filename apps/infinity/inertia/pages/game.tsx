@@ -104,6 +104,9 @@ interface GameState {
   turn: number
   isFinished: boolean
   winnerId?: string | null
+  winnerIds?: string[]
+  loserId?: string | null
+  myHand?: string[]
   deckCount: number
   players: LoveLetterPlayer[]
 }
@@ -275,7 +278,9 @@ export default function Game({
   const [gameState, setGameState] = useState<PlayerViewState | null>(playerView)
   const [availableActions, setAvailableActions] = useState<string[]>(initialActions || [])
   const [lastSubmittedMove, setLastSubmittedMove] = useState<RpsMove | null>(null)
-  const [myHand, setMyHand] = useState<string[]>([])
+  const [myHand, setMyHand] = useState<string[]>(
+    Array.isArray(playerView?.state?.myHand) ? playerView.state.myHand : []
+  )
   const [selectedCard, setSelectedCard] = useState<string | null>(null)
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null)
   const [selectedGuess, setSelectedGuess] = useState<string | null>(null)
@@ -411,7 +416,9 @@ export default function Game({
         return 'You'
       }
 
-      const replayPlayer = activeReplayStep?.snapshot.players.find((player) => player.id === playerId)
+      const replayPlayer = activeReplayStep?.snapshot.players.find(
+        (player) => player.id === playerId
+      )
       if (replayPlayer?.name) {
         return replayPlayer.name
       }
@@ -479,9 +486,7 @@ export default function Game({
 
     return (
       <div className="rounded-base border-2 border-amber-300 bg-amber-50 p-3 text-sm">
-        <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">
-          Step Diff
-        </p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">Step Diff</p>
         {!replayDiff.hasPreviousStep ? (
           <p className="mt-2 text-xs text-amber-900">
             Initial snapshot: no previous step to compare.
@@ -726,9 +731,24 @@ export default function Game({
       winnerId: string | null
       choices: Record<string, string>
     }>
-    const winner = gameState?.state?.players?.find((p) =>
-      gameState?.state?.winnerId ? p.id === gameState.state.winnerId : !p.isEliminated
+    const loveLetterWinnerIds = Array.isArray(finalStateRecord.winnerIds)
+      ? finalStateRecord.winnerIds.filter(
+          (winnerId): winnerId is string => typeof winnerId === 'string'
+        )
+      : []
+    const loveLetterLoserId =
+      typeof finalStateRecord.loserId === 'string' ? finalStateRecord.loserId : null
+    const loveLetterLoser = (gameState?.state?.players ?? []).find(
+      (player) => player.id === loveLetterLoserId
     )
+    const loveLetterWinners = (gameState?.state?.players ?? []).filter((player) =>
+      loveLetterWinnerIds.includes(player.id)
+    )
+    const winner = isRpsFinished
+      ? gameState?.state?.players?.find((p) =>
+          gameState?.state?.winnerId ? p.id === gameState.state.winnerId : !p.isEliminated
+        )
+      : loveLetterWinners[0]
     return (
       <Layout>
         <Head title="Game Over" />
@@ -740,7 +760,13 @@ export default function Game({
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-xl mb-6">
-                {winner?.isMe ? '🏆 You won!' : `🏆 ${winner?.name} wins!`}
+                {isRpsFinished
+                  ? winner?.isMe
+                    ? 'You won!'
+                    : `${winner?.name} wins!`
+                  : loveLetterLoser?.isMe
+                    ? 'You lost this round.'
+                    : `${loveLetterLoser?.name ?? 'One player'} lost this round.`}
               </p>
 
               {isRpsFinished && (
@@ -781,6 +807,30 @@ export default function Game({
                           </div>
                         ))
                       )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {!isRpsFinished && (
+                <div className="space-y-4 text-left">
+                  <div className="rounded-base border-2 border-border p-3">
+                    <p className="font-heading mb-2">Round Result</p>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span>Loser</span>
+                        <span>
+                          {loveLetterLoser?.isMe ? 'You' : (loveLetterLoser?.name ?? 'Unknown')}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Winners</span>
+                        <span>
+                          {loveLetterWinners
+                            .map((player) => (player.isMe ? 'You' : player.name))
+                            .join(', ') || 'Unknown'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -833,8 +883,8 @@ export default function Game({
                       {new Date(activeReplayStep.recordedAt).toLocaleString()}
                     </p>
                     <p className="mt-2 text-xs text-muted-foreground">
-                      Phase: {activeReplayStep.snapshot.phase} | Round: {activeReplayStep.snapshot.round}{' '}
-                      | Turn: {activeReplayStep.snapshot.turn}
+                      Phase: {activeReplayStep.snapshot.phase} | Round:{' '}
+                      {activeReplayStep.snapshot.round} | Turn: {activeReplayStep.snapshot.turn}
                     </p>
                   </div>
 
@@ -855,7 +905,7 @@ export default function Game({
   const players = gameState?.state?.players || []
   const stateRecord = (gameState?.state ?? {}) as Record<string, unknown>
   const isRpsGame = gameType === 'rock-paper-scissors'
-  const gameTitle = isRpsGame ? 'Rock Paper Scissors' : 'Love Letter'
+  const gameTitle = isRpsGame ? 'Rock Paper Scissors' : 'Love Letter Infinity Gauntlet'
   const isMyTurn = gameState?.isMyTurn || false
   const phase = gameState?.state?.phase || 'waiting'
   const canDraw = !isSpectator && availableActions.includes('draw_card')
@@ -945,7 +995,9 @@ export default function Game({
                         {player.name} {player.isMe ? '(You)' : ''}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {player.choice ? `Choice: ${formatRpsMove(player.choice)}` : 'Choice: hidden'}
+                        {player.choice
+                          ? `Choice: ${formatRpsMove(player.choice)}`
+                          : 'Choice: hidden'}
                       </p>
                     </div>
                     <Badge variant="secondary">Score: {player.score}</Badge>
@@ -1000,7 +1052,9 @@ export default function Game({
                                     : 'Cuts paper'}
                               </p>
                             </div>
-                            <span className="text-3xl leading-none">{RPS_MOVE_META[move].picto}</span>
+                            <span className="text-3xl leading-none">
+                              {RPS_MOVE_META[move].picto}
+                            </span>
                           </div>
                           <div className="mt-3 text-xs font-base text-gray-700">
                             {isSelected ? 'Selected' : isLoading ? 'Submitting...' : 'Choose move'}

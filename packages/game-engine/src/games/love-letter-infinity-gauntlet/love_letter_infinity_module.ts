@@ -5,10 +5,7 @@ import type {
 	LoveLetterInfinitySettings,
 	LoveLetterInfinityState,
 } from './domain/love_letter_infinity_types.js';
-import {
-	LoveLetterInfinityActionTypes,
-	LoveLetterInfinityCardTypes,
-} from './domain/love_letter_infinity_types.js';
+import { LoveLetterInfinityActionTypes, LoveLetterInfinityCardTypes } from './domain/love_letter_infinity_types.js';
 
 const loveLetterInfinitySettingsDefinition: GameSettingsDefinition<LoveLetterInfinitySettings> = {
 	fields: [
@@ -63,6 +60,9 @@ export const loveLetterInfinityModule: GameModule<
 			maxPlayers: 6,
 		},
 		settings: loveLetterInfinitySettingsDefinition,
+		presentation: {
+			playerView: 'hidden-hand-player-list',
+		},
 		capabilities: ['turn-based', 'hidden-information', 'spectator-mode', 'replay', 'async-play', 'live-play'],
 		licensing: {
 			distribution: 'open-source',

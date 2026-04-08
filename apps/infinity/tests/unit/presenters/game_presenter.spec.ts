@@ -55,6 +55,64 @@ test.group('game_presenter', () => {
     assert.equal(payload.gameType, 'love-letter')
   })
 
+  test('toGamePagePayload should normalize raw Love Letter player views for the frontend', ({
+    assert,
+  }) => {
+    const session = makeSession()
+    const rawPlayerView = {
+      playerId: 'user-1',
+      isMyTurn: true,
+      availableActions: ['play_card'],
+      state: {
+        phase: 'play',
+        currentPlayerId: 'user-1',
+        round: 3,
+        turn: 4,
+        isFinished: false,
+        deck: [CardTypes.PRIEST, CardTypes.HANDMAID],
+        players: [
+          {
+            id: 'user-1',
+            name: 'User 1',
+            isActive: true,
+            isEliminated: false,
+            isProtected: false,
+            hand: [CardTypes.GUARD, CardTypes.PRIEST],
+            discardPile: [CardTypes.BARON],
+            tokensOfAffection: 1,
+          },
+          {
+            id: 'user-2',
+            name: 'User 2',
+            isActive: true,
+            isEliminated: false,
+            isProtected: false,
+            hand: [CardTypes.PRINCESS],
+            discardPile: [],
+            tokensOfAffection: 0,
+          },
+        ],
+      },
+    }
+
+    const payload = toGamePagePayload({
+      session,
+      playerView: rawPlayerView,
+      availableActions: ['play_card'],
+      user: { uuid: 'user-1', nickName: 'User 1' },
+      gamePresentation: { playerView: 'hidden-hand-player-list' },
+    }) as any
+
+    assert.deepEqual(payload.playerView.state.myHand, [CardTypes.GUARD, CardTypes.PRIEST])
+    assert.equal(payload.playerView.state.deckCount, 2)
+    assert.equal(payload.playerView.state.players[0].handCount, 2)
+    assert.equal(payload.playerView.state.players[1].handCount, 1)
+    assert.isUndefined(payload.playerView.state.players[1].hand)
+    assert.equal(payload.playerView.state.players[0].discardPile[0].type, CardTypes.BARON)
+    assert.equal(payload.playerView.state.players[0].isMe, true)
+    assert.equal(payload.playerView.state.players[0].isCurrentPlayer, true)
+  })
+
   test('game payloads should include runtimeStatus when provided', ({ assert }) => {
     const session = makeSession()
     const runtimeStatus = { source: 'restored' as const, persisted: true, inMemory: true }
@@ -167,6 +225,104 @@ test.group('game_presenter', () => {
     assert.deepEqual(payload.events?.[0]?.payload, { card: 'guard' })
   })
 
+  test('toActionResponsePayload should normalize raw hidden-hand player views when presentation requires it', ({
+    assert,
+  }) => {
+    const payload = toActionResponsePayload({
+      actionResult: {
+        success: true,
+        newState: { isFinished: false, winnerId: null } as any,
+        events: [],
+      },
+      playerView: {
+        playerId: 'user-1',
+        isMyTurn: true,
+        availableActions: ['play_card'],
+        state: {
+          phase: 'play',
+          currentPlayerId: 'user-1',
+          round: 1,
+          turn: 2,
+          isFinished: false,
+          deck: [CardTypes.PRIEST],
+          players: [
+            {
+              id: 'user-1',
+              name: 'User 1',
+              isActive: true,
+              isEliminated: false,
+              isProtected: false,
+              hand: [CardTypes.GUARD],
+              discardPile: [],
+              tokensOfAffection: 0,
+            },
+          ],
+        },
+      },
+      availableActions: [],
+      gamePresentation: { playerView: 'hidden-hand-player-list' },
+    }) as any
+
+    assert.deepEqual(payload.playerView.state.myHand, [CardTypes.GUARD])
+    assert.equal(payload.playerView.state.deckCount, 1)
+    assert.equal(payload.playerView.state.players[0].handCount, 1)
+  })
+
+  test('toActionResponsePayload should keep opponent hands hidden after a Love Letter action', ({
+    assert,
+  }) => {
+    const payload = toActionResponsePayload({
+      actionResult: {
+        success: true,
+        newState: { isFinished: false, winnerId: null } as any,
+        events: [{ type: 'lli.card_played', payload: { cardType: CardTypes.GUARD } }],
+      },
+      playerView: {
+        playerId: 'user-1',
+        isMyTurn: false,
+        availableActions: ['draw_card'],
+        state: {
+          phase: 'draw',
+          currentPlayerId: 'user-2',
+          round: 1,
+          turn: 2,
+          isFinished: false,
+          deck: [CardTypes.PRIEST, CardTypes.HANDMAID],
+          players: [
+            {
+              id: 'user-1',
+              name: 'User 1',
+              isActive: true,
+              isEliminated: false,
+              isProtected: false,
+              hand: [CardTypes.BARON],
+              discardPile: [CardTypes.GUARD],
+              tokensOfAffection: 0,
+            },
+            {
+              id: 'user-2',
+              name: 'User 2',
+              isActive: true,
+              isEliminated: false,
+              isProtected: false,
+              hand: [CardTypes.PRINCESS],
+              discardPile: [],
+              tokensOfAffection: 0,
+            },
+          ],
+        },
+      },
+      availableActions: ['draw_card'],
+      gamePresentation: { playerView: 'hidden-hand-player-list' },
+    }) as any
+
+    assert.deepEqual(payload.playerView.state.myHand, [CardTypes.BARON])
+    assert.equal(payload.playerView.state.players[0].handCount, 1)
+    assert.equal(payload.playerView.state.players[1].handCount, 1)
+    assert.isUndefined(payload.playerView.state.players[0].hand)
+    assert.isUndefined(payload.playerView.state.players[1].hand)
+  })
+
   test('toPublicPlayersPayload should serialize discard metadata from cards catalog', ({
     assert,
   }) => {
@@ -192,5 +348,6 @@ test.group('game_presenter', () => {
     assert.equal(spectatorView.isMyTurn, false)
     assert.equal(spectatorView.state.players[0].isMe, false)
     assert.equal(spectatorView.state.players[0].handCount, 1)
+    assert.deepEqual(spectatorView.state.myHand, [])
   })
 })

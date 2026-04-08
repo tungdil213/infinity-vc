@@ -14,6 +14,7 @@ import {
 import Game, { type GameStateData } from '#domain/entities/game'
 import { GameStatus } from '#domain/value_objects/game_status'
 import { DatabaseGameRepository } from '#infrastructure/repositories/database_game_repository'
+import { resolveGamePresentation } from '#infrastructure/game_engine/game_presentation_registry'
 import {
   toActionResponsePayload,
   toGameActionsPayload,
@@ -63,6 +64,7 @@ export default class GamesController {
       })
     }
     const { session, source } = resolvedSession
+    const gamePresentation = resolveGamePresentation(session.gameType)
 
     const isSpectator = !isUserInGameSession(session, user.userUuid)
     const playerView = isSpectator
@@ -88,6 +90,7 @@ export default class GamesController {
           gameEngineService.getReplayTimeline(uuid),
           canViewDebugPayload
         ),
+        gamePresentation,
         runtimeStatus: {
           source,
           persisted: source === 'restored',
@@ -136,6 +139,7 @@ export default class GamesController {
       return response.status(404).json({ error: i18n.t('games.errors.notFoundOrFinished') })
     }
     const { session, source } = resolvedSession
+    const gamePresentation = resolveGamePresentation(session.gameType)
 
     const isSpectator = !isUserInGameSession(session, user.userUuid)
     const playerView = isSpectator
@@ -155,6 +159,7 @@ export default class GamesController {
           gameEngineService.getReplayTimeline(uuid),
           canViewDebugPayload
         ),
+        gamePresentation,
         runtimeStatus: {
           source,
           persisted: source === 'restored',
@@ -205,6 +210,7 @@ export default class GamesController {
       return response.status(404).json({ error: i18n.t('games.errors.notFound') })
     }
     const { session } = resolvedSession
+    const gamePresentation = resolveGamePresentation(session.gameType)
     if (!isUserInGameSession(session, user.userUuid)) {
       return response.status(403).json({ error: i18n.t('games.errors.spectatorsCannotAct') })
     }
@@ -246,6 +252,7 @@ export default class GamesController {
         playerView,
         availableActions,
         includeDebugPayload: this.canViewDebugPayload(user.normalizedRole),
+        gamePresentation,
       })
     )
   }

@@ -78,6 +78,12 @@ export interface GamePlayerConstraints {
 	readonly maxPlayers: number;
 }
 
+export type GamePlayerViewMode = 'raw' | 'hidden-hand-player-list';
+
+export interface GamePresentationDefinition {
+	readonly playerView?: GamePlayerViewMode;
+}
+
 export interface GameDefinition<TSettings extends object> {
 	readonly id: string;
 	readonly displayName: string;
@@ -85,6 +91,7 @@ export interface GameDefinition<TSettings extends object> {
 	readonly metadata: IGameMetadata;
 	readonly playerConstraints: GamePlayerConstraints;
 	readonly settings: GameSettingsDefinition<TSettings>;
+	readonly presentation?: GamePresentationDefinition;
 	readonly capabilities?: readonly GameCapability[];
 	readonly licensing?: GameLicensing;
 	readonly security?: GameSecurityPolicy;

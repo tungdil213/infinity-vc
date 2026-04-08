@@ -31,24 +31,18 @@ import { defaultGameCatalog } from '#infrastructure/game_engine/launcher_game_ca
 import type Game from '#domain/entities/game'
 import { DatabaseGameRepository } from '#infrastructure/repositories/database_game_repository'
 import {
+  coerceGameSettings,
+  toAvailableGameSettingViewModel,
+  toAvailableGameViewModel,
+  type AvailableGameViewModel,
+} from '../../shared/game_definition_helpers.js'
+import {
   LobbyPresenceService,
   type LobbyConnectionPayload,
   type PendingLeavePayload,
 } from '#application/services/lobby_presence_service'
 import { projectActiveGames, type GameProjectionInput } from '@infinity.dev/game-runtime-session'
-
-type AvailableGameViewModel = {
-  id: string
-  displayName: string
-  description: string
-  minPlayers: number
-  maxPlayers: number
-}
-
-type CreateLobbySettingsInput = {
-  roundsToWin?: number
-  allowDrawReplay?: boolean
-}
+import type { GameDefinition } from '@infinity.dev/game-engine'
 
 const LOBBY_ERROR_TRANSLATION_KEYS: Record<string, string> = {
   'Lobby not found': 'lobbies.errors.notFound',
@@ -111,37 +105,35 @@ export default class EnhancedLobbiesController {
     })
   }
 
-  private sanitizeGameSettings(gameType: string, gameSettings?: CreateLobbySettingsInput) {
-    if (gameType !== 'rock-paper-scissors') {
+  private sanitizeGameSettings(
+    definition: GameDefinition<Record<string, unknown>>,
+    gameSettings?: Record<string, unknown>
+  ) {
+    if (definition.settings.fields.length === 0) {
       return {}
     }
 
-    const roundsToWinRaw = gameSettings?.roundsToWin
-    const roundsToWin = Number.isFinite(roundsToWinRaw) ? Number(roundsToWinRaw) : 3
-    const allowDrawReplay = gameSettings?.allowDrawReplay ?? true
+    const normalizedSettings = coerceGameSettings(
+      definition.settings.fields.map(toAvailableGameSettingViewModel),
+      gameSettings
+    )
+    const validationErrors = definition.settings.validate(normalizedSettings)
 
-    if (!Number.isInteger(roundsToWin) || roundsToWin < 1 || roundsToWin > 10) {
+    if (validationErrors.length > 0) {
       throw new InvalidLobbyConfigurationException(
-        'gameSettings.roundsToWin',
-        roundsToWinRaw,
-        'roundsToWin must be an integer between 1 and 10'
+        'gameSettings',
+        gameSettings,
+        validationErrors.join('; ')
       )
     }
 
-    return {
-      roundsToWin,
-      allowDrawReplay,
-    }
+    return normalizedSettings
   }
 
   private getAvailableGames(): AvailableGameViewModel[] {
-    return defaultGameCatalog.listGames({ includeProprietary: false }).map((game) => ({
-      id: game.id,
-      displayName: game.displayName,
-      description: game.description,
-      minPlayers: game.playerConstraints.minPlayers,
-      maxPlayers: game.playerConstraints.maxPlayers,
-    }))
+    return defaultGameCatalog
+      .listGames({ includeProprietary: false })
+      .map((game) => toAvailableGameViewModel(game))
   }
 
   /**
@@ -196,7 +188,7 @@ export default class EnhancedLobbiesController {
     return inertia.render('create-lobby', {
       user: toUserSummary(user),
       currentLobby: null,
-      availableGames,
+      availableGames: availableGames as any,
     })
   }
 
@@ -217,14 +209,15 @@ export default class EnhancedLobbiesController {
         gameSettings,
       } = await request.validateUsing(lobbyStoreValidator)
 
-      const selectedGame = this.getAvailableGames().find((game) => game.id === gameType)
-      if (!selectedGame) {
+      const selectedGameDefinition = defaultGameCatalog.findGameDefinition(gameType)
+      if (!selectedGameDefinition) {
         throw new InvalidLobbyConfigurationException(
           'gameType',
           gameType,
           `Selected game '${gameType}' is not available`
         )
       }
+      const selectedGame = toAvailableGameViewModel(selectedGameDefinition)
 
       if (maxPlayers < selectedGame.minPlayers || maxPlayers > selectedGame.maxPlayers) {
         throw new InvalidLobbyConfigurationException(
@@ -242,7 +235,7 @@ export default class EnhancedLobbiesController {
         )
       }
 
-      const sanitizedGameSettings = this.sanitizeGameSettings(gameType, gameSettings)
+      const sanitizedGameSettings = this.sanitizeGameSettings(selectedGameDefinition, gameSettings)
 
       const result = await this.createLobbyUseCase.execute({
         userUuid: user.userUuid,

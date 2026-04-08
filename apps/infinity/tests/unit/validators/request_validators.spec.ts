@@ -102,7 +102,25 @@ test.group('Request validators', () => {
     assert.isTrue(hasFailed)
   })
 
-  test('lobby join and game action validators accept optional payload structure', async ({ assert }) => {
+  test('lobby store validator accepts schema-driven game settings payloads', async ({ assert }) => {
+    const payload = await lobbyStoreValidator.validate({
+      name: 'Infinity Match',
+      maxPlayers: 4,
+      gameType: 'love-letter-infinity-gauntlet',
+      gameSettings: {
+        deckMultiplier: 2,
+        endOnFirstElimination: true,
+      },
+    })
+
+    assert.equal(payload.gameType, 'love-letter-infinity-gauntlet')
+    assert.equal((payload.gameSettings as Record<string, unknown>).deckMultiplier, 2)
+    assert.equal((payload.gameSettings as Record<string, unknown>).endOnFirstElimination, true)
+  })
+
+  test('lobby join and game action validators accept optional payload structure', async ({
+    assert,
+  }) => {
     const joinPayload = await lobbyJoinValidator.validate({
       password: ' shared-secret ',
     })

@@ -43,6 +43,9 @@ export const rockPaperScissorsModule: GameModule<RpsState, RpsAction, RpsSetting
 			maxPlayers: 2,
 		},
 		settings: rpsSettingsDefinition,
+		presentation: {
+			playerView: 'raw',
+		},
 		capabilities: ['turn-based', 'simultaneous-turns', 'replay', 'live-play'],
 		licensing: {
 			distribution: 'open-source',

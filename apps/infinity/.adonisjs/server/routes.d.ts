@@ -40,6 +40,7 @@ export type ScannedRoutes = {
     'lobbies.kick': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'lobbies.transfer': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'lobbies.close': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'games.resume': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'games.show': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'games.leave': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'lobbies.join.invite.show': { paramsTuple: [ParamValue]; params: {'invitationCode': ParamValue} }
@@ -55,6 +56,7 @@ export type ScannedRoutes = {
     'api.lobbies.heartbeat': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.lobbies.start': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.lobbies.close': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'api.games.my.active': { paramsTuple?: []; params?: {} }
     'api.games.my.history': { paramsTuple?: []; params?: {} }
     'api.games.my.stats': { paramsTuple?: []; params?: {} }
     'api.games.show': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
@@ -64,6 +66,9 @@ export type ScannedRoutes = {
     'api.games.action': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'admin.lobbies.close': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'admin.games.catalog': { paramsTuple?: []; params?: {} }
+    'admin.games.replay.import': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'admin.games.verification.metrics': { paramsTuple?: []; params?: {} }
+    'admin.games.verification.metrics.reset': { paramsTuple?: []; params?: {} }
     'event_stream': { paramsTuple?: []; params?: {} }
     'subscribe': { paramsTuple?: []; params?: {} }
     'unsubscribe': { paramsTuple?: []; params?: {} }
@@ -91,6 +96,7 @@ export type ScannedRoutes = {
     'lobbies.index': { paramsTuple?: []; params?: {} }
     'lobbies.create': { paramsTuple?: []; params?: {} }
     'lobbies.show': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'games.resume': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'games.show': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'lobbies.join.invite.show': { paramsTuple: [ParamValue]; params: {'invitationCode': ParamValue} }
     'api.auth.me': { paramsTuple?: []; params?: {} }
@@ -98,6 +104,7 @@ export type ScannedRoutes = {
     'api.games.catalog': { paramsTuple?: []; params?: {} }
     'api.lobbies.index': { paramsTuple?: []; params?: {} }
     'api.lobbies.show': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'api.games.my.active': { paramsTuple?: []; params?: {} }
     'api.games.my.history': { paramsTuple?: []; params?: {} }
     'api.games.my.stats': { paramsTuple?: []; params?: {} }
     'api.games.show': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
@@ -105,6 +112,7 @@ export type ScannedRoutes = {
     'api.games.actions': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.games.players': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'admin.games.catalog': { paramsTuple?: []; params?: {} }
+    'admin.games.verification.metrics': { paramsTuple?: []; params?: {} }
     'event_stream': { paramsTuple?: []; params?: {} }
   }
   HEAD: {
@@ -130,6 +138,7 @@ export type ScannedRoutes = {
     'lobbies.index': { paramsTuple?: []; params?: {} }
     'lobbies.create': { paramsTuple?: []; params?: {} }
     'lobbies.show': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'games.resume': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'games.show': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'lobbies.join.invite.show': { paramsTuple: [ParamValue]; params: {'invitationCode': ParamValue} }
     'api.auth.me': { paramsTuple?: []; params?: {} }
@@ -137,6 +146,7 @@ export type ScannedRoutes = {
     'api.games.catalog': { paramsTuple?: []; params?: {} }
     'api.lobbies.index': { paramsTuple?: []; params?: {} }
     'api.lobbies.show': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'api.games.my.active': { paramsTuple?: []; params?: {} }
     'api.games.my.history': { paramsTuple?: []; params?: {} }
     'api.games.my.stats': { paramsTuple?: []; params?: {} }
     'api.games.show': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
@@ -144,6 +154,7 @@ export type ScannedRoutes = {
     'api.games.actions': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.games.players': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'admin.games.catalog': { paramsTuple?: []; params?: {} }
+    'admin.games.verification.metrics': { paramsTuple?: []; params?: {} }
     'event_stream': { paramsTuple?: []; params?: {} }
   }
   POST: {
@@ -171,6 +182,8 @@ export type ScannedRoutes = {
     'api.lobbies.close': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.games.action': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'admin.lobbies.close': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'admin.games.replay.import': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'admin.games.verification.metrics.reset': { paramsTuple?: []; params?: {} }
     'subscribe': { paramsTuple?: []; params?: {} }
     'unsubscribe': { paramsTuple?: []; params?: {} }
   }
