@@ -1,10 +1,10 @@
 import { inject } from '@adonisjs/core'
-import Lobby from '../../domain/entities/lobby.js'
-import { LobbyStatus } from '../../domain/value_objects/lobby_status.js'
-import { LobbyRepository } from '../repositories/lobby_repository.js'
-import { EntityNotFoundError } from '../repositories/base_repository.js'
-import { InMemoryLobbyRepository } from '../../infrastructure/repositories/in_memory_lobby_repository.js'
-import { DatabaseLobbyRepository } from '../../infrastructure/repositories/database_lobby_repository.js'
+import Lobby from '#domain/entities/lobby'
+import { LobbyStatus } from '#domain/value_objects/lobby_status'
+import { LobbyRepository } from '#application/repositories/lobby_repository'
+import { EntityNotFoundError } from '#application/repositories/base_repository'
+import { InMemoryLobbyRepository } from '#infrastructure/repositories/in_memory_lobby_repository'
+import { DatabaseLobbyRepository } from '#infrastructure/repositories/database_lobby_repository'
 
 /**
  * Service hybride pour la gestion des lobbies

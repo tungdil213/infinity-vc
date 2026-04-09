@@ -1,8 +1,8 @@
 import app from '@adonisjs/core/services/app'
-import { HttpContext, ExceptionHandler } from '@adonisjs/core/http'
+import { type HttpContext, ExceptionHandler } from '@adonisjs/core/http'
 import type { StatusPageRange, StatusPageRenderer } from '@adonisjs/core/types/http'
 import { errors } from '@vinejs/vine'
-import BusinessException from './business_exception.js'
+import BusinessException from '#exceptions/business_exception'
 
 export default class HttpExceptionHandler extends ExceptionHandler {
   /**
@@ -23,8 +23,8 @@ export default class HttpExceptionHandler extends ExceptionHandler {
    * to return the HTML contents to send as a response.
    */
   protected statusPages: Record<StatusPageRange, StatusPageRenderer> = {
-    '404': (error, { inertia }) => inertia.render('errors/not_found', { error }),
-    '500..599': (error, { inertia }) => inertia.render('errors/server_error', { error }),
+    '404': (_error, { inertia }) => inertia.render('errors/not_found', {}),
+    '500..599': (_error, { inertia }) => inertia.render('errors/server_error', {}),
   }
 
   /**
@@ -39,13 +39,20 @@ export default class HttpExceptionHandler extends ExceptionHandler {
 
     // Gestion des erreurs de validation avec toast d'erreur
     if (error instanceof errors.E_VALIDATION_ERROR) {
-      ctx.session.flash('error', 'Please check the form and correct any errors.')
+      ctx.session.flash(
+        'error',
+        this.translate(
+          ctx,
+          'http.validation.checkForm',
+          'Please check the form and correct any errors.'
+        )
+      )
       ctx.session.flashExcept(['_token'])
 
       if (ctx.request.accepts(['json'])) {
         return ctx.response.status(422).json({
           success: false,
-          message: 'Validation failed',
+          message: this.translate(ctx, 'http.errors.validationFailed', 'Validation failed'),
           errors: error.messages,
         })
       }
@@ -78,11 +85,23 @@ export default class HttpExceptionHandler extends ExceptionHandler {
     return {
       requestId: ctx.request.id(),
       userId: ctx.auth?.user?.id,
-      email: ctx.auth?.user?.email,
       ip: ctx.request.ip(),
       userAgent: ctx.request.header('user-agent'),
       method: ctx.request.method(),
       url: ctx.request.url(),
     }
+  }
+
+  private translate(ctx: HttpContext, key: string, fallback: string): string {
+    try {
+      const translated = ctx.i18n?.t(key)
+      if (typeof translated === 'string' && translated.length > 0) {
+        return translated
+      }
+    } catch {
+      // Ignore i18n failures and use fallback.
+    }
+
+    return fallback
   }
 }

@@ -1,45 +1,65 @@
-import React, { useState, useEffect } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { router } from '@inertiajs/react'
 import { toast } from 'sonner'
 import { useLobbyDetail } from '../hooks/use_lobby_detail'
 import { useLobbyLeaveGuard } from '../hooks/use_lobby_leave_guard'
 import { Button } from '@infinity.dev/ui/primitives/button'
-import { Badge } from '@infinity.dev/ui/primitives/badge'
-import { Users } from 'lucide-react'
 import { LobbyPlayersPanel } from '@infinity.dev/ui/components/lobby-players-panel'
 import { LobbyHeaderPanel } from '@infinity.dev/ui/components/lobby-header-panel'
 import { ConnectionStatusIndicator } from '@infinity.dev/ui/components/connection-status-indicator'
-import { useTransmit } from '../contexts/TransmitContext'
-
-interface Player {
-  uuid: string
-  nickName: string
-}
+import { LobbyPasswordDialog } from '@infinity.dev/ui/components/lobby-password-dialog'
+import { useI18n } from '../i18n/use_i18n'
 
 interface GameLobbyProps {
   lobbyUuid: string
+  lobbyName: string
+  lobbyDescription?: string
+  hasPassword?: boolean
   currentUser: {
     uuid: string
     nickName: string
   }
 }
 
-export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
+export default function GameLobby({
+  lobbyUuid,
+  lobbyName,
+  lobbyDescription,
+  hasPassword = false,
+  currentUser,
+}: GameLobbyProps) {
+  const { t } = useI18n()
   const { lobby, loading, error, leaveLobby, startGame, isServiceReady } = useLobbyDetail(lobbyUuid)
   const [isStartingGame, setIsStartingGame] = useState(false)
   const [isLeavingLobby, setIsLeavingLobby] = useState(false)
   const [isJoiningLobby, setIsJoiningLobby] = useState(false)
-  const { subscribeToLobby, isConnected } = useTransmit()
+  const [passwordDialogError, setPasswordDialogError] = useState<string | null>(null)
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false)
+  const hasNavigatedToGame = useRef(false)
+  const startedGameUuid = typeof lobby?.gameUuid === 'string' ? lobby.gameUuid : undefined
 
-  // Détecter si l'utilisateur est dans le lobby
+  const navigateToGame = useCallback((gameUuid: string) => {
+    if (!gameUuid || hasNavigatedToGame.current) {
+      return
+    }
+
+    hasNavigatedToGame.current = true
+    setIsStartingGame(true)
+    toast.success(t('gameLobby.gameStarting'))
+    router.visit(`/games/${gameUuid}`)
+  }, [t])
+
+  // Detect whether current user is in the lobby
   const isUserInLobby = lobby?.players?.some((player) => player.uuid === currentUser.uuid) || false
+  const shouldKeepLobbySessionOnNavigation = Boolean(lobby?.isPrivate || lobby?.hasPassword)
 
-  // Hook pour gérer la confirmation de sortie
+  // Hook used to manage leave confirmation
   const { markAsLeaving } = useLobbyLeaveGuard({
     isInLobby: isUserInLobby,
     lobbyUuid,
     userUuid: currentUser.uuid,
     onLeaveLobby: leaveLobby,
+    leaveOnNavigation: !shouldKeepLobbySessionOnNavigation,
   })
 
   const handleStartGame = async () => {
@@ -49,95 +69,104 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
     try {
       const result = await startGame(currentUser.uuid)
       if (result.gameUuid) {
-        toast.success('Game is starting!')
         // Redirect to game page after a short delay
         setTimeout(() => {
-          router.visit(`/games/${result.gameUuid}`)
+          navigateToGame(result.gameUuid)
         }, 2000)
       }
     } catch (error) {
-      console.error('Failed to start game:', error)
-      toast.error('Failed to start game')
+      toast.error(t('gameLobby.failedStart'))
       setIsStartingGame(false)
     }
   }
 
-  // Écouter les événements temps réel du lobby pour détecter le démarrage de la partie
+  // Robust fallback: redirect driven by synchronized real-time lobby status.
   useEffect(() => {
-    if (!isConnected) return
-
-    let unsubscribe: (() => void) | null = null
-
-    const subscribe = async () => {
-      unsubscribe = await subscribeToLobby(lobbyUuid, (event) => {
-        if (
-          event.type === 'lobby.game.started' &&
-          event.lobbyUuid === lobbyUuid &&
-          event.gameUuid
-        ) {
-          setIsStartingGame(true)
-          toast.success('Game is starting!')
-          router.visit(`/games/${event.gameUuid}`)
-        }
-      })
+    if (lobby?.status === 'IN_GAME' && startedGameUuid) {
+      navigateToGame(startedGameUuid)
     }
-
-    subscribe().catch((err) => {
-      console.error('Failed to subscribe to lobby game events:', err)
-    })
-
-    return () => {
-      if (unsubscribe) {
-        unsubscribe()
-      }
-    }
-  }, [lobbyUuid, subscribeToLobby, isConnected])
+  }, [lobby?.status, startedGameUuid, navigateToGame])
 
   const handleLeaveLobby = async () => {
     if (!isServiceReady) return
 
     setIsLeavingLobby(true)
-    // Marquer qu'on quitte volontairement pour éviter la confirmation
+    // Mark as explicit leave to avoid confirmation prompt
     markAsLeaving()
 
     try {
       await leaveLobby(currentUser.uuid)
-      toast.success('Left lobby successfully')
+      toast.success(t('gameLobby.leftLobby'))
       router.visit('/lobbies')
-    } catch (error) {
-      console.error('Failed to leave lobby:', error)
-      toast.error('Failed to leave lobby')
+    } catch {
+      toast.error(t('gameLobby.failedLeave'))
     } finally {
       setIsLeavingLobby(false)
     }
   }
 
   const handleJoinLobby = async () => {
+    const lobbyIsProtected = Boolean(lobby?.hasPassword ?? hasPassword)
+
+    if (lobbyIsProtected) {
+      setPasswordDialogError(null)
+      setIsPasswordDialogOpen(true)
+      return
+    }
+
+    await submitJoinLobby()
+  }
+
+  const buildJsonHeaders = () => {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    }
+    if (csrfToken) {
+      headers['X-CSRF-TOKEN'] = csrfToken
+    }
+    return headers
+  }
+
+  const submitJoinLobby = async (password?: string) => {
     setIsJoiningLobby(true)
     try {
-      router.post(
-        `/lobbies/${lobbyUuid}/join`,
-        {},
-        {
-          onSuccess: () => {
-            toast.success('Vous avez rejoint le lobby avec succès!')
-            // Reload the page to update the lobby state
-            router.reload()
-          },
-          onError: (errors) => {
-            const errorMessage =
-              typeof errors === 'object' && errors !== null && 'error' in errors
-                ? (errors as any).error
-                : 'Impossible de rejoindre le lobby'
-            toast.error(errorMessage)
-          },
+      const response = await fetch(`/api/v1/lobbies/${lobbyUuid}/join`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: buildJsonHeaders(),
+        body: JSON.stringify(password ? { password } : {}),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        const errorMessage =
+          typeof payload?.error === 'string' ? payload.error : t('lobbies.unableJoin')
+        if (isPasswordDialogOpen) {
+          setPasswordDialogError(errorMessage)
+          return
         }
-      )
+        throw new Error(errorMessage)
+      }
+
+      setIsPasswordDialogOpen(false)
+      setPasswordDialogError(null)
+      toast.success(t('lobbies.joined'))
+      router.reload()
     } catch (error) {
-      toast.error('Une erreur est survenue')
+      const errorMessage = error instanceof Error ? error.message : t('lobbies.unexpectedError')
+      if (isPasswordDialogOpen) {
+        setPasswordDialogError(errorMessage)
+        return
+      }
+      toast.error(errorMessage)
     } finally {
       setIsJoiningLobby(false)
     }
+  }
+
+  const handleSubmitPassword = async (password: string) => {
+    await submitJoinLobby(password)
   }
 
   if (loading) {
@@ -165,11 +194,11 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Error loading lobby</h3>
-              <div className="mt-2 text-sm text-red-700">{error || 'Lobby not found'}</div>
+              <h3 className="text-sm font-medium text-red-800">{t('gameLobby.errorLoadingLobby')}</h3>
+              <div className="mt-2 text-sm text-red-700">{error || t('gameLobby.lobbyNotFound')}</div>
               <div className="mt-4">
                 <Button onClick={() => router.visit('/lobbies')} variant="neutral" size="sm">
-                  Back to Lobbies
+                  {t('gameLobby.backToLobbies')}
                 </Button>
               </div>
             </div>
@@ -187,16 +216,22 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
     <div className="max-w-4xl mx-auto p-6">
       {/* Connection Status */}
       <div className="mb-4">
-        <ConnectionStatusIndicator isConnected={!!isServiceReady} />
+        <ConnectionStatusIndicator
+          isConnected={!!isServiceReady}
+          labelConnected={t('header.connected')}
+          labelDisconnected={t('header.disconnected')}
+        />
       </div>
 
       {/* Lobby Header */}
       <LobbyHeaderPanel
-        name={lobby.name}
+        name={lobby.name || lobbyName}
+        description={lobby.description || lobbyDescription}
         status={lobby.status}
         currentPlayers={lobby.currentPlayers}
         maxPlayers={lobby.maxPlayers}
         isPrivate={lobby.isPrivate}
+        hasPassword={Boolean(lobby.hasPassword ?? hasPassword)}
         isUserInLobby={isUserInLobby}
         canJoinLobby={canJoinLobby}
         canStartGame={canStartGame}
@@ -206,6 +241,23 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
         onJoinLobby={handleJoinLobby}
         onStartGame={handleStartGame}
         onLeaveLobby={handleLeaveLobby}
+        statusLabels={{
+          WAITING: t('lobbyList.statusWaiting'),
+          READY: t('lobbyList.statusReady'),
+          FULL: t('lobbyList.statusFull'),
+          IN_GAME: t('lobbyList.statusInGame'),
+        }}
+        labels={{
+          playersSuffix: t('gameLobby.playersSuffix'),
+          privateBadge: t('joinLobby.privateBadge'),
+          protectedBadge: t('joinLobby.protectedBadge'),
+          joining: t('header.joining'),
+          joinLobby: t('gameLobby.joinLobby'),
+          starting: t('common.starting'),
+          startGame: t('common.startGame'),
+          leaving: t('sidebar.leaving'),
+          leaveLobby: t('sidebar.leaveLobby'),
+        }}
       />
 
       {/* Players List */}
@@ -217,6 +269,40 @@ export default function GameLobby({ lobbyUuid, currentUser }: GameLobbyProps) {
         currentPlayers={lobby.currentPlayers}
         hasAvailableSlots={lobby.hasAvailableSlots}
         createdAt={lobby.createdAt}
+        labels={{
+          title: t('gameLobby.playersTitle'),
+          creatorBadge: t('gameLobby.creatorBadge'),
+          youBadge: t('gameLobby.youBadge'),
+          waitingForPlayer: t('gameLobby.waitingForPlayer'),
+          createdAtPrefix: t('gameLobby.createdAtPrefix'),
+          openForNewPlayers: t('gameLobby.openForNewPlayers'),
+          lobbyIsFull: t('gameLobby.lobbyIsFull'),
+        }}
+      />
+
+      <LobbyPasswordDialog
+        open={isPasswordDialogOpen}
+        lobbyName={lobby?.name || lobbyName}
+        loading={isJoiningLobby}
+        error={passwordDialogError}
+        onOpenChange={(open) => {
+          setIsPasswordDialogOpen(open)
+          if (!open) {
+            setPasswordDialogError(null)
+          }
+        }}
+        onSubmit={handleSubmitPassword}
+        labels={{
+          title: t('passwordDialog.title'),
+          descriptionWithLobby: t('passwordDialog.descriptionWithLobby'),
+          descriptionWithoutLobby: t('passwordDialog.descriptionWithoutLobby'),
+          passwordLabel: t('passwordDialog.passwordLabel'),
+          passwordPlaceholder: t('passwordDialog.passwordPlaceholder'),
+          passwordRequired: t('passwordDialog.passwordRequired'),
+          cancel: t('passwordDialog.cancel'),
+          join: t('passwordDialog.join'),
+          joining: t('passwordDialog.joining'),
+        }}
       />
     </div>
   )

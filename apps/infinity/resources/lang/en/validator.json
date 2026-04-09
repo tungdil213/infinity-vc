@@ -1,0 +1,43 @@
+{
+  "shared": {
+    "fields": {
+      "fullName": "full name",
+      "email": "email address",
+      "password": "password",
+      "currentPassword": "current password",
+      "password_confirmation": "password confirmation",
+      "name": "name",
+      "description": "description",
+      "maxPlayers": "max players",
+      "isPrivate": "private mode",
+      "hasPassword": "password protection",
+      "gameType": "game type",
+      "gameSettings": "game settings",
+      "roundsToWin": "rounds to win",
+      "allowDrawReplay": "draw replay option",
+      "playerUuid": "player identifier",
+      "reason": "reason",
+      "lobbyUuid": "lobby identifier",
+      "userUuid": "user identifier",
+      "clientSessionId": "client session identifier",
+      "capabilities": "capabilities",
+      "limit": "limit",
+      "status": "status"
+    },
+    "messages": {
+      "required": "The {field} field is required",
+      "string": "The {field} field must be a string",
+      "email": "The {field} field must be a valid email address",
+      "minLength": "The {field} field must be at least {min} characters long",
+      "maxLength": "The {field} field must not be greater than {max} characters",
+      "confirmed": "The {field} field and its confirmation must match",
+      "number": "The {field} field must be a number",
+      "boolean": "The {field} field must be a boolean",
+      "object": "The {field} field must be an object",
+      "min": "The {field} field must be at least {min}",
+      "range": "The {field} field must be between {min} and {max}",
+      "uuid": "The {field} field must be a valid UUID",
+      "regex": "The {field} field format is invalid"
+    }
+  }
+}

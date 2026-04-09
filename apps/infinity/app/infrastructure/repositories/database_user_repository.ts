@@ -1,6 +1,6 @@
-import User from '../../domain/entities/user.js'
-import { UserRepository } from '../../application/repositories/user_repository.js'
-import { EntityNotFoundException } from '../../exceptions/domain_exceptions.js'
+import User from '#domain/entities/user'
+import { type UserRepository } from '#application/repositories/user_repository'
+import { EntityNotFoundException } from '#exceptions/domain_exceptions'
 import UserModel from '#models/user'
 
 export class DatabaseUserRepository implements UserRepository {
@@ -30,6 +30,7 @@ export class DatabaseUserRepository implements UserRepository {
       existingUser.merge({
         fullName: serialized.fullName,
         email: serialized.email,
+        role: serialized.role,
       })
       await existingUser.save()
     } else {
@@ -38,6 +39,7 @@ export class DatabaseUserRepository implements UserRepository {
         userUuid: serialized.uuid,
         fullName: serialized.fullName,
         email: serialized.email,
+        role: serialized.role,
         password: user.password, // Access password directly, will be hashed by model hook
       })
     }
@@ -87,6 +89,7 @@ export class DatabaseUserRepository implements UserRepository {
       username: emailUsername, // Use sanitized email prefix as username
       email: userModel.email,
       password: userModel.password,
+      role: userModel.role ?? undefined,
     })
   }
 }

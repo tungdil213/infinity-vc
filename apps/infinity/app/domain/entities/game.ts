@@ -1,7 +1,7 @@
-import { BaseEntity } from './base_entity.js'
-import { GameStatus } from '../value_objects/game_status.js'
-import { PlayerInterface } from '../interfaces/player_interface.js'
-import { GameStateException } from '../../exceptions/domain_exceptions.js'
+import { BaseEntity } from '#domain/entities/base_entity'
+import { GameStatus } from '#domain/value_objects/game_status'
+import { type PlayerInterface } from '#domain/interfaces/player_interface'
+import { GameStateException } from '#exceptions/domain_exceptions'
 
 export interface GameData {
   uuid?: string
@@ -18,6 +18,20 @@ export interface GameStateData {
   winner?: string
   deck: {
     remaining: number
+  }
+  runtime?: {
+    gameType?: string
+    lobbyId?: string
+    settings?: Record<string, unknown>
+    engineState?: Record<string, unknown>
+    replayTimeline?: unknown[]
+    replayEnvelope?: unknown
+    importedAt?: string
+    importedBy?: string
+    persistedAt?: string
+    runtimeStatus?: 'HOT' | 'RESTORED'
+    abandonedBy?: string
+    abandonReason?: string
   }
 }
 
@@ -107,7 +121,7 @@ export default class Game extends BaseEntity {
   }
 
   get isFinished(): boolean {
-    return this._status === GameStatus.FINISHED
+    return [GameStatus.FINISHED, GameStatus.ABANDONED].includes(this._status)
   }
 
   get currentPlayer(): PlayerInterface | undefined {
@@ -149,6 +163,23 @@ export default class Game extends BaseEntity {
         ...this._gameData,
         winner: winnerUuid,
       }
+    }
+  }
+
+  abandonGame(abandonedBy?: string, reason?: string): void {
+    if (this.isFinished) {
+      throw new GameStateException('Game is already completed', this._status)
+    }
+
+    this._status = GameStatus.ABANDONED
+    this._finishedAt = new Date()
+    this._gameData = {
+      ...this._gameData,
+      runtime: {
+        ...(this._gameData.runtime ?? {}),
+        abandonedBy,
+        abandonReason: reason,
+      },
     }
   }
 

@@ -103,6 +103,8 @@ export class LoveLetterInfinityEngine extends BaseGameEngine<LoveLetterInfinityS
 			) {
 				return this.failResult(new Error('Countess must be discarded when holding King or Prince'));
 			}
+
+			return this.validatePlayPayload(state, player.id, payload);
 		}
 
 		return this.successResult(undefined);
@@ -318,7 +320,7 @@ export class LoveLetterInfinityEngine extends BaseGameEngine<LoveLetterInfinityS
 			}
 			case LoveLetterInfinityCardTypes.PRINCE: {
 				const targetId = targetPlayerId ?? playerId;
-				nextState = this.resolvePrince(nextState, targetId, events);
+				nextState = this.resolvePrince(nextState, playerId, targetId, events);
 				break;
 			}
 			case LoveLetterInfinityCardTypes.KING:
@@ -370,6 +372,7 @@ export class LoveLetterInfinityEngine extends BaseGameEngine<LoveLetterInfinityS
 
 	private resolvePrince(
 		state: LoveLetterInfinityState,
+		playerId: string,
 		targetPlayerId: string,
 		events: IGameEvent[]
 	): LoveLetterInfinityState {
@@ -378,7 +381,7 @@ export class LoveLetterInfinityEngine extends BaseGameEngine<LoveLetterInfinityS
 			return state;
 		}
 		const target = state.players[targetIndex];
-		if (target.isProtected || target.hand.length === 0) {
+		if ((target.id !== playerId && target.isProtected) || target.hand.length === 0) {
 			return state;
 		}
 
@@ -462,7 +465,16 @@ export class LoveLetterInfinityEngine extends BaseGameEngine<LoveLetterInfinityS
 			hand: [],
 		};
 
-		events.push(this.buildEvent('lli.player_eliminated', { playerId, discardedHand: player.hand }, { type: 'public' }));
+		events.push(
+			this.buildEvent(
+				'lli.player_eliminated',
+				{
+					playerId,
+					...(state.settings.revealEliminatedHand ? { discardedHand: player.hand } : {}),
+				},
+				{ type: 'public' }
+			)
+		);
 
 		return { ...state, players };
 	}
@@ -550,6 +562,121 @@ export class LoveLetterInfinityEngine extends BaseGameEngine<LoveLetterInfinityS
 			winnerIds,
 			winnerId: winnerIds[0] ?? null,
 		};
+	}
+
+	private validatePlayPayload(
+		state: LoveLetterInfinityState,
+		playerId: string,
+		payload: PlayLoveLetterInfinityCardPayload
+	): Result<void, Error> {
+		switch (payload.cardType) {
+			case LoveLetterInfinityCardTypes.GUARD: {
+				const targetValidation = this.validateTargetSelection(state, playerId, payload.targetPlayerId, {
+					cardLabel: 'Guard',
+					includeSelf: false,
+					allowMissingWhenNoTargets: true,
+				});
+				if (targetValidation.isFailure) {
+					return targetValidation;
+				}
+				if (!payload.targetPlayerId) {
+					return this.successResult(undefined);
+				}
+				if (!payload.guessedCard) {
+					return this.failResult(new Error('guessedCard is required for guard'));
+				}
+				if (payload.guessedCard === LoveLetterInfinityCardTypes.GUARD) {
+					return this.failResult(new Error('Guard cannot guess Guard'));
+				}
+				return this.successResult(undefined);
+			}
+			case LoveLetterInfinityCardTypes.PRIEST:
+				return this.validateTargetSelection(state, playerId, payload.targetPlayerId, {
+					cardLabel: 'Priest',
+					includeSelf: false,
+					allowMissingWhenNoTargets: true,
+				});
+			case LoveLetterInfinityCardTypes.BARON:
+				return this.validateTargetSelection(state, playerId, payload.targetPlayerId, {
+					cardLabel: 'Baron',
+					includeSelf: false,
+					allowMissingWhenNoTargets: true,
+				});
+			case LoveLetterInfinityCardTypes.PRINCE:
+				if (!payload.targetPlayerId) {
+					return this.successResult(undefined);
+				}
+				return this.validateTargetSelection(state, playerId, payload.targetPlayerId, {
+					cardLabel: 'Prince',
+					includeSelf: true,
+					allowMissingWhenNoTargets: true,
+				});
+			case LoveLetterInfinityCardTypes.KING:
+				return this.validateTargetSelection(state, playerId, payload.targetPlayerId, {
+					cardLabel: 'King',
+					includeSelf: false,
+					allowMissingWhenNoTargets: true,
+				});
+			default:
+				return this.successResult(undefined);
+		}
+	}
+
+	private validateTargetSelection(
+		state: LoveLetterInfinityState,
+		playerId: string,
+		targetPlayerId: string | undefined,
+		options: {
+			cardLabel: string;
+			includeSelf: boolean;
+			allowMissingWhenNoTargets: boolean;
+		}
+	): Result<void, Error> {
+		const legalTargets = this.getLegalTargets(state, playerId, options.includeSelf);
+
+		if (!targetPlayerId) {
+			if (legalTargets.length === 0 && options.allowMissingWhenNoTargets) {
+				return this.successResult(undefined);
+			}
+			return this.failResult(new Error(`${options.cardLabel} requires a target player`));
+		}
+
+		const target = state.players.find((candidate) => candidate.id === targetPlayerId);
+		if (!target) {
+			return this.failResult(new Error('Target player not found'));
+		}
+
+		if (target.isEliminated) {
+			return this.failResult(new Error('Target player is eliminated'));
+		}
+
+		if (!options.includeSelf && target.id === playerId) {
+			return this.failResult(new Error(`${options.cardLabel} cannot target yourself`));
+		}
+
+		if (target.id !== playerId && target.isProtected) {
+			return this.failResult(new Error('Target player is protected'));
+		}
+
+		return this.successResult(undefined);
+	}
+
+	private getLegalTargets(
+		state: LoveLetterInfinityState,
+		playerId: string,
+		includeSelf: boolean
+	): LoveLetterInfinityPlayer[] {
+		return state.players.filter((candidate) => {
+			if (candidate.isEliminated) {
+				return false;
+			}
+
+			if (candidate.id === playerId) {
+				return includeSelf;
+			}
+
+			return !candidate.isProtected;
+		});
 	}
 
 	private createDeck(multiplier: number): LoveLetterInfinityCardType[] {

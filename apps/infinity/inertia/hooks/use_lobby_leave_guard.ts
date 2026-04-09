@@ -1,27 +1,157 @@
-import { useEffect, useRef } from 'react'
 import { router } from '@inertiajs/react'
+import { useEffect, useRef } from 'react'
+import { useI18n } from '../i18n/use_i18n'
 
 interface UseLobbyLeaveGuardOptions {
   isInLobby: boolean
   lobbyUuid?: string
   userUuid?: string
-  onLeaveLobby?: (lobbyUuid: string, userUuid: string) => Promise<void>
+  onLeaveLobby?: (userUuid: string) => Promise<void>
+  leaveOnNavigation?: boolean
+}
+
+const HEARTBEAT_INTERVAL_MS = 5_000
+
+const createClientSessionId = (): string => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+
+  return `lobby-${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
+const normalizeVisitHref = (rawUrl: unknown): string | null => {
+  if (typeof rawUrl === 'string') {
+    return rawUrl
+  }
+
+  if (rawUrl && typeof rawUrl === 'object') {
+    const href = (rawUrl as { href?: unknown }).href
+    if (typeof href === 'string') {
+      return href
+    }
+
+    const rawToString = (rawUrl as { toString?: () => string }).toString
+    if (typeof rawToString === 'function') {
+      const fromToString = rawToString.call(rawUrl)
+      if (typeof fromToString === 'string' && fromToString.length > 0) {
+        return fromToString
+      }
+    }
+  }
+
+  return null
+}
+
+const normalizeVisitPath = (rawUrl: unknown): string | null => {
+  const href = normalizeVisitHref(rawUrl)
+  if (!href) {
+    return null
+  }
+
+  try {
+    return new URL(href, window.location.origin).pathname
+  } catch {
+    return null
+  }
+}
+
+const isLobbyDetailPath = (pathname: string): boolean => {
+  const segments = pathname.split('/').filter(Boolean)
+  if (segments.length !== 2 || segments[0] !== 'lobbies') {
+    return false
+  }
+
+  const reservedPaths = new Set(['create', 'join'])
+  return !reservedPaths.has(segments[1])
 }
 
 /**
- * Hook pour gérer la confirmation de sortie du lobby lors de la fermeture de page
+ * Handles robust lobby leave behavior on tab close/navigation.
  */
 export function useLobbyLeaveGuard({
   isInLobby,
   lobbyUuid,
   userUuid,
   onLeaveLobby,
+  leaveOnNavigation = true,
 }: UseLobbyLeaveGuardOptions) {
+  const { t } = useI18n()
   const isLeavingRef = useRef(false)
+  const clientSessionIdRef = useRef<string>(createClientSessionId())
 
   useEffect(() => {
     if (!isInLobby || !lobbyUuid || !userUuid || !onLeaveLobby) {
       return
+    }
+
+    let heartbeatIntervalId: number | undefined
+
+    const getCsrfToken = () =>
+      document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? undefined
+
+    const sendHeartbeat = async () => {
+      if (isLeavingRef.current) {
+        return
+      }
+
+      const csrfToken = getCsrfToken()
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+
+      if (csrfToken) {
+        headers['X-CSRF-TOKEN'] = csrfToken
+      }
+
+      try {
+        await fetch(`/api/v1/lobbies/${lobbyUuid}/heartbeat`, {
+          method: 'POST',
+          headers,
+          credentials: 'include',
+          keepalive: true,
+          body: JSON.stringify({
+            lobbyUuid,
+            userUuid,
+            clientSessionId: clientSessionIdRef.current,
+            _csrf: csrfToken,
+          }),
+        })
+      } catch (error) {
+        console.debug('Lobby heartbeat failed:', error)
+      }
+    }
+
+    const sendLeaveBeacon = () => {
+      const csrfToken = getCsrfToken()
+      const payload = {
+        lobbyUuid,
+        userUuid,
+        clientSessionId: clientSessionIdRef.current,
+        _csrf: csrfToken,
+      }
+
+      const requestBody = new Blob([JSON.stringify(payload)], {
+        type: 'application/json',
+      })
+
+      const beaconAccepted = navigator.sendBeacon('/api/v1/lobbies/leave-on-close', requestBody)
+      if (beaconAccepted) {
+        return
+      }
+
+      fetch('/api/v1/lobbies/leave-on-close', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
+        },
+        credentials: 'include',
+        keepalive: true,
+        body: JSON.stringify(payload),
+      }).catch((error) => {
+        console.debug('Fallback leave-on-close request failed:', error)
+      })
     }
 
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -29,98 +159,93 @@ export function useLobbyLeaveGuard({
         return
       }
 
-      // Afficher la confirmation de fermeture
+      // Show browser leave confirmation
       event.preventDefault()
-      event.returnValue = 'Vous êtes actuellement dans un lobby. Voulez-vous vraiment quitter ?'
+      event.returnValue = t('guard.leaveLobbyConfirm')
       return event.returnValue
     }
 
-    const handleUnload = async () => {
+    const handlePageHide = () => {
       if (isLeavingRef.current) {
         return
       }
 
       try {
-        // Marquer qu'on quitte pour éviter les appels multiples
         isLeavingRef.current = true
-
-        // Utiliser sendBeacon pour envoyer la requête de façon fiable
-        const data = JSON.stringify({
-          lobbyUuid,
-          userUuid,
-        })
-
-        navigator.sendBeacon('/api/v1/lobbies/leave-on-close', data)
+        sendLeaveBeacon()
       } catch (error) {
-        console.error('Erreur lors de la sortie automatique du lobby:', error)
+        console.error('Error while auto-leaving lobby on page hide:', error)
       }
     }
 
-    const handleVisibilityChange = async () => {
-      if (document.visibilityState === 'hidden' && !isLeavingRef.current) {
-        try {
-          // Marquer qu'on quitte pour éviter les appels multiples
-          isLeavingRef.current = true
-
-          // Tentative de sortie du lobby quand la page devient cachée
-          const data = JSON.stringify({
-            lobbyUuid,
-            userUuid,
-          })
-
-          navigator.sendBeacon('/api/v1/lobbies/leave-on-close', data)
-        } catch (error) {
-          console.error('Erreur lors de la sortie automatique du lobby:', error)
-        }
-      }
-    }
-
-    // Gérer la navigation Inertia
-    const handleInertiaStart = (event: any) => {
+    // Handle Inertia navigation transitions before they start.
+    const handleInertiaBefore = (event: any) => {
       if (isLeavingRef.current) {
         return
       }
 
       const url = event.detail.visit.url
       const currentPath = window.location.pathname
+      const nextPath = normalizeVisitPath(url)
+      const nextHref = normalizeVisitHref(url)
+      if (!nextPath || !nextHref) {
+        return
+      }
 
-      // Si on quitte la page du lobby, demander confirmation
-      if (currentPath.includes('/lobby/') && !url.includes('/lobby/')) {
-        const shouldLeave = window.confirm(
-          'Vous êtes actuellement dans un lobby. Voulez-vous vraiment quitter ?'
-        )
+      const isLeavingLobbyDetail =
+        isLobbyDetailPath(currentPath) &&
+        !isLobbyDetailPath(nextPath) &&
+        !nextPath.startsWith('/games/')
+
+      if (isLeavingLobbyDetail) {
+        const shouldLeave = window.confirm(t('guard.leaveLobbyConfirm'))
 
         if (!shouldLeave) {
           event.preventDefault()
           return
         }
 
-        // Marquer qu'on est en train de quitter pour éviter les doubles appels
+        if (!leaveOnNavigation) {
+          return
+        }
+
+        event.preventDefault()
+
+        // Mark as intentionally leaving to prevent duplicate requests
         isLeavingRef.current = true
 
-        // Quitter le lobby de façon asynchrone
-        onLeaveLobby(lobbyUuid, userUuid).catch((error) => {
-          console.error('Erreur lors de la sortie du lobby:', error)
-        })
+        // Leave lobby before navigation to avoid ghost lobbies.
+        onLeaveLobby(userUuid)
+          .catch((error) => {
+            console.error(t('guard.leaveLobbyError'), error)
+            sendLeaveBeacon()
+          })
+          .finally(() => {
+            router.visit(nextHref)
+          })
       }
     }
 
-    // Ajouter les listeners
+    sendHeartbeat()
+    heartbeatIntervalId = window.setInterval(sendHeartbeat, HEARTBEAT_INTERVAL_MS)
+
+    // Register listeners
     window.addEventListener('beforeunload', handleBeforeUnload)
-    window.addEventListener('unload', handleUnload)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    document.addEventListener('inertia:start', handleInertiaStart)
+    window.addEventListener('pagehide', handlePageHide)
+    document.addEventListener('inertia:before', handleInertiaBefore)
 
     // Cleanup
     return () => {
+      if (heartbeatIntervalId !== undefined) {
+        window.clearInterval(heartbeatIntervalId)
+      }
       window.removeEventListener('beforeunload', handleBeforeUnload)
-      window.removeEventListener('unload', handleUnload)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      document.removeEventListener('inertia:start', handleInertiaStart)
+      window.removeEventListener('pagehide', handlePageHide)
+      document.removeEventListener('inertia:before', handleInertiaBefore)
     }
-  }, [isInLobby, lobbyUuid, userUuid, onLeaveLobby])
+  }, [isInLobby, lobbyUuid, userUuid, onLeaveLobby, t, leaveOnNavigation])
 
-  // Fonction pour marquer qu'on quitte volontairement (pour éviter la confirmation)
+  // Mark explicit leave to skip confirmation dialogs
   const markAsLeaving = () => {
     isLeavingRef.current = true
   }

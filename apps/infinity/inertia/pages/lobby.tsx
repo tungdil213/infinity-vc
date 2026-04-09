@@ -1,5 +1,5 @@
 import React from 'react'
-import { Head, router } from '@inertiajs/react'
+import { Head } from '@inertiajs/react'
 import GameLobby from '../features/GameLobby'
 import Layout from '../layouts/layout'
 
@@ -11,6 +11,7 @@ interface Player {
 interface Lobby {
   uuid: string
   name: string
+  description?: string
   status: string
   currentPlayers: number
   maxPlayers: number
@@ -42,8 +43,14 @@ export default function Lobby({ lobby, user }: LobbyProps) {
     <Layout>
       <Head title={`Lobby - ${lobby.name}`} />
 
-      <div className="min-h-screen bg-secondary-background">
-        <GameLobby lobbyUuid={lobby.uuid} currentUser={user} />
+      <div className="flex-1 bg-secondary-background">
+        <GameLobby
+          lobbyUuid={lobby.uuid}
+          lobbyName={lobby.name}
+          lobbyDescription={lobby.description}
+          hasPassword={lobby.hasPassword}
+          currentUser={user}
+        />
       </div>
     </Layout>
   )

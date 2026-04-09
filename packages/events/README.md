@@ -13,7 +13,7 @@ Event-driven architecture foundation for the infinity game platform.
 ## Installation
 
 ```bash
-pnpm add @infinity.dev/events
+yarn add @infinity.dev/events
 ```
 
 ## Usage

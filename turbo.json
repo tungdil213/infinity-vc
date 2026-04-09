@@ -1,13 +1,13 @@
 {
 	"$schema": "https://turbo.build/schema.json",
-	"globalDependencies": ["package.json", "pnpm-lock.yaml"],
+	"globalDependencies": ["package.json", "yarn.lock"],
 	"tasks": {
 		"clean": {
 			"cache": false
 		},
 		"build": {
 			"dependsOn": ["^build"],
-			"outputs": ["dist/**"]
+			"outputs": ["dist/**", "build/**", "build/public/assets/.vite/**", "storybook-static/**"]
 		},
 		"build:ui": {
 			"inputs": ["packages/ui/src/**/*", "packages/ui/tailwind.config.js"],

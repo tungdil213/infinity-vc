@@ -1,7 +1,7 @@
-import React from 'react'
 import { Head, Link } from '@inertiajs/react'
 import { Button } from '@infinity.dev/ui/primitives/button'
 import Layout from '../../layouts/layout'
+import { useI18n } from '../../i18n/use_i18n'
 
 interface Route {
   method: string
@@ -20,6 +20,8 @@ interface DevRoutesProps {
 }
 
 export default function DevRoutes({ routes }: DevRoutesProps) {
+  const { t } = useI18n()
+
   const getMethodColor = (method: string) => {
     switch (method) {
       case 'GET':
@@ -41,29 +43,29 @@ export default function DevRoutes({ routes }: DevRoutesProps) {
 
   return (
     <Layout>
-      <Head title="Routes de développement - infinity Game" />
+      <Head title={t('devRoutes.pageTitle')} />
 
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="flex-1 bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">🛠️ Routes de développement</h1>
-                <p className="text-gray-600 mt-2">
-                  Liste complète des routes disponibles dans l'application infinity Game
-                </p>
+                <h1 className="text-3xl font-bold text-gray-900">{t('devRoutes.heading')}</h1>
+                <p className="text-gray-600 mt-2">{t('devRoutes.subtitle')}</p>
               </div>
-              <Link href="/">
-                <Button variant="neutral">← Retour à l'accueil</Button>
-              </Link>
+              <div className="shrink-0">
+                <Link href="/">
+                  <Button variant="neutral">{t('devRoutes.backHome')}</Button>
+                </Link>
+              </div>
             </div>
           </div>
 
           {/* Warning */}
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-8">
             <div className="flex">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
                   <path
                     fillRule="evenodd"
@@ -73,14 +75,9 @@ export default function DevRoutes({ routes }: DevRoutesProps) {
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-yellow-800">
-                  Page de développement uniquement
-                </h3>
+                <h3 className="text-sm font-medium text-yellow-800">{t('devRoutes.warningTitle')}</h3>
                 <div className="mt-2 text-sm text-yellow-700">
-                  <p>
-                    Cette page n'est accessible qu'en mode développement et ne sera pas disponible
-                    en production.
-                  </p>
+                  <p>{t('devRoutes.warningBody')}</p>
                 </div>
               </div>
             </div>
@@ -133,16 +130,16 @@ export default function DevRoutes({ routes }: DevRoutesProps) {
           {/* Footer */}
           <div className="mt-12 text-center">
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Actions rapides</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">{t('devRoutes.quickActions')}</h3>
               <div className="flex flex-wrap justify-center gap-4">
                 <Link href="/auth/login">
-                  <Button variant="neutral">🔑 Connexion</Button>
+                  <Button variant="neutral">{t('devRoutes.login')}</Button>
                 </Link>
                 <Link href="/auth/register">
-                  <Button variant="neutral">📝 Inscription</Button>
+                  <Button variant="neutral">{t('devRoutes.signup')}</Button>
                 </Link>
                 <Link href="/lobbies">
-                  <Button variant="neutral">🎮 Lobbies</Button>
+                  <Button variant="neutral">{t('devRoutes.lobbies')}</Button>
                 </Link>
                 <Link href="/api/v1/auth/check">
                   <Button variant="neutral">🔍 Check API</Button>

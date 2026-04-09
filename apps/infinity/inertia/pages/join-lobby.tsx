@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Head, Link, router } from '@inertiajs/react'
 import { Button } from '@infinity.dev/ui/primitives/button'
 import { Input } from '@infinity.dev/ui/primitives/input'
@@ -13,6 +13,8 @@ import {
 import { Alert, AlertDescription } from '@infinity.dev/ui/primitives/alert'
 import { Badge } from '@infinity.dev/ui/primitives/badge'
 import { AlertCircle, CheckCircle2, Lock, Key, Users } from 'lucide-react'
+import { useI18n } from '../i18n/use_i18n'
+import Layout from '../layouts/layout'
 
 interface JoinLobbyProps {
   lobby: {
@@ -49,6 +51,7 @@ export default function JoinLobby({
   errors = {},
   flash = {},
 }: JoinLobbyProps) {
+  const { t } = useI18n()
   const [password, setPassword] = useState('')
   const [isJoining, setIsJoining] = useState(false)
 
@@ -71,10 +74,10 @@ export default function JoinLobby({
 
   if (!user) {
     return (
-      <>
-        <Head title={`Join ${lobby.name} - infinity Game`} />
+      <Layout>
+        <Head title={t('joinLobby.pageTitle', { lobbyName: lobby.name })} />
 
-        <div className="min-h-screen bg-secondary-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-1 items-center justify-center bg-secondary-background py-12 px-4 sm:px-6 lg:px-8">
           <div className="max-w-md w-full space-y-8">
             <div className="text-center">
               <Link href="/">
@@ -84,9 +87,9 @@ export default function JoinLobby({
 
             <Card>
               <CardHeader className="text-center">
-                <CardTitle>You're Invited!</CardTitle>
+                <CardTitle>{t('joinLobby.invitedTitle')}</CardTitle>
                 <CardDescription>
-                  You've been invited to join <strong>{lobby.name}</strong>
+                  {t('joinLobby.invitedDescription', { lobbyName: lobby.name })}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -103,12 +106,12 @@ export default function JoinLobby({
                     </Badge>
                     {lobby.isPrivate && (
                       <Badge variant="secondary">
-                        <Lock className="h-3 w-3 mr-1" /> Private
+                        <Lock className="h-3 w-3 mr-1" /> {t('joinLobby.privateBadge')}
                       </Badge>
                     )}
                     {lobby.hasPassword && (
                       <Badge variant="secondary">
-                        <Key className="h-3 w-3 mr-1" /> Protected
+                        <Key className="h-3 w-3 mr-1" /> {t('joinLobby.protectedBadge')}
                       </Badge>
                     )}
                   </div>
@@ -116,17 +119,17 @@ export default function JoinLobby({
 
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>You need to sign in to join this lobby</AlertDescription>
+                  <AlertDescription>{t('joinLobby.signInRequired')}</AlertDescription>
                 </Alert>
 
                 <div className="space-y-3">
                   <Link href={`/auth/login?redirect=/lobbies/join/${invitationCode}`}>
-                    <Button className="w-full">Sign In to Join</Button>
+                    <Button className="w-full">{t('joinLobby.signInToJoin')}</Button>
                   </Link>
 
                   <Link href={`/auth/register?redirect=/lobbies/join/${invitationCode}`}>
                     <Button variant="neutral" className="w-full">
-                      Create Account & Join
+                      {t('joinLobby.createAccountAndJoin')}
                     </Button>
                   </Link>
                 </div>
@@ -135,20 +138,20 @@ export default function JoinLobby({
 
             <div className="text-center">
               <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
-                ← Back to Homepage
+                {t('joinLobby.backToHomepage')}
               </Link>
             </div>
           </div>
         </div>
-      </>
+      </Layout>
     )
   }
 
   return (
-    <>
-      <Head title={`Join ${lobby.name} - infinity Game`} />
+    <Layout>
+      <Head title={t('joinLobby.pageTitle', { lobbyName: lobby.name })} />
 
-      <div className="min-h-screen bg-secondary-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-1 items-center justify-center bg-secondary-background py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           {/* Header */}
           <div className="text-center">
@@ -175,9 +178,9 @@ export default function JoinLobby({
           {/* Lobby Info */}
           <Card>
             <CardHeader className="text-center">
-              <CardTitle>You're Invited!</CardTitle>
+              <CardTitle>{t('joinLobby.invitedTitle')}</CardTitle>
               <CardDescription>
-                Welcome {user.fullName}! You've been invited to join this lobby.
+                {t('joinLobby.welcomeDescription', { userName: user.fullName })}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -194,18 +197,18 @@ export default function JoinLobby({
                   </Badge>
                   {lobby.isPrivate && (
                     <Badge variant="secondary">
-                      <Lock className="h-3 w-3 mr-1" /> Private
+                      <Lock className="h-3 w-3 mr-1" /> {t('joinLobby.privateBadge')}
                     </Badge>
                   )}
                   {lobby.hasPassword && (
                     <Badge variant="secondary">
-                      <Key className="h-3 w-3 mr-1" /> Protected
+                      <Key className="h-3 w-3 mr-1" /> {t('joinLobby.protectedBadge')}
                     </Badge>
                   )}
                 </div>
 
                 <p className="text-xs text-muted-foreground">
-                  Created {new Date(lobby.createdAt).toLocaleDateString()}
+                  {t('joinLobby.createdOn', { date: new Date(lobby.createdAt).toLocaleDateString() })}
                 </p>
               </div>
 
@@ -213,7 +216,7 @@ export default function JoinLobby({
               <form onSubmit={handleJoin} className="space-y-4">
                 {lobby.hasPassword && (
                   <div className="space-y-2">
-                    <Label htmlFor="password">Lobby Password</Label>
+                    <Label htmlFor="password">{t('joinLobby.passwordLabel')}</Label>
                     <Input
                       id="password"
                       name="password"
@@ -221,7 +224,7 @@ export default function JoinLobby({
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter lobby password"
+                      placeholder={t('joinLobby.passwordPlaceholder')}
                       className={errors.password ? 'border-destructive' : ''}
                     />
                     {errors.password && (
@@ -243,19 +246,19 @@ export default function JoinLobby({
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
-                      <strong>Lobby is Full</strong> - This lobby has reached its maximum capacity.
+                      {t('joinLobby.lobbyFullDescription')}
                     </AlertDescription>
                   </Alert>
                 ) : (
                   <Button type="submit" disabled={isJoining} className="w-full">
-                    {isJoining ? 'Joining Lobby...' : '🎮 Join Lobby'}
+                    {isJoining ? t('joinLobby.joining') : t('joinLobby.joinCta')}
                   </Button>
                 )}
               </form>
 
               <Link href="/lobbies">
                 <Button variant="neutral" className="w-full">
-                  Browse Other Lobbies
+                  {t('joinLobby.browseOtherLobbies')}
                 </Button>
               </Link>
             </CardContent>
@@ -264,11 +267,11 @@ export default function JoinLobby({
           {/* Footer Links */}
           <div className="text-center">
             <Link href="/lobbies" className="text-sm text-muted-foreground hover:text-foreground">
-              ← Back to Lobbies
+              {t('joinLobby.backToLobbies')}
             </Link>
           </div>
         </div>
       </div>
-    </>
+    </Layout>
   )
 }

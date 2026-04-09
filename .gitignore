@@ -42,3 +42,6 @@ yarn-error.log
 reports/stryker/
 cookies.txt
 docs/infinity-Gauntlet-Rulebook.pdf
+
+# Deployment
+.deploy

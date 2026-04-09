@@ -1,0 +1,43 @@
+{
+  "shared": {
+    "fields": {
+      "fullName": "vollständiger Name",
+      "email": "E-Mail-Adresse",
+      "password": "Passwort",
+      "currentPassword": "aktuelles Passwort",
+      "password_confirmation": "Passwortbestätigung",
+      "name": "Name",
+      "description": "Beschreibung",
+      "maxPlayers": "maximale Spielerzahl",
+      "isPrivate": "Privatmodus",
+      "hasPassword": "Passwortschutz",
+      "gameType": "Spieltyp",
+      "gameSettings": "Spieleinstellungen",
+      "roundsToWin": "Runden bis zum Sieg",
+      "allowDrawReplay": "Wiederholung bei Unentschieden",
+      "playerUuid": "Spieler-ID",
+      "reason": "Grund",
+      "lobbyUuid": "Lobby-ID",
+      "userUuid": "Benutzer-ID",
+      "clientSessionId": "Client-Session-ID",
+      "capabilities": "Fähigkeiten",
+      "limit": "Limit",
+      "status": "Status"
+    },
+    "messages": {
+      "required": "Das Feld {field} ist erforderlich",
+      "string": "Das Feld {field} muss eine Zeichenkette sein",
+      "email": "Das Feld {field} muss eine gültige E-Mail-Adresse sein",
+      "minLength": "Das Feld {field} muss mindestens {min} Zeichen lang sein",
+      "maxLength": "Das Feld {field} darf nicht länger als {max} Zeichen sein",
+      "confirmed": "Das Feld {field} und seine Bestätigung müssen übereinstimmen",
+      "number": "Das Feld {field} muss eine Zahl sein",
+      "boolean": "Das Feld {field} muss ein boolescher Wert sein",
+      "object": "Das Feld {field} muss ein Objekt sein",
+      "min": "Das Feld {field} muss mindestens {min} sein",
+      "range": "Das Feld {field} muss zwischen {min} und {max} liegen",
+      "uuid": "Das Feld {field} muss eine gültige UUID sein",
+      "regex": "Das Format des Feldes {field} ist ungültig"
+    }
+  }
+}

@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Head, Link, router } from '@inertiajs/react'
+import { useState } from 'react'
+import { Head, router } from '@inertiajs/react'
 import { Button } from '@infinity.dev/ui/primitives/button'
 import { Input } from '@infinity.dev/ui/primitives/input'
 import { Textarea } from '@infinity.dev/ui/primitives/textarea'
@@ -20,27 +20,23 @@ import {
   CardTitle,
 } from '@infinity.dev/ui/primitives/card'
 import { Alert, AlertDescription } from '@infinity.dev/ui/primitives/alert'
-import { HeaderWrapper } from '../layouts/HeaderWrapper'
 import Layout from '../layouts/layout'
 import { AlertCircle, CheckCircle2, Lightbulb } from 'lucide-react'
+import { useI18n } from '../i18n/use_i18n'
+import type { AvailableGameViewModel } from '../../app/utils/game_definition_helpers.js'
+
+function buildDefaultGameSettings(availableGame: AvailableGameViewModel | null | undefined) {
+  return Object.fromEntries((availableGame?.settings ?? []).map((field) => [field.key, field.defaultValue]))
+}
 
 interface CreateLobbyProps {
-  user: {
-    uuid: string
-    fullName: string
-  }
-  availableGames: Array<{
-    id: string
-    displayName: string
-    description: string
-    minPlayers: number
-    maxPlayers: number
-  }>
+  availableGames: AvailableGameViewModel[]
   errors?: {
     name?: string[]
     gameType?: string[]
     maxPlayers?: string[]
     password?: string[]
+    gameSettings?: string[]
     general?: string[]
   }
   flash?: {
@@ -50,11 +46,11 @@ interface CreateLobbyProps {
 }
 
 export default function CreateLobby({
-  user,
   availableGames,
   errors = {},
   flash = {},
 }: CreateLobbyProps) {
+  const { t } = useI18n()
   const defaultGame = availableGames[0]
   const [formData, setFormData] = useState({
     name: '',
@@ -64,16 +60,14 @@ export default function CreateLobby({
     password: '',
     description: '',
     gameType: defaultGame?.id ?? '',
-    gameSettings: {
-      roundsToWin: 3,
-      allowDrawReplay: true,
-    },
+    gameSettings: buildDefaultGameSettings(defaultGame),
   })
   const [isLoading, setIsLoading] = useState(false)
 
   const selectedGame =
     availableGames.find((game) => game.id === formData.gameType) ?? availableGames[0] ?? null
-  const isRpsSelected = formData.gameType === 'rock-paper-scissors'
+  const selectedGameSettings = selectedGame?.settings ?? []
+  const hasConfigurableSettings = selectedGameSettings.length > 0
   const playerOptions = selectedGame
     ? Array.from(
         { length: selectedGame.maxPlayers - selectedGame.minPlayers + 1 },
@@ -88,7 +82,7 @@ export default function CreateLobby({
     const submitData = {
       ...formData,
       password: formData.hasPassword ? formData.password : undefined,
-      gameSettings: isRpsSelected ? formData.gameSettings : undefined,
+      gameSettings: hasConfigurableSettings ? formData.gameSettings : undefined,
     }
 
     router.post('/lobbies', submitData, {
@@ -125,11 +119,9 @@ export default function CreateLobby({
 
   return (
     <Layout>
-      <Head title="Create Lobby - infinity Game" />
+      <Head title={t('createLobby.pageTitle')} />
 
-      <div className="min-h-screen bg-secondary-background">
-        <HeaderWrapper user={{ uuid: user.uuid, fullName: user.fullName, email: '' }} />
-
+      <div className="flex-1 bg-secondary-background">
         <div className="max-w-2xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
           {/* Flash Messages */}
           {flash.error && (
@@ -149,16 +141,16 @@ export default function CreateLobby({
           {/* Create Lobby Form */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl">Create New Lobby</CardTitle>
+              <CardTitle className="text-2xl">{t('createLobby.heading')}</CardTitle>
               <CardDescription>
-                Set up your gaming session and invite friends to play
+                {t('createLobby.subtitle')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Lobby Name */}
                 <div className="space-y-2">
-                  <Label htmlFor="name">Lobby Name *</Label>
+                  <Label htmlFor="name">{t('createLobby.nameLabel')}</Label>
                   <Input
                     id="name"
                     name="name"
@@ -166,7 +158,7 @@ export default function CreateLobby({
                     required
                     value={formData.name}
                     onChange={handleChange}
-                    placeholder="Enter a catchy lobby name"
+                    placeholder={t('createLobby.namePlaceholder')}
                     className={errors.name ? 'border-destructive' : ''}
                   />
                   {errors.name && <p className="text-sm text-destructive">{errors.name[0]}</p>}
@@ -174,20 +166,20 @@ export default function CreateLobby({
 
                 {/* Description */}
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description (Optional)</Label>
+                  <Label htmlFor="description">{t('createLobby.descriptionLabel')}</Label>
                   <Textarea
                     id="description"
                     name="description"
                     rows={3}
                     value={formData.description}
                     onChange={handleChange}
-                    placeholder="Describe your lobby or add any special rules..."
+                    placeholder={t('createLobby.descriptionPlaceholder')}
                   />
                 </div>
 
                 {/* Game Type */}
                 <div className="space-y-2">
-                  <Label>Game Type</Label>
+                  <Label>{t('createLobby.gameTypeLabel')}</Label>
                   <Select
                     value={formData.gameType}
                     onValueChange={(value) => {
@@ -201,11 +193,14 @@ export default function CreateLobby({
                               nextGame.maxPlayers
                             )
                           : prev.maxPlayers,
+                        gameSettings: nextGame
+                          ? buildDefaultGameSettings(nextGame)
+                          : prev.gameSettings,
                       }))
                     }}
                   >
                     <SelectTrigger className={errors.gameType ? 'border-destructive' : ''}>
-                      <SelectValue placeholder="Select a game" />
+                      <SelectValue placeholder={t('createLobby.gameTypePlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
                       {availableGames.map((game) => (
@@ -221,14 +216,14 @@ export default function CreateLobby({
                   {selectedGame && (
                     <p className="text-sm text-muted-foreground">
                       {selectedGame.description} ({selectedGame.minPlayers}-
-                      {selectedGame.maxPlayers} joueurs)
+                      {selectedGame.maxPlayers} {t('createLobby.playersSuffix')})
                     </p>
                   )}
                 </div>
 
                 {/* Max Players */}
                 <div className="space-y-2">
-                  <Label>Maximum Players</Label>
+                  <Label>{t('createLobby.maxPlayersLabel')}</Label>
                   <Select
                     value={String(formData.maxPlayers)}
                     onValueChange={(value) =>
@@ -236,12 +231,12 @@ export default function CreateLobby({
                     }
                   >
                     <SelectTrigger className={errors.maxPlayers ? 'border-destructive' : ''}>
-                      <SelectValue placeholder="Select max players" />
+                      <SelectValue placeholder={t('createLobby.maxPlayersPlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
                       {playerOptions.map((count) => (
                         <SelectItem key={count} value={String(count)}>
-                          {count} Players
+                          {count} {t('createLobby.playersSuffix')}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -251,66 +246,123 @@ export default function CreateLobby({
                   )}
                 </div>
 
-                {isRpsSelected && (
+                {hasConfigurableSettings && (
                   <div className="space-y-4">
-                    <Label className="text-base font-heading">Game Settings</Label>
+                    <Label className="text-base font-heading">{t('createLobby.gameSettingsTitle')}</Label>
+                    {selectedGameSettings.map((field) => {
+                      const fieldValue = formData.gameSettings[field.key] ?? field.defaultValue
 
-                    <div className="space-y-2">
-                      <Label htmlFor="roundsToWin">Rounds to win</Label>
-                      <Input
-                        id="roundsToWin"
-                        name="roundsToWin"
-                        type="number"
-                        min={1}
-                        max={10}
-                        value={formData.gameSettings.roundsToWin}
-                        onChange={(event) => {
-                          const roundsToWin = Number.parseInt(event.target.value, 10)
-                          setFormData((prev) => ({
-                            ...prev,
-                            gameSettings: {
-                              ...prev.gameSettings,
-                              roundsToWin: Number.isNaN(roundsToWin)
-                                ? prev.gameSettings.roundsToWin
-                                : roundsToWin,
-                            },
-                          }))
-                        }}
-                      />
-                      <p className="text-sm text-muted-foreground">
-                        Number of won rounds needed to win the match (1-10).
-                      </p>
-                    </div>
+                      if (field.type === 'boolean') {
+                        return (
+                          <div key={field.key} className="flex items-center space-x-3">
+                            <Checkbox
+                              id={field.key}
+                              checked={Boolean(fieldValue)}
+                              onCheckedChange={(checked) =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  gameSettings: {
+                                    ...prev.gameSettings,
+                                    [field.key]: !!checked,
+                                  },
+                                }))
+                              }
+                            />
+                            <div>
+                              <Label htmlFor={field.key} className="cursor-pointer">
+                                {field.label}
+                              </Label>
+                              {field.description && (
+                                <p className="text-sm text-muted-foreground">
+                                  {field.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      }
 
-                    <div className="flex items-center space-x-3">
-                      <Checkbox
-                        id="allowDrawReplay"
-                        checked={formData.gameSettings.allowDrawReplay}
-                        onCheckedChange={(checked) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            gameSettings: {
-                              ...prev.gameSettings,
-                              allowDrawReplay: !!checked,
-                            },
-                          }))
-                        }
-                      />
-                      <div>
-                        <Label htmlFor="allowDrawReplay" className="cursor-pointer">
-                          Replay draw rounds
-                        </Label>
-                        <p className="text-sm text-muted-foreground">
-                          If disabled, draw rounds still advance the match.
-                        </p>
-                      </div>
-                    </div>
+                      if (field.type === 'select') {
+                        return (
+                          <div key={field.key} className="space-y-2">
+                            <Label htmlFor={field.key}>{field.label}</Label>
+                            <Select
+                              value={String(fieldValue ?? '')}
+                              onValueChange={(value) =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  gameSettings: {
+                                    ...prev.gameSettings,
+                                    [field.key]: value,
+                                  },
+                                }))
+                              }
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder={field.label} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {(field.options ?? []).map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {field.description && (
+                              <p className="text-sm text-muted-foreground">{field.description}</p>
+                            )}
+                          </div>
+                        )
+                      }
+
+                      return (
+                        <div key={field.key} className="space-y-2">
+                          <Label htmlFor={field.key}>{field.label}</Label>
+                          <Input
+                            id={field.key}
+                            name={field.key}
+                            type={field.type === 'number' ? 'number' : 'text'}
+                            min={field.type === 'number' ? field.min : undefined}
+                            max={field.type === 'number' ? field.max : undefined}
+                            value={
+                              field.type === 'number'
+                                ? typeof fieldValue === 'number'
+                                  ? fieldValue
+                                  : String(fieldValue ?? '')
+                                : String(fieldValue ?? '')
+                            }
+                            onChange={(event) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                gameSettings: {
+                                  ...prev.gameSettings,
+                                  [field.key]:
+                                    field.type === 'number'
+                                      ? event.target.value === ''
+                                        ? ''
+                                        : Number(event.target.value)
+                                      : event.target.value,
+                                },
+                              }))
+                            }
+                          />
+                          {field.description && (
+                            <p className="text-sm text-muted-foreground">{field.description}</p>
+                          )}
+                        </div>
+                      )
+                    })}
+
+                    {errors.gameSettings && (
+                      <p className="text-sm text-destructive">{errors.gameSettings[0]}</p>
+                    )}
                   </div>
                 )}
 
                 {/* Privacy Settings */}
                 <div className="space-y-4">
-                  <Label className="text-base font-heading">Privacy Settings</Label>
+                  <Label className="text-base font-heading">{t('createLobby.privacyTitle')}</Label>
 
                   {/* Private Lobby */}
                   <div className="flex items-center space-x-3">
@@ -323,10 +375,10 @@ export default function CreateLobby({
                     />
                     <div>
                       <Label htmlFor="isPrivate" className="cursor-pointer">
-                        Private Lobby
+                        {t('createLobby.privateLabel')}
                       </Label>
                       <p className="text-sm text-muted-foreground">
-                        Only people with the invitation link can join
+                        {t('createLobby.privateHelp')}
                       </p>
                     </div>
                   </div>
@@ -342,10 +394,10 @@ export default function CreateLobby({
                     />
                     <div>
                       <Label htmlFor="hasPassword" className="cursor-pointer">
-                        Password Protection
+                        {t('createLobby.passwordProtectionLabel')}
                       </Label>
                       <p className="text-sm text-muted-foreground">
-                        Require a password to join the lobby
+                        {t('createLobby.passwordProtectionHelp')}
                       </p>
                     </div>
                   </div>
@@ -359,7 +411,7 @@ export default function CreateLobby({
                         type="password"
                         value={formData.password}
                         onChange={handleChange}
-                        placeholder="Enter lobby password"
+                        placeholder={t('createLobby.passwordPlaceholder')}
                         className={errors.password ? 'border-destructive' : ''}
                       />
                       {errors.password && (
@@ -380,14 +432,17 @@ export default function CreateLobby({
                 {/* Submit Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4 pt-6">
                   <Button type="submit" disabled={isLoading} className="flex-1">
-                    {isLoading ? 'Creating Lobby...' : '🎮 Create Lobby'}
+                    {isLoading ? t('createLobby.creating') : t('createLobby.createCta')}
                   </Button>
 
-                  <Link href="/lobbies" className="flex-1">
-                    <Button variant="neutral" className="w-full">
-                      Cancel
-                    </Button>
-                  </Link>
+                  <Button
+                    type="button"
+                    variant="neutral"
+                    className="flex-1"
+                    onClick={() => router.visit('/lobbies')}
+                  >
+                    {t('createLobby.cancel')}
+                  </Button>
                 </div>
               </form>
             </CardContent>
@@ -397,9 +452,7 @@ export default function CreateLobby({
           <Alert className="mt-8">
             <Lightbulb className="h-4 w-4" />
             <AlertDescription>
-              <strong>Pro Tips:</strong> Choose a descriptive name to attract the right players.
-              Private lobbies are great for playing with friends. You'll get a shareable invitation
-              link after creating the lobby.
+              {t('createLobby.proTips')}
             </AlertDescription>
           </Alert>
         </div>

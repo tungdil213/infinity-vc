@@ -1,6 +1,9 @@
-import { BaseEntity } from './base_entity.js'
-import { PlayerInterface, PlayerWithStatsInterface } from '../interfaces/player_interface.js'
-import { PlayerValidationException } from '../../exceptions/domain_exceptions.js'
+import { BaseEntity } from '#domain/entities/base_entity'
+import {
+  type PlayerInterface,
+  type PlayerWithStatsInterface,
+} from '#domain/interfaces/player_interface'
+import { PlayerValidationException } from '#exceptions/domain_exceptions'
 
 export interface PlayerData {
   uuid?: string

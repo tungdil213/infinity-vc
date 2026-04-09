@@ -14,7 +14,7 @@
 
 - **Node.js** : Version LTS recommandée (Bookworm Slim utilisée dans le Dockerfile).
 - **Docker** : Dernière version stable.
-- **pnpm** : Gestionnaire de paquets recommandé (via Corepack).
+- **Yarn 1.22.22** : Gestionnaire de paquets requis.
 
 ## Installation
 
@@ -25,7 +25,7 @@
    ```
 2. Installez les dépendances :
    ```bash
-   pnpm install
+   yarn install
    ```
 
 ## Commandes principales
@@ -76,6 +76,7 @@ La documentation complète se trouve dans le dossier `docs`. Voici les principal
 2. **[Commandes npm TODO](docs/infra/scripts.md)** : Détails sur chaque script du `package.json`.
 3. **[Design System TODO](docs/design-system.md)** : Guide d'utilisation et de contribution au système de design.
 4. **[Package.json](docs/infra/package_json.md)** : Description des propriétés et scripts.
+5. **[Noyau plateforme multi-jeux](docs/platform-launcher-kernel.md)** : Contrats de modules de jeux (open source/propriétaire), sécurité et pattern d’extension.
 
 ## Contributions
 

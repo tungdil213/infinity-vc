@@ -6,8 +6,8 @@ export default class extends BaseSchema {
   async up() {
     this.schema.createTable(this.tableName, (table) => {
       table.uuid('uuid').primary()
-      table.integer('lobby_id').notNullable()
-      table.integer('user_id').notNullable()
+      table.integer('lobby_id').unsigned().notNullable()
+      table.integer('user_id').unsigned().notNullable()
       table.timestamp('joined_at').notNullable()
       table.timestamp('created_at').notNullable()
       table.timestamp('updated_at').notNullable()

@@ -1,10 +1,11 @@
 import { inject } from '@adonisjs/core'
-import { GameRepository } from '../../application/repositories/game_repository.js'
-import { EntityNotFoundError } from '../../application/repositories/base_repository.js'
-import Game from '../../domain/entities/game.js'
-import { GameStatus } from '../../domain/value_objects/game_status.js'
-import GameModel from '../../models/game_model.js'
+import { GameRepository } from '#application/repositories/game_repository'
+import { EntityNotFoundError } from '#application/repositories/base_repository'
+import Game from '#domain/entities/game'
+import { GameStatus } from '#domain/value_objects/game_status'
+import GameModel from '#models/game_model'
 import { DateTime } from 'luxon'
+import env from '#start/env'
 
 @inject()
 export class DatabaseGameRepository implements GameRepository {
@@ -61,20 +62,20 @@ export class DatabaseGameRepository implements GameRepository {
   }
 
   async findByPlayer(playerUuid: string): Promise<Game[]> {
-    const models = await GameModel.query()
-      .whereJsonSuperset('players', [{ uuid: playerUuid }])
-      .where('is_archived', false)
-      .orderBy('started_at', 'desc')
+    const query = GameModel.query().where('is_archived', false).orderBy('started_at', 'desc')
+    this.applyPlayerFilter(query, playerUuid)
+    const models = await query
 
     return models.map((model) => this.toDomainEntity(model))
   }
 
   async findActiveByPlayer(playerUuid: string): Promise<Game[]> {
-    const models = await GameModel.query()
-      .whereJsonSuperset('players', [{ uuid: playerUuid }])
+    const query = GameModel.query()
       .whereIn('status', [GameStatus.IN_PROGRESS, GameStatus.PAUSED])
       .where('is_archived', false)
       .orderBy('started_at', 'desc')
+    this.applyPlayerFilter(query, playerUuid)
+    const models = await query
 
     return models.map((model) => this.toDomainEntity(model))
   }
@@ -94,7 +95,7 @@ export class DatabaseGameRepository implements GameRepository {
 
   async findFinishedGames(): Promise<Game[]> {
     const models = await GameModel.query()
-      .where('status', GameStatus.FINISHED)
+      .whereIn('status', [GameStatus.FINISHED, GameStatus.ABANDONED])
       .where('is_archived', false)
       .orderBy('started_at', 'desc')
 
@@ -111,10 +112,9 @@ export class DatabaseGameRepository implements GameRepository {
   }
 
   async countGamesByPlayer(playerUuid: string): Promise<number> {
-    const result = await GameModel.query()
-      .whereJsonSuperset('players', [{ uuid: playerUuid }])
-      .where('is_archived', false)
-      .count('* as total')
+    const query = GameModel.query().where('is_archived', false).count('* as total')
+    this.applyPlayerFilter(query, playerUuid)
+    const result = await query
 
     return Number((result[0] as any)?.total ?? 0)
   }
@@ -126,6 +126,25 @@ export class DatabaseGameRepository implements GameRepository {
       .count('* as total')
 
     return Number((result[0] as any)?.total ?? 0)
+  }
+
+  private applyPlayerFilter(query: ReturnType<typeof GameModel.query>, playerUuid: string) {
+    if (env.get('DB_CONNECTION') === 'sqlite') {
+      const playersColumn = `"${GameModel.table}"."players"`
+      query.whereRaw(
+        `
+          EXISTS (
+            SELECT 1
+            FROM json_each(${playersColumn}) AS player_entry
+            WHERE json_extract(player_entry.value, '$.uuid') = ?
+          )
+        `,
+        [playerUuid]
+      )
+      return
+    }
+
+    query.whereJsonSuperset('players', [{ uuid: playerUuid }])
   }
 
   private toDomainEntity(model: GameModel): Game {

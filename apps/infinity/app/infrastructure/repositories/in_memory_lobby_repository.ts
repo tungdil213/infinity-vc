@@ -1,7 +1,7 @@
-import Lobby from '../../domain/entities/lobby.js'
-import { LobbyStatus } from '../../domain/value_objects/lobby_status.js'
-import { LobbyRepository } from '../../application/repositories/lobby_repository.js'
-import { EntityNotFoundError } from '../../application/repositories/base_repository.js'
+import type Lobby from '#domain/entities/lobby'
+import { LobbyStatus } from '#domain/value_objects/lobby_status'
+import { type LobbyRepository } from '#application/repositories/lobby_repository'
+import { EntityNotFoundError } from '#application/repositories/base_repository'
 
 export class InMemoryLobbyRepository implements LobbyRepository {
   private lobbies: Map<string, Lobby> = new Map()
@@ -53,8 +53,6 @@ export class InMemoryLobbyRepository implements LobbyRepository {
   }
 
   async findByPlayer(playerUuid: string): Promise<Lobby | null> {
-    console.log('findByPlayer', playerUuid)
-    console.log(this.lobbies)
     for (const lobby of this.lobbies.values()) {
       if (lobby.hasPlayer(playerUuid)) {
         return lobby

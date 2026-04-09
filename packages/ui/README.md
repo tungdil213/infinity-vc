@@ -18,12 +18,12 @@ A modern, accessible, and customizable React component library built with shadcn
 - Node.js v22.0.0 or higher
 - React 19 or later
 - Tailwind CSS 4
-- pnpm (recommended package manager)
+- Yarn 1.22.22 (required package manager)
 
 ## Installation
 
 ```bash
-pnpm add @infinity.dev/ui
+yarn add @infinity.dev/ui
 ```
 
 ## Directory Structure
@@ -161,16 +161,16 @@ import { cn } from '@infinity.dev/ui/utils';
 
 ```bash
 # Install dependencies
-pnpm install
+yarn install
 
 # Start development server
-pnpm dev
+yarn dev
 
 # Build the package
-pnpm build
+yarn build
 
 # Run linting
-pnpm lint
+yarn lint
 ```
 
 ### Contributing

@@ -1,4 +1,6 @@
+import { indexEntities } from '@adonisjs/core'
 import { defineConfig } from '@adonisjs/core/app'
+import { indexPages } from '@adonisjs/inertia'
 
 export default defineConfig({
   /*
@@ -10,7 +12,12 @@ export default defineConfig({
   | will be scanned automatically from the "./commands" directory.
   |
   */
-  commands: [() => import('@adonisjs/core/commands'), () => import('@adonisjs/lucid/commands')],
+  commands: [
+    () => import('@adonisjs/core/commands'),
+    () => import('@adonisjs/lucid/commands'),
+    () => import('@adonisjs/session/commands'),
+    () => import('@adonisjs/inertia/commands'),
+  ],
 
   /*
   |--------------------------------------------------------------------------
@@ -45,10 +52,7 @@ export default defineConfig({
       file: () => import('adonisjs-server-stats/provider'),
       environment: ['web'],
     },
-    {
-      file: () => import('adonisjs-server-stats/log-stream/provider'),
-      environment: ['web'],
-    },
+    () => import('@adonisjs/i18n/i18n_provider')
   ],
 
   /*
@@ -73,17 +77,17 @@ export default defineConfig({
   tests: {
     suites: [
       {
-        files: ['tests/unit/**/*.spec(.ts|.js)'],
+        files: ['tests/unit/**/*.spec.{ts,js}'],
         name: 'unit',
         timeout: 2000,
       },
       {
-        files: ['tests/integration/**/*.spec(.ts|.js)'],
+        files: ['tests/integration/**/*.spec.{ts,js}'],
         name: 'integration',
         timeout: 15000,
       },
       {
-        files: ['tests/functional/**/*.spec(.ts|.js)'],
+        files: ['tests/functional/**/*.spec.{ts,js}'],
         name: 'functional',
         timeout: 30000,
       },
@@ -109,10 +113,17 @@ export default defineConfig({
       pattern: 'public/**',
       reloadServer: false,
     },
+    {
+      pattern: 'resources/lang/**/*.{json,yaml,yml}',
+      reloadServer: false,
+    }
   ],
 
-  assetsBundler: false,
   hooks: {
-    onBuildStarting: [() => import('@adonisjs/vite/build_hook')],
+    init: [
+      indexEntities({ transformers: { enabled: true, withSharedProps: true } }),
+      indexPages({ framework: 'react' }),
+    ],
+    buildStarting: [() => import('@adonisjs/vite/build_hook')],
   },
 })

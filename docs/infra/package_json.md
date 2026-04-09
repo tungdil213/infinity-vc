@@ -67,7 +67,7 @@ Le fichier `package.json` inclut plusieurs scripts pour faciliter le développem
 
 ### 3. **Workspaces**
 
-Le projet utilise la fonctionnalité **pnpm workspaces** pour organiser les packages et applications :
+Le projet utilise la fonctionnalité **Yarn workspaces** pour organiser les packages et applications :
 
 - **`apps/*`** : Contient les applications principales.
 - **`packages/*`** : Contient les bibliothèques partagées comme le système de design.
@@ -88,7 +88,7 @@ Cette configuration permet :
 Les dépendances utilisées sont installées et gérées selon les besoins de chaque workspace. La commande suivante installe toutes les dépendances dans un environnement reproductible :
 
 ```bash
-pnpm install
+yarn install
 ```
 
 ### 6. **Scripts personnalisés**
@@ -96,7 +96,7 @@ pnpm install
 Le monorepo peut contenir des scripts supplémentaires définis par les workspaces individuels. Pour exécuter un script spécifique à un workspace :
 
 ```bash
-pnpm run <script_name> --filter <workspace_name>
+yarn workspace <workspace_name> <script_name>
 ```
 
 ---

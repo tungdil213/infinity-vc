@@ -80,18 +80,18 @@ test.group('Lobby Entity', () => {
         maxPlayers: 1,
         isPrivate: false,
       })
-    }, 'Max players must be between 2 and 8')
+    }, 'Max players must be greater than or equal to 2')
   })
 
-  test('should throw error for maxPlayers too high', ({ assert }) => {
-    assert.throws(() => {
-      Lobby.create({
-        name: 'Test Lobby',
-        creator: createPlayerInterface(),
-        maxPlayers: 10,
-        isPrivate: false,
-      })
-    }, 'Max players must be between 2 and 8')
+  test('should allow maxPlayers higher than legacy cap', ({ assert }) => {
+    const lobby = Lobby.create({
+      name: 'Test Lobby',
+      creator: createPlayerInterface(),
+      maxPlayers: 10,
+      isPrivate: false,
+    })
+
+    assert.equal(lobby.maxPlayers, 10)
   })
 
   test('should add player successfully', ({ assert }) => {
@@ -257,6 +257,31 @@ test.group('Lobby Entity', () => {
     assert.equal(json.status, lobby.status)
     assert.exists(json.uuid)
     assert.exists(json.createdAt)
+  })
+
+  test('should hash and verify protected lobby password', ({ assert }) => {
+    const password = 'SuperSecret'
+    const lobby = createLobby({
+      name: 'Protected Lobby',
+      maxPlayers: 4,
+      isPrivate: true,
+      passwordHash: Lobby.hashPassword(password),
+    })
+
+    assert.isTrue(lobby.hasPassword)
+    assert.isTrue(lobby.verifyPassword(password))
+    assert.isFalse(lobby.verifyPassword('wrong-password'))
+  })
+
+  test('should expose description in serialized payload', ({ assert }) => {
+    const lobby = createLobby({
+      name: 'Described Lobby',
+      description: 'Lobby description visible in lobby page',
+    })
+
+    const json = lobby.toJSON()
+
+    assert.equal(json.description, 'Lobby description visible in lobby page')
   })
 
   test('should record events when players join', ({ assert }) => {

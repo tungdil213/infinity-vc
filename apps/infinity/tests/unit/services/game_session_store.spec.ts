@@ -53,4 +53,28 @@ test.group('GameSessionStore', () => {
 
     assert.equal(found?.gameId, 'game-2')
   })
+
+  test('should append replay steps', ({ assert }) => {
+    const store = new GameSessionStore()
+    const session = makeSession()
+    store.save(session)
+
+    store.appendReplayStep(session.gameId, {
+      step: 0,
+      kind: 'initial',
+      recordedAt: new Date().toISOString(),
+      events: [],
+      snapshot: {
+        phase: 'play',
+        round: 1,
+        turn: 1,
+        isFinished: false,
+        winnerId: null,
+        currentPlayerId: null,
+        players: [],
+      },
+    })
+
+    assert.lengthOf(store.get(session.gameId)?.timeline || [], 1)
+  })
 })

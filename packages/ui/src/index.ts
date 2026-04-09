@@ -55,6 +55,7 @@ export * from './components/connection-status-indicator';
 export * from './components/lobby-card';
 export * from './components/lobby-header-panel';
 export * from './components/lobby-list';
+export * from './components/lobby-password-dialog';
 export * from './components/lobby-players-panel';
 export * from './components/lobby-status-badge';
 export * from './components/player-avatar';

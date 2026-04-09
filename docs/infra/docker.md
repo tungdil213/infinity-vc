@@ -6,7 +6,7 @@ Ce document décrit comment construire et lancer l’application **infinity** vi
 
 L’image Docker est construite à partir du `Dockerfile` à la racine :
 
-- Build des dépendances et workspaces avec **pnpm**
+- Build des dépendances et workspaces avec **Yarn 1.22.22**
 - Build des packages partagés :
   - `@infinity.dev/ui`
   - `@infinity.dev/events`
@@ -33,7 +33,7 @@ cp .env.example .env
 Depuis la racine du projet :
 
 ```bash
-pnpm docker:build
+yarn docker:build
 ```
 
 Cela exécute :
@@ -55,7 +55,7 @@ Le fichier `compose.yml` définit trois services :
 Lancer l’ensemble :
 
 ```bash
-pnpm docker:up
+yarn docker:up
 ```
 
 Ce qui exécute :
@@ -74,7 +74,7 @@ Le service `site` :
 Arrêter les services :
 
 ```bash
-pnpm docker:down
+yarn docker:down
 ```
 
 Ce qui exécute :
@@ -87,12 +87,12 @@ docker compose down
 
 Le service `database` utilise l’image `postgres:16-alpine3.19` et expose le port `5432`.
 
-Les variables par défaut dans `compose.yml` :
+Les variables par défaut dans `compose.yml` (surchargées via ton environnement shell ou un fichier `.env` à la racine) :
 
 ```yaml
 environment:
-  - POSTGRES_USER=root
-  - POSTGRES_PASSWORD=root
+  - POSTGRES_USER=${POSTGRES_USER:-infinity}
+  - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-change_me_dev_only}
 ```
 
 Adapte ton `.env` d’infinity en conséquence :
@@ -100,8 +100,8 @@ Adapte ton `.env` d’infinity en conséquence :
 ```bash
 DB_HOST=database
 DB_PORT=5432
-DB_USER=root
-DB_PASSWORD=root
+DB_USER=infinity
+DB_PASSWORD=change_me_dev_only
 DB_DATABASE=infinity_gauntlet
 ```
 

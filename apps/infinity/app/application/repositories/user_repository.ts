@@ -1,5 +1,5 @@
-import User from '../../domain/entities/user.js'
-import { BaseRepository } from './base_repository.js'
+import type User from '#domain/entities/user'
+import { type BaseRepository } from '#application/repositories/base_repository'
 
 export interface UserRepository extends BaseRepository<User> {
   findByEmail(email: string): Promise<User | null>

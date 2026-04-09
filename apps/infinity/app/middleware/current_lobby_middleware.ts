@@ -1,13 +1,17 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 import { inject } from '@adonisjs/core'
-import { HybridLobbyService } from '../application/services/hybrid_lobby_service.js'
+import { HybridLobbyService } from '#application/services/hybrid_lobby_service'
+import logger from '@adonisjs/core/services/logger'
 
 @inject()
 export default class CurrentLobbyMiddleware {
   constructor(private lobbyRepository: HybridLobbyService) {}
 
   async handle({ auth, inertia }: HttpContext, next: NextFn) {
+    // Hydrate auth.user from session even on public routes.
+    await auth.check()
+
     // Only run for authenticated users
     if (auth.user) {
       try {
@@ -22,11 +26,22 @@ export default class CurrentLobbyMiddleware {
                 status: currentLobby.status,
                 currentPlayers: currentLobby.players.length,
                 maxPlayers: currentLobby.maxPlayers,
+                createdBy: currentLobby.createdBy,
+                canStart: currentLobby.canStart,
+                isOwner: currentLobby.createdBy === auth.user.userUuid,
+                isPrivate: currentLobby.isPrivate,
+                hasPassword: currentLobby.hasPassword,
               }
             : (null as any),
         })
       } catch (error) {
-        console.error('Error fetching current lobby in middleware:', error)
+        logger.warn(
+          {
+            operation: 'current_lobby_fetch',
+            reason: error instanceof Error ? error.message : 'unknown',
+          },
+          'Failed to resolve current lobby, continuing request'
+        )
         // Don't block the request if lobby fetch fails
         inertia.share({ currentLobby: null as any })
       }

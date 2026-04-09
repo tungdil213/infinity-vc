@@ -5,4 +5,4 @@
  */
 
 export { TransmitAdapter, transmitAdapter } from './transmit_adapter.js'
-export { eventBridgeService } from './event_bridge_service.js'
+export { EventBridgeService, eventBridgeService } from './event_bridge_service.js'

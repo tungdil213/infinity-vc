@@ -19,6 +19,13 @@ const mockLobbyRepository = {
       LobbyFactory.lobbyDto({ status: LobbyStatus.WAITING }),
     ]
   },
+  findAll: async () => {
+    return [
+      LobbyFactory.lobbyDto({ status: LobbyStatus.OPEN }),
+      LobbyFactory.lobbyDto({ status: LobbyStatus.OPEN, isPrivate: true }),
+      LobbyFactory.lobbyDto({ status: LobbyStatus.WAITING, isPrivate: true }),
+    ]
+  },
   // Add missing methods to satisfy LobbyRepository interface
   findByCreator: async () => [],
   findByPlayer: async () => null,
@@ -52,7 +59,7 @@ test.group('ListLobbiesUseCase', () => {
     // Par défaut, les lobbies privés sont filtrés, donc 1 lobby public sur 2
     assert.equal(result.value.lobbies.length, 1)
     assert.equal(result.value.total, 1)
-    result.value.lobbies.forEach((lobby) => {
+    result.value.lobbies.forEach((lobby: { status: string }) => {
       assert.equal(lobby.status, LobbyStatus.OPEN)
     })
   })
@@ -61,16 +68,28 @@ test.group('ListLobbiesUseCase', () => {
     const result = await useCase.execute()
 
     assert.isTrue(result.isSuccess)
-    const privateLobbies = result.value.lobbies.filter((lobby) => lobby.isPrivate)
+    const privateLobbies = result.value.lobbies.filter((lobby: { isPrivate: boolean }) => lobby.isPrivate)
     assert.equal(privateLobbies.length, 0)
   })
 
   test('should include private lobbies when requested', async ({ assert }) => {
-    const result = await useCase.execute({ includePrivate: true })
+    const result = await useCase.execute({ includePrivate: true, viewerRole: 'MODERATOR' })
 
     assert.isTrue(result.isSuccess)
-    const privateLobbies = result.value.lobbies.filter((lobby) => lobby.isPrivate)
+    const privateLobbies = result.value.lobbies.filter(
+      (lobby: { isPrivate: boolean }) => lobby.isPrivate
+    )
     assert.isAbove(privateLobbies.length, 0)
+  })
+
+  test('should keep private lobbies hidden for standard users even when includePrivate is requested', async ({
+    assert,
+  }) => {
+    const result = await useCase.execute({ includePrivate: true, viewerRole: 'PLAYER' as any })
+
+    assert.isTrue(result.isSuccess)
+    const privateLobbies = result.value.lobbies.filter((lobby: { isPrivate: boolean }) => lobby.isPrivate)
+    assert.equal(privateLobbies.length, 0)
   })
 
   test('should filter lobbies with available slots', async ({ assert }) => {
@@ -154,8 +173,6 @@ test.group('ListLobbiesUseCase', () => {
     assert.isTrue(result.isSuccess)
     assert.isTrue(result.value.lobbies.length > 0)
     const lobby = result.value.lobbies[0]
-
-    console.log(lobby)
 
     assert.exists(lobby.name)
     assert.exists(lobby.status)

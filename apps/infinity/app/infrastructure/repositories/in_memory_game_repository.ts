@@ -1,7 +1,7 @@
-import Game from '../../domain/entities/game.js'
-import { GameStatus } from '../../domain/value_objects/game_status.js'
-import { GameRepository } from '../../application/repositories/game_repository.js'
-import { EntityNotFoundError } from '../../application/repositories/base_repository.js'
+import type Game from '#domain/entities/game'
+import { GameStatus } from '#domain/value_objects/game_status'
+import { type GameRepository } from '#application/repositories/game_repository'
+import { EntityNotFoundError } from '#application/repositories/base_repository'
 
 export class InMemoryGameRepository implements GameRepository {
   private games: Map<string, Game> = new Map()
@@ -56,7 +56,7 @@ export class InMemoryGameRepository implements GameRepository {
   async findFinishedGames(): Promise<Game[]> {
     const result: Game[] = []
     for (const game of this.games.values()) {
-      if (game.status === GameStatus.FINISHED) {
+      if ([GameStatus.FINISHED, GameStatus.ABANDONED].includes(game.status)) {
         result.push(game)
       }
     }

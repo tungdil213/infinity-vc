@@ -24,7 +24,7 @@ L'application **infinity Gauntlet Love Letter** suit une architecture **Clean Ar
 ### Infrastructure
 
 - **Containerisation** : Docker avec compose.yml
-- **Package Manager** : pnpm avec workspace monorepo
+- **Package Manager** : Yarn 1.22.22 avec workspace monorepo
 - **CI/CD** : Turbo pour les builds optimisés
 
 ## Architecture Clean Architecture

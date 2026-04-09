@@ -1,4 +1,5 @@
-import { eventBus, type IEvent } from '../../infrastructure/events/event_bus.js'
+import { eventBus, type IEvent } from '#infrastructure/events/event_bus'
+import logger from '@adonisjs/core/services/logger'
 
 /**
  * Event type that supports both old and new event formats
@@ -19,13 +20,13 @@ export class EventBusDomainEventPublisher implements DomainEventPublisher {
   }
 
   async publishEvent(event: PublishableEvent): Promise<void> {
+    const eventType = event.eventType ?? event.type
+
     try {
       await eventBus.publish(event)
-      const eventType = event.eventType ?? event.type
-      console.log(`Published domain event: ${eventType}`)
+      logger.debug({ eventType }, 'Published domain event')
     } catch (error) {
-      const eventType = event.eventType ?? event.type
-      console.error(`Failed to publish domain event ${eventType}:`, error)
+      logger.error({ eventType, error }, 'Failed to publish domain event')
       // Don't throw - we don't want event publishing failures to break business logic
     }
   }

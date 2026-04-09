@@ -2,7 +2,7 @@ import { DateTime } from 'luxon'
 import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import { randomUUID } from 'node:crypto'
-import User from './user.js'
+import User from '#models/user'
 
 export default class Player extends BaseModel {
   static table = 'players'
@@ -39,6 +39,10 @@ export default class Player extends BaseModel {
 
   // Generate UUID before saving
   static async boot() {
+    if (this.booted) {
+      return
+    }
+
     super.boot()
 
     this.before('create', async (player) => {

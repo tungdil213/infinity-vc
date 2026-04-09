@@ -1,8 +1,9 @@
-import User from '../../domain/entities/user.js'
-import Player from '../../domain/entities/player.js'
-import { UserRepository } from '../repositories/user_repository.js'
-import { PlayerRepository } from '../repositories/player_repository.js'
-import { Result } from '../../domain/shared/result.js'
+import User from '#domain/entities/user'
+import Player from '#domain/entities/player'
+import { type UserRepository } from '#application/repositories/user_repository'
+import { type PlayerRepository } from '#application/repositories/player_repository'
+import { Result } from '#shared/result'
+import { safeSystemError } from '#shared/error_sanitizer'
 
 export interface RegisterUserRequest {
   firstName: string
@@ -30,6 +31,8 @@ export interface RegisterUserResponse {
 }
 
 export class RegisterUserUseCase {
+  private static readonly NICKNAME_ALLOWED_REGEX = /^[a-zA-Z0-9\s_-]+$/
+
   constructor(
     private readonly userRepository: UserRepository,
     private readonly playerRepository: PlayerRepository
@@ -53,7 +56,7 @@ export class RegisterUserUseCase {
       })
 
       // Création du joueur associé
-      const nickName = request.nickName?.trim() || `${request.firstName} ${request.lastName}`
+      const nickName = this.resolveNickName(request)
       const player = Player.create({
         userUuid: user.uuid,
         nickName,
@@ -79,9 +82,7 @@ export class RegisterUserUseCase {
         },
       })
     } catch (error) {
-      return Result.fail(
-        error instanceof Error ? error.message : 'Registration failed due to an unexpected error'
-      )
+      return Result.fail(safeSystemError(error, 'register_user'))
     }
   }
 
@@ -100,6 +101,15 @@ export class RegisterUserUseCase {
       (request.nickName.trim().length < 3 || request.nickName.trim().length > 30)
     ) {
       return Result.fail('Nickname must be between 3 and 30 characters')
+    }
+
+    if (
+      request.nickName &&
+      !RegisterUserUseCase.NICKNAME_ALLOWED_REGEX.test(request.nickName.trim())
+    ) {
+      return Result.fail(
+        'Nickname can only contain letters, numbers, spaces, underscores and hyphens'
+      )
     }
 
     // Vérifier l'unicité de l'email (sécurité : message générique)
@@ -124,7 +134,7 @@ export class RegisterUserUseCase {
       }
     } else {
       // Vérifier l'unicité du pseudonyme généré automatiquement
-      const generatedNickName = `${request.firstName} ${request.lastName}`
+      const generatedNickName = this.generateDefaultNickName(request)
       const existingPlayerByGeneratedNickname =
         await this.playerRepository.existsByNickName(generatedNickName)
       if (existingPlayerByGeneratedNickname) {
@@ -133,5 +143,28 @@ export class RegisterUserUseCase {
     }
 
     return Result.ok(undefined)
+  }
+
+  private resolveNickName(request: RegisterUserRequest): string {
+    if (request.nickName?.trim()) {
+      return request.nickName.trim()
+    }
+
+    return this.generateDefaultNickName(request)
+  }
+
+  private generateDefaultNickName(request: RegisterUserRequest): string {
+    const rawFullName = `${request.firstName} ${request.lastName}`.trim()
+    const sanitizedFromName = rawFullName
+      .replace(/[^a-zA-Z0-9\s_-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+
+    const clippedFromName = sanitizedFromName.slice(0, 30).trim()
+    if (clippedFromName.length >= 3) {
+      return clippedFromName
+    }
+
+    return request.username.trim().slice(0, 30)
   }
 }

@@ -1,15 +1,15 @@
 import { test } from '@japa/runner'
-import { CreateLobbyUseCase } from '../../app/application/use_cases/create_lobby_use_case.js'
-import { JoinLobbyUseCase } from '../../app/application/use_cases/join_lobby_use_case.js'
-import { LeaveLobbyUseCase } from '../../app/application/use_cases/leave_lobby_use_case.js'
-import { StartGameUseCase } from '../../app/application/use_cases/start_game_use_case.js'
-import { ListLobbiesUseCase } from '../../app/application/use_cases/list_lobbies_use_case.js'
-import { InMemoryLobbyRepository } from '../../app/infrastructure/repositories/in_memory_lobby_repository.js'
-import { InMemoryPlayerRepository } from '../../app/infrastructure/repositories/in_memory_player_repository.js'
-import { InMemoryGameRepository } from '../../app/infrastructure/repositories/in_memory_game_repository.js'
-import Player from '../../app/domain/entities/player.js'
-import { LobbyStatus } from '../../app/domain/value_objects/lobby_status.js'
-import { gameEngineService } from '../../app/application/services/game_engine_service.js'
+import { CreateLobbyUseCase } from '#application/use_cases/create_lobby_use_case'
+import { JoinLobbyUseCase } from '#application/use_cases/join_lobby_use_case'
+import { LeaveLobbyUseCase } from '#application/use_cases/leave_lobby_use_case'
+import { StartGameUseCase } from '#application/use_cases/start_game_use_case'
+import { ListLobbiesUseCase } from '#application/use_cases/list_lobbies_use_case'
+import { InMemoryLobbyRepository } from '#infrastructure/repositories/in_memory_lobby_repository'
+import { InMemoryPlayerRepository } from '#infrastructure/repositories/in_memory_player_repository'
+import { InMemoryGameRepository } from '#infrastructure/repositories/in_memory_game_repository'
+import Player from '#domain/entities/player'
+import { LobbyStatus } from '#domain/value_objects/lobby_status'
+import { gameEngineService } from '#application/services/game_engine_service'
 import { RpsActionTypes } from '@infinity.dev/game-engine'
 
 // Helper function to create a player
@@ -200,6 +200,67 @@ test.group('Lobby Use Cases Integration', (group) => {
     gameEngineService.endGame(gameUuid)
   })
 
+  test('should start a Love Letter Infinity Gauntlet session with hidden player views', async ({
+    assert,
+  }) => {
+    const player1 = createPlayer({ nickName: 'LL_Player_1' })
+    const player2 = createPlayer({ nickName: 'LL_Player_2' })
+
+    await playerRepository.save(player1)
+    await playerRepository.save(player2)
+
+    const createResult = await createLobbyUseCase.execute({
+      name: 'Love Letter Infinity Match',
+      userUuid: player1.userUuid,
+      maxPlayers: 2,
+      isPrivate: false,
+      gameType: 'love-letter-infinity-gauntlet',
+    })
+
+    assert.isTrue(createResult.isSuccess)
+    const lobbyUuid = createResult.value.uuid
+
+    const joinResult = await joinLobbyUseCase.execute({
+      lobbyUuid,
+      userUuid: player2.userUuid,
+    })
+    assert.isTrue(joinResult.isSuccess)
+
+    const startResult = await startGameUseCase.execute({
+      lobbyUuid,
+      userUuid: player1.userUuid,
+    })
+    assert.isTrue(startResult.isSuccess)
+
+    const gameUuid = startResult.value!.game.uuid
+    const session = gameEngineService.getSession(gameUuid)
+    assert.exists(session)
+    assert.equal(session!.gameType, 'love-letter-infinity-gauntlet')
+
+    const currentPlayerId = session!.state.currentPlayerId
+    const opponentId = session!.players.find((player) => player.id !== currentPlayerId)?.id
+    const currentPlayerView = gameEngineService.getPlayerView(gameUuid, currentPlayerId!)
+    const rawPlayers = Array.isArray(currentPlayerView?.state.players)
+      ? (currentPlayerView?.state.players as unknown as Array<Record<string, unknown>>)
+      : []
+
+    assert.deepEqual(gameEngineService.getAvailableActions(gameUuid, currentPlayerId!), [
+      'draw_card',
+    ])
+    assert.equal(
+      (rawPlayers.find((player) => player.id === currentPlayerId)?.hand as unknown[] | undefined)
+        ?.length ?? 0,
+      1
+    )
+    assert.equal(
+      (rawPlayers.find((player) => player.id === opponentId)?.hand as unknown[] | undefined)
+        ?.length ?? 0,
+      0
+    )
+
+    gameEngineService.endGame(gameUuid)
+  })
+
   test('should handle player leaving and rejoining', async ({ assert }) => {
     // Créer des joueurs
     const player1 = createPlayer()
@@ -337,8 +398,8 @@ test.group('Lobby Use Cases Integration', (group) => {
     const results = await Promise.all(joinPromises)
 
     // 3 devraient réussir, 1 devrait échouer (lobby plein)
-    const successful = results.filter((r) => r.isSuccess)
-    const failed = results.filter((r) => r.isFailure)
+    const successful = results.filter((r: { isSuccess: boolean }) => r.isSuccess)
+    const failed = results.filter((r: { isFailure: boolean; error?: string }) => r.isFailure)
 
     assert.lengthOf(successful, 3)
     assert.lengthOf(failed, 1)

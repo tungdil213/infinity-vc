@@ -1,10 +1,10 @@
 {
   "$schema": "https://raw.githubusercontent.com/stryker-mutator/stryker/master/packages/api/schema/stryker-schema.json",
-  "packageManager": "pnpm",
+  "packageManager": "yarn",
   "reporters": ["html", "clear-text", "progress"],
   "testRunner": "command",
   "commandRunner": {
-    "command": "pnpm run test:mutation"
+    "command": "yarn test:mutation"
   },
   "coverageAnalysis": "perTest",
   "concurrency": 1,

@@ -2,6 +2,12 @@ import { DateTime } from 'luxon'
 import { BaseModel, column, beforeSave } from '@adonisjs/lucid/orm'
 import hash from '@adonisjs/core/services/hash'
 import { randomUUID } from 'node:crypto'
+import {
+  type UserRole,
+  USER_ROLES,
+  hasRequiredRole,
+  normalizeUserRole,
+} from '#domain/value_objects/user_role'
 
 export default class User extends BaseModel {
   static table = 'users'
@@ -20,6 +26,12 @@ export default class User extends BaseModel {
 
   @column({ serializeAs: null })
   declare password: string
+
+  @column()
+  declare role: UserRole | null
+
+  @column()
+  declare invitedByUserUuid: string | null
 
   @column.dateTime({ columnName: 'deleted_at' })
   declare deletedAt: DateTime | null
@@ -44,6 +56,13 @@ export default class User extends BaseModel {
     }
   }
 
+  @beforeSave()
+  static normalizeRole(user: User) {
+    if (user.$dirty.role || !user.role) {
+      user.role = normalizeUserRole(user.role)
+    }
+  }
+
   // Helper method to verify password
   async verifyPassword(plainPassword: string): Promise<boolean> {
     return hash.verify(this.password, plainPassword)
@@ -53,6 +72,18 @@ export default class User extends BaseModel {
   async softDelete() {
     this.deletedAt = DateTime.now()
     await this.save()
+  }
+
+  get normalizedRole(): UserRole {
+    return normalizeUserRole(this.role)
+  }
+
+  get isAdmin(): boolean {
+    return hasRequiredRole(this.role, USER_ROLES.ADMIN)
+  }
+
+  get canModerateLobbies(): boolean {
+    return hasRequiredRole(this.role, USER_ROLES.MODERATOR)
   }
 
   // Check if user is deleted

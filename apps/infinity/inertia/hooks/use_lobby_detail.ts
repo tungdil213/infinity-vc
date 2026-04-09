@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useLobbyService } from './use_lobby_service'
-import { LobbyDetailState, LobbyData } from '../services/lobby_service'
+import { type LobbyDetailState, LobbyData } from '../services/lobby_service'
 
 /**
- * Hook pour gérer les détails d'un lobby avec mises à jour temps réel
+ * Handles lobby detail state with realtime updates.
  */
 export function useLobbyDetail(lobbyUuid: string) {
-  const { service: lobbyService, isConnected, error: sseError } = useLobbyService()
+  const { service: lobbyService } = useLobbyService()
   const [state, setState] = useState<LobbyDetailState>({
     lobby: null,
     loading: true,
@@ -15,32 +15,23 @@ export function useLobbyDetail(lobbyUuid: string) {
 
   useEffect(() => {
     if (!lobbyService || !lobbyUuid) {
-      console.log('useLobbyDetail: Service ou UUID manquant', {
-        lobbyService: !!lobbyService,
-        lobbyUuid,
-      })
       return
     }
 
-    console.log('useLobbyDetail: Initialisation pour lobby', lobbyUuid)
     setState((prev) => ({ ...prev, loading: true, error: null }))
 
-    // S'abonner aux mises à jour du lobby
+    // Subscribe to lobby updates
     const unsubscribe = lobbyService.subscribeLobbyDetail(lobbyUuid, (newState) => {
-      console.log('useLobbyDetail: Nouvel état reçu:', newState)
       setState(newState)
     })
 
-    // Charger les données initiales
-    console.log('useLobbyDetail: Chargement des données initiales')
+    // Load initial data
     lobbyService
       .fetchLobbyDetails(lobbyUuid)
       .then((lobby) => {
-        console.log('useLobbyDetail: Données reçues:', lobby)
         setState({ lobby, loading: false, error: null })
       })
       .catch((error) => {
-        console.error('useLobbyDetail: Erreur lors du chargement:', error)
         setState({ lobby: null, loading: false, error: error.message })
       })
 

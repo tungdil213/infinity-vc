@@ -35,7 +35,7 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {
-		"@infinity.dev/typescript-config": "workspace:*",
+		"@infinity.dev/typescript-config": "1.0.0",
 		"typescript": "~5.7.3"
 	},
 	"publishConfig": {

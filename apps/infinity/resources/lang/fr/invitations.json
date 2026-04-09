@@ -1,0 +1,18 @@
+{
+  "generate": {
+    "success": "Invitation générée avec succès.",
+    "failure": {
+      "generic": "Impossible de générer l’invitation.",
+      "quotaExceeded": "Quota d’invitations atteint. Révoquez ou utilisez des invitations existantes avant d’en créer de nouvelles."
+    }
+  },
+  "revoke": {
+    "failure": {
+      "generic": "Impossible de révoquer l’invitation.",
+      "notFound": "Invitation introuvable.",
+      "expired": "Les invitations expirées ne peuvent pas être révoquées.",
+      "used": "Les invitations déjà utilisées ne peuvent pas être révoquées.",
+      "alreadyRevoked": "L’invitation a déjà été révoquée."
+    }
+  }
+}

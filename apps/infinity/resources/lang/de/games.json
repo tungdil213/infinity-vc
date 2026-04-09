@@ -1,0 +1,19 @@
+{
+  "errors": {
+    "notFound": "Spiel nicht gefunden",
+    "notFoundOrFinished": "Spiel nicht gefunden oder bereits beendet",
+    "spectatorsCannotAct": "Zuschauer können keine Spielaktionen ausführen",
+    "unsupportedCapability": "Nicht unterstützte Fähigkeit '{capability}'",
+    "actionRequired": "Der Aktionstyp ist erforderlich",
+    "cardTypeRequired": "Der Kartentyp ist für diese Aktion erforderlich",
+    "moveRequired": "Der Zug ist für diese Aktion erforderlich",
+    "invalidAction": "Ungültige Spielaktionsdaten",
+    "actionRejected": "Spielaktion wurde abgelehnt",
+    "resumeUnauthorized": "Du bist nicht berechtigt, dieses Spiel fortzusetzen",
+    "resumeUnavailable": "Dieses Spiel ist nicht mehr aktiv",
+    "catalogUnavailable": "Der Spielekatalog ist vorübergehend nicht verfügbar",
+    "replayVerificationFailed": "Replay kann nicht geladen werden, da die Integritätsprüfung fehlgeschlagen ist",
+    "importVerificationFailed": "Replay-Import wurde wegen fehlgeschlagener Integritätsprüfung abgelehnt",
+    "replayImportPayloadInvalid": "Replay-Import-Payload ist ungültig"
+  }
+}

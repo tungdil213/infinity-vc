@@ -44,10 +44,10 @@
 		"test:watch": "vitest"
 	},
 	"dependencies": {
-		"@infinity.dev/events": "workspace:*"
+		"@infinity.dev/events": "1.0.0"
 	},
 	"devDependencies": {
-		"@infinity.dev/typescript-config": "workspace:*",
+		"@infinity.dev/typescript-config": "1.0.0",
 		"typescript": "~5.7.3",
 		"vitest": "^2.1.0"
 	},

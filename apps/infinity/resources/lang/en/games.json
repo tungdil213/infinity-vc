@@ -1,0 +1,19 @@
+{
+  "errors": {
+    "notFound": "Game not found",
+    "notFoundOrFinished": "Game not found or finished",
+    "spectatorsCannotAct": "Spectators cannot perform game actions",
+    "unsupportedCapability": "Unsupported capability '{capability}'",
+    "actionRequired": "Action type is required",
+    "cardTypeRequired": "Card type is required for this action",
+    "moveRequired": "Move is required for this action",
+    "invalidAction": "Invalid game action payload",
+    "actionRejected": "Game action was rejected",
+    "resumeUnauthorized": "You are not allowed to resume this game",
+    "resumeUnavailable": "This game is no longer active",
+    "catalogUnavailable": "Game catalog is temporarily unavailable",
+    "replayVerificationFailed": "Replay cannot be loaded because integrity verification failed",
+    "importVerificationFailed": "Replay import was rejected because integrity verification failed",
+    "replayImportPayloadInvalid": "Replay import payload is invalid"
+  }
+}

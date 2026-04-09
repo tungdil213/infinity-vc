@@ -8,26 +8,17 @@
 */
 
 import router from '@adonisjs/core/services/router'
+import app from '@adonisjs/core/services/app'
 import { middleware } from './kernel.js'
 import transmit from '@adonisjs/transmit/services/main'
-import app from '@adonisjs/core/services/app'
 import './transmit.js'
 
 // Public routes
-router.get('/', '#controllers/simple_lobbies_controller.welcome').as('home')
+router.get('/', '#controllers/enhanced_lobbies_controller.welcome').as('home')
 
-// Development routes (only in dev mode)
-router.get('/dev/routes', '#controllers/dev_routes_controller.index').as('dev.routes')
-
+// Development routes (registered only in dev mode)
 if (app.inDev) {
-  router
-    .group(() => {
-      router
-        .get('/server-stats', '#controllers/admin/server_stats_controller.index')
-        .as('admin.server-stats.index')
-    })
-    .prefix('/admin/api')
-    .use(middleware.auth())
+  router.get('/dev/routes', '#controllers/dev_routes_controller.index').as('dev.routes')
 }
 
 // Authentication routes
@@ -41,7 +32,17 @@ router
     router
       .get('/register', '#controllers/enhanced_auth_controller.showRegister')
       .as('auth.register.show')
-    router.post('/register', '#controllers/enhanced_auth_controller.register').as('auth.register')
+    router
+      .post(
+        '/register/validate-invitation',
+        '#controllers/enhanced_auth_controller.validateInvitationCode'
+      )
+      .use(middleware.invitationThrottle())
+      .as('auth.register.validateInvitation')
+    router
+      .post('/register', '#controllers/enhanced_auth_controller.register')
+      .use(middleware.invitationThrottle())
+      .as('auth.register')
   })
   .prefix('/auth')
 
@@ -50,6 +51,43 @@ router
   .group(() => {
     // Auth actions
     router.post('/auth/logout', '#controllers/enhanced_auth_controller.logout').as('auth.logout')
+
+    // Profile & settings
+    router
+      .get('/profile', '#controllers/profile_settings_controller.showProfile')
+      .as('profile.show')
+    router
+      .get('/settings', '#controllers/profile_settings_controller.showSettings')
+      .as('settings.show')
+    router.get('/invitations', '#controllers/invitations_controller.index').as('invitations.index')
+    router
+      .post('/invitations', '#controllers/invitations_controller.generate')
+      .as('invitations.generate')
+    router
+      .post('/invitations/:uuid/revoke', '#controllers/invitations_controller.revoke')
+      .as('invitations.revoke')
+    router.get('/friends', '#controllers/friends_controller.index').as('friends.index')
+    router
+      .post('/friends/requests', '#controllers/friends_controller.sendRequest')
+      .as('friends.requests.send')
+    router
+      .post('/friends/requests/:uuid/accept', '#controllers/friends_controller.accept')
+      .as('friends.requests.accept')
+    router
+      .post('/friends/requests/:uuid/reject', '#controllers/friends_controller.reject')
+      .as('friends.requests.reject')
+    router
+      .post('/friends/requests/:uuid/cancel', '#controllers/friends_controller.cancel')
+      .as('friends.requests.cancel')
+    router
+      .post('/friends/:friendUserUuid/remove', '#controllers/friends_controller.remove')
+      .as('friends.remove')
+    router
+      .post('/settings/profile', '#controllers/profile_settings_controller.updateProfile')
+      .as('settings.profile.update')
+    router
+      .post('/settings/password', '#controllers/profile_settings_controller.updatePassword')
+      .as('settings.password.update')
 
     // Lobbies routes
     router.get('/lobbies', '#controllers/enhanced_lobbies_controller.index').as('lobbies.index')
@@ -68,6 +106,9 @@ router
       .post('/lobbies/leave-on-close', '#controllers/enhanced_lobbies_controller.leaveOnClose')
       .as('lobbies.leave.close')
     router
+      .post('/lobbies/:uuid/heartbeat', '#controllers/enhanced_lobbies_controller.heartbeat')
+      .as('lobbies.heartbeat')
+    router
       .post('/lobbies/:uuid/start', '#controllers/enhanced_lobbies_controller.start')
       .as('lobbies.start')
 
@@ -79,7 +120,14 @@ router
       .post('/lobbies/:uuid/transfer', '#controllers/enhanced_lobbies_controller.transferOwnership')
       .as('lobbies.transfer')
 
+    // Moderation actions
+    router
+      .post('/lobbies/:uuid/close', '#controllers/enhanced_lobbies_controller.adminClose')
+      .use(middleware.moderationGuard())
+      .as('lobbies.close')
+
     // Games routes
+    router.get('/games/:uuid/resume', '#controllers/games_controller.resume').as('games.resume')
     router.get('/games/:uuid', '#controllers/games_controller.show').as('games.show')
     router.post('/games/:uuid/leave', '#controllers/games_controller.leave').as('games.leave')
   })
@@ -98,6 +146,9 @@ router
   .group(() => {
     router.get('/auth/me', '#controllers/enhanced_auth_controller.me').as('api.auth.me')
     router.get('/auth/check', '#controllers/enhanced_auth_controller.check').as('api.auth.check')
+    router
+      .get('/games/catalog', '#controllers/game_catalog_controller.publicIndex')
+      .as('api.games.catalog')
   })
   .prefix('/api/v1')
 
@@ -121,11 +172,26 @@ router
       .post('/lobbies/leave-on-close', '#controllers/enhanced_lobbies_controller.leaveOnClose')
       .as('api.lobbies.leave.close')
     router
+      .post('/lobbies/:uuid/heartbeat', '#controllers/enhanced_lobbies_controller.heartbeat')
+      .as('api.lobbies.heartbeat')
+    router
       .post('/lobbies/:uuid/start', '#controllers/enhanced_lobbies_controller.start')
       .as('api.lobbies.start')
+    router
+      .post('/lobbies/:uuid/close', '#controllers/enhanced_lobbies_controller.adminClose')
+      .use(middleware.moderationGuard())
+      .as('api.lobbies.close')
 
     // Games API
+    router
+      .get('/games/me/active', '#controllers/games_controller.myActive')
+      .as('api.games.my.active')
+    router
+      .get('/games/me/history', '#controllers/games_controller.myHistory')
+      .as('api.games.my.history')
+    router.get('/games/me/stats', '#controllers/games_controller.myStats').as('api.games.my.stats')
     router.get('/games/:uuid', '#controllers/games_controller.apiShow').as('api.games.show')
+    router.get('/games/:uuid/replay', '#controllers/games_controller.replay').as('api.games.replay')
     router
       .get('/games/:uuid/actions', '#controllers/games_controller.getActions')
       .as('api.games.actions')
@@ -139,33 +205,39 @@ router
   .prefix('/api/v1')
   .use(middleware.auth())
 
-// Transmit routes
-transmit.registerRoutes((route) => {
-  // Ensure you are authenticated to register your client
-  route.middleware(middleware.auth())
-})
-
-// Lobby synchronization routes
+// Admin API routes - includes proprietary game modules in catalog
 router
   .group(() => {
     router
-      .post('/lobbies/:lobbyUuid/subscribe', '#controllers/lobby_sync_controller.subscribeLobby')
-      .as('api.lobbies.sync.subscribe')
+      .post('/lobbies/:uuid/close', '#controllers/enhanced_lobbies_controller.adminClose')
+      .as('admin.lobbies.close')
+  })
+  .prefix('/admin/api')
+  .use([middleware.auth(), middleware.moderationGuard()])
+
+// Admin API routes - includes proprietary game modules in catalog
+router
+  .group(() => {
+    router
+      .get('/games/catalog', '#controllers/game_catalog_controller.adminIndex')
+      .as('admin.games.catalog')
+    router
+      .post('/games/:uuid/replay/import', '#controllers/games_controller.importReplay')
+      .as('admin.games.replay.import')
+    router
+      .get('/games/verification/metrics', '#controllers/games_controller.verificationMetrics')
+      .as('admin.games.verification.metrics')
     router
       .post(
-        '/lobbies/:lobbyUuid/unsubscribe',
-        '#controllers/lobby_sync_controller.unsubscribeLobby'
+        '/games/verification/metrics/reset',
+        '#controllers/games_controller.resetVerificationMetrics'
       )
-      .as('api.lobbies.sync.unsubscribe')
-    router
-      .get('/lobbies/:lobbyUuid/state', '#controllers/lobby_sync_controller.getLobbyState')
-      .as('api.lobbies.sync.state')
-    router
-      .get('/lobbies/sync/stats', '#controllers/lobby_sync_controller.getSyncStats')
-      .as('api.lobbies.sync.stats')
-    router
-      .post('/lobbies/:lobbyUuid/test-event', '#controllers/lobby_sync_controller.sendTestEvent')
-      .as('api.lobbies.sync.test')
+      .as('admin.games.verification.metrics.reset')
   })
-  .prefix('/api/v1')
-  .use(middleware.auth())
+  .prefix('/admin/api')
+  .use([middleware.auth(), middleware.adminGuard()])
+
+// Transmit routes
+// Keep SSE endpoint reachable to avoid noisy connection failures.
+// Channel-level authorization (see start/transmit.ts) remains the source of truth.
+transmit.registerRoutes()

@@ -265,4 +265,118 @@ test.group('JoinLobbyUseCase', (group) => {
     assert.isTrue(result.isFailure)
     assert.include(result.error, 'Lobby not found')
   })
+
+  test('should require password for protected lobby', async ({ assert }) => {
+    const protectedLobby = {
+      uuid: 'lobby-protected',
+      name: 'Protected Lobby',
+      status: LobbyStatus.WAITING,
+      maxPlayers: 4,
+      isPrivate: true,
+      hasPassword: true,
+      verifyPassword: (_password?: string) => false,
+      createdBy: 'creator-123',
+      players: [],
+      hasAvailableSlots: true,
+      canStart: false,
+      availableActions: ['start', 'leave'],
+      createdAt: new Date(),
+      addPlayer: (_player: any) => ({ isFailure: false, isSuccess: true }),
+      creator: { uuid: 'creator-123', nickName: 'Creator' },
+      serialize: () => ({
+        uuid: 'lobby-protected',
+        name: 'Protected Lobby',
+        status: LobbyStatus.WAITING,
+        maxPlayers: 4,
+        isPrivate: true,
+        hasPassword: true,
+        createdBy: 'creator-123',
+        currentPlayers: 1,
+        players: [],
+        hasAvailableSlots: true,
+        canStart: false,
+        availableActions: ['start', 'leave'],
+        createdAt: new Date(),
+      }),
+    }
+
+    const useCase = new JoinLobbyUseCase(
+      mockPlayerRepository as any,
+      {
+        ...mockLobbyRepository,
+        findByUuidOrFail: async (_uuid: string) => protectedLobby,
+      } as any,
+      mockNotificationService as any
+    )
+
+    const result = await useCase.execute({
+      userUuid: 'user-123',
+      lobbyUuid: 'lobby-protected',
+    })
+
+    assert.isTrue(result.isFailure)
+    assert.include(result.error, 'Password is required for this lobby')
+  })
+
+  test('should reject invalid password for protected lobby', async ({ assert }) => {
+    const protectedLobby = {
+      uuid: 'lobby-protected',
+      name: 'Protected Lobby',
+      status: LobbyStatus.WAITING,
+      maxPlayers: 4,
+      isPrivate: true,
+      hasPassword: true,
+      verifyPassword: (password?: string) => password === 'secret123',
+      createdBy: 'creator-123',
+      players: [],
+      hasAvailableSlots: true,
+      canStart: false,
+      availableActions: ['start', 'leave'],
+      createdAt: new Date(),
+      addPlayer: (_player: any) => ({ isFailure: false, isSuccess: true }),
+      creator: { uuid: 'creator-123', nickName: 'Creator' },
+      serialize: () => ({
+        uuid: 'lobby-protected',
+        name: 'Protected Lobby',
+        status: LobbyStatus.WAITING,
+        maxPlayers: 4,
+        isPrivate: true,
+        hasPassword: true,
+        createdBy: 'creator-123',
+        currentPlayers: 1,
+        players: [],
+        hasAvailableSlots: true,
+        canStart: false,
+        availableActions: ['start', 'leave'],
+        createdAt: new Date(),
+      }),
+    }
+
+    const useCase = new JoinLobbyUseCase(
+      mockPlayerRepository as any,
+      {
+        ...mockLobbyRepository,
+        findByUuidOrFail: async (_uuid: string) => protectedLobby,
+      } as any,
+      mockNotificationService as any
+    )
+
+    const invalidPasswordResult = await useCase.execute({
+      userUuid: 'user-123',
+      lobbyUuid: 'lobby-protected',
+      password: 'wrong-password',
+    })
+
+    assert.isTrue(invalidPasswordResult.isFailure)
+    assert.include(invalidPasswordResult.error, 'Invalid lobby password')
+
+    const validPasswordResult = await useCase.execute({
+      userUuid: 'user-123',
+      lobbyUuid: 'lobby-protected',
+      password: 'secret123',
+    })
+
+    assert.isTrue(validPasswordResult.isSuccess)
+    assert.equal(validPasswordResult.value.lobby.uuid, 'lobby-protected')
+  })
 })

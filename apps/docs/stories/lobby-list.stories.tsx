@@ -19,6 +19,7 @@ const meta: Meta<typeof LobbyList> = {
 		onView: { action: 'viewed' },
 		onShare: { action: 'shared' },
 		onStart: { action: 'started' },
+		onClose: { action: 'closed' },
 		onKick: { action: 'kicked' },
 		onSettings: { action: 'settings' },
 		onCreateLobby: { action: 'create-lobby' },
@@ -33,13 +34,14 @@ type Story = StoryObj<typeof meta>;
 const mockCurrentUser = {
 	uuid: 'user-123',
 	nickName: 'PlayerOne',
+	role: 'MODERATOR' as const,
 };
 
 const mockLobbies: LobbyData[] = [
 	{
 		uuid: 'lobby-1',
 		name: 'Epic Battle Arena',
-		description: 'Une bataille épique pour 4 joueurs',
+		description: 'An epic battle for 4 players',
 		status: 'WAITING',
 		currentPlayers: 2,
 		maxPlayers: 4,
@@ -66,7 +68,7 @@ const mockLobbies: LobbyData[] = [
 	{
 		uuid: 'lobby-2',
 		name: 'Quick Match',
-		description: 'Partie rapide pour 2 joueurs',
+		description: 'Fast match for 2 players',
 		status: 'READY',
 		currentPlayers: 2,
 		maxPlayers: 2,
@@ -92,7 +94,7 @@ const mockLobbies: LobbyData[] = [
 	{
 		uuid: 'lobby-3',
 		name: 'Friends Only',
-		description: 'Lobby privé entre amis',
+		description: 'Private lobby with friends',
 		status: 'WAITING',
 		currentPlayers: 1,
 		maxPlayers: 6,
@@ -112,7 +114,7 @@ const mockLobbies: LobbyData[] = [
 	{
 		uuid: 'lobby-4',
 		name: 'Tournament Final',
-		description: 'Finale du tournoi hebdomadaire',
+		description: 'Weekly tournament final',
 		status: 'FULL',
 		currentPlayers: 8,
 		maxPlayers: 8,
@@ -130,7 +132,7 @@ const mockLobbies: LobbyData[] = [
 	{
 		uuid: 'lobby-5',
 		name: 'Active Battle',
-		description: 'Partie en cours depuis 15 minutes',
+		description: 'Game in progress for 15 minutes',
 		status: 'IN_GAME',
 		currentPlayers: 4,
 		maxPlayers: 4,
@@ -148,7 +150,7 @@ const mockLobbies: LobbyData[] = [
 	{
 		uuid: 'lobby-6',
 		name: 'Casual Gaming',
-		description: 'Partie décontractée pour tous niveaux',
+		description: 'Casual game for all skill levels',
 		status: 'WAITING',
 		currentPlayers: 3,
 		maxPlayers: 6,
@@ -193,7 +195,7 @@ export const WithError: Story = {
 	args: {
 		lobbies: [],
 		currentUser: mockCurrentUser,
-		error: 'Impossible de charger les lobbies. Vérifiez votre connexion.',
+		error: 'Unable to load lobbies. Check your connection.',
 	},
 };
 
@@ -278,7 +280,7 @@ export const FilteredResults: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'Exemple de liste filtrée montrant seulement les lobbies avec des places disponibles.',
+				story: 'Example filtered list showing only lobbies with available slots.',
 			},
 		},
 	},
@@ -314,7 +316,7 @@ export const AllStatuses: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'Démonstration de tous les statuts de lobby possibles.',
+				story: 'Demonstration of all possible lobby statuses.',
 			},
 		},
 	},
@@ -329,7 +331,7 @@ export const Interactive: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'Version interactive avec tous les callbacks activés. Testez les actions dans les contrôles.',
+				story: 'Interactive version with all callbacks enabled. Try the actions in controls.',
 			},
 		},
 	},

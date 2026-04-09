@@ -1,11 +1,13 @@
 import { eventBus } from '#infrastructure/events/event_bus'
-import { HybridLobbyService } from './hybrid_lobby_service.js'
+import { type HybridLobbyService } from '#application/services/hybrid_lobby_service'
 import {
   LobbyCreatedEvent,
+  LobbyModerationClosedEvent,
   LobbyUpdatedEvent,
   LobbyDeletedEvent,
 } from '#domain/events/lobby_events'
-import Lobby from '#domain/entities/lobby'
+import type Lobby from '#domain/entities/lobby'
+import logger from '@adonisjs/core/services/logger'
 
 /**
  * Service pour gérer les événements liés aux lobbies
@@ -22,7 +24,7 @@ export class LobbyEventService {
   async emitLobbyCreated(lobby: Lobby): Promise<void> {
     const event = new LobbyCreatedEvent(lobby.uuid, lobby.name, lobby.createdBy, lobby.maxPlayers)
     await eventBus.publish(event)
-    console.log(`[LobbyEventService] Published LobbyCreated for ${lobby.uuid}`)
+    logger.debug({ lobbyUuid: lobby.uuid }, '[LobbyEventService] Published LobbyCreated')
   }
 
   /**
@@ -38,7 +40,7 @@ export class LobbyEventService {
       lobby.players
     )
     await eventBus.publish(event)
-    console.log(`[LobbyEventService] Published LobbyUpdated for ${lobby.uuid}`)
+    logger.debug({ lobbyUuid: lobby.uuid }, '[LobbyEventService] Published LobbyUpdated')
   }
 
   /**
@@ -47,7 +49,29 @@ export class LobbyEventService {
   async emitLobbyDeleted(lobbyUuid: string, reason: string = 'deleted'): Promise<void> {
     const event = new LobbyDeletedEvent(lobbyUuid, reason)
     await eventBus.publish(event)
-    console.log(`[LobbyEventService] Published LobbyDeleted for ${lobbyUuid}`)
+    logger.debug({ lobbyUuid }, '[LobbyEventService] Published LobbyDeleted')
+  }
+
+  /**
+   * Émet un événement de fermeture modération (audit)
+   */
+  async emitLobbyModerationClosed(args: {
+    lobbyUuid: string
+    reason: string
+    closedByUserUuid: string
+    closedByRole: string
+  }): Promise<void> {
+    const event = new LobbyModerationClosedEvent(
+      args.lobbyUuid,
+      args.reason,
+      args.closedByUserUuid,
+      args.closedByRole
+    )
+    await eventBus.publish(event)
+    logger.debug(
+      { lobbyUuid: args.lobbyUuid, closedByUserUuid: args.closedByUserUuid },
+      '[LobbyEventService] Published LobbyModerationClosed'
+    )
   }
 
   /**

@@ -4,7 +4,7 @@ Abstract game engine with state machine, rules, and actions for building board g
 
 ## Launcher MVP (multi-games)
 
-Le package inclut maintenant un socle launcher type BGA pour orchestrer plusieurs jeux.
+Le package inclut maintenant un socle launcher multi-jeux pour orchestrer plusieurs jeux.
 
 - Contrats: `GameModule`, `GameDefinition`, `GameSettingsDefinition`
 - Orchestration launcher: `idle -> game_selected -> configured -> running -> finished`
@@ -17,15 +17,15 @@ Documentation détaillée: `docs/launcher-mvp.md`
 
 ```bash
 # Qualité package game-engine
-pnpm --filter @infinity.dev/game-engine run typecheck
-pnpm --filter @infinity.dev/game-engine run lint
-pnpm --filter @infinity.dev/game-engine run test
+yarn workspace @infinity.dev/game-engine typecheck
+yarn workspace @infinity.dev/game-engine lint
+yarn workspace @infinity.dev/game-engine test
 
 # Démo launcher via Ace (app Adonis)
-pnpm --filter @infinity/app run game:demo:rps
+yarn workspace @infinity/app game:demo:rps
 
 # Raccourci depuis la racine
-pnpm run demo:rps
+yarn demo:rps
 ```
 
 ## Features
@@ -39,7 +39,7 @@ pnpm run demo:rps
 ## Installation
 
 ```bash
-pnpm add @infinity.dev/game-engine
+yarn add @infinity.dev/game-engine
 ```
 
 ## Usage

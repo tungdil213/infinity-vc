@@ -33,6 +33,39 @@ function createTransmitContext(overrides: Partial<TestTransmitContext> = {}): Te
 }
 
 test.group('LobbyRealtimeSync', () => {
+  test('should retry global subscription after a transient failure', async ({ assert }) => {
+    let subscribeCalls = 0
+
+    const context = createTransmitContext({
+      subscribeToLobbies: async () => {
+        subscribeCalls += 1
+
+        if (subscribeCalls === 1) {
+          throw new Error('temporary failure')
+        }
+
+        return () => {}
+      },
+    })
+
+    const sync = new LobbyRealtimeSync(
+      context,
+      {
+        onGlobalLobbyEvent: () => {},
+        onLobbyDetailEvent: () => {},
+      },
+      { retryDelayMs: 10 }
+    )
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    assert.equal(subscribeCalls, 1)
+
+    await new Promise((resolve) => setTimeout(resolve, 25))
+    assert.equal(subscribeCalls, 2)
+
+    sync.destroy()
+  })
+
   test('should not create duplicate lobby subscriptions while one is pending', ({ assert }) => {
     const deferred = createDeferred<() => void>()
     let subscribeCalls = 0
@@ -55,6 +88,41 @@ test.group('LobbyRealtimeSync', () => {
     assert.equal(subscribeCalls, 1)
 
     deferred.resolve(() => {})
+    sync.destroy()
+  })
+
+  test('should retry lobby detail subscription after a transient failure', async ({ assert }) => {
+    let subscribeCalls = 0
+
+    const context = createTransmitContext({
+      subscribeToLobby: async () => {
+        subscribeCalls += 1
+
+        if (subscribeCalls === 1) {
+          throw new Error('temporary failure')
+        }
+
+        return () => {}
+      },
+    })
+
+    const sync = new LobbyRealtimeSync(
+      context,
+      {
+        onGlobalLobbyEvent: () => {},
+        onLobbyDetailEvent: () => {},
+      },
+      { retryDelayMs: 10 }
+    )
+
+    sync.subscribeLobbyDetail('lobby-retry-1')
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    assert.equal(subscribeCalls, 1)
+
+    await new Promise((resolve) => setTimeout(resolve, 25))
+    assert.equal(subscribeCalls, 2)
+
     sync.destroy()
   })
 

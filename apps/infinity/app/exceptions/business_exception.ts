@@ -1,11 +1,11 @@
 import { Exception } from '@adonisjs/core/exceptions'
-import { HttpContext } from '@adonisjs/core/http'
+import { type HttpContext } from '@adonisjs/core/http'
 import {
   ErrorClassification,
-  ErrorSeverity,
+  type ErrorSeverity,
   ToastType,
-  ErrorMetadata,
-} from './types/error_classification.js'
+  type ErrorMetadata,
+} from '#exceptions/types/error_classification'
 
 /**
  * Exception de base pour les erreurs métier avec classification de sécurité
@@ -86,7 +86,7 @@ export default class BusinessException extends Exception {
       },
       user: {
         id: ctx.auth.user?.id,
-        email: ctx.auth.user?.email,
+        userUuid: ctx.auth.user?.userUuid,
       },
       context: this.metadata.context,
     }

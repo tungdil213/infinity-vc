@@ -166,7 +166,7 @@ test.group('UpdateLobbySettingsUseCase', () => {
     const result = await useCase.execute(request)
 
     assert.isTrue(result.isFailure)
-    assert.equal(result.error, 'Failed to update lobby settings: Lobby not found')
+    assert.equal(result.error, 'Lobby not found')
   })
 
   test('should fail when user is not lobby creator', async ({ assert }) => {

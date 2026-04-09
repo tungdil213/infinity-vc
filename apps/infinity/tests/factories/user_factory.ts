@@ -1,8 +1,8 @@
 import {
-  RegisterUserRequestDto,
-  UserDto,
-  PlayerDto,
-  AuthenticateUserRequestDto,
+  type RegisterUserRequestDto,
+  type UserDto,
+  type PlayerDto,
+  type AuthenticateUserRequestDto,
 } from '../../app/application/dtos/user_dto.js'
 
 /**

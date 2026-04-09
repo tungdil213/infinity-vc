@@ -1,36 +1,51 @@
 import { HttpContext } from '@adonisjs/core/http'
 import { inject } from '@adonisjs/core'
-import { RegisterUserUseCase } from '#application/use_cases/register_user_use_case'
-// import AuthenticateUserUseCase from '#application/use_cases/authenticate_user_use_case' // TODO: Use
-// import { DatabaseUserRepository } from '#infrastructure/repositories/database_user_repository' // TODO: Use
 import User from '#models/user'
 import hash from '@adonisjs/core/services/hash'
-import app from '@adonisjs/core/services/app'
 import logger from '@adonisjs/core/services/logger'
 import { authRegisterValidator } from '#validators/auth_register_validator'
+import { authInvitationCodeValidator } from '#validators/auth_invitation_validator'
 import { authLoginValidator } from '#validators/auth_login_validator'
+import { ValidateInvitationCodeUseCase } from '#application/use_cases/validate_invitation_code_use_case'
+import { RegisterWithInvitationUseCase } from '#application/use_cases/register_with_invitation_use_case'
+import BusinessException from '#exceptions/business_exception'
+import {
+  ErrorClassification,
+  ErrorSeverity,
+  ToastType,
+} from '#exceptions/types/error_classification'
+
+const DEFAULT_REDIRECT_PATH = '/lobbies'
+const AUTH_ERROR_TRANSLATION_KEYS: Record<string, string> = {
+  'Invitation code is required': 'auth.register.failure.invitationRequired',
+  'Invitation code is invalid': 'auth.register.failure.invitationInvalid',
+  'Invitation code has expired': 'auth.register.failure.invitationExpired',
+  'Invitation code has been revoked': 'auth.register.failure.invitationRevoked',
+  'Invitation code has already been used': 'auth.register.failure.invitationUsed',
+  'Invitation code is no longer available': 'auth.register.failure.invitationUnavailable',
+  'Invitation code is not valid for this email address':
+    'auth.register.failure.invitationEmailMismatch',
+  'An account with this information already exists': 'auth.register.failure.accountExists',
+  'This name combination is already taken as a nickname': 'auth.register.failure.nicknameCollision',
+  'Invalid credentials': 'auth.login.failure.invalidCredentials',
+}
 
 @inject()
 export default class EnhancedAuthController {
-  // TODO: Inject these when needed
-  // constructor(
-  //   private userRepository: DatabaseUserRepository,
-  //   private authenticateUserUseCase: AuthenticateUserUseCase
-  // ) {}
+  constructor(
+    private readonly validateInvitationCodeUseCase: ValidateInvitationCodeUseCase,
+    private readonly registerWithInvitationUseCase: RegisterWithInvitationUseCase
+  ) {}
 
   /**
    * Show login form
    */
   async showLogin({ inertia, request }: HttpContext) {
-    const redirect = request.input('redirect', '/lobbies')
-
-    // Check if user is currently in a lobby
-    // TODO: Implement findCurrentLobby in UserRepository
-    // const currentLobby = user ? await this.userRepository.findCurrentLobby(user.userUuid) : null
+    const redirect = this.sanitizeRedirectTarget(request.input('redirect'))
 
     return inertia.render('auth/login', {
       redirect,
-      currentLobby: null, // Feature not yet implemented
+      currentLobby: null,
     })
   }
 
@@ -38,58 +53,84 @@ export default class EnhancedAuthController {
    * Show register form
    */
   async showRegister({ inertia, request }: HttpContext) {
-    const redirect = request.input('redirect', '/lobbies')
+    const redirect = this.sanitizeRedirectTarget(request.input('redirect'))
+    const invitationCode =
+      typeof request.input('invitationCode') === 'string' ? request.input('invitationCode') : ''
 
     return inertia.render('auth/register', {
       redirect,
+      invitationCode,
     })
   }
 
   /**
-   * Register new user
+   * Validate invitation code before showing the registration form
    */
-  async register({ request, response, auth, session }: HttpContext) {
-    const redirect = request.input('redirect', '/lobbies')
+  async validateInvitationCode({ request, response, i18n }: HttpContext) {
+    const { invitationCode } = await request.validateUsing(authInvitationCodeValidator)
+    const result = await this.validateInvitationCodeUseCase.execute({ invitationCode })
+
+    if (result.isFailure) {
+      return response.status(400).json({
+        valid: false,
+        message: this.translateError(i18n, result.error, 'auth.register.failure.invitationInvalid'),
+      })
+    }
+
+    return response.json({
+      valid: true,
+      invitation: {
+        issuerDisplayName: result.value.issuerDisplayName,
+        expiresAt: result.value.invitation.expiresAt?.toISOString() ?? null,
+      },
+    })
+  }
+
+  /**
+   * Register new user with invitation code
+   */
+  async register({ request, response, auth, session, i18n }: HttpContext) {
+    const redirect = this.sanitizeRedirectTarget(request.input('redirect'))
 
     try {
-      const { fullName, email, password } = await request.validateUsing(authRegisterValidator)
+      const { fullName, email, password, invitationCode } =
+        await request.validateUsing(authRegisterValidator)
+      const normalizedEmail = email.trim().toLowerCase()
 
-      // Get use case from container
-      const registerUserUseCase = await app.container.make(RegisterUserUseCase)
-
-      // Create user - split fullName into firstName and lastName
-      const nameParts = fullName.trim().split(' ')
-      const firstName = nameParts[0] || ''
-      const lastName = nameParts.slice(1).join(' ') || ''
-
-      const result = await registerUserUseCase.execute({
-        firstName,
-        lastName,
-        username: email.split('@')[0], // Use email prefix as username
-        email: email.trim().toLowerCase(),
-        password: password, // Pass plain password, will be hashed by User model
+      const result = await this.registerWithInvitationUseCase.execute({
+        fullName,
+        email: normalizedEmail,
+        password,
+        invitationCode,
       })
 
       if (result.isFailure) {
-        session.flash('error', result.error || 'Failed to create account')
-        return response.redirect().back()
+        throw this.userSafeError(
+          this.translateError(i18n, result.error, 'auth.register.failure.createAccount')
+        )
       }
 
-      // Auto-login the newly created user
-      const newUser = await User.query().where('email', email.trim().toLowerCase()).first()
+      const newUser = await User.query().where('user_uuid', result.value.user.uuid).first()
       if (newUser) {
         await auth.use('web').login(newUser)
         session.flash(
           'success',
-          `Account created successfully! Welcome to infinity Game, ${newUser.fullName}!`
+          i18n.t('auth.register.success.welcome', {
+            name: newUser.fullName,
+          })
         )
       } else {
-        session.flash('success', 'Account created successfully! Please log in.')
+        session.flash('success', i18n.t('auth.register.success.createdPleaseLogin'))
       }
+
       return response.redirect(redirect)
     } catch (error) {
+      if (error instanceof BusinessException) {
+        throw error
+      }
+
       logger.error({ error }, 'Registration error')
-      session.flash('error', 'Failed to create account. Please try again.')
+      session.flash('error', i18n.t('auth.register.failure.tryAgain'))
       return response.redirect().back()
     }
   }
@@ -97,34 +138,36 @@ export default class EnhancedAuthController {
   /**
    * Authenticate user
    */
-  async login({ request, response, auth, session }: HttpContext) {
-    const redirect = request.input('redirect', '/lobbies')
+  async login({ request, response, auth, session, i18n }: HttpContext) {
+    const redirect = this.sanitizeRedirectTarget(request.input('redirect'))
 
     try {
       const { email, password } = await request.validateUsing(authLoginValidator)
 
-      // Find user using Lucid model directly for auth
       const user = await User.query().where('email', email.trim().toLowerCase()).first()
       if (!user) {
-        session.flash('error', 'Invalid email or password')
+        session.flash('error', i18n.t('auth.login.failure.invalidCredentials'))
         return response.redirect().back()
       }
 
-      // Verify password
       const isValidPassword = await hash.verify(user.password, password)
       if (!isValidPassword) {
-        session.flash('error', 'Invalid email or password')
+        session.flash('error', i18n.t('auth.login.failure.invalidCredentials'))
         return response.redirect().back()
       }
 
-      // Log the user in
       await auth.use('web').login(user)
 
-      session.flash('success', `Welcome back, ${user.fullName}!`)
+      session.flash(
+        'success',
+        i18n.t('auth.login.success.welcomeBack', {
+          name: user.fullName,
+        })
+      )
       return response.redirect(redirect)
     } catch (error) {
       logger.error({ error }, 'Login error')
-      session.flash('error', 'Login failed. Please try again.')
+      session.flash('error', i18n.t('auth.login.failure.tryAgain'))
       return response.redirect().back()
     }
   }
@@ -132,14 +175,14 @@ export default class EnhancedAuthController {
   /**
    * Logout user
    */
-  async logout({ response, auth, session }: HttpContext) {
+  async logout({ response, auth, session, i18n }: HttpContext) {
     try {
       await auth.use('web').logout()
-      session.flash('success', 'You have been logged out successfully')
+      session.flash('success', i18n.t('auth.logout.success'))
       return response.redirect('/')
     } catch (error) {
-      console.error('Logout error:', error)
-      session.flash('error', 'Logout failed')
+      logger.error({ error }, 'Logout error')
+      session.flash('error', i18n.t('auth.logout.failure'))
       return response.redirect().back()
     }
   }
@@ -166,11 +209,15 @@ export default class EnhancedAuthController {
           uuid: user.userUuid,
           fullName: user.fullName,
           email: user.email,
+          role: user.normalizedRole,
           createdAt: user.createdAt,
         },
       })
     } catch (error) {
-      logger.error({ error }, 'Profile error')
+      if ((error as any)?.code !== 'E_UNAUTHORIZED_ACCESS') {
+        logger.error({ error }, 'Profile error')
+      }
+
       return response.status(200).json({
         authenticated: false,
         user: null,
@@ -194,15 +241,66 @@ export default class EnhancedAuthController {
               uuid: user.userUuid,
               fullName: user.fullName,
               email: user.email,
+              role: user.normalizedRole,
             }
           : null,
       })
     } catch (error) {
-      logger.error({ error }, 'Auth check error')
+      if ((error as any)?.code !== 'E_UNAUTHORIZED_ACCESS') {
+        logger.error({ error }, 'Auth check error')
+      }
+
       return response.status(200).json({
         authenticated: false,
         user: null,
       })
     }
+  }
+
+  private sanitizeRedirectTarget(rawValue: unknown): string {
+    if (typeof rawValue !== 'string') {
+      return DEFAULT_REDIRECT_PATH
+    }
+
+    const value = rawValue.trim()
+    if (!value) {
+      return DEFAULT_REDIRECT_PATH
+    }
+
+    if (!value.startsWith('/') || value.startsWith('//') || /[\r\n]/.test(value)) {
+      return DEFAULT_REDIRECT_PATH
+    }
+
+    return value
+  }
+
+  private translateError(
+    i18n: HttpContext['i18n'],
+    error: string | undefined,
+    fallbackKey: string
+  ): string {
+    if (!error) {
+      return i18n.t(fallbackKey)
+    }
+
+    const translatedKey = AUTH_ERROR_TRANSLATION_KEYS[error] ?? fallbackKey
+    const translated = i18n.t(translatedKey)
+    if (typeof translated === 'string' && !translated.startsWith('translation missing:')) {
+      return translated
+    }
+
+    return error
+  }
+
+  private userSafeError(message: string): BusinessException {
+    return new BusinessException(message, {
+      status: 400,
+      code: 'E_AUTH_REGISTER_FAILED',
+      classification: ErrorClassification.USER_SAFE,
+      severity: ErrorSeverity.MEDIUM,
+      userMessage: message,
+      toastType: ToastType.ERROR,
+      reportToSentry: false,
+    })
   }
 }

@@ -1,7 +1,9 @@
 import { test } from '@japa/runner'
 import {
   executeParsedGameAction,
+  getGameSession,
   getAuthorizedGameSession,
+  isUserInGameSession,
   parseGameActionInput,
 } from '../../../app/controllers/support/game_controller_guard.js'
 import type {
@@ -39,6 +41,19 @@ function makeSession(playerIds: string[]): GameSession {
 }
 
 test.group('game_controller_guard', () => {
+  test('getGameSession should return null when game does not exist', ({ assert }) => {
+    const session = getGameSession('missing-game', () => undefined)
+
+    assert.isNull(session)
+  })
+
+  test('isUserInGameSession should detect player membership', ({ assert }) => {
+    const session = makeSession(['user-a'])
+
+    assert.isTrue(isUserInGameSession(session, 'user-a'))
+    assert.isFalse(isUserInGameSession(session, 'user-b'))
+  })
+
   test('getAuthorizedGameSession should return null when player is not in game', ({ assert }) => {
     const session = makeSession(['user-a'])
 

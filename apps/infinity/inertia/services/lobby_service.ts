@@ -19,7 +19,7 @@ export type {
 } from './lobby_types'
 
 /**
- * Façade orchestrant l'API HTTP, le realtime Transmit et le store local des lobbies.
+ * Facade orchestrating HTTP API calls, Transmit realtime sync, and local lobby state.
  */
 export class LobbyService {
   private readonly apiClient: LobbyApiClient

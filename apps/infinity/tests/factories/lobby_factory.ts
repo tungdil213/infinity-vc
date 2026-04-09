@@ -1,4 +1,8 @@
-import { CreateLobbyRequestDto, LobbyDto, PlayerDto } from '../../app/application/dtos/lobby_dto.js'
+import {
+  type CreateLobbyRequestDto,
+  type LobbyDto,
+  type PlayerDto,
+} from '../../app/application/dtos/lobby_dto.js'
 
 /**
  * Lobby Factory
@@ -35,6 +39,7 @@ export class LobbyFactory {
       gameType: 'love-letter',
       maxPlayers: 4,
       isPrivate: false,
+      hasPassword: false,
       status: 'OPEN',
       currentPlayers: 1,
       hasAvailableSlots: true,

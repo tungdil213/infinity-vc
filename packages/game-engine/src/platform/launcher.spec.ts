@@ -38,6 +38,8 @@ describe('GameLauncher', () => {
 		}
 
 		expect(started.value.machine.currentState).toBe(LauncherStates.RUNNING);
+		expect(started.value.state).not.toBeNull();
+		expect(started.value.state?.phase).toBe('waiting_move');
 	});
 
 	it('fails launch when settings are invalid', () => {
@@ -66,5 +68,61 @@ describe('GameLauncher', () => {
 		if (launched.isFailure) {
 			expect(launched.error.message).toContain('Invalid player count');
 		}
+	});
+
+	it('returns catalog entries filtered by capabilities and licensing', () => {
+		const launcher = createGameLauncher([rockPaperScissorsModule]);
+		const proprietaryModule = {
+			...rockPaperScissorsModule,
+			definition: {
+				...rockPaperScissorsModule.definition,
+				id: 'secret-rps',
+				displayName: 'Secret RPS',
+				licensing: {
+					distribution: 'proprietary' as const,
+				},
+				capabilities: ['turn-based', 'live-play'] as const,
+			},
+		};
+
+		launcher.register(proprietaryModule);
+		expect(launcher.listCatalog()).toHaveLength(2);
+		expect(launcher.listOpenSourceGames()).toHaveLength(1);
+		expect(
+			launcher.listCatalog({
+				requiredCapabilities: ['simultaneous-turns'],
+				includeProprietary: true,
+			})
+		).toHaveLength(1);
+	});
+
+	it('rejects modules with duplicate setting keys', () => {
+		const launcher = createGameLauncher([]);
+		const invalidModule = {
+			...rockPaperScissorsModule,
+			definition: {
+				...rockPaperScissorsModule.definition,
+				id: 'invalid-rps',
+				settings: {
+					...rockPaperScissorsModule.definition.settings,
+					fields: [
+						{
+							key: 'duplicate',
+							label: 'Duplicate',
+							type: 'number' as const,
+							defaultValue: 1,
+						},
+						{
+							key: 'duplicate',
+							label: 'Duplicate again',
+							type: 'number' as const,
+							defaultValue: 2,
+						},
+					],
+				},
+			},
+		};
+
+		expect(() => launcher.register(invalidModule)).toThrowError(/Duplicate setting key/);
 	});
 });

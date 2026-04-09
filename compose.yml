@@ -27,8 +27,8 @@ services:
     volumes:
       - psql-data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=root
+      - POSTGRES_USER=${POSTGRES_USER:-infinity}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-change_me_dev_only}
 
   mailer:
     image: axllent/mailpit:v1.21

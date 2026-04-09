@@ -45,4 +45,14 @@ export default await Env.create(new URL('../', import.meta.url), {
   */
   DRIVE_DISK: Env.schema.enum(['fs'] as const),
   TEST_TMP_DIR: Env.schema.string(),
+  ADMIN_EMAILS: Env.schema.string.optional(),
+  MODERATOR_EMAILS: Env.schema.string.optional(),
+  INVITATION_CODE_SECRET: Env.schema.string.optional(),
+  INVITATION_CODE_QUOTA_PER_USER: Env.schema.number.optional(),
+  INVITATION_CODE_TTL_HOURS: Env.schema.number.optional(),
+  LOBBY_DISCONNECT_GRACE_MS: Env.schema.number.optional(),
+  REPLAY_SIGNING_KEY: Env.schema.string.optional(),
+  REPLAY_SIGNING_KEY_ID: Env.schema.string.optional(),
+  REPLAY_SIGNING_PREVIOUS_KEYS: Env.schema.string.optional(),
+  REPLAY_REQUIRE_SIGNATURES: Env.schema.boolean.optional(),
 })

@@ -1,34 +1,61 @@
 import transmit from '@adonisjs/transmit/services/main'
 import type { HttpContext } from '@adonisjs/core/http'
+import app from '@adonisjs/core/services/app'
+import logger from '@adonisjs/core/services/logger'
+import { HybridLobbyService } from '#application/services/hybrid_lobby_service'
+import { canModerateLobbies } from '#domain/value_objects/user_role'
 
 /**
- * Configuration des autorisations pour les channels Transmit
+ * Authorization rules for Transmit channels
  */
 
-// Channel global pour les mises à jour de liste des lobbies
+// Global channel for lobby list updates
 transmit.authorize('lobbies', (ctx: HttpContext) => {
-  // Tous les utilisateurs authentifiés peuvent voir la liste des lobbies
+  // All authenticated users can view lobby list updates
   return !!ctx.auth.user
 })
 
-// Channel spécifique à un lobby
+// Channel scoped to a specific lobby
 transmit.authorize<{ lobbyUuid: string }>(
   'lobbies/:lobbyUuid',
   async (ctx: HttpContext, { lobbyUuid }) => {
-    // Vérifier que l'utilisateur est authentifié
-    if (!ctx.auth.user) {
+    const user = ctx.auth.user
+    if (!user) {
       return false
     }
 
-    // TODO: Ajouter une vérification pour s'assurer que l'utilisateur peut accéder à ce lobby
-    // Pour l'instant, on autorise tous les utilisateurs authentifiés
-    console.log(`User ${ctx.auth.user.userUuid} accessing lobby ${lobbyUuid}`)
-    return true
+    if (canModerateLobbies(user.role)) {
+      return true
+    }
+
+    try {
+      const lobbyRepository = await app.container.make(HybridLobbyService)
+      const lobby = await lobbyRepository.findByUuid(lobbyUuid)
+
+      if (!lobby) {
+        return false
+      }
+
+      if (!lobby.isPrivate) {
+        return true
+      }
+
+      return lobby.hasPlayer(user.userUuid)
+    } catch (error) {
+      logger.warn(
+        {
+          channel: 'lobbies/:lobbyUuid',
+          reason: error instanceof Error ? error.message : 'unknown_error',
+        },
+        '[Transmit] Failed to verify lobby channel authorization'
+      )
+      return false
+    }
   }
 )
 
-// Channel pour les notifications utilisateur
+// User notification channel
 transmit.authorize<{ userUuid: string }>('users/:userUuid', (ctx: HttpContext, { userUuid }) => {
-  // L'utilisateur ne peut écouter que ses propres notifications
+  // Users can only listen to their own notifications
   return ctx.auth.user?.userUuid === userUuid
 })

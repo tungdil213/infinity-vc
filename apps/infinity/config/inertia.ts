@@ -1,5 +1,4 @@
 import { defineConfig } from '@adonisjs/inertia'
-import type { InferSharedProps, PageProps } from '@adonisjs/inertia/types'
 
 const inertiaConfig = defineConfig({
   /**
@@ -8,30 +7,17 @@ const inertiaConfig = defineConfig({
   rootView: 'inertia_layout',
 
   /**
-   * Data that should be shared with all rendered pages
+   * In dev, force a static assets version to avoid Inertia reading
+   * the Vite manifest when a stale build manifest exists on disk.
    */
-  sharedData: {
-    errors: (ctx) => ctx.inertia.always(() => ctx.session?.flashMessages.get('errors')),
-    toast: (ctx) =>
-      ctx.inertia.always(() => ({
-        success: ctx.session?.flashMessages.get('success'),
-        error: ctx.session?.flashMessages.get('error'),
-        warning: ctx.session?.flashMessages.get('warning'),
-        info: ctx.session?.flashMessages.get('info'),
-      })),
-  },
+  assetsVersion: process.env.NODE_ENV === 'development' ? 'dev' : undefined,
 
   /**
    * Options for the server-side rendering
    */
   ssr: {
     enabled: false,
-    entrypoint: 'inertia/app/ssr.tsx',
   },
 })
 
 export default inertiaConfig
-
-declare module '@adonisjs/inertia/types' {
-  export interface SharedProps extends InferSharedProps<typeof inertiaConfig>, PageProps {}
-}

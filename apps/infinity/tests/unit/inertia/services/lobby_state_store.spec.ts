@@ -122,4 +122,135 @@ test.group('LobbyStateStore', () => {
     assert.equal(receivedCurrentPlayers, 2)
     assert.equal(receivedPlayersCount, 2)
   })
+
+  test('should recalculate canStart after player left event payload update', ({ assert }) => {
+    const store = new LobbyStateStore()
+    const lobbyUuid = 'lobby-left-1'
+
+    store.setLobbyDetail(
+      lobbyUuid,
+      makeLobby({
+        uuid: lobbyUuid,
+        status: 'FULL',
+        currentPlayers: 2,
+        maxPlayers: 2,
+        canStart: true,
+        hasAvailableSlots: false,
+      })
+    )
+
+    store.applyLobbyEvent({
+      type: 'lobby.player.left',
+      data: {
+        lobbyUuid,
+        player: { uuid: 'user-2', nickName: 'User2' },
+        lobby: {
+          uuid: lobbyUuid,
+          status: 'WAITING',
+          currentPlayers: 1,
+          maxPlayers: 2,
+          players: [{ uuid: 'user-1', nickName: 'User1' }],
+        },
+      },
+      timestamp: new Date().toISOString(),
+      channel: `lobbies/${lobbyUuid}`,
+    })
+
+    let canStart: boolean | undefined
+    let hasAvailableSlots: boolean | undefined
+
+    store.subscribeLobbyDetail(lobbyUuid, (state) => {
+      canStart = state.lobby?.canStart
+      hasAvailableSlots = state.lobby?.hasAvailableSlots
+    })
+
+    assert.equal(canStart, false)
+    assert.equal(hasAvailableSlots, true)
+  })
+
+  test('should store gameUuid and set IN_GAME on lobby.game.started', ({ assert }) => {
+    const store = new LobbyStateStore()
+    const lobbyUuid = 'lobby-game-started-1'
+
+    store.setLobbyListData(
+      [
+        makeLobby({
+          uuid: lobbyUuid,
+          status: 'ready',
+          currentPlayers: 2,
+          canStart: true,
+        }),
+      ],
+      1
+    )
+
+    store.setLobbyDetail(
+      lobbyUuid,
+      makeLobby({
+        uuid: lobbyUuid,
+        status: 'ready',
+        currentPlayers: 2,
+        canStart: true,
+      })
+    )
+
+    store.applyLobbyEvent({
+      type: 'lobby.game.started',
+      data: {
+        lobbyUuid,
+        gameUuid: 'game-42',
+      },
+      timestamp: new Date().toISOString(),
+      channel: `lobbies/${lobbyUuid}`,
+    })
+
+    let detailGameUuid: string | undefined
+    let detailStatus: string | undefined
+    store.subscribeLobbyDetail(lobbyUuid, (state) => {
+      detailGameUuid = state.lobby?.gameUuid
+      detailStatus = state.lobby?.status
+    })
+
+    let listSnapshot: LobbyListState | null = null
+    store.subscribeLobbyList((state) => {
+      listSnapshot = state
+    })
+
+    assert.equal(detailStatus, 'IN_GAME')
+    assert.equal(detailGameUuid, 'game-42')
+    assert.equal(listSnapshot?.lobbies[0].status, 'IN_GAME')
+    assert.equal(listSnapshot?.lobbies[0].gameUuid, 'game-42')
+  })
+
+  test('should normalize legacy gameId to gameUuid on lobby.game.started', ({ assert }) => {
+    const store = new LobbyStateStore()
+    const lobbyUuid = 'lobby-game-started-legacy'
+
+    store.setLobbyDetail(
+      lobbyUuid,
+      makeLobby({
+        uuid: lobbyUuid,
+        status: 'ready',
+        currentPlayers: 2,
+        canStart: true,
+      })
+    )
+
+    store.applyLobbyEvent({
+      type: 'lobby.game.started',
+      data: {
+        lobbyUuid,
+        gameId: 'game-legacy-1',
+      },
+      timestamp: new Date().toISOString(),
+      channel: `lobbies/${lobbyUuid}`,
+    })
+
+    let detailGameUuid: string | undefined
+    store.subscribeLobbyDetail(lobbyUuid, (state) => {
+      detailGameUuid = state.lobby?.gameUuid
+    })
+
+    assert.equal(detailGameUuid, 'game-legacy-1')
+  })
 })

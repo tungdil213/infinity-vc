@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { router } from '@inertiajs/react'
 import { Button } from '@infinity.dev/ui/primitives/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@infinity.dev/ui/primitives/card'
@@ -6,6 +6,7 @@ import { Badge } from '@infinity.dev/ui/primitives/badge'
 import { Users, LogOut, Play } from 'lucide-react'
 import { toast } from 'sonner'
 import { useLobbyService } from '../hooks/use_lobby_service'
+import { useI18n } from '../i18n/use_i18n'
 
 interface LobbyStatusSidebarProps {
   currentLobby: {
@@ -14,6 +15,8 @@ interface LobbyStatusSidebarProps {
     status: string
     currentPlayers: number
     maxPlayers: number
+    canStart?: boolean
+    isOwner?: boolean
   } | null
   currentUser?: {
     uuid: string
@@ -22,13 +25,38 @@ interface LobbyStatusSidebarProps {
 }
 
 export function LobbyStatusSidebar({ currentLobby, currentUser }: LobbyStatusSidebarProps) {
-  const { service: lobbyService, isConnected } = useLobbyService()
-  const [isLeavingLobby, setIsLeavingLobby] = useState(false)
-
-  // Ne pas afficher le sidebar si pas de lobby
+  // Do not render the sidebar when there is no current lobby
   if (!currentLobby) {
     return null
   }
+
+  return <LobbyStatusSidebarConnected currentLobby={currentLobby} currentUser={currentUser} />
+}
+
+interface LobbyStatusSidebarConnectedProps {
+  currentLobby: {
+    uuid: string
+    name: string
+    status: string
+    currentPlayers: number
+    maxPlayers: number
+    canStart?: boolean
+    isOwner?: boolean
+  }
+  currentUser?: {
+    uuid: string
+    fullName: string
+  }
+}
+
+function LobbyStatusSidebarConnected({
+  currentLobby,
+  currentUser,
+}: LobbyStatusSidebarConnectedProps) {
+  const { service: lobbyService, isConnected } = useLobbyService()
+  const { t } = useI18n()
+  const [isLeavingLobby, setIsLeavingLobby] = useState(false)
+  const [isStartingGame, setIsStartingGame] = useState(false)
 
   const handleLeaveLobby = async () => {
     if (!currentUser || !isConnected || !lobbyService) return
@@ -36,11 +64,11 @@ export function LobbyStatusSidebar({ currentLobby, currentUser }: LobbyStatusSid
     setIsLeavingLobby(true)
     try {
       await lobbyService.leaveLobby(currentLobby.uuid, currentUser.uuid)
-      toast.success('Vous avez quitté le lobby avec succès')
-      // Le sidebar disparaîtra automatiquement car lobby deviendra null
+      toast.success(t('sidebar.leaveSuccess'))
+      // Sidebar hides automatically once current lobby becomes null
     } catch (error) {
       console.error('Failed to leave lobby:', error)
-      toast.error('Erreur lors de la sortie du lobby')
+      toast.error(t('sidebar.leaveError'))
     } finally {
       setIsLeavingLobby(false)
     }
@@ -50,13 +78,48 @@ export function LobbyStatusSidebar({ currentLobby, currentUser }: LobbyStatusSid
     router.visit(`/lobbies/${currentLobby.uuid}`)
   }
 
+  const handleStartGame = async () => {
+    if (
+      !currentUser ||
+      !isConnected ||
+      !lobbyService ||
+      !currentLobby.isOwner ||
+      !currentLobby.canStart
+    ) {
+      return
+    }
+
+    setIsStartingGame(true)
+    try {
+      const result = (await lobbyService.startGame(currentLobby.uuid, currentUser.uuid)) as
+        | { gameUuid?: string }
+        | undefined
+      toast.success(t('lobbies.gameStarted'))
+
+      if (result && typeof result.gameUuid === 'string' && result.gameUuid.length > 0) {
+        router.visit(`/games/${result.gameUuid}`)
+        return
+      }
+
+      router.visit(`/lobbies/${currentLobby.uuid}`)
+    } catch (error) {
+      console.error('Failed to start game from sidebar:', error)
+      toast.error(t('lobbies.unableStartGame'))
+    } finally {
+      setIsStartingGame(false)
+    }
+  }
+
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'waiting':
+    switch (status.toUpperCase()) {
+      case 'OPEN':
+      case 'WAITING':
+      case 'READY':
         return 'bg-yellow-500'
-      case 'playing':
+      case 'IN_GAME':
+      case 'PLAYING':
         return 'bg-green-500'
-      case 'finished':
+      case 'FINISHED':
         return 'bg-gray-500'
       default:
         return 'bg-blue-500'
@@ -64,42 +127,61 @@ export function LobbyStatusSidebar({ currentLobby, currentUser }: LobbyStatusSid
   }
 
   const getStatusText = (status: string) => {
-    switch (status) {
-      case 'waiting':
-        return 'En attente'
-      case 'playing':
-        return 'En cours'
-      case 'finished':
-        return 'Terminé'
+    switch (status.toUpperCase()) {
+      case 'OPEN':
+      case 'WAITING':
+      case 'READY':
+        return t('status.waiting')
+      case 'IN_GAME':
+      case 'PLAYING':
+        return t('status.inProgress')
+      case 'FINISHED':
+        return t('status.finished')
       default:
         return status
     }
   }
 
+  const canStartFromSidebar = Boolean(
+    currentUser && isConnected && currentLobby.isOwner && currentLobby.canStart
+  )
+
   return (
-    <div className="fixed right-4 top-20 w-80 z-50">
+    <div className="fixed top-20 left-4 right-4 z-50 sm:left-auto sm:w-80">
       <Card className="border-l-4 border-l-blue-500 shadow-lg">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Lobby Actuel
-            {!isConnected && <div className="w-2 h-2 bg-red-500 rounded-full" title="Déconnecté" />}
+            {t('sidebar.currentLobby')}
+            {!isConnected && (
+              <div className="w-2 h-2 bg-red-500 rounded-full" title={t('sidebar.disconnected')} />
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <h3 className="font-semibold text-base mb-2">{currentLobby.name}</h3>
+            <h3 className="font-semibold text-base mb-2 break-words">{currentLobby.name}</h3>
             <div className="flex items-center justify-between mb-2">
               <Badge className={`${getStatusColor(currentLobby.status)} text-white`}>
                 {getStatusText(currentLobby.status)}
               </Badge>
               <span className="text-sm text-gray-600">
-                {currentLobby.currentPlayers}/{currentLobby.maxPlayers} joueurs
+                {t('sidebar.playersCount', {
+                  current: currentLobby.currentPlayers,
+                  max: currentLobby.maxPlayers,
+                })}
               </span>
             </div>
           </div>
 
           <div className="flex flex-col gap-2">
+            {canStartFromSidebar && (
+              <Button onClick={handleStartGame} className="w-full" disabled={isStartingGame}>
+                <Play className="h-4 w-4 mr-2" />
+                {isStartingGame ? t('common.starting') : t('common.startGame')}
+              </Button>
+            )}
+
             <Button
               onClick={handleGoToLobby}
               className="w-full"
@@ -107,7 +189,7 @@ export function LobbyStatusSidebar({ currentLobby, currentUser }: LobbyStatusSid
               disabled={!isConnected}
             >
               <Play className="h-4 w-4 mr-2" />
-              Aller au lobby
+              {t('sidebar.openLobby')}
             </Button>
 
             <Button
@@ -117,14 +199,11 @@ export function LobbyStatusSidebar({ currentLobby, currentUser }: LobbyStatusSid
               disabled={isLeavingLobby || !isConnected}
             >
               <LogOut className="h-4 w-4 mr-2" />
-              {isLeavingLobby ? 'Sortie...' : 'Quitter le lobby'}
+              {isLeavingLobby ? t('sidebar.leaving') : t('sidebar.leaveLobby')}
             </Button>
           </div>
 
-          <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
-            💡 Vous êtes actuellement dans ce lobby. Vous devez le quitter avant de rejoindre un
-            autre.
-          </div>
+          <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">{t('sidebar.notice')}</div>
         </CardContent>
       </Card>
     </div>

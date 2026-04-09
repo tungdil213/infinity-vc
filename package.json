@@ -3,13 +3,29 @@
 	"type": "module",
 	"version": "0.0.1",
 	"private": true,
-	"packageManager": "pnpm@10.4.0",
+	"packageManager": "yarn@1.22.22",
+	"workspaces": [
+		"apps/*",
+		"packages/*"
+	],
 	"license": "MIT",
 	"scripts": {
-		"build": "turbo run build && cp -r apps/infinity/.env apps/infinity/build/",
+		"build": "yarn build:deps && yarn workspace @infinity/app build && cp -r apps/infinity/.env apps/infinity/build/ && test -f apps/infinity/build/public/assets/.vite/manifest.json",
+		"build:deps": "yarn workspace @infinity.dev/ui build && yarn workspace @infinity.dev/events build && yarn workspace @infinity.dev/lobby-domain build && yarn workspace @infinity.dev/lobby-application build && yarn workspace @infinity.dev/game-engine build && yarn workspace @infinity.dev/game-runtime-session build && yarn workspace @infinity.dev/frontend-lobby-realtime build && yarn workspace @infinity.dev/shared-i18n build && yarn workspace @infinity.dev/transcript build && yarn workspace @infinity.dev/transcript-adonis build && yarn workspace @infinity.dev/boardgame-toolkit build",
+		"build:all": "turbo run build && yarn build",
+		"start": "NODE_ENV=production yarn --cwd apps/infinity/build node bin/server.js",
+		"deploy": "./scripts/deploy.sh deploy",
+		"deploy:start": "./scripts/deploy.sh start",
+		"deploy:status": "./scripts/deploy.sh status",
+		"deploy:list": "./scripts/deploy.sh list",
+		"deploy:rollback": "./scripts/deploy.sh rollback",
+		"deploy:cleanup": "./scripts/deploy.sh cleanup",
+		"install:locked": "yarn install --frozen-lockfile",
 		"clean": "turbo run clean && rm -rf node_modules",
-		"dev": "turbo run dev",
-		"demo:rps": "pnpm --filter @infinity/app run game:demo:rps",
+		"dev": "turbo run dev --concurrency=20 --filter=!docs",
+		"dev:all": "turbo run dev --concurrency=20",
+		"dev:app": "yarn --cwd apps/infinity dev",
+		"demo:rps": "yarn workspace @infinity/app game:demo:rps",
 		"docker:up": "docker compose up -d",
 		"docker:down": "docker compose down",
 		"docker:build": "docker build . -t site",
@@ -17,8 +33,12 @@
 		"lint": "turbo run lint",
 		"preview-storybook": "turbo run preview-storybook",
 		"format": "prettier .",
-		"taze": "yarn dlx taze -r -I",
-		"typecheck": "pnpm -r run typecheck"
+		"taze": "npx taze -r -I",
+		"typecheck": "turbo run typecheck",
+		"preinstall": "node -e \"const ua=process.env.npm_config_user_agent||''; if(!ua.startsWith('yarn/1.22.22')){console.error('Please use yarn@1.22.22'); process.exit(1)}\""
+	},
+	"engines": {
+		"yarn": "1.22.22"
 	},
 	"devDependencies": {
 		"@julr/tooling-configs": "^4.0.0",
@@ -27,28 +47,6 @@
 		"prettier": "^3.8.1",
 		"prettier-plugin-edgejs": "^1.0.6",
 		"turbo": "^2.8.7"
-	},
-	"pnpm": {
-		"overrides": {
-			"@inertiajs/core": "^2.3.15",
-			"strtok3": "8.0.1"
-		},
-		"ignoredBuiltDependencies": [
-			"@parcel/watcher",
-			"@swc/core",
-			"better-sqlite3",
-			"esbuild",
-			"prettier-edgejs",
-			"unrs-resolver"
-		],
-		"onlyBuiltDependencies": [
-			"@parcel/watcher",
-			"@swc/core",
-			"better-sqlite3",
-			"esbuild",
-			"prettier-edgejs",
-			"unrs-resolver"
-		]
 	},
 	"overrides": {
 		"@inertiajs/core": "^2.3.15",

@@ -1,0 +1,175 @@
+{
+	"name": "@infinity.dev/boardgame-toolkit",
+	"version": "1.0.0",
+	"type": "module",
+	"license": "MIT",
+	"description": "Comprehensive board game development toolbox (dice, decks, zones, clocks, drafting, objectives, scoring, replay)",
+	"keywords": [
+		"board-game",
+		"tabletop",
+		"framework",
+		"dice",
+		"deck",
+		"turn-based",
+		"state-machine",
+		"drafting",
+		"tabletop-simulator"
+	],
+	"sideEffects": false,
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
+		"./random": {
+			"types": "./dist/random/index.d.ts",
+			"import": "./dist/random/index.js"
+		},
+		"./dice": {
+			"types": "./dist/dice/index.d.ts",
+			"import": "./dist/dice/index.js"
+		},
+		"./cards": {
+			"types": "./dist/cards/index.d.ts",
+			"import": "./dist/cards/index.js"
+		},
+		"./bag": {
+			"types": "./dist/bag/index.d.ts",
+			"import": "./dist/bag/index.js"
+		},
+		"./turn": {
+			"types": "./dist/turn/index.d.ts",
+			"import": "./dist/turn/index.js"
+		},
+		"./phases": {
+			"types": "./dist/phases/index.d.ts",
+			"import": "./dist/phases/index.js"
+		},
+		"./zones": {
+			"types": "./dist/zones/index.d.ts",
+			"import": "./dist/zones/index.js"
+		},
+		"./scoring": {
+			"types": "./dist/scoring/index.d.ts",
+			"import": "./dist/scoring/index.js"
+		},
+		"./resources": {
+			"types": "./dist/resources/index.d.ts",
+			"import": "./dist/resources/index.js"
+		},
+		"./actions": {
+			"types": "./dist/actions/index.d.ts",
+			"import": "./dist/actions/index.js"
+		},
+		"./replay": {
+			"types": "./dist/replay/index.d.ts",
+			"import": "./dist/replay/index.js"
+		},
+		"./board": {
+			"types": "./dist/board/index.d.ts",
+			"import": "./dist/board/index.js"
+		},
+		"./clock": {
+			"types": "./dist/clock/index.d.ts",
+			"import": "./dist/clock/index.js"
+		},
+		"./draft": {
+			"types": "./dist/draft/index.d.ts",
+			"import": "./dist/draft/index.js"
+		},
+		"./objectives": {
+			"types": "./dist/objectives/index.d.ts",
+			"import": "./dist/objectives/index.js"
+		},
+		"./effects": {
+			"types": "./dist/effects/index.d.ts",
+			"import": "./dist/effects/index.js"
+		},
+		"./network": {
+			"types": "./dist/network/index.d.ts",
+			"import": "./dist/network/index.js"
+		},
+		"./rules": {
+			"types": "./dist/rules/index.d.ts",
+			"import": "./dist/rules/index.js"
+		},
+		"./simultaneous": {
+			"types": "./dist/simultaneous/index.d.ts",
+			"import": "./dist/simultaneous/index.js"
+		},
+		"./trade": {
+			"types": "./dist/trade/index.d.ts",
+			"import": "./dist/trade/index.js"
+		},
+		"./privacy": {
+			"types": "./dist/privacy/index.d.ts",
+			"import": "./dist/privacy/index.js"
+		},
+		"./logs": {
+			"types": "./dist/logs/index.d.ts",
+			"import": "./dist/logs/index.js"
+		},
+		"./accessibility": {
+			"types": "./dist/accessibility/index.d.ts",
+			"import": "./dist/accessibility/index.js"
+		},
+		"./visibility": {
+			"types": "./dist/visibility/index.d.ts",
+			"import": "./dist/visibility/index.js"
+		},
+		"./auction": {
+			"types": "./dist/auction/index.d.ts",
+			"import": "./dist/auction/index.js"
+		},
+		"./voting": {
+			"types": "./dist/voting/index.d.ts",
+			"import": "./dist/voting/index.js"
+		},
+		"./fog": {
+			"types": "./dist/fog/index.d.ts",
+			"import": "./dist/fog/index.js"
+		},
+		"./validation": {
+			"types": "./dist/validation/index.d.ts",
+			"import": "./dist/validation/index.js"
+		},
+		"./scripting": {
+			"types": "./dist/scripting/index.d.ts",
+			"import": "./dist/scripting/index.js"
+		},
+		"./triggers": {
+			"types": "./dist/triggers/index.d.ts",
+			"import": "./dist/triggers/index.js"
+		},
+		"./serialization": {
+			"types": "./dist/serialization/index.d.ts",
+			"import": "./dist/serialization/index.js"
+		},
+		"./audit": {
+			"types": "./dist/audit/index.d.ts",
+			"import": "./dist/audit/index.js"
+		},
+		"./schema": {
+			"types": "./dist/schema/index.d.ts",
+			"import": "./dist/schema/index.js"
+		}
+	},
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc -w",
+		"clean": "rm -rf dist .turbo node_modules",
+		"lint": "eslint . --max-warnings 0",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"docs:run": "yarn build && node ./dist/examples/visibility_demo.js && node ./dist/examples/advanced_toolkit_demo.js"
+	},
+	"devDependencies": {
+		"@infinity.dev/typescript-config": "1.0.0",
+		"typescript": "~5.7.3",
+		"vitest": "^2.1.0"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}
