@@ -256,6 +256,9 @@ export function useGamePageController(
     () => computeReplayDiff(activeReplayStep, previousReplayStep),
     [activeReplayStep, previousReplayStep]
   )
+  const canDraw = !isSpectator && availableActions.includes('draw_card')
+  const canPlay = !isSpectator && availableActions.includes('play_card')
+  const canSubmitMove = !isSpectator && availableActions.includes('submit_move')
   const playValidationPlayers = useMemo(
     () =>
       (gameState?.state?.players ?? []).map((player) => ({
@@ -482,9 +485,6 @@ export function useGamePageController(
   const isGameFinished = isFinished || gameState?.state?.isFinished || false
   const isMyTurn = gameState?.isMyTurn || false
   const phase = gameState?.state?.phase || 'waiting'
-  const canDraw = !isSpectator && availableActions.includes('draw_card')
-  const canPlay = !isSpectator && availableActions.includes('play_card')
-  const canSubmitMove = !isSpectator && availableActions.includes('submit_move')
 
   return {
     gameState,
