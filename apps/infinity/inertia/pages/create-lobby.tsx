@@ -23,7 +23,7 @@ import { Alert, AlertDescription } from '@infinity.dev/ui/primitives/alert'
 import Layout from '../layouts/layout'
 import { AlertCircle, CheckCircle2, Lightbulb } from 'lucide-react'
 import { useI18n } from '../i18n/use_i18n'
-import type { AvailableGameViewModel } from '../../shared/game_definition_helpers.js'
+import type { AvailableGameViewModel } from '../../app/utils/game_definition_helpers.js'
 
 function buildDefaultGameSettings(availableGame: AvailableGameViewModel | null | undefined) {
   return Object.fromEntries((availableGame?.settings ?? []).map((field) => [field.key, field.defaultValue]))

@@ -5,7 +5,7 @@ import {
   coerceGameSettings,
   toAvailableGameSettingViewModel,
   toAvailableGameViewModel,
-} from '../../../shared/game_definition_helpers.js'
+} from '../../../app/utils/game_definition_helpers.js'
 
 const settingsDefinition: GameSettingsDefinition<Record<string, unknown>> = {
   fields: [
