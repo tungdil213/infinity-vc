@@ -7,6 +7,7 @@ export function toGamePagePayload(args: {
   playerView: unknown
   availableActions: string[]
   user: { uuid: string; nickName: string; role?: string }
+  gameDisplayName?: string
   isSpectator?: boolean
   replayTimeline?: GameReplayStep[]
   runtimeStatus?: {
@@ -21,6 +22,7 @@ export function toGamePagePayload(args: {
     playerView,
     availableActions,
     user,
+    gameDisplayName,
     isSpectator = false,
     replayTimeline = [],
     runtimeStatus,
@@ -30,6 +32,11 @@ export function toGamePagePayload(args: {
   return {
     gameId: session.gameId,
     gameType: session.gameType,
+    gameTitle: gameDisplayName ?? null,
+    rendererKind: gamePresentation?.rendererKind ?? null,
+    pollingIntervalMs: gamePresentation?.pollingIntervalMs ?? null,
+    showReplayDiff: gamePresentation?.showReplayDiff ?? null,
+    rendererOptions: gamePresentation?.rendererOptions ?? null,
     playerView: normalizePlayerViewForFrontend(playerView, gamePresentation),
     availableActions,
     replayTimeline,
@@ -44,6 +51,7 @@ export function toGameApiPayload(args: {
   session: GameSession
   playerView: unknown
   availableActions: string[]
+  gameDisplayName?: string
   isSpectator?: boolean
   replayTimeline?: GameReplayStep[]
   runtimeStatus?: {
@@ -57,6 +65,7 @@ export function toGameApiPayload(args: {
     session,
     playerView,
     availableActions,
+    gameDisplayName,
     isSpectator = false,
     replayTimeline = [],
     runtimeStatus,
@@ -66,6 +75,11 @@ export function toGameApiPayload(args: {
   return {
     gameId: session.gameId,
     gameType: session.gameType,
+    gameTitle: gameDisplayName ?? null,
+    rendererKind: gamePresentation?.rendererKind ?? null,
+    pollingIntervalMs: gamePresentation?.pollingIntervalMs ?? null,
+    showReplayDiff: gamePresentation?.showReplayDiff ?? null,
+    rendererOptions: gamePresentation?.rendererOptions ?? null,
     playerView: normalizePlayerViewForFrontend(playerView, gamePresentation),
     availableActions,
     replayTimeline,
@@ -95,6 +109,7 @@ export function toActionResponsePayload(args: {
   actionResult: GameActionResponse
   playerView: unknown
   availableActions: string[]
+  gameDisplayName?: string
   includeDebugPayload?: boolean
   gamePresentation?: GamePresentationDefinition
 }) {
@@ -102,6 +117,7 @@ export function toActionResponsePayload(args: {
     actionResult,
     playerView,
     availableActions,
+    gameDisplayName,
     includeDebugPayload = false,
     gamePresentation,
   } = args
@@ -114,6 +130,11 @@ export function toActionResponsePayload(args: {
 
   return {
     success: true,
+    gameTitle: gameDisplayName ?? null,
+    rendererKind: gamePresentation?.rendererKind ?? null,
+    pollingIntervalMs: gamePresentation?.pollingIntervalMs ?? null,
+    showReplayDiff: gamePresentation?.showReplayDiff ?? null,
+    rendererOptions: gamePresentation?.rendererOptions ?? null,
     playerView: normalizePlayerViewForFrontend(playerView, gamePresentation),
     availableActions,
     events,

@@ -13,6 +13,21 @@ describe('rockPaperScissorsModule', () => {
 		expect(rockPaperScissorsModule.definition.settings.fields.length).toBe(2);
 		expect(rockPaperScissorsModule.definition.metadata.minPlayers).toBe(2);
 		expect(rockPaperScissorsModule.definition.presentation?.playerView).toBe('raw');
+		expect(rockPaperScissorsModule.definition.presentation?.rendererKind).toBe('simultaneous-choice');
+		expect(rockPaperScissorsModule.definition.presentation?.pollingIntervalMs).toBe(3000);
+		expect(rockPaperScissorsModule.definition.presentation?.showReplayDiff).toBe(true);
+		expect(rockPaperScissorsModule.definition.presentation?.rendererOptions).toEqual({
+			sections: {
+				players: 'Players & Scores',
+				actions: 'Actions',
+				history: 'Rounds History',
+				replay: 'Replay Timeline',
+			},
+			summary: {
+				finalScore: 'Final Score',
+				roundsRecap: 'Rounds Recap',
+			},
+		});
 	});
 
 	it('plays a full match and reaches a winner', () => {

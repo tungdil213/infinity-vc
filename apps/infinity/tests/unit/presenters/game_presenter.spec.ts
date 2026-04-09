@@ -55,6 +55,123 @@ test.group('game_presenter', () => {
     assert.equal(payload.gameType, 'love-letter')
   })
 
+  test('game payloads should expose rendererKind when presentation declares a renderer family', ({
+    assert,
+  }) => {
+    const session = makeSession()
+
+    const pagePayload = toGamePagePayload({
+      session,
+      playerView: { foo: 'bar' },
+      availableActions: [],
+      user: { uuid: 'user-1', nickName: 'User 1' },
+      gameDisplayName: 'Love Letter Infinity Gauntlet',
+      gamePresentation: {
+        playerView: 'hidden-hand-player-list',
+        rendererKind: 'turn-based-card-hand',
+        pollingIntervalMs: 5000,
+        showReplayDiff: true,
+        rendererOptions: {
+          sections: {
+            players: 'Players',
+            hand: 'Your Hand',
+          },
+          summary: {
+            roundResult: 'Round Result',
+          },
+        },
+      },
+    })
+
+    const apiPayload = toGameApiPayload({
+      session,
+      playerView: { foo: 'bar' },
+      availableActions: [],
+      gameDisplayName: 'Love Letter Infinity Gauntlet',
+      gamePresentation: {
+        playerView: 'hidden-hand-player-list',
+        rendererKind: 'turn-based-card-hand',
+        pollingIntervalMs: 5000,
+        showReplayDiff: true,
+        rendererOptions: {
+          sections: {
+            players: 'Players',
+            hand: 'Your Hand',
+          },
+          summary: {
+            roundResult: 'Round Result',
+          },
+        },
+      },
+    })
+
+    const actionPayload = toActionResponsePayload({
+      actionResult: {
+        success: true,
+        newState: { isFinished: false, winnerId: null } as any,
+        events: [],
+      },
+      playerView: { foo: 'bar' },
+      availableActions: [],
+      gameDisplayName: 'Love Letter Infinity Gauntlet',
+      gamePresentation: {
+        playerView: 'hidden-hand-player-list',
+        rendererKind: 'turn-based-card-hand',
+        pollingIntervalMs: 5000,
+        showReplayDiff: true,
+        rendererOptions: {
+          sections: {
+            players: 'Players',
+            hand: 'Your Hand',
+          },
+          summary: {
+            roundResult: 'Round Result',
+          },
+        },
+      },
+    })
+
+    assert.equal(pagePayload.gameTitle, 'Love Letter Infinity Gauntlet')
+    assert.equal(pagePayload.rendererKind, 'turn-based-card-hand')
+    assert.equal(pagePayload.pollingIntervalMs, 5000)
+    assert.equal(pagePayload.showReplayDiff, true)
+    assert.deepEqual(pagePayload.rendererOptions, {
+      sections: {
+        players: 'Players',
+        hand: 'Your Hand',
+      },
+      summary: {
+        roundResult: 'Round Result',
+      },
+    })
+    assert.equal(apiPayload.gameTitle, 'Love Letter Infinity Gauntlet')
+    assert.equal(apiPayload.rendererKind, 'turn-based-card-hand')
+    assert.equal(apiPayload.pollingIntervalMs, 5000)
+    assert.equal(apiPayload.showReplayDiff, true)
+    assert.deepEqual(apiPayload.rendererOptions, {
+      sections: {
+        players: 'Players',
+        hand: 'Your Hand',
+      },
+      summary: {
+        roundResult: 'Round Result',
+      },
+    })
+    assert.equal(actionPayload.gameTitle, 'Love Letter Infinity Gauntlet')
+    assert.equal(actionPayload.rendererKind, 'turn-based-card-hand')
+    assert.equal(actionPayload.pollingIntervalMs, 5000)
+    assert.equal(actionPayload.showReplayDiff, true)
+    assert.deepEqual(actionPayload.rendererOptions, {
+      sections: {
+        players: 'Players',
+        hand: 'Your Hand',
+      },
+      summary: {
+        roundResult: 'Round Result',
+      },
+    })
+  })
+
   test('toGamePagePayload should normalize raw Love Letter player views for the frontend', ({
     assert,
   }) => {

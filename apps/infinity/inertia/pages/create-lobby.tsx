@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Head, router } from '@inertiajs/react'
-import { Link } from '@adonisjs/inertia/react'
 import { Button } from '@infinity.dev/ui/primitives/button'
 import { Input } from '@infinity.dev/ui/primitives/input'
 import { Textarea } from '@infinity.dev/ui/primitives/textarea'
@@ -436,11 +435,14 @@ export default function CreateLobby({
                     {isLoading ? t('createLobby.creating') : t('createLobby.createCta')}
                   </Button>
 
-                  <Link href="/lobbies" className="flex-1">
-                    <Button variant="neutral" className="w-full">
-                      {t('createLobby.cancel')}
-                    </Button>
-                  </Link>
+                  <Button
+                    type="button"
+                    variant="neutral"
+                    className="flex-1"
+                    onClick={() => router.visit('/lobbies')}
+                  >
+                    {t('createLobby.cancel')}
+                  </Button>
                 </div>
               </form>
             </CardContent>

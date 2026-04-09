@@ -15,6 +15,22 @@ describe('loveLetterInfinityModule', () => {
 
 		expect(games.some((game) => game.id === 'love-letter-infinity-gauntlet')).toBe(true);
 		expect(loveLetterInfinityModule.definition.presentation?.playerView).toBe('hidden-hand-player-list');
+		expect(loveLetterInfinityModule.definition.presentation?.rendererKind).toBe('turn-based-card-hand');
+		expect(loveLetterInfinityModule.definition.presentation?.pollingIntervalMs).toBe(5000);
+		expect(loveLetterInfinityModule.definition.presentation?.showReplayDiff).toBe(true);
+		expect(loveLetterInfinityModule.definition.presentation?.rendererOptions).toEqual({
+			sections: {
+				players: 'Players',
+				hand: 'Your Hand',
+				actions: 'Actions',
+				replay: 'Replay Timeline',
+				spectator: 'Spectator View',
+				guess: 'Guess a Card',
+			},
+			summary: {
+				roundResult: 'Round Result',
+			},
+		});
 
 		const invalidLaunch = launcher.launch({
 			gameId: 'love-letter-infinity-gauntlet',

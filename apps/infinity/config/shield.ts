@@ -18,7 +18,9 @@ const shieldConfig = defineConfig({
       imgSrc: ["'self'", 'data:'],
       connectSrc: [
         "'self'",
-        ...(isDevelopment ? ['ws://localhost:24678', 'ws://127.0.0.1:24678'] : []),
+        ...(isDevelopment
+          ? ['ws://localhost:*', 'ws://127.0.0.1:*', 'http://localhost:*', 'http://127.0.0.1:*']
+          : []),
       ],
     },
     reportOnly: false,

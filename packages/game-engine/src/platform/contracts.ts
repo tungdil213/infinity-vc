@@ -79,10 +79,60 @@ export interface GamePlayerConstraints {
 }
 
 export type GamePlayerViewMode = 'raw' | 'hidden-hand-player-list';
+export type RendererKind = 'simultaneous-choice' | 'turn-based-card-hand';
 
-export interface GamePresentationDefinition {
-	readonly playerView?: GamePlayerViewMode;
+export interface SimultaneousChoiceRendererOptions {
+	readonly sections?: {
+		readonly players?: string;
+		readonly actions?: string;
+		readonly history?: string;
+		readonly replay?: string;
+	};
+	readonly summary?: {
+		readonly finalScore?: string;
+		readonly roundsRecap?: string;
+	};
 }
+
+export interface TurnBasedCardHandRendererOptions {
+	readonly sections?: {
+		readonly players?: string;
+		readonly hand?: string;
+		readonly actions?: string;
+		readonly replay?: string;
+		readonly spectator?: string;
+		readonly guess?: string;
+	};
+	readonly summary?: {
+		readonly roundResult?: string;
+	};
+}
+
+export interface RendererOptionsByKind {
+	readonly 'simultaneous-choice': SimultaneousChoiceRendererOptions;
+	readonly 'turn-based-card-hand': TurnBasedCardHandRendererOptions;
+}
+
+export type GameRendererOptions = RendererOptionsByKind[RendererKind];
+
+interface BaseGamePresentationDefinition {
+	readonly playerView?: GamePlayerViewMode;
+	readonly pollingIntervalMs?: number;
+	readonly showReplayDiff?: boolean;
+	readonly rendererKind?: undefined;
+	readonly rendererOptions?: undefined;
+}
+
+export type GamePresentationDefinition =
+	| BaseGamePresentationDefinition
+	| (Omit<BaseGamePresentationDefinition, 'rendererKind' | 'rendererOptions'> & {
+			readonly rendererKind: 'simultaneous-choice';
+			readonly rendererOptions?: SimultaneousChoiceRendererOptions;
+	  })
+	| (Omit<BaseGamePresentationDefinition, 'rendererKind' | 'rendererOptions'> & {
+			readonly rendererKind: 'turn-based-card-hand';
+			readonly rendererOptions?: TurnBasedCardHandRendererOptions;
+	  });
 
 export interface GameDefinition<TSettings extends object> {
 	readonly id: string;

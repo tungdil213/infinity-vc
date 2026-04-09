@@ -62,6 +62,22 @@ export const loveLetterInfinityModule: GameModule<
 		settings: loveLetterInfinitySettingsDefinition,
 		presentation: {
 			playerView: 'hidden-hand-player-list',
+			rendererKind: 'turn-based-card-hand',
+			pollingIntervalMs: 5000,
+			showReplayDiff: true,
+			rendererOptions: {
+				sections: {
+					players: 'Players',
+					hand: 'Your Hand',
+					actions: 'Actions',
+					replay: 'Replay Timeline',
+					spectator: 'Spectator View',
+					guess: 'Guess a Card',
+				},
+				summary: {
+					roundResult: 'Round Result',
+				},
+			},
 		},
 		capabilities: ['turn-based', 'hidden-information', 'spectator-mode', 'replay', 'async-play', 'live-play'],
 		licensing: {

@@ -45,6 +45,21 @@ export const rockPaperScissorsModule: GameModule<RpsState, RpsAction, RpsSetting
 		settings: rpsSettingsDefinition,
 		presentation: {
 			playerView: 'raw',
+			rendererKind: 'simultaneous-choice',
+			pollingIntervalMs: 3000,
+			showReplayDiff: true,
+			rendererOptions: {
+				sections: {
+					players: 'Players & Scores',
+					actions: 'Actions',
+					history: 'Rounds History',
+					replay: 'Replay Timeline',
+				},
+				summary: {
+					finalScore: 'Final Score',
+					roundsRecap: 'Rounds Recap',
+				},
+			},
 		},
 		capabilities: ['turn-based', 'simultaneous-turns', 'replay', 'live-play'],
 		licensing: {
