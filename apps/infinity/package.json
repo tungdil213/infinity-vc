@@ -55,7 +55,8 @@
     "#application/use_cases/*": "./app/application/use_cases/*.js",
     "#application/dtos/*": "./app/application/dtos/*.js",
     "#application/serializers/*": "./app/application/serializers/*.js",
-    "#presenters/*": "./app/presenters/*.js"
+    "#presenters/*": "./app/presenters/*.js",
+    "#app_shared/*": "./shared/*.js"
   },
   "devDependencies": {
     "@adonisjs/assembler": "^8.0.0",

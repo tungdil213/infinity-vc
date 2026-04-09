@@ -35,7 +35,7 @@ import {
   toAvailableGameSettingViewModel,
   toAvailableGameViewModel,
   type AvailableGameViewModel,
-} from '../../shared/game_definition_helpers.js'
+} from '#app_shared/game_definition_helpers'
 import {
   LobbyPresenceService,
   type LobbyConnectionPayload,
