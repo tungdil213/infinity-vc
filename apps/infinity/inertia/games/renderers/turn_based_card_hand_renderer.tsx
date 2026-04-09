@@ -249,6 +249,7 @@ export function TurnBasedCardHandRenderer(props: GameRendererProps) {
   const players = normalizePlayers(gameState?.state?.players)
   const actionState = resolveTurnBasedCardHandActionState({
     canPlay,
+    myHand,
     selectedCard,
     selectedTarget,
     selectedGuess,
@@ -259,14 +260,19 @@ export function TurnBasedCardHandRenderer(props: GameRendererProps) {
   const selectedTargetPlayer = selectedTarget
     ? players.find((player) => player.id === selectedTarget) ?? null
     : null
+  const effectiveTargetPlayer = actionState.effectiveTargetId
+    ? players.find((player) => player.id === actionState.effectiveTargetId) ?? null
+    : null
   const selectedGuessInfo = selectedGuess ? CARD_INFO[selectedGuess] : null
   const showGuessSelection =
     selectedCard === 'guard' && (!actionState.requiresTarget || selectedTargetPlayer !== null)
   const actionSummarySegments = selectedCardInfo
     ? [
         selectedCardInfo.name,
-        ...(actionState.requiresTarget
+        ...(actionState.targetMode === 'required'
           ? [selectedTargetPlayer?.name ?? 'Select target']
+          : actionState.targetMode === 'optional'
+            ? [effectiveTargetPlayer?.isMe ? 'You (default)' : (effectiveTargetPlayer?.name ?? 'You (default)')]
           : []),
         ...(actionState.requiresGuess
           ? [selectedGuessInfo?.name ?? 'Select guess']
@@ -466,7 +472,11 @@ export function TurnBasedCardHandRenderer(props: GameRendererProps) {
                         cardType={cardType}
                         selected={selectedCard === cardType}
                         onClick={() => onSelectCard(selectedCard === cardType ? null : cardType)}
-                        disabled={!canPlay}
+                        disabled={
+                          !canPlay ||
+                          (!actionState.playableCardTypes.includes(cardType) &&
+                            selectedCard !== cardType)
+                        }
                       />
                     ))
                   ) : (
@@ -494,15 +504,28 @@ export function TurnBasedCardHandRenderer(props: GameRendererProps) {
                 <div className="rounded-base border-2 border-border p-3">
                   <p className="text-xs uppercase tracking-wide text-muted-foreground">Step 1</p>
                   <p className="font-heading">{selectedCardInfo?.name ?? 'Select a card'}</p>
+                  {actionState.forcedCardType === 'countess' && (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Countess is mandatory because you also hold King or Prince.
+                    </p>
+                  )}
                 </div>
 
                 <div className="rounded-base border-2 border-border p-3">
                   <p className="text-xs uppercase tracking-wide text-muted-foreground">Step 2</p>
-                  {actionState.requiresTarget ? (
+                  {actionState.targetMode === 'required' ? (
                     selectedTargetPlayer ? (
                       <p className="font-heading">Target: {selectedTargetPlayer.name}</p>
                     ) : (
                       <p className="text-sm text-muted-foreground">Choose a player from the board.</p>
+                    )
+                  ) : actionState.targetMode === 'optional' ? (
+                    selectedTargetPlayer ? (
+                      <p className="font-heading">Target: {selectedTargetPlayer.name}</p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Optional target. If you play now, this card will target you.
+                      </p>
                     )
                   ) : (
                     <p className="text-sm text-muted-foreground">No target required.</p>
@@ -531,7 +554,7 @@ export function TurnBasedCardHandRenderer(props: GameRendererProps) {
                       Clear target
                     </Button>
                   )}
-                  {selectedGuess && (
+                  {actionState.requiresGuess && selectedGuess && (
                     <Button variant="neutral" size="sm" onClick={() => onSelectGuess(null)}>
                       Clear guess
                     </Button>
@@ -541,7 +564,7 @@ export function TurnBasedCardHandRenderer(props: GameRendererProps) {
             </UICard>
           )}
 
-          {!isSpectator && selectedCard === 'guard' && (
+          {!isSpectator && selectedCard === 'guard' && actionState.requiresGuess && (
             <UICard>
               <CardHeader>
                 <CardTitle>{labels.guess}</CardTitle>

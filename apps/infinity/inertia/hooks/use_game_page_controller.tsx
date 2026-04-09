@@ -8,9 +8,9 @@ import {
   resolveGamePlayerLabel,
 } from '../games/game_replay_helpers.js'
 import { ReplayDiffPanel } from '../games/replay_diff_panel.js'
+import { resolveTurnBasedCardHandActionState } from '../games/turn_based_card_hand_action_state.js'
 import type { GameRendererProps, PlayerViewState, ReplayStep, RpsMove } from '../games/game_renderer_types.js'
 
-const TARGET_CARD_TYPES = new Set(['guard', 'priest', 'baron', 'prince', 'king'])
 const CARD_DISPLAY_NAMES: Record<string, string> = {
   guard: 'Guard',
   priest: 'Priest',
@@ -256,6 +256,28 @@ export function useGamePageController(
     () => computeReplayDiff(activeReplayStep, previousReplayStep),
     [activeReplayStep, previousReplayStep]
   )
+  const playValidationPlayers = useMemo(
+    () =>
+      (gameState?.state?.players ?? []).map((player) => ({
+        id: String(player.id ?? ''),
+        isProtected: Boolean(player.isProtected),
+        isEliminated: Boolean(player.isEliminated),
+        isMe: String(player.id ?? '') === user.uuid,
+      })),
+    [gameState?.state?.players, user.uuid]
+  )
+  const playActionState = useMemo(
+    () =>
+      resolveTurnBasedCardHandActionState({
+        canPlay,
+        myHand,
+        selectedCard,
+        selectedTarget,
+        selectedGuess,
+        players: playValidationPlayers,
+      }),
+    [canPlay, myHand, playValidationPlayers, selectedCard, selectedGuess, selectedTarget]
+  )
 
   const getPlayerLabel = useCallback(
     (playerId?: string | null) =>
@@ -341,16 +363,8 @@ export function useGamePageController(
       return
     }
 
-    const needsTarget = TARGET_CARD_TYPES.has(selectedCard) && selectedCard !== 'prince'
-    const needsGuess = selectedCard === 'guard'
-
-    if (needsTarget && !selectedTarget) {
-      addNotification('Select a target')
-      return
-    }
-
-    if (needsGuess && !selectedGuess) {
-      addNotification('Select card to guess')
+    if (!playActionState.canAttemptPlay) {
+      addNotification(playActionState.helperText ?? 'Complete the action setup before playing.')
       return
     }
 
@@ -381,6 +395,7 @@ export function useGamePageController(
     addNotification,
     isLoading,
     postGameAction,
+    playActionState,
     refreshGameState,
     selectedCard,
     selectedGuess,
