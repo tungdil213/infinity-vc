@@ -9,7 +9,9 @@
   },
   "rateLimit": {
     "loginRetryInSeconds": "Too many login attempts. Try again in {seconds} seconds.",
-    "loginTryLater": "Too many login attempts. Please try again later."
+    "loginTryLater": "Too many login attempts. Please try again later.",
+    "invitationRetryInSeconds": "Too many invitation attempts. Try again in {seconds} seconds.",
+    "invitationTryLater": "Too many invitation attempts. Please try again later."
   },
   "access": {
     "adminRequired": "Admin access required",

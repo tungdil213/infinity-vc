@@ -22,10 +22,20 @@ export type ScannedRoutes = {
     'auth.login.show': { paramsTuple?: []; params?: {} }
     'auth.login': { paramsTuple?: []; params?: {} }
     'auth.register.show': { paramsTuple?: []; params?: {} }
+    'auth.register.validateInvitation': { paramsTuple?: []; params?: {} }
     'auth.register': { paramsTuple?: []; params?: {} }
     'auth.logout': { paramsTuple?: []; params?: {} }
     'profile.show': { paramsTuple?: []; params?: {} }
     'settings.show': { paramsTuple?: []; params?: {} }
+    'invitations.index': { paramsTuple?: []; params?: {} }
+    'invitations.generate': { paramsTuple?: []; params?: {} }
+    'invitations.revoke': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'friends.index': { paramsTuple?: []; params?: {} }
+    'friends.requests.send': { paramsTuple?: []; params?: {} }
+    'friends.requests.accept': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'friends.requests.reject': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'friends.requests.cancel': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'friends.remove': { paramsTuple: [ParamValue]; params: {'friendUserUuid': ParamValue} }
     'settings.profile.update': { paramsTuple?: []; params?: {} }
     'settings.password.update': { paramsTuple?: []; params?: {} }
     'lobbies.index': { paramsTuple?: []; params?: {} }
@@ -93,6 +103,8 @@ export type ScannedRoutes = {
     'auth.register.show': { paramsTuple?: []; params?: {} }
     'profile.show': { paramsTuple?: []; params?: {} }
     'settings.show': { paramsTuple?: []; params?: {} }
+    'invitations.index': { paramsTuple?: []; params?: {} }
+    'friends.index': { paramsTuple?: []; params?: {} }
     'lobbies.index': { paramsTuple?: []; params?: {} }
     'lobbies.create': { paramsTuple?: []; params?: {} }
     'lobbies.show': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
@@ -135,6 +147,8 @@ export type ScannedRoutes = {
     'auth.register.show': { paramsTuple?: []; params?: {} }
     'profile.show': { paramsTuple?: []; params?: {} }
     'settings.show': { paramsTuple?: []; params?: {} }
+    'invitations.index': { paramsTuple?: []; params?: {} }
+    'friends.index': { paramsTuple?: []; params?: {} }
     'lobbies.index': { paramsTuple?: []; params?: {} }
     'lobbies.create': { paramsTuple?: []; params?: {} }
     'lobbies.show': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
@@ -159,8 +173,16 @@ export type ScannedRoutes = {
   }
   POST: {
     'auth.login': { paramsTuple?: []; params?: {} }
+    'auth.register.validateInvitation': { paramsTuple?: []; params?: {} }
     'auth.register': { paramsTuple?: []; params?: {} }
     'auth.logout': { paramsTuple?: []; params?: {} }
+    'invitations.generate': { paramsTuple?: []; params?: {} }
+    'invitations.revoke': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'friends.requests.send': { paramsTuple?: []; params?: {} }
+    'friends.requests.accept': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'friends.requests.reject': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'friends.requests.cancel': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'friends.remove': { paramsTuple: [ParamValue]; params: {'friendUserUuid': ParamValue} }
     'settings.profile.update': { paramsTuple?: []; params?: {} }
     'settings.password.update': { paramsTuple?: []; params?: {} }
     'lobbies.store': { paramsTuple?: []; params?: {} }

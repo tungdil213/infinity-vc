@@ -1,5 +1,4 @@
 import { test } from '@japa/runner'
-import app from '@adonisjs/core/services/app'
 import hash from '@adonisjs/core/services/hash'
 import logger from '@adonisjs/core/services/logger'
 import UserModel from '#models/user'
@@ -43,6 +42,10 @@ function createResponseHarness() {
         },
       }
     },
+    json(payload: unknown) {
+      state.payload = payload
+      return payload
+    },
   }
 
   return { response, state }
@@ -54,26 +57,58 @@ function createI18nHarness() {
       if (typeof data?.name === 'string') {
         return `${key}:${data.name}`
       }
+      if (typeof data?.issuer === 'string') {
+        return `${key}:${data.issuer}`
+      }
       return key
     },
   }
 }
 
+function createController(overrides?: {
+  validateInvitationResult?: { isFailure: boolean; error?: string; value?: any }
+  registerResult?: { isFailure: boolean; error?: string; value?: any }
+}) {
+  return new EnhancedAuthController(
+    {
+      execute: async () =>
+        overrides?.validateInvitationResult ?? {
+          isFailure: false,
+          value: {
+            issuerDisplayName: 'Jane Doe',
+            invitation: { expiresAt: null },
+          },
+        },
+    } as any,
+    {
+      execute: async () =>
+        overrides?.registerResult ?? {
+          isFailure: false,
+          value: {
+            user: {
+              uuid: 'user-1',
+              fullName: 'Jane Doe',
+              email: 'user@example.com',
+            },
+          },
+        },
+    } as any
+  )
+}
+
 test.group('EnhancedAuthController', (group) => {
-  const originalContainerMake = (app.container as any).make
   const originalUserQuery = (UserModel as any).query
   const originalHashVerify = (hash as any).verify
   const originalLoggerError = (logger as any).error
 
   group.each.teardown(() => {
-    ;(app.container as any).make = originalContainerMake
     ;(UserModel as any).query = originalUserQuery
     ;(hash as any).verify = originalHashVerify
     ;(logger as any).error = originalLoggerError
   })
 
   test('showLogin and showRegister sanitize redirect targets', async ({ assert }) => {
-    const controller = new EnhancedAuthController()
+    const controller = createController()
 
     let loginRender: { component: string; props: Record<string, unknown> } | null = null
     let registerRender: { component: string; props: Record<string, unknown> } | null = null
@@ -86,8 +121,8 @@ test.group('EnhancedAuthController', (group) => {
         },
       },
       request: {
-        input() {
-          return 'https://malicious.example.com/redirect'
+        input(key: string) {
+          return key === 'redirect' ? 'https://malicious.example.com/redirect' : undefined
         },
       },
     } as any)
@@ -100,8 +135,14 @@ test.group('EnhancedAuthController', (group) => {
         },
       },
       request: {
-        input() {
-          return '/auth/register?from=lobby'
+        input(key: string) {
+          if (key === 'redirect') {
+            return '/auth/register?from=lobby'
+          }
+          if (key === 'invitationCode') {
+            return 'ABCD-EFGH-IJKL'
+          }
+          return undefined
         },
       },
     } as any)
@@ -112,16 +153,73 @@ test.group('EnhancedAuthController', (group) => {
     })
     assert.deepEqual(registerRender, {
       component: 'auth/register',
-      props: { redirect: '/auth/register?from=lobby' },
+      props: { redirect: '/auth/register?from=lobby', invitationCode: 'ABCD-EFGH-IJKL' },
+    })
+  })
+
+  test('validateInvitationCode returns JSON success and failure payloads', async ({ assert }) => {
+    const successController = createController()
+    const successResponse = createResponseHarness()
+
+    await successController.validateInvitationCode({
+      request: {
+        validateUsing: async () => ({
+          invitationCode: 'ABCD-EFGH-IJKL',
+        }),
+      },
+      response: successResponse.response,
+      i18n: createI18nHarness(),
+    } as any)
+
+    assert.deepEqual(successResponse.state.payload, {
+      valid: true,
+      invitation: {
+        issuerDisplayName: 'Jane Doe',
+        expiresAt: null,
+      },
+    })
+
+    const failureController = createController({
+      validateInvitationResult: {
+        isFailure: true,
+        error: 'Invitation code is invalid',
+      },
+    })
+    const failureResponse = createResponseHarness()
+
+    await failureController.validateInvitationCode({
+      request: {
+        validateUsing: async () => ({
+          invitationCode: 'bad-code',
+        }),
+      },
+      response: failureResponse.response,
+      i18n: createI18nHarness(),
+    } as any)
+
+    assert.equal(failureResponse.state.statusCode, 400)
+    assert.deepEqual(failureResponse.state.payload, {
+      valid: false,
+      message: 'auth.register.failure.invitationInvalid',
     })
   })
 
   test('register logs user in and redirects to sanitized safe path', async ({ assert }) => {
-    const controller = new EnhancedAuthController()
+    const controller = createController({
+      registerResult: {
+        isFailure: false,
+        value: {
+          user: {
+            uuid: 'user-1',
+            fullName: 'Jane Doe',
+            email: 'user@example.com',
+          },
+        },
+      },
+    })
     const { response, state } = createResponseHarness()
     const i18n = createI18nHarness()
 
-    let capturedPayload: Record<string, unknown> | null = null
     const createdUser = {
       userUuid: 'user-1',
       fullName: 'Jane Doe',
@@ -130,13 +228,6 @@ test.group('EnhancedAuthController', (group) => {
       createdAt: new Date(),
       password: 'hashed',
     }
-
-    ;(app.container as any).make = async () => ({
-      execute: async (payload: Record<string, unknown>) => {
-        capturedPayload = payload
-        return { isFailure: false, value: { userUuid: createdUser.userUuid } }
-      },
-    })
 
     ;(UserModel as any).query = () => ({
       where() {
@@ -150,13 +241,14 @@ test.group('EnhancedAuthController', (group) => {
 
     await controller.register({
       request: {
-        input() {
-          return '//evil.com'
+        input(key: string) {
+          return key === 'redirect' ? '//evil.com' : undefined
         },
         validateUsing: async () => ({
           fullName: ' Jane Doe ',
           email: ' USER@EXAMPLE.COM ',
           password: 'password123',
+          invitationCode: 'ABCD-EFGH-IJKL',
         }),
       },
       response,
@@ -177,14 +269,6 @@ test.group('EnhancedAuthController', (group) => {
       i18n,
     } as any)
 
-    assert.isNotNull(capturedPayload)
-    assert.deepInclude(capturedPayload!, {
-      firstName: 'Jane',
-      lastName: 'Doe',
-      email: 'user@example.com',
-      password: 'password123',
-    })
-    assert.equal(capturedPayload!.username, 'user')
     assert.equal(state.redirectedTo, '/lobbies')
     assert.equal(loggedInUser, createdUser)
     assert.deepEqual(flashes, [
@@ -192,50 +276,47 @@ test.group('EnhancedAuthController', (group) => {
     ])
   })
 
-  test('register failure flashes translated error and redirects back', async ({ assert }) => {
-    const controller = new EnhancedAuthController()
-    const { response, state } = createResponseHarness()
-    const i18n = createI18nHarness()
-
-    ;(app.container as any).make = async () => ({
-      execute: async () => ({ isFailure: true, error: 'Failed to create account' }),
+  test('register failure throws a translated business error', async ({ assert }) => {
+    const controller = createController({
+      registerResult: {
+        isFailure: true,
+        error: 'Invitation code is invalid',
+      },
     })
 
-    const flashes: Array<{ type: string; message: unknown }> = []
-
-    await controller.register({
-      request: {
-        input() {
-          return '/lobbies'
-        },
-        validateUsing: async () => ({
-          fullName: 'John Doe',
-          email: 'john@example.com',
-          password: 'password123',
-        }),
-      },
-      response,
-      auth: {
-        use() {
-          return {
-            login: async () => {},
-          }
-        },
-      },
-      session: {
-        flash(type: string, message: unknown) {
-          flashes.push({ type, message })
-        },
-      },
-      i18n,
-    } as any)
-
-    assert.equal(state.redirectedBack, 1)
-    assert.deepEqual(flashes, [{ type: 'error', message: 'auth.register.failure.createAccount' }])
+    await assert.rejects(
+      () =>
+        controller.register({
+          request: {
+            input() {
+              return '/lobbies'
+            },
+            validateUsing: async () => ({
+              fullName: 'John Doe',
+              email: 'john@example.com',
+              password: 'password123',
+              invitationCode: 'bad-code',
+            }),
+          },
+          response: createResponseHarness().response,
+          auth: {
+            use() {
+              return {
+                login: async () => {},
+              }
+            },
+          },
+          session: {
+            flash() {},
+          },
+          i18n: createI18nHarness(),
+        } as any),
+      /auth\.register\.failure\.invitationInvalid/
+    )
   })
 
   test('login rejects invalid credentials and accepts valid credentials', async ({ assert }) => {
-    const controller = new EnhancedAuthController()
+    const controller = createController()
     const i18n = createI18nHarness()
 
     const knownUser = {
@@ -338,7 +419,7 @@ test.group('EnhancedAuthController', (group) => {
   })
 
   test('logout success and failure, plus API me/check responses', async ({ assert }) => {
-    const controller = new EnhancedAuthController()
+    const controller = createController()
     const i18n = createI18nHarness()
 
     const logoutSuccess = createResponseHarness()
@@ -362,7 +443,6 @@ test.group('EnhancedAuthController', (group) => {
 
     assert.equal(logoutSuccess.state.redirectedTo, '/')
     assert.deepEqual(logoutFlashes, [{ type: 'success', message: 'auth.logout.success' }])
-
     ;(logger as any).error = () => {}
     const logoutFailure = createResponseHarness()
     const logoutFailureFlashes: Array<{ type: string; message: unknown }> = []

@@ -18,8 +18,10 @@ declare module '@adonisjs/inertia/types' {
     'dev/routes': ExtractProps<(typeof import('../../inertia/pages/dev/routes.tsx'))['default']>
     'errors/not_found': ExtractProps<(typeof import('../../inertia/pages/errors/not_found.tsx'))['default']>
     'errors/server_error': ExtractProps<(typeof import('../../inertia/pages/errors/server_error.tsx'))['default']>
+    'friends': ExtractProps<(typeof import('../../inertia/pages/friends.tsx'))['default']>
     'game': ExtractProps<(typeof import('../../inertia/pages/game.tsx'))['default']>
     'home': ExtractProps<(typeof import('../../inertia/pages/home.tsx'))['default']>
+    'invitations': ExtractProps<(typeof import('../../inertia/pages/invitations.tsx'))['default']>
     'join-lobby': ExtractProps<(typeof import('../../inertia/pages/join-lobby.tsx'))['default']>
     'lobbies': ExtractProps<(typeof import('../../inertia/pages/lobbies.tsx'))['default']>
     'lobby': ExtractProps<(typeof import('../../inertia/pages/lobby.tsx'))['default']>

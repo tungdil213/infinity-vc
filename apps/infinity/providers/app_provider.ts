@@ -18,6 +18,18 @@ import { CloseLobbyUseCase } from '#application/use_cases/close_lobby_use_case'
 import { UpdateLobbySettingsUseCase } from '#application/use_cases/update_lobby_settings_use_case'
 import { SetPlayerReadyUseCase } from '#application/use_cases/set_player_ready_use_case'
 import { ListGameCatalogUseCase } from '#application/use_cases/list_game_catalog_use_case'
+import { ValidateInvitationCodeUseCase } from '#application/use_cases/validate_invitation_code_use_case'
+import { RegisterWithInvitationUseCase } from '#application/use_cases/register_with_invitation_use_case'
+import { GenerateInvitationCodeUseCase } from '#application/use_cases/generate_invitation_code_use_case'
+import { ListMyInvitationsUseCase } from '#application/use_cases/list_my_invitations_use_case'
+import { RevokeInvitationCodeUseCase } from '#application/use_cases/revoke_invitation_code_use_case'
+import { ListFriendsUseCase } from '#application/use_cases/list_friends_use_case'
+import { SearchUsersUseCase } from '#application/use_cases/search_users_use_case'
+import { SendFriendRequestUseCase } from '#application/use_cases/send_friend_request_use_case'
+import { AcceptFriendRequestUseCase } from '#application/use_cases/accept_friend_request_use_case'
+import { RejectFriendRequestUseCase } from '#application/use_cases/reject_friend_request_use_case'
+import { CancelSentFriendRequestUseCase } from '#application/use_cases/cancel_sent_friend_request_use_case'
+import { RemoveFriendUseCase } from '#application/use_cases/remove_friend_use_case'
 import { LobbyEventService } from '#application/services/lobby_event_service'
 import { EventBusDomainEventPublisher } from '#application/services/domain_event_publisher'
 import { eventBridgeService } from '#infrastructure/transcript/index'
@@ -25,6 +37,9 @@ import { initializeAppGameLauncher } from '#infrastructure/game_engine/app_game_
 import { defaultGameCatalog } from '#infrastructure/game_engine/launcher_game_catalog'
 import { LobbyPresenceService } from '#application/services/lobby_presence_service'
 import logger from '@adonisjs/core/services/logger'
+import env from '#start/env'
+import { DatabaseInvitationRepository } from '#infrastructure/repositories/database_invitation_repository'
+import { DatabaseFriendRepository } from '#infrastructure/repositories/database_friend_repository'
 
 export default class AppProvider {
   constructor(protected app: ApplicationService) {}
@@ -73,6 +88,14 @@ export default class AppProvider {
 
     this.app.container.singleton(DatabaseGameRepository, () => {
       return new DatabaseGameRepository()
+    })
+
+    this.app.container.singleton(DatabaseInvitationRepository, () => {
+      return new DatabaseInvitationRepository()
+    })
+
+    this.app.container.singleton(DatabaseFriendRepository, () => {
+      return new DatabaseFriendRepository()
     })
 
     // Register services as singletons
@@ -143,6 +166,70 @@ export default class AppProvider {
 
     this.app.container.singleton(ListGameCatalogUseCase, () => {
       return new ListGameCatalogUseCase()
+    })
+
+    this.app.container.singleton(ValidateInvitationCodeUseCase, async (resolver) => {
+      const invitationRepository = await resolver.make(DatabaseInvitationRepository)
+      return new ValidateInvitationCodeUseCase(invitationRepository)
+    })
+
+    this.app.container.singleton(RegisterWithInvitationUseCase, async (resolver) => {
+      const invitationRepository = await resolver.make(DatabaseInvitationRepository)
+      return new RegisterWithInvitationUseCase(invitationRepository)
+    })
+
+    this.app.container.singleton(GenerateInvitationCodeUseCase, async (resolver) => {
+      const invitationRepository = await resolver.make(DatabaseInvitationRepository)
+      return new GenerateInvitationCodeUseCase(
+        invitationRepository,
+        env.get('INVITATION_CODE_QUOTA_PER_USER') ?? 5,
+        env.get('INVITATION_CODE_TTL_HOURS') ?? 168
+      )
+    })
+
+    this.app.container.singleton(ListMyInvitationsUseCase, async (resolver) => {
+      const invitationRepository = await resolver.make(DatabaseInvitationRepository)
+      return new ListMyInvitationsUseCase(invitationRepository)
+    })
+
+    this.app.container.singleton(RevokeInvitationCodeUseCase, async (resolver) => {
+      const invitationRepository = await resolver.make(DatabaseInvitationRepository)
+      return new RevokeInvitationCodeUseCase(invitationRepository)
+    })
+
+    this.app.container.singleton(ListFriendsUseCase, async (resolver) => {
+      const friendRepository = await resolver.make(DatabaseFriendRepository)
+      return new ListFriendsUseCase(friendRepository)
+    })
+
+    this.app.container.singleton(SearchUsersUseCase, async (resolver) => {
+      const friendRepository = await resolver.make(DatabaseFriendRepository)
+      return new SearchUsersUseCase(friendRepository)
+    })
+
+    this.app.container.singleton(SendFriendRequestUseCase, async (resolver) => {
+      const friendRepository = await resolver.make(DatabaseFriendRepository)
+      return new SendFriendRequestUseCase(friendRepository)
+    })
+
+    this.app.container.singleton(AcceptFriendRequestUseCase, async (resolver) => {
+      const friendRepository = await resolver.make(DatabaseFriendRepository)
+      return new AcceptFriendRequestUseCase(friendRepository)
+    })
+
+    this.app.container.singleton(RejectFriendRequestUseCase, async (resolver) => {
+      const friendRepository = await resolver.make(DatabaseFriendRepository)
+      return new RejectFriendRequestUseCase(friendRepository)
+    })
+
+    this.app.container.singleton(CancelSentFriendRequestUseCase, async (resolver) => {
+      const friendRepository = await resolver.make(DatabaseFriendRepository)
+      return new CancelSentFriendRequestUseCase(friendRepository)
+    })
+
+    this.app.container.singleton(RemoveFriendUseCase, async (resolver) => {
+      const friendRepository = await resolver.make(DatabaseFriendRepository)
+      return new RemoveFriendUseCase(friendRepository)
     })
 
     this.app.container.singleton(ShowLobbyUseCase, async (resolver) => {

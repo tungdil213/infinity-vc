@@ -30,6 +30,9 @@ export default class User extends BaseModel {
   @column()
   declare role: UserRole | null
 
+  @column()
+  declare invitedByUserUuid: string | null
+
   @column.dateTime({ columnName: 'deleted_at' })
   declare deletedAt: DateTime | null
 

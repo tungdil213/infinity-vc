@@ -32,7 +32,17 @@ router
     router
       .get('/register', '#controllers/enhanced_auth_controller.showRegister')
       .as('auth.register.show')
-    router.post('/register', '#controllers/enhanced_auth_controller.register').as('auth.register')
+    router
+      .post(
+        '/register/validate-invitation',
+        '#controllers/enhanced_auth_controller.validateInvitationCode'
+      )
+      .use(middleware.invitationThrottle())
+      .as('auth.register.validateInvitation')
+    router
+      .post('/register', '#controllers/enhanced_auth_controller.register')
+      .use(middleware.invitationThrottle())
+      .as('auth.register')
   })
   .prefix('/auth')
 
@@ -49,6 +59,29 @@ router
     router
       .get('/settings', '#controllers/profile_settings_controller.showSettings')
       .as('settings.show')
+    router.get('/invitations', '#controllers/invitations_controller.index').as('invitations.index')
+    router
+      .post('/invitations', '#controllers/invitations_controller.generate')
+      .as('invitations.generate')
+    router
+      .post('/invitations/:uuid/revoke', '#controllers/invitations_controller.revoke')
+      .as('invitations.revoke')
+    router.get('/friends', '#controllers/friends_controller.index').as('friends.index')
+    router
+      .post('/friends/requests', '#controllers/friends_controller.sendRequest')
+      .as('friends.requests.send')
+    router
+      .post('/friends/requests/:uuid/accept', '#controllers/friends_controller.accept')
+      .as('friends.requests.accept')
+    router
+      .post('/friends/requests/:uuid/reject', '#controllers/friends_controller.reject')
+      .as('friends.requests.reject')
+    router
+      .post('/friends/requests/:uuid/cancel', '#controllers/friends_controller.cancel')
+      .as('friends.requests.cancel')
+    router
+      .post('/friends/:friendUserUuid/remove', '#controllers/friends_controller.remove')
+      .as('friends.remove')
     router
       .post('/settings/profile', '#controllers/profile_settings_controller.updateProfile')
       .as('settings.profile.update')

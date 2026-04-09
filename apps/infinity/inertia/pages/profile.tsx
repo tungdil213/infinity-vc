@@ -158,6 +158,22 @@ export default function ProfilePage({ user, stats, recentGames, activeGames }: P
                 size="sm"
                 variant="neutral"
                 className="w-full sm:w-auto"
+                onClick={() => router.visit('/friends')}
+              >
+                {t('profile.manageFriends')}
+              </Button>
+              <Button
+                size="sm"
+                variant="neutral"
+                className="w-full sm:w-auto"
+                onClick={() => router.visit('/invitations')}
+              >
+                {t('profile.manageInvitations')}
+              </Button>
+              <Button
+                size="sm"
+                variant="neutral"
+                className="w-full sm:w-auto"
                 onClick={() => router.visit('/settings')}
               >
                 {t('profile.goToSettings')}

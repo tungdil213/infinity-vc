@@ -1,0 +1,18 @@
+{
+  "generate": {
+    "success": "Einladung erfolgreich erstellt.",
+    "failure": {
+      "generic": "Einladung konnte nicht erstellt werden.",
+      "quotaExceeded": "Einladungslimit erreicht. Widerrufe oder nutze bestehende Einladungen, bevor du neue erzeugst."
+    }
+  },
+  "revoke": {
+    "failure": {
+      "generic": "Einladung konnte nicht widerrufen werden.",
+      "notFound": "Einladung wurde nicht gefunden.",
+      "expired": "Abgelaufene Einladungen können nicht widerrufen werden.",
+      "used": "Bereits verwendete Einladungen können nicht widerrufen werden.",
+      "alreadyRevoked": "Die Einladung wurde bereits widerrufen."
+    }
+  }
+}

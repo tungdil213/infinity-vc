@@ -117,6 +117,22 @@ export default function SettingsPage({
             </div>
 
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+              <Button
+                variant="neutral"
+                size="sm"
+                className="w-full sm:w-auto"
+                onClick={() => router.visit('/friends')}
+              >
+                {t('settings.friendsAction')}
+              </Button>
+              <Button
+                variant="neutral"
+                size="sm"
+                className="w-full sm:w-auto"
+                onClick={() => router.visit('/invitations')}
+              >
+                {t('settings.invitationsAction')}
+              </Button>
               {currentLobbyUuid && (
                 <Button
                   variant="neutral"

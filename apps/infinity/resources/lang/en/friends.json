@@ -1,0 +1,11 @@
+{
+  "errors": {
+    "selfRequest": "You cannot send a friend request to yourself.",
+    "duplicateRequest": "A friend request is already pending for this user.",
+    "alreadyFriends": "You are already friends with this user.",
+    "requestNotFound": "Friend request was not found.",
+    "requestNotPending": "Friend request is no longer pending.",
+    "friendshipNotFound": "Friendship was not found.",
+    "userNotFound": "User was not found."
+  }
+}

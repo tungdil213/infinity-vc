@@ -9,7 +9,9 @@
   },
   "rateLimit": {
     "loginRetryInSeconds": "Zu viele Anmeldeversuche. Bitte versuche es in {seconds} Sekunden erneut.",
-    "loginTryLater": "Zu viele Anmeldeversuche. Bitte versuche es später erneut."
+    "loginTryLater": "Zu viele Anmeldeversuche. Bitte versuche es später erneut.",
+    "invitationRetryInSeconds": "Zu viele Einladungsversuche. Bitte versuche es in {seconds} Sekunden erneut.",
+    "invitationTryLater": "Zu viele Einladungsversuche. Bitte versuche es später erneut."
   },
   "access": {
     "adminRequired": "Administratorzugriff erforderlich",

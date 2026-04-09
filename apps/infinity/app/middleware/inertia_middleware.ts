@@ -30,6 +30,7 @@ export default class InertiaMiddleware extends BaseInertiaMiddleware {
       flash: ctx.inertia.always({
         error: session?.flashMessages.get('error'),
         success: session?.flashMessages.get('success'),
+        generatedInvitationCode: session?.flashMessages.get('generatedInvitationCode'),
       }),
       toast: ctx.inertia.always({
         error: session?.flashMessages.get('error'),
