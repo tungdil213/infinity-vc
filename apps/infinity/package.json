@@ -10,6 +10,7 @@
     "build": "node ace build",
     "clean": "rm -rf .turbo node_modules build",
     "dev": "DEV_MODE=true node ace serve --hmr",
+    "bootstrap:first-user": "node ace bootstrap:first-user",
     "game:demo:rps": "node ace game:demo:rps",
     "game:replay:backfill-signatures": "node ace game:replay:backfill-signatures",
     "test": "node ace test",

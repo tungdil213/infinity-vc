@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from '@adonisjs/inertia/react'
-import { Head, router } from '@inertiajs/react'
+import { Head, Link, router } from '@inertiajs/react'
 import { Button } from '@infinity.dev/ui/primitives/button'
 import { Input } from '@infinity.dev/ui/primitives/input'
 import { Label } from '@infinity.dev/ui/primitives/label'
