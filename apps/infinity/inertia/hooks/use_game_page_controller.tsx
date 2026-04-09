@@ -393,14 +393,16 @@ export function useGamePageController(
 
   const handleSelectCard = useCallback((cardType: string | null) => {
     setSelectedCard(cardType)
+    setSelectedTarget(null)
+    setSelectedGuess(null)
   }, [])
 
-  const handleSelectTarget = useCallback((playerId: string) => {
-    setSelectedTarget(playerId)
+  const handleSelectTarget = useCallback((playerId: string | null) => {
+    setSelectedTarget((currentTarget) => (currentTarget === playerId ? null : playerId))
   }, [])
 
-  const handleSelectGuess = useCallback((cardType: string) => {
-    setSelectedGuess(cardType)
+  const handleSelectGuess = useCallback((cardType: string | null) => {
+    setSelectedGuess((currentGuess) => (currentGuess === cardType ? null : cardType))
   }, [])
 
   useEffect(() => {

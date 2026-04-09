@@ -12,6 +12,7 @@ import type {
   GameRendererProps,
   TurnBasedCardHandRendererOptions,
 } from '../game_renderer_types.js'
+import { resolveTurnBasedCardHandActionState } from '../turn_based_card_hand_action_state.js'
 
 const CARD_INFO: Record<
   string,
@@ -68,7 +69,6 @@ const CARD_INFO: Record<
 }
 
 const GUESSABLE_CARDS = ['priest', 'baron', 'handmaid', 'prince', 'king', 'countess', 'princess']
-const TARGET_CARDS = ['guard', 'priest', 'baron', 'prince', 'king']
 
 interface TurnBasedCardHandPlayer {
   id: string
@@ -145,14 +145,14 @@ function PlayerCard({
 }) {
   return (
     <div
-      onClick={canTarget && !player.isProtected && !player.isEliminated ? onSelect : undefined}
+      onClick={canTarget ? onSelect : undefined}
       className={`p-4 rounded-lg border-2 transition-all
         ${player.isMe ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'}
         ${player.isCurrentPlayer ? 'ring-2 ring-green-400' : ''}
         ${player.isEliminated ? 'opacity-50 bg-gray-100' : ''}
         ${player.isProtected ? 'border-yellow-400' : ''}
         ${isTarget ? 'ring-4 ring-red-400 scale-105' : ''}
-        ${canTarget && !player.isProtected && !player.isEliminated ? 'cursor-pointer hover:shadow-lg' : ''}`}
+        ${canTarget ? 'cursor-pointer hover:shadow-lg' : ''}`}
     >
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
@@ -190,6 +190,11 @@ function PlayerCard({
               <Card key={index} cardType={card.type} size="small" />
             ))}
           </div>
+        </div>
+      )}
+      {(canTarget || isTarget) && (
+        <div className="mt-2 pt-2 border-t border-gray-200 text-xs font-medium">
+          {isTarget ? 'Selected target' : 'Click to target'}
         </div>
       )}
     </div>
@@ -242,7 +247,33 @@ export function TurnBasedCardHandRenderer(props: GameRendererProps) {
   }
 
   const players = normalizePlayers(gameState?.state?.players)
+  const actionState = resolveTurnBasedCardHandActionState({
+    canPlay,
+    selectedCard,
+    selectedTarget,
+    selectedGuess,
+    players,
+  })
   const finalState = gameState?.state
+  const selectedCardInfo = selectedCard ? CARD_INFO[selectedCard] : null
+  const selectedTargetPlayer = selectedTarget
+    ? players.find((player) => player.id === selectedTarget) ?? null
+    : null
+  const selectedGuessInfo = selectedGuess ? CARD_INFO[selectedGuess] : null
+  const showGuessSelection =
+    selectedCard === 'guard' && (!actionState.requiresTarget || selectedTargetPlayer !== null)
+  const actionSummarySegments = selectedCardInfo
+    ? [
+        selectedCardInfo.name,
+        ...(actionState.requiresTarget
+          ? [selectedTargetPlayer?.name ?? 'Select target']
+          : []),
+        ...(actionState.requiresGuess
+          ? [selectedGuessInfo?.name ?? 'Select guess']
+          : []),
+      ]
+    : []
+  const actionSummary = actionSummarySegments.join(' -> ')
   const winnerIds = Array.isArray(finalState?.winnerIds) ? finalState.winnerIds : []
   const loserId = typeof finalState?.loserId === 'string' ? finalState.loserId : null
   const loser = players.find((player) => player.id === loserId)
@@ -391,9 +422,7 @@ export function TurnBasedCardHandRenderer(props: GameRendererProps) {
                     player={player}
                     isTarget={selectedTarget === player.id}
                     onSelect={() => onSelectTarget(player.id)}
-                    canTarget={
-                      canPlay && selectedCard !== null && TARGET_CARDS.includes(selectedCard) && !player.isMe
-                    }
+                    canTarget={actionState.legalTargetIds.includes(player.id)}
                   />
                 ))}
               </div>
@@ -456,24 +485,87 @@ export function TurnBasedCardHandRenderer(props: GameRendererProps) {
             </UICard>
           )}
 
+          {!isSpectator && selectedCard && (
+            <UICard>
+              <CardHeader>
+                <CardTitle>Action Setup</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="rounded-base border-2 border-border p-3">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Step 1</p>
+                  <p className="font-heading">{selectedCardInfo?.name ?? 'Select a card'}</p>
+                </div>
+
+                <div className="rounded-base border-2 border-border p-3">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Step 2</p>
+                  {actionState.requiresTarget ? (
+                    selectedTargetPlayer ? (
+                      <p className="font-heading">Target: {selectedTargetPlayer.name}</p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Choose a player from the board.</p>
+                    )
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No target required.</p>
+                  )}
+                </div>
+
+                <div className="rounded-base border-2 border-border p-3">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Step 3</p>
+                  {actionState.requiresGuess ? (
+                    selectedGuessInfo ? (
+                      <p className="font-heading">Guess: {selectedGuessInfo.name}</p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Choose the card to guess.</p>
+                    )
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No guess required.</p>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="neutral" size="sm" onClick={() => onSelectCard(null)}>
+                    Clear selection
+                  </Button>
+                  {selectedTarget && (
+                    <Button variant="neutral" size="sm" onClick={() => onSelectTarget(null)}>
+                      Clear target
+                    </Button>
+                  )}
+                  {selectedGuess && (
+                    <Button variant="neutral" size="sm" onClick={() => onSelectGuess(null)}>
+                      Clear guess
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </UICard>
+          )}
+
           {!isSpectator && selectedCard === 'guard' && (
             <UICard>
               <CardHeader>
                 <CardTitle>{labels.guess}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-2">
-                  {GUESSABLE_CARDS.map((cardType) => (
-                    <button
-                      key={cardType}
-                      onClick={() => onSelectGuess(cardType)}
-                      className={`p-2 rounded-base border-2 text-left transition-all ${selectedGuess === cardType ? 'border-main bg-main/10' : 'border-border hover:border-main'}`}
-                    >
-                      <span className="font-heading">{CARD_INFO[cardType]?.name}</span> (
-                      {CARD_INFO[cardType]?.value})
-                    </button>
-                  ))}
-                </div>
+                {showGuessSelection ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    {GUESSABLE_CARDS.map((cardType) => (
+                      <button
+                        type="button"
+                        key={cardType}
+                        onClick={() => onSelectGuess(cardType)}
+                        className={`p-2 rounded-base border-2 text-left transition-all ${selectedGuess === cardType ? 'border-main bg-main/10' : 'border-border hover:border-main'}`}
+                      >
+                        <span className="font-heading">{CARD_INFO[cardType]?.name}</span> (
+                        {CARD_INFO[cardType]?.value})
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Choose a target first to unlock the Guard guess.
+                  </p>
+                )}
               </CardContent>
             </UICard>
           )}
@@ -489,13 +581,33 @@ export function TurnBasedCardHandRenderer(props: GameRendererProps) {
                 </p>
               ) : (
                 <>
+                  {selectedCard && actionState.helperText && (
+                    <p className="text-sm text-muted-foreground">{actionState.helperText}</p>
+                  )}
+                  {selectedCard && (
+                    <div className="rounded-base border-2 border-dashed border-border p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                          Action Summary
+                        </p>
+                        <Badge variant={actionState.canAttemptPlay ? 'default' : 'secondary'}>
+                          {actionState.canAttemptPlay ? 'Ready' : 'Incomplete'}
+                        </Badge>
+                      </div>
+                      <p className="mt-2 font-heading text-sm">{actionSummary}</p>
+                    </div>
+                  )}
                   {canDraw && (
                     <Button onClick={onDraw} disabled={isLoading} className="w-full">
                       {isLoading ? 'Drawing...' : '🃏 Draw Card'}
                     </Button>
                   )}
                   {canPlay && selectedCard && (
-                    <Button onClick={onPlayCard} disabled={isLoading} className="w-full">
+                    <Button
+                      onClick={onPlayCard}
+                      disabled={isLoading || !actionState.canAttemptPlay}
+                      className="w-full"
+                    >
                       {isLoading ? 'Playing...' : `▶️ Play ${CARD_INFO[selectedCard]?.name}`}
                     </Button>
                   )}

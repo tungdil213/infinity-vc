@@ -125,8 +125,8 @@ export interface GameRendererProps {
   onSubmitMove: (move: RpsMove) => void
   onPlayCard: () => void
   onSelectCard: (cardType: string | null) => void
-  onSelectTarget: (playerId: string) => void
-  onSelectGuess: (cardType: string) => void
+  onSelectTarget: (playerId: string | null) => void
+  onSelectGuess: (cardType: string | null) => void
   moveReplayCursor: (nextCursor: number) => void
   getPlayerLabel: (playerId?: string | null) => string
   describeReplayEvent: (event: { type: string; payload: unknown }) => string
