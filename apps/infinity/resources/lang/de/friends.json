@@ -3,7 +3,6 @@
     "selfRequest": "Du kannst dir nicht selbst eine Freundschaftsanfrage senden.",
     "duplicateRequest": "Für diesen Nutzer gibt es bereits eine ausstehende Freundschaftsanfrage.",
     "alreadyFriends": "Ihr seid bereits befreundet.",
-    "adminSenderRequired": "Nur Administratoren können Freundschaftsanfragen senden.",
     "adminRecipientBlocked": "An Administratoren können keine Freundschaftsanfragen gesendet werden.",
     "requestNotFound": "Freundschaftsanfrage wurde nicht gefunden.",
     "requestNotPending": "Diese Freundschaftsanfrage ist nicht mehr offen.",

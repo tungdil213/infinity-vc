@@ -27,10 +27,6 @@ export class SendFriendRequestUseCase {
       return Result.fail('User was not found')
     }
 
-    if (requester.role !== USER_ROLES.ADMIN) {
-      return Result.fail('Only admins can send friend requests')
-    }
-
     if (recipient.role === USER_ROLES.ADMIN) {
       return Result.fail('You cannot send a friend request to an admin')
     }

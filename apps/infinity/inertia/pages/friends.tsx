@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react'
+import { Head, router } from '@inertiajs/react'
 import { Badge } from '@infinity.dev/ui/primitives/badge'
 import { Button } from '@infinity.dev/ui/primitives/button'
 import {
@@ -64,13 +64,7 @@ export default function FriendsPage({
   searchQuery = '',
 }: FriendsPageProps) {
   const { t } = useI18n()
-  const { props } = usePage()
   const [query, setQuery] = useState(searchQuery)
-  const currentUserRole =
-    typeof (props.user as { role?: string } | undefined)?.role === 'string'
-      ? (props.user as { role?: string }).role
-      : null
-  const canCurrentUserSendFriendRequests = currentUserRole === 'ADMIN'
 
   const handleSearch = (event: React.FormEvent) => {
     event.preventDefault()
@@ -142,13 +136,6 @@ export default function FriendsPage({
                             {!candidate.isFriend &&
                               !candidate.hasIncomingRequest &&
                               !candidate.hasOutgoingRequest &&
-                              !canCurrentUserSendFriendRequests && (
-                                <Badge variant="neutral">{t('friends.adminSenderOnlyBadge')}</Badge>
-                              )}
-                            {!candidate.isFriend &&
-                              !candidate.hasIncomingRequest &&
-                              !candidate.hasOutgoingRequest &&
-                              canCurrentUserSendFriendRequests &&
                               !candidate.canReceiveFriendRequests && (
                                 <Badge variant="neutral">
                                   {t('friends.protectedAccountBadge')}
@@ -157,7 +144,6 @@ export default function FriendsPage({
                             {!candidate.isFriend &&
                               !candidate.hasIncomingRequest &&
                               !candidate.hasOutgoingRequest &&
-                              canCurrentUserSendFriendRequests &&
                               candidate.canReceiveFriendRequests && (
                                 <Button
                                   variant="neutral"

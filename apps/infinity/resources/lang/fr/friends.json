@@ -3,7 +3,6 @@
     "selfRequest": "Vous ne pouvez pas vous envoyer une demande d’ami.",
     "duplicateRequest": "Une demande d’ami est déjà en attente pour cet utilisateur.",
     "alreadyFriends": "Vous êtes déjà ami avec cet utilisateur.",
-    "adminSenderRequired": "Seuls les administrateurs peuvent envoyer des demandes d’ami.",
     "adminRecipientBlocked": "Impossible d’envoyer une demande d’ami à un administrateur.",
     "requestNotFound": "Demande d’ami introuvable.",
     "requestNotPending": "Cette demande d’ami n’est plus en attente.",

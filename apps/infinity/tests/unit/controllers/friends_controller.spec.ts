@@ -38,7 +38,6 @@ function createController(overrides?: {
 function createI18nHarness() {
   const translations: Record<string, string> = {
     'friends.errors.actionFailed': 'Friend action failed safely.',
-    'friends.errors.adminSenderRequired': 'Only admins can send friend requests.',
     'friends.errors.adminRecipientBlocked': 'You cannot send a friend request to an administrator.',
   }
 
@@ -185,11 +184,11 @@ test.group('FriendsController', () => {
     }
   })
 
-  test('translates admin friend-request restrictions safely', async ({ assert }) => {
+  test('translates admin-recipient restrictions safely', async ({ assert }) => {
     const controller = createController({
       sendResult: {
         isFailure: true,
-        error: 'Only admins can send friend requests',
+        error: 'You cannot send a friend request to an admin',
       },
     })
 
@@ -218,7 +217,10 @@ test.group('FriendsController', () => {
       assert.fail('Expected sendRequest to throw a BusinessException')
     } catch (error) {
       assert.instanceOf(error, BusinessException)
-      assert.equal((error as BusinessException).message, 'Only admins can send friend requests.')
+      assert.equal(
+        (error as BusinessException).message,
+        'You cannot send a friend request to an administrator.'
+      )
     }
   })
 })

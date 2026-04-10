@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import { test } from '@japa/runner'
-import User from '#models/user'
 import { DatabaseInvitationRepository } from '#infrastructure/repositories/database_invitation_repository'
+import Friendship from '#models/friendship'
+import User from '#models/user'
 
 async function createUser(userUuid: string, email: string, fullName = 'Invitation Issuer') {
   await User.updateOrCreate(
@@ -30,7 +31,7 @@ test.group('DatabaseInvitationRepository', () => {
     })
 
     assert.isTrue(generated.isSuccess)
-    assert.match(generated.value!.plainCode, /^[A-Z0-9-]+$/)
+    assert.match(generated.value!.plainCode, /^[\dA-Z-]+$/)
 
     const validated = await repository.validateCode(generated.value!.plainCode)
     assert.isTrue(validated.isSuccess)
@@ -45,6 +46,12 @@ test.group('DatabaseInvitationRepository', () => {
 
     assert.isTrue(registered.isSuccess)
     assert.equal(registered.value!.user.invitedByUserUuid, issuerUserUuid)
+
+    const friendship = await Friendship.query()
+      .where('pair_key', `${[issuerUserUuid, registered.value!.user.uuid].sort().join('::')}`)
+      .first()
+
+    assert.exists(friendship)
 
     const reused = await repository.registerUserWithInvitation({
       fullName: 'Another Member',
