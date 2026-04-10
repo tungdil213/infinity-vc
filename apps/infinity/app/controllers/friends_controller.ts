@@ -141,15 +141,23 @@ export default class FriendsController {
 
     const key = map[error]
     if (!key) {
-      return error
+      return this.translateFallback(
+        i18n,
+        'friends.errors.actionFailed',
+        'Unable to complete the friend action.'
+      )
     }
 
+    return this.translateFallback(i18n, key, error)
+  }
+
+  private translateFallback(i18n: HttpContext['i18n'], key: string, fallback: string): string {
     const translated = i18n.t(key)
     if (typeof translated === 'string' && !translated.startsWith('translation missing:')) {
       return translated
     }
 
-    return error
+    return fallback
   }
 
   private userSafeError(message: string): BusinessException {

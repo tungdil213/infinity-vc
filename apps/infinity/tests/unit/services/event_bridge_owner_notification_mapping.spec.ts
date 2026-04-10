@@ -118,6 +118,11 @@ test.group('Event bridge owner notification mapping', () => {
     assert.equal(transcript.broadcasts[1].channel, 'users/friend-2')
     assert.equal((transcript.broadcasts[0].payload as any).type, 'social.presence.updated')
     assert.equal((transcript.broadcasts[0].payload as any).presence.friendUserUuid, 'actor-1')
+    assert.notProperty((transcript.broadcasts[0].payload as any).presence, 'email')
+    assert.notInclude(
+      JSON.stringify((transcript.broadcasts[0].payload as any).presence),
+      '@example.com'
+    )
 
     bridge.stop()
   })

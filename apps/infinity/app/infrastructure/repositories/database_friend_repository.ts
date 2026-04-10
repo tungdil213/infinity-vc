@@ -16,7 +16,7 @@ import { Result } from '#shared/result'
 type UserSummaryRow = {
   user_uuid: string
   full_name: string | null
-  email: string
+  nick_name: string | null
 }
 
 type FriendRequestRow = {
@@ -61,8 +61,7 @@ export class DatabaseFriendRepository implements FriendRepository {
           uuid: row.uuid,
           userUuid,
           friendUserUuid,
-          friendFullName: friendUser.full_name ?? 'Unknown User',
-          friendEmail: friendUser.email,
+          friendDisplayName: this.resolveDisplayName(friendUser),
           createdAt: this.toDate(row.created_at)!,
         } satisfies FriendshipRecord
       })
@@ -101,7 +100,7 @@ export class DatabaseFriendRepository implements FriendRepository {
           return this.toFriendRequestRecord(row, requester, {
             user_uuid: userUuid,
             full_name: null,
-            email: '',
+            nick_name: null,
           })
         })
         .filter((value): value is FriendRequestRecord => value !== null),
@@ -117,7 +116,7 @@ export class DatabaseFriendRepository implements FriendRepository {
             {
               user_uuid: userUuid,
               full_name: null,
-              email: '',
+              nick_name: null,
             },
             recipient
           )
@@ -135,7 +134,7 @@ export class DatabaseFriendRepository implements FriendRepository {
     const rows = (await db
       .from('users')
       .leftJoin('players', 'players.user_uuid', 'users.user_uuid')
-      .select('users.user_uuid', 'users.full_name', 'users.email')
+      .select('users.user_uuid', 'users.full_name', 'players.nick_name')
       .whereNull('users.deleted_at')
       .where('users.user_uuid', '!=', userUuid)
       .where((builder) => {
@@ -170,8 +169,7 @@ export class DatabaseFriendRepository implements FriendRepository {
 
       return {
         userUuid: row.user_uuid,
-        fullName: row.full_name ?? 'Unknown User',
-        email: row.email,
+        displayName: this.resolveDisplayName(row),
         isFriend: friendshipsByKey.has(pairKey),
         hasIncomingRequest:
           existingRequest?.status === 'pending' &&
@@ -228,9 +226,9 @@ export class DatabaseFriendRepository implements FriendRepository {
         return Result.ok({
           uuid,
           requesterUserUuid,
-          requesterFullName: requester.full_name ?? 'Unknown User',
+          requesterDisplayName: this.resolveDisplayName(requester),
           recipientUserUuid,
-          recipientFullName: recipient.full_name ?? 'Unknown User',
+          recipientDisplayName: this.resolveDisplayName(recipient),
           status: 'pending',
           createdAt: now.toJSDate(),
           respondedAt: null,
@@ -256,9 +254,9 @@ export class DatabaseFriendRepository implements FriendRepository {
       return Result.ok({
         uuid: existingRequest.uuid,
         requesterUserUuid,
-        requesterFullName: requester.full_name ?? 'Unknown User',
+        requesterDisplayName: this.resolveDisplayName(requester),
         recipientUserUuid,
-        recipientFullName: recipient.full_name ?? 'Unknown User',
+        recipientDisplayName: this.resolveDisplayName(recipient),
         status: 'pending',
         createdAt: this.toDate(existingRequest.created_at) ?? now.toJSDate(),
         respondedAt: null,
@@ -341,8 +339,7 @@ export class DatabaseFriendRepository implements FriendRepository {
         uuid: friendshipUuid,
         userUuid: recipientUserUuid,
         friendUserUuid: requestRow.requester_user_uuid,
-        friendFullName: friendUser.full_name ?? 'Unknown User',
-        friendEmail: friendUser.email,
+        friendDisplayName: this.resolveDisplayName(friendUser),
         createdAt: now.toJSDate(),
       })
     } catch (error) {
@@ -388,9 +385,9 @@ export class DatabaseFriendRepository implements FriendRepository {
       return Result.ok({
         uuid: requestRow.uuid,
         requesterUserUuid: requestRow.requester_user_uuid,
-        requesterFullName: requester.full_name ?? 'Unknown User',
+        requesterDisplayName: this.resolveDisplayName(requester),
         recipientUserUuid: requestRow.recipient_user_uuid,
-        recipientFullName: recipient.full_name ?? 'Unknown User',
+        recipientDisplayName: this.resolveDisplayName(recipient),
         status: 'rejected',
         createdAt: this.toDate(requestRow.created_at) ?? now.toJSDate(),
         respondedAt: now.toJSDate(),
@@ -437,9 +434,9 @@ export class DatabaseFriendRepository implements FriendRepository {
       return Result.ok({
         uuid: requestRow.uuid,
         requesterUserUuid: requestRow.requester_user_uuid,
-        requesterFullName: requester.full_name ?? 'Unknown User',
+        requesterDisplayName: this.resolveDisplayName(requester),
         recipientUserUuid: requestRow.recipient_user_uuid,
-        recipientFullName: recipient.full_name ?? 'Unknown User',
+        recipientDisplayName: this.resolveDisplayName(recipient),
         status: 'cancelled',
         createdAt: this.toDate(requestRow.created_at) ?? now.toJSDate(),
         respondedAt: now.toJSDate(),
@@ -468,9 +465,10 @@ export class DatabaseFriendRepository implements FriendRepository {
     return (
       ((await db
         .from('users')
-        .select('user_uuid', 'full_name', 'email')
-        .where('user_uuid', userUuid)
-        .whereNull('deleted_at')
+        .leftJoin('players', 'players.user_uuid', 'users.user_uuid')
+        .select('users.user_uuid', 'users.full_name', 'players.nick_name')
+        .where('users.user_uuid', userUuid)
+        .whereNull('users.deleted_at')
         .first()) as UserSummaryRow | null) ?? null
     )
   }
@@ -483,9 +481,10 @@ export class DatabaseFriendRepository implements FriendRepository {
 
     const rows = (await db
       .from('users')
-      .select('user_uuid', 'full_name', 'email')
-      .whereIn('user_uuid', uniqueUuids)
-      .whereNull('deleted_at')) as UserSummaryRow[]
+      .leftJoin('players', 'players.user_uuid', 'users.user_uuid')
+      .select('users.user_uuid', 'users.full_name', 'players.nick_name')
+      .whereIn('users.user_uuid', uniqueUuids)
+      .whereNull('users.deleted_at')) as UserSummaryRow[]
 
     return new Map(rows.map((row) => [row.user_uuid, row]))
   }
@@ -498,13 +497,27 @@ export class DatabaseFriendRepository implements FriendRepository {
     return {
       uuid: row.uuid,
       requesterUserUuid: row.requester_user_uuid,
-      requesterFullName: requester.full_name ?? 'Unknown User',
+      requesterDisplayName: this.resolveDisplayName(requester),
       recipientUserUuid: row.recipient_user_uuid,
-      recipientFullName: recipient.full_name ?? 'Unknown User',
+      recipientDisplayName: this.resolveDisplayName(recipient),
       status: row.status,
       createdAt: this.toDate(row.created_at) ?? new Date(),
       respondedAt: this.toDate(row.responded_at),
     }
+  }
+
+  private resolveDisplayName(user: UserSummaryRow): string {
+    const fullName = user.full_name?.trim()
+    if (fullName) {
+      return fullName
+    }
+
+    const nickName = user.nick_name?.trim()
+    if (nickName) {
+      return nickName
+    }
+
+    return 'Unknown User'
   }
 
   private toDate(value: Date | string | null): Date | null {

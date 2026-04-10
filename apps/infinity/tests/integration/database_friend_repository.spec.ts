@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { test } from '@japa/runner'
+import Player from '#models/player'
 import User from '#models/user'
 import { DatabaseFriendRepository } from '#infrastructure/repositories/database_friend_repository'
 
@@ -11,6 +12,17 @@ async function createUser(userUuid: string, email: string, fullName: string) {
       fullName,
       email,
       password: 'password123',
+    }
+  )
+}
+
+async function createPlayer(userUuid: string, nickName: string) {
+  await Player.updateOrCreate(
+    { userUuid },
+    {
+      userUuid,
+      nickName,
+      avatarUrl: null,
     }
   )
 }
@@ -41,6 +53,8 @@ test.group('DatabaseFriendRepository', () => {
     const overview = await repository.listOverview(requesterUserUuid)
     assert.lengthOf(overview.friends, 1)
     assert.equal(overview.friends[0].friendUserUuid, recipientUserUuid)
+    assert.equal(overview.friends[0].friendDisplayName, 'Recipient User')
+    assert.notProperty(overview.friends[0], 'friendEmail')
 
     const removed = await repository.removeFriend(requesterUserUuid, recipientUserUuid)
     assert.isTrue(removed.isSuccess)
@@ -74,5 +88,24 @@ test.group('DatabaseFriendRepository', () => {
     const rejected = await repository.rejectRequest(resent.value!.uuid, secondUserUuid)
     assert.isTrue(rejected.isSuccess)
     assert.equal(rejected.value!.status, 'rejected')
+    assert.equal(rejected.value!.requesterDisplayName, 'Self User')
+    assert.notProperty(rejected.value!, 'requesterEmail')
+  })
+
+  test('searches by public nickname and never exposes email in search results', async ({ assert }) => {
+    const repository = new DatabaseFriendRepository()
+    const viewerUserUuid = randomUUID()
+    const searchableUserUuid = randomUUID()
+
+    await createUser(viewerUserUuid, `search.viewer.${Date.now()}@example.com`, 'Viewer User')
+    await createUser(searchableUserUuid, `search.target.${Date.now()}@example.com`, '')
+    await createPlayer(searchableUserUuid, 'ShadowFox')
+
+    const results = await repository.searchUsers('shadow', viewerUserUuid)
+
+    assert.lengthOf(results, 1)
+    assert.equal(results[0].userUuid, searchableUserUuid)
+    assert.equal(results[0].displayName, 'ShadowFox')
+    assert.notProperty(results[0], 'email')
   })
 })

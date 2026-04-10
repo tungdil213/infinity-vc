@@ -74,6 +74,8 @@ test.group('Friend presence API', (group) => {
     assert.lengthOf(initialSnapshot.body().friends, 1)
     assert.equal(initialSnapshot.body().friends[0].friendUserUuid, friendUserUuid)
     assert.equal(initialSnapshot.body().friends[0].status, 'offline')
+    assert.equal(initialSnapshot.body().friends[0].displayName, 'Friend User')
+    assert.notProperty(initialSnapshot.body().friends[0], 'email')
 
     const outsiderHeartbeat = await client
       .post('/api/v1/friends/presence/heartbeat')
@@ -88,6 +90,8 @@ test.group('Friend presence API', (group) => {
       .form({ clientSessionId: friendSessionId })
       .withCsrfToken()
     onlineHeartbeat.assertStatus(200)
+    assert.equal(onlineHeartbeat.body().presence.displayName, 'Friend User')
+    assert.notProperty(onlineHeartbeat.body().presence, 'email')
 
     const onlineSnapshot = await client
       .get('/api/v1/friends/presence')
@@ -170,7 +174,50 @@ test.group('Friend presence API', (group) => {
     finalSnapshot.assertStatus(200)
     assert.lengthOf(finalSnapshot.body().friends, 1)
     assert.equal(finalSnapshot.body().friends[0].status, 'offline')
+    assert.notProperty(finalSnapshot.body().friends[0], 'email')
 
     socialPresenceRepository.clearAll()
+  })
+
+  test('never falls back to email when a friend has no public display name', async ({
+    client,
+    assert,
+  }) => {
+    const friendRepository = new DatabaseFriendRepository()
+
+    const viewerUserUuid = randomUUID()
+    const friendUserUuid = randomUUID()
+    const friendSessionId = randomUUID()
+
+    const viewer = await createUser(
+      viewerUserUuid,
+      `presence.viewer.private.${Date.now()}@example.com`,
+      'Viewer User'
+    )
+    const friend = await createUser(
+      friendUserUuid,
+      `presence.private.${Date.now()}@example.com`,
+      ''
+    )
+
+    const sent = await friendRepository.sendRequest(viewerUserUuid, friendUserUuid)
+    assert.isTrue(sent.isSuccess)
+    const accepted = await friendRepository.acceptRequest(sent.value!.uuid, friendUserUuid)
+    assert.isTrue(accepted.isSuccess)
+
+    const heartbeat = await client
+      .post('/api/v1/friends/presence/heartbeat')
+      .loginAs(friend)
+      .form({ clientSessionId: friendSessionId })
+      .withCsrfToken()
+    heartbeat.assertStatus(200)
+    assert.equal(heartbeat.body().presence.displayName, 'Unknown User')
+    assert.notInclude(JSON.stringify(heartbeat.body()), friend.email)
+
+    const snapshot = await client.get('/api/v1/friends/presence').loginAs(viewer).withCsrfToken()
+    snapshot.assertStatus(200)
+    assert.equal(snapshot.body().friends[0].displayName, 'Unknown User')
+    assert.notProperty(snapshot.body().friends[0], 'email')
+    assert.notInclude(JSON.stringify(snapshot.body()), friend.email)
   })
 })

@@ -6,6 +6,8 @@
     "requestNotFound": "Demande d’ami introuvable.",
     "requestNotPending": "Cette demande d’ami n’est plus en attente.",
     "friendshipNotFound": "Relation d’amitié introuvable.",
-    "userNotFound": "Utilisateur introuvable."
+    "userNotFound": "Utilisateur introuvable.",
+    "actionFailed": "Impossible d’effectuer l’action sociale.",
+    "presenceFailed": "Impossible de mettre à jour la présence sociale."
   }
 }

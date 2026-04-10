@@ -168,5 +168,7 @@ test.group('SocialPresence use cases', (group) => {
       ['online', 'in_lobby', 'in_game', 'offline']
     )
     assert.deepEqual(notifier.notifications[0].recipients, [viewerUserUuid])
+    assert.equal(notifier.notifications[0].presence.displayName, 'Friend User')
+    assert.notProperty(notifier.notifications[0].presence, 'email')
   })
 })

@@ -6,6 +6,8 @@
     "requestNotFound": "Friend request was not found.",
     "requestNotPending": "Friend request is no longer pending.",
     "friendshipNotFound": "Friendship was not found.",
-    "userNotFound": "User was not found."
+    "userNotFound": "User was not found.",
+    "actionFailed": "Unable to complete the friend action.",
+    "presenceFailed": "Unable to update social presence."
   }
 }

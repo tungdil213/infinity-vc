@@ -33,7 +33,7 @@ export class ListFriendPresenceUseCase {
         if (!currentPresence) {
           return {
             friendUserUuid: friend.friendUserUuid,
-            displayName: friend.friendFullName,
+            displayName: friend.friendDisplayName,
             status: 'offline',
             lobbyId: null,
             lobbyName: null,
@@ -44,7 +44,7 @@ export class ListFriendPresenceUseCase {
 
         return {
           ...toFriendPresenceDto(currentPresence),
-          displayName: friend.friendFullName,
+          displayName: friend.friendDisplayName,
         }
       })
       .sort((left, right) => {

@@ -6,6 +6,8 @@
     "requestNotFound": "Freundschaftsanfrage wurde nicht gefunden.",
     "requestNotPending": "Diese Freundschaftsanfrage ist nicht mehr offen.",
     "friendshipNotFound": "Freundschaft wurde nicht gefunden.",
-    "userNotFound": "Nutzer wurde nicht gefunden."
+    "userNotFound": "Nutzer wurde nicht gefunden.",
+    "actionFailed": "Die Freundschaftsaktion konnte nicht abgeschlossen werden.",
+    "presenceFailed": "Die soziale Präsenz konnte nicht aktualisiert werden."
   }
 }

@@ -16,25 +16,23 @@ import Layout from '../layouts/layout'
 interface FriendItem {
   uuid: string
   friendUserUuid: string
-  friendFullName: string
-  friendEmail: string
+  friendDisplayName: string
   createdAt: string
 }
 
 interface FriendRequestItem {
   uuid: string
   requesterUserUuid: string
-  requesterFullName: string
+  requesterDisplayName: string
   recipientUserUuid: string
-  recipientFullName: string
+  recipientDisplayName: string
   status: 'pending' | 'accepted' | 'rejected' | 'cancelled'
   createdAt: string
 }
 
 interface FriendSearchItem {
   userUuid: string
-  fullName: string
-  email: string
+  displayName: string
   isFriend: boolean
   hasIncomingRequest: boolean
   hasOutgoingRequest: boolean
@@ -121,8 +119,7 @@ export default function FriendsPage({
                           className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-center sm:justify-between"
                         >
                           <div>
-                            <p className="font-medium text-foreground">{candidate.fullName}</p>
-                            <p className="text-sm text-muted-foreground">{candidate.email}</p>
+                            <p className="font-medium text-foreground">{candidate.displayName}</p>
                           </div>
 
                           <div className="flex flex-wrap items-center gap-2">
@@ -172,7 +169,9 @@ export default function FriendsPage({
                   <div className="space-y-3">
                     {incomingRequests.map((requestItem) => (
                       <div key={requestItem.uuid} className="rounded-lg border border-border p-4">
-                        <p className="font-medium text-foreground">{requestItem.requesterFullName}</p>
+                        <p className="font-medium text-foreground">
+                          {requestItem.requesterDisplayName}
+                        </p>
                         <p className="text-sm text-muted-foreground">
                           {t('friends.requestReceivedAt', {
                             date: toReadableDate(requestItem.createdAt),
@@ -211,7 +210,9 @@ export default function FriendsPage({
                   <div className="space-y-3">
                     {outgoingRequests.map((requestItem) => (
                       <div key={requestItem.uuid} className="rounded-lg border border-border p-4">
-                        <p className="font-medium text-foreground">{requestItem.recipientFullName}</p>
+                        <p className="font-medium text-foreground">
+                          {requestItem.recipientDisplayName}
+                        </p>
                         <p className="text-sm text-muted-foreground">
                           {t('friends.requestSentAt', {
                             date: toReadableDate(requestItem.createdAt),
@@ -250,8 +251,7 @@ export default function FriendsPage({
                         className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-center sm:justify-between"
                       >
                         <div>
-                          <p className="font-medium text-foreground">{friend.friendFullName}</p>
-                          <p className="text-sm text-muted-foreground">{friend.friendEmail}</p>
+                          <p className="font-medium text-foreground">{friend.friendDisplayName}</p>
                           <p className="text-xs text-muted-foreground">
                             {t('friends.friendSince', { date: toReadableDate(friend.createdAt) })}
                           </p>

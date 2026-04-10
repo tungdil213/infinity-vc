@@ -19,12 +19,12 @@ export default class FriendPresenceController {
     private readonly clearSocialPresenceUseCase: ClearSocialPresenceUseCase
   ) {}
 
-  async index({ auth, response }: HttpContext) {
+  async index({ auth, response, i18n }: HttpContext) {
     const user = auth.user!
     const result = await this.listFriendPresenceUseCase.execute(user.userUuid)
 
     if (result.isFailure) {
-      throw this.userSafeError(result.error)
+      throw this.userSafeError(this.translateFallback(i18n))
     }
 
     return response.json({
@@ -35,7 +35,7 @@ export default class FriendPresenceController {
     })
   }
 
-  async heartbeat({ auth, request, response }: HttpContext) {
+  async heartbeat({ auth, request, response, i18n }: HttpContext) {
     const user = auth.user!
     const { clientSessionId } = await request.validateUsing(socialPresenceHeartbeatValidator)
     const result = await this.heartbeatSocialPresenceUseCase.execute({
@@ -45,7 +45,7 @@ export default class FriendPresenceController {
     })
 
     if (result.isFailure) {
-      throw this.userSafeError(result.error)
+      throw this.userSafeError(this.translateFallback(i18n))
     }
 
     return response.json({
@@ -56,7 +56,7 @@ export default class FriendPresenceController {
     })
   }
 
-  async offline({ auth, request, response }: HttpContext) {
+  async offline({ auth, request, response, i18n }: HttpContext) {
     const user = auth.user!
     const { clientSessionId } = await request.validateUsing(socialPresenceHeartbeatValidator)
     const result = await this.clearSocialPresenceUseCase.execute({
@@ -66,7 +66,7 @@ export default class FriendPresenceController {
     })
 
     if (result.isFailure) {
-      throw this.userSafeError(result.error)
+      throw this.userSafeError(this.translateFallback(i18n))
     }
 
     return response.json({
@@ -77,12 +77,21 @@ export default class FriendPresenceController {
     })
   }
 
-  private resolveDisplayName(user: { fullName?: string | null; email?: string | null }): string {
+  private resolveDisplayName(user: { fullName?: string | null }): string {
     if (typeof user.fullName === 'string' && user.fullName.trim().length > 0) {
       return user.fullName.trim()
     }
 
-    return user.email?.trim() || 'Unknown User'
+    return 'Unknown User'
+  }
+
+  private translateFallback(i18n: HttpContext['i18n']): string {
+    const translated = i18n.t('friends.errors.presenceFailed')
+    if (typeof translated === 'string' && !translated.startsWith('translation missing:')) {
+      return translated
+    }
+
+    return 'Unable to update social presence.'
   }
 
   private userSafeError(message: string): BusinessException {
