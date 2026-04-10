@@ -1,19 +1,20 @@
-import { HttpContext } from '@adonisjs/core/http'
 import { inject } from '@adonisjs/core'
-import User from '#models/user'
+import { HttpContext } from '@adonisjs/core/http'
 import hash from '@adonisjs/core/services/hash'
 import logger from '@adonisjs/core/services/logger'
-import { authRegisterValidator } from '#validators/auth_register_validator'
-import { authInvitationCodeValidator } from '#validators/auth_invitation_validator'
-import { authLoginValidator } from '#validators/auth_login_validator'
-import { ValidateInvitationCodeUseCase } from '#application/use_cases/validate_invitation_code_use_case'
+import { ClearSocialPresenceUseCase } from '#application/use_cases/clear_social_presence_use_case'
 import { RegisterWithInvitationUseCase } from '#application/use_cases/register_with_invitation_use_case'
+import { ValidateInvitationCodeUseCase } from '#application/use_cases/validate_invitation_code_use_case'
 import BusinessException from '#exceptions/business_exception'
 import {
   ErrorClassification,
   ErrorSeverity,
   ToastType,
 } from '#exceptions/types/error_classification'
+import User from '#models/user'
+import { authInvitationCodeValidator } from '#validators/auth_invitation_validator'
+import { authLoginValidator } from '#validators/auth_login_validator'
+import { authRegisterValidator } from '#validators/auth_register_validator'
 
 const DEFAULT_REDIRECT_PATH = '/lobbies'
 const AUTH_ERROR_TRANSLATION_KEYS: Record<string, string> = {
@@ -34,7 +35,8 @@ const AUTH_ERROR_TRANSLATION_KEYS: Record<string, string> = {
 export default class EnhancedAuthController {
   constructor(
     private readonly validateInvitationCodeUseCase: ValidateInvitationCodeUseCase,
-    private readonly registerWithInvitationUseCase: RegisterWithInvitationUseCase
+    private readonly registerWithInvitationUseCase: RegisterWithInvitationUseCase,
+    private readonly clearSocialPresenceUseCase: ClearSocialPresenceUseCase
   ) {}
 
   /**
@@ -177,6 +179,16 @@ export default class EnhancedAuthController {
    */
   async logout({ response, auth, session, i18n }: HttpContext) {
     try {
+      const currentUser = auth.user
+      if (currentUser) {
+        await this.clearSocialPresenceUseCase.execute({
+          userUuid: currentUser.userUuid,
+          displayName:
+            typeof currentUser.fullName === 'string' && currentUser.fullName.trim().length > 0
+              ? currentUser.fullName
+              : currentUser.email,
+        })
+      }
       await auth.use('web').logout()
       session.flash('success', i18n.t('auth.logout.success'))
       return response.redirect('/')
@@ -267,7 +279,7 @@ export default class EnhancedAuthController {
       return DEFAULT_REDIRECT_PATH
     }
 
-    if (!value.startsWith('/') || value.startsWith('//') || /[\r\n]/.test(value)) {
+    if (!value.startsWith('/') || value.startsWith('//') || /[\n\r]/.test(value)) {
       return DEFAULT_REDIRECT_PATH
     }
 

@@ -38,6 +38,7 @@ export interface FriendOverview {
 }
 
 export interface FriendRepository {
+  listFriends(userUuid: string): Promise<FriendshipRecord[]>
   listOverview(userUuid: string): Promise<FriendOverview>
   searchUsers(query: string, userUuid: string, limit?: number): Promise<FriendUserRecord[]>
   sendRequest(

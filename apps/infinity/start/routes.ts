@@ -7,11 +7,11 @@
 |
 */
 
-import router from '@adonisjs/core/services/router'
-import app from '@adonisjs/core/services/app'
-import { middleware } from './kernel.js'
-import transmit from '@adonisjs/transmit/services/main'
 import './transmit.js'
+import app from '@adonisjs/core/services/app'
+import router from '@adonisjs/core/services/router'
+import transmit from '@adonisjs/transmit/services/main'
+import { middleware } from './kernel.js'
 
 // Public routes
 router.get('/', '#controllers/enhanced_lobbies_controller.welcome').as('home')
@@ -190,6 +190,15 @@ router
       .get('/games/me/history', '#controllers/games_controller.myHistory')
       .as('api.games.my.history')
     router.get('/games/me/stats', '#controllers/games_controller.myStats').as('api.games.my.stats')
+    router
+      .get('/friends/presence', '#controllers/friend_presence_controller.index')
+      .as('api.friends.presence.index')
+    router
+      .post('/friends/presence/heartbeat', '#controllers/friend_presence_controller.heartbeat')
+      .as('api.friends.presence.heartbeat')
+    router
+      .post('/friends/presence/offline', '#controllers/friend_presence_controller.offline')
+      .as('api.friends.presence.offline')
     router.get('/games/:uuid', '#controllers/games_controller.apiShow').as('api.games.show')
     router.get('/games/:uuid/replay', '#controllers/games_controller.replay').as('api.games.replay')
     router

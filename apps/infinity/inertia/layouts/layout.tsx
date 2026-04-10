@@ -1,16 +1,17 @@
-import React, { useEffect } from 'react'
 import { usePage } from '@inertiajs/react'
-import { toast } from 'sonner'
-import { Toaster } from '@infinity.dev/ui/primitives/sonner'
 import { Footer } from '@infinity.dev/ui/components/footer'
-import { ToastHandler } from './toast_handler'
-import { LobbyStatusSidebar } from './LobbyStatusSidebar'
-import { AutoLeaveLobby } from './AutoLeaveLobby'
-import { LobbyOwnerNotifications } from './LobbyOwnerNotifications'
+import { Toaster } from '@infinity.dev/ui/primitives/sonner'
+import React, { useEffect } from 'react'
+import { toast } from 'sonner'
 import { TransmitProvider } from '../contexts/TransmitContext'
 import { disposeLobbyService } from '../hooks/use_lobby_service'
-import { HeaderWrapper } from './HeaderWrapper'
 import { useI18n } from '../i18n/use_i18n'
+import { AutoLeaveLobby } from './AutoLeaveLobby'
+import { FriendPresencePanel } from './friend_presence_panel'
+import { HeaderWrapper } from './HeaderWrapper'
+import { LobbyOwnerNotifications } from './LobbyOwnerNotifications'
+import { LobbyStatusSidebar } from './LobbyStatusSidebar'
+import { ToastHandler } from './toast_handler'
 
 // Flash messages component using Sonner
 function FlashMessages() {
@@ -151,6 +152,16 @@ export default function Layout({ children }: LayoutProps) {
           }
         />
       )}
+      <FriendPresencePanel
+        currentUser={
+          userUuid
+            ? {
+                uuid: userUuid,
+                fullName: userDisplayName ?? '',
+              }
+            : undefined
+        }
+      />
       <LobbyOwnerNotifications userUuid={userUuid} />
       <AutoLeaveLobby currentLobby={currentLobby} enabled={true} />
       <Toaster />

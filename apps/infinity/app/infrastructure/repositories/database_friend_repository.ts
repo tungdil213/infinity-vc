@@ -1,9 +1,7 @@
-import { DateTime } from 'luxon'
 import { randomUUID } from 'node:crypto'
-import db from '@adonisjs/lucid/services/db'
 import logger from '@adonisjs/core/services/logger'
-import { Result } from '#shared/result'
-import { safeSystemError } from '#shared/error_sanitizer'
+import db from '@adonisjs/lucid/services/db'
+import { DateTime } from 'luxon'
 import {
   type FriendOverview,
   type FriendRepository,
@@ -12,6 +10,8 @@ import {
   type FriendshipRecord,
   type FriendUserRecord,
 } from '#application/repositories/friend_repository'
+import { safeSystemError } from '#shared/error_sanitizer'
+import { Result } from '#shared/result'
 
 type UserSummaryRow = {
   user_uuid: string
@@ -36,7 +36,7 @@ type FriendshipRow = {
 }
 
 export class DatabaseFriendRepository implements FriendRepository {
-  async listOverview(userUuid: string): Promise<FriendOverview> {
+  async listFriends(userUuid: string): Promise<FriendshipRecord[]> {
     const friendships = (await db
       .from('friendships')
       .where((query) => {
@@ -49,7 +49,7 @@ export class DatabaseFriendRepository implements FriendRepository {
     )
     const usersByUuid = await this.getUsersByUuid(friendUuids)
 
-    const friends = friendships
+    return friendships
       .map((row) => {
         const friendUserUuid = row.user_a_uuid === userUuid ? row.user_b_uuid : row.user_a_uuid
         const friendUser = usersByUuid.get(friendUserUuid)
@@ -67,6 +67,10 @@ export class DatabaseFriendRepository implements FriendRepository {
         } satisfies FriendshipRecord
       })
       .filter((value): value is FriendshipRecord => value !== null)
+  }
+
+  async listOverview(userUuid: string): Promise<FriendOverview> {
+    const friends = await this.listFriends(userUuid)
 
     const incomingRows = (await db
       .from('friend_requests')
