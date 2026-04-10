@@ -94,29 +94,28 @@ test.group('FriendPresenceController', () => {
       {} as any
     )
 
-    await assert.rejects(
-      () =>
-        controller.heartbeat({
-          auth: {
-            user: {
-              userUuid: 'friend-1',
-              fullName: 'Friend User',
-            },
+    try {
+      await controller.heartbeat({
+        auth: {
+          user: {
+            userUuid: 'friend-1',
+            fullName: 'Friend User',
           },
-          request: {
-            validateUsing: async () => ({
-              clientSessionId: 'session-1',
-            }),
-          },
-          response: createResponseHarness().response,
-          i18n: createI18nHarness(),
-        } as any),
-      (error: unknown) => {
-        assert.instanceOf(error, BusinessException)
-        assert.equal((error as BusinessException).message, 'Presence update failed safely.')
-        assert.notInclude((error as BusinessException).message, 'private.friend@example.com')
-        return true
-      }
-    )
+        },
+        request: {
+          validateUsing: async () => ({
+            clientSessionId: 'session-1',
+          }),
+        },
+        response: createResponseHarness().response,
+        i18n: createI18nHarness(),
+      } as any)
+
+      assert.fail('Expected heartbeat to throw a BusinessException')
+    } catch (error) {
+      assert.instanceOf(error, BusinessException)
+      assert.equal((error as BusinessException).message, 'Presence update failed safely.')
+      assert.notInclude((error as BusinessException).message, 'private.friend@example.com')
+    }
   })
 })

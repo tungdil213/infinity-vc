@@ -229,7 +229,8 @@ export default class AppProvider {
 
     this.app.container.singleton(SendFriendRequestUseCase, async (resolver) => {
       const friendRepository = await resolver.make(DatabaseFriendRepository)
-      return new SendFriendRequestUseCase(friendRepository)
+      const userRepository = await resolver.make(DatabaseUserRepository)
+      return new SendFriendRequestUseCase(friendRepository, userRepository)
     })
 
     this.app.container.singleton(AcceptFriendRequestUseCase, async (resolver) => {

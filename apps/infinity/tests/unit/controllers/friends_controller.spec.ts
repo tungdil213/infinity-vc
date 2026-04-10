@@ -1,6 +1,6 @@
 import { test } from '@japa/runner'
-import BusinessException from '#exceptions/business_exception'
 import FriendsController from '#controllers/friends_controller'
+import BusinessException from '#exceptions/business_exception'
 
 function createController(overrides?: {
   overview?: any
@@ -38,6 +38,8 @@ function createController(overrides?: {
 function createI18nHarness() {
   const translations: Record<string, string> = {
     'friends.errors.actionFailed': 'Friend action failed safely.',
+    'friends.errors.adminSenderRequired': 'Only admins can send friend requests.',
+    'friends.errors.adminRecipientBlocked': 'You cannot send a friend request to an administrator.',
   }
 
   return {
@@ -93,6 +95,7 @@ test.group('FriendsController', () => {
             isFriend: false,
             hasIncomingRequest: false,
             hasOutgoingRequest: false,
+            canReceiveFriendRequests: true,
           },
         ],
       },
@@ -125,6 +128,7 @@ test.group('FriendsController', () => {
     assert.isNotNull(render)
     assert.equal(render!.component, 'friends')
     assert.equal(render!.props.searchResults[0].displayName, 'ShadowFox')
+    assert.isTrue(render!.props.searchResults[0].canReceiveFriendRequests)
     assert.notProperty(render!.props.searchResults[0], 'email')
     assert.notProperty(render!.props.friends[0], 'friendEmail')
     assert.notProperty(render!.props.incomingRequests[0], 'requesterEmail')
@@ -147,38 +151,74 @@ test.group('FriendsController', () => {
       },
     })
 
-    await assert.rejects(
-      () =>
-        controller.sendRequest({
-          auth: {
-            user: {
-              userUuid: 'viewer-1',
-            },
+    try {
+      await controller.sendRequest({
+        auth: {
+          user: {
+            userUuid: 'viewer-1',
           },
-          request: {
-            validateUsing: async () => ({
-              recipientUserUuid: 'friend-1',
-            }),
+        },
+        request: {
+          validateUsing: async () => ({
+            recipientUserUuid: 'friend-1',
+          }),
+        },
+        response: {
+          redirect() {
+            return {
+              toRoute() {},
+            }
           },
-          response: {
-            redirect() {
-              return {
-                toRoute() {},
-              }
-            },
+        },
+        i18n: createI18nHarness(),
+      } as any)
+
+      assert.fail('Expected sendRequest to throw a BusinessException')
+    } catch (error) {
+      assert.instanceOf(error, BusinessException)
+      assert.equal((error as BusinessException).message, 'Friend action failed safely.')
+      assert.equal(
+        (error as BusinessException).metadata.userMessage,
+        'Friend action failed safely.'
+      )
+      assert.notInclude((error as BusinessException).message, 'leaked@example.com')
+    }
+  })
+
+  test('translates admin friend-request restrictions safely', async ({ assert }) => {
+    const controller = createController({
+      sendResult: {
+        isFailure: true,
+        error: 'Only admins can send friend requests',
+      },
+    })
+
+    try {
+      await controller.sendRequest({
+        auth: {
+          user: {
+            userUuid: 'viewer-1',
           },
-          i18n: createI18nHarness(),
-        } as any),
-      (error: unknown) => {
-        assert.instanceOf(error, BusinessException)
-        assert.equal((error as BusinessException).message, 'Friend action failed safely.')
-        assert.equal(
-          (error as BusinessException).metadata.userMessage,
-          'Friend action failed safely.'
-        )
-        assert.notInclude((error as BusinessException).message, 'leaked@example.com')
-        return true
-      }
-    )
+        },
+        request: {
+          validateUsing: async () => ({
+            recipientUserUuid: 'friend-1',
+          }),
+        },
+        response: {
+          redirect() {
+            return {
+              toRoute() {},
+            }
+          },
+        },
+        i18n: createI18nHarness(),
+      } as any)
+
+      assert.fail('Expected sendRequest to throw a BusinessException')
+    } catch (error) {
+      assert.instanceOf(error, BusinessException)
+      assert.equal((error as BusinessException).message, 'Only admins can send friend requests.')
+    }
   })
 })

@@ -10,6 +10,7 @@ import {
   type FriendshipRecord,
   type FriendUserRecord,
 } from '#application/repositories/friend_repository'
+import { USER_ROLES, normalizeUserRole, type UserRole } from '#domain/value_objects/user_role'
 import { safeSystemError } from '#shared/error_sanitizer'
 import { Result } from '#shared/result'
 
@@ -17,6 +18,7 @@ type UserSummaryRow = {
   user_uuid: string
   full_name: string | null
   nick_name: string | null
+  role?: UserRole | null
 }
 
 type FriendRequestRow = {
@@ -134,7 +136,7 @@ export class DatabaseFriendRepository implements FriendRepository {
     const rows = (await db
       .from('users')
       .leftJoin('players', 'players.user_uuid', 'users.user_uuid')
-      .select('users.user_uuid', 'users.full_name', 'players.nick_name')
+      .select('users.user_uuid', 'users.full_name', 'players.nick_name', 'users.role')
       .whereNull('users.deleted_at')
       .where('users.user_uuid', '!=', userUuid)
       .where((builder) => {
@@ -176,6 +178,7 @@ export class DatabaseFriendRepository implements FriendRepository {
           existingRequest.requester_user_uuid === row.user_uuid,
         hasOutgoingRequest:
           existingRequest?.status === 'pending' && existingRequest.requester_user_uuid === userUuid,
+        canReceiveFriendRequests: normalizeUserRole(row.role) !== USER_ROLES.ADMIN,
       }
     })
   }
@@ -466,7 +469,7 @@ export class DatabaseFriendRepository implements FriendRepository {
       ((await db
         .from('users')
         .leftJoin('players', 'players.user_uuid', 'users.user_uuid')
-        .select('users.user_uuid', 'users.full_name', 'players.nick_name')
+        .select('users.user_uuid', 'users.full_name', 'players.nick_name', 'users.role')
         .where('users.user_uuid', userUuid)
         .whereNull('users.deleted_at')
         .first()) as UserSummaryRow | null) ?? null
@@ -482,7 +485,7 @@ export class DatabaseFriendRepository implements FriendRepository {
     const rows = (await db
       .from('users')
       .leftJoin('players', 'players.user_uuid', 'users.user_uuid')
-      .select('users.user_uuid', 'users.full_name', 'players.nick_name')
+      .select('users.user_uuid', 'users.full_name', 'players.nick_name', 'users.role')
       .whereIn('users.user_uuid', uniqueUuids)
       .whereNull('users.deleted_at')) as UserSummaryRow[]
 

@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import { test } from '@japa/runner'
+import { DatabaseFriendRepository } from '#infrastructure/repositories/database_friend_repository'
 import Player from '#models/player'
 import User from '#models/user'
-import { DatabaseFriendRepository } from '#infrastructure/repositories/database_friend_repository'
 
 async function createUser(userUuid: string, email: string, fullName: string) {
   await User.updateOrCreate(
@@ -92,7 +92,9 @@ test.group('DatabaseFriendRepository', () => {
     assert.notProperty(rejected.value!, 'requesterEmail')
   })
 
-  test('searches by public nickname and never exposes email in search results', async ({ assert }) => {
+  test('searches by public nickname and never exposes email in search results', async ({
+    assert,
+  }) => {
     const repository = new DatabaseFriendRepository()
     const viewerUserUuid = randomUUID()
     const searchableUserUuid = randomUUID()
@@ -106,6 +108,31 @@ test.group('DatabaseFriendRepository', () => {
     assert.lengthOf(results, 1)
     assert.equal(results[0].userUuid, searchableUserUuid)
     assert.equal(results[0].displayName, 'ShadowFox')
+    assert.isTrue(results[0].canReceiveFriendRequests)
     assert.notProperty(results[0], 'email')
+  })
+
+  test('marks admin accounts as protected in friend search results', async ({ assert }) => {
+    const repository = new DatabaseFriendRepository()
+    const viewerUserUuid = randomUUID()
+    const adminUserUuid = randomUUID()
+
+    await createUser(viewerUserUuid, `search.viewer.${Date.now()}@example.com`, 'Viewer User')
+    await User.updateOrCreate(
+      { userUuid: adminUserUuid },
+      {
+        userUuid: adminUserUuid,
+        fullName: 'Admin User',
+        email: `search.admin.${Date.now()}@example.com`,
+        password: 'password123',
+        role: 'ADMIN',
+      }
+    )
+
+    const results = await repository.searchUsers('admin', viewerUserUuid)
+
+    assert.lengthOf(results, 1)
+    assert.equal(results[0].displayName, 'Admin User')
+    assert.isFalse(results[0].canReceiveFriendRequests)
   })
 })

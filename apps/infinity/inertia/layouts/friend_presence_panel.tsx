@@ -286,6 +286,10 @@ function FriendPresencePanelCard({
               />
             ))}
           </div>
+        ) : entries.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-border px-3 py-4 text-sm text-muted-foreground">
+            {t('friends.presence.noFriendsEmptyState')}
+          </p>
         ) : (
           <ScrollArea className="max-h-[22rem] pr-3">
             <div className="space-y-5">
@@ -322,7 +326,37 @@ export function FriendPresencePanel({ currentUser }: FriendPresencePanelProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isOpen, setIsOpen] = useState(false)
+  const [isDesktopViewport, setIsDesktopViewport] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(min-width: 768px)').matches : false
+  )
   const clientSessionIdRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const mediaQuery = window.matchMedia('(min-width: 768px)')
+    const updateViewport = (event?: MediaQueryListEvent) => {
+      setIsDesktopViewport(event?.matches ?? mediaQuery.matches)
+    }
+
+    updateViewport()
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', updateViewport)
+
+      return () => {
+        mediaQuery.removeEventListener('change', updateViewport)
+      }
+    }
+
+    mediaQuery.addListener(updateViewport)
+
+    return () => {
+      mediaQuery.removeListener(updateViewport)
+    }
+  }, [])
 
   useEffect(() => {
     if (!currentUser || typeof window === 'undefined') {
@@ -490,12 +524,14 @@ export function FriendPresencePanel({ currentUser }: FriendPresencePanelProps) {
   const buttonLabel = t('friends.presence.toggleLabel', {
     count: onlineCount,
   })
+  const isDesktopPanelOpen = isDesktopViewport && isOpen
+  const isMobileDrawerOpen = !isDesktopViewport && isOpen
 
   return (
     <>
       <div className="fixed bottom-4 right-4 z-[60] hidden md:block">
         <div className="relative">
-          {isOpen && (
+          {isDesktopPanelOpen && (
             <div className="absolute bottom-16 right-0 w-[22rem]">
               <FriendPresencePanelCard
                 entries={entries}
@@ -543,7 +579,7 @@ export function FriendPresencePanel({ currentUser }: FriendPresencePanelProps) {
         </Button>
       </div>
 
-      <Drawer open={isOpen} onOpenChange={setIsOpen}>
+      <Drawer open={isMobileDrawerOpen} onOpenChange={setIsOpen}>
         <DrawerContent className="md:hidden">
           <DrawerHeader>
             <DrawerTitle>{t('friends.presence.title')}</DrawerTitle>

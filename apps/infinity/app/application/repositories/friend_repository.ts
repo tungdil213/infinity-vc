@@ -11,6 +11,7 @@ export interface FriendUserRecord extends PublicSocialUserView {
   isFriend: boolean
   hasIncomingRequest: boolean
   hasOutgoingRequest: boolean
+  canReceiveFriendRequests: boolean
 }
 
 export interface FriendRequestRecord {
