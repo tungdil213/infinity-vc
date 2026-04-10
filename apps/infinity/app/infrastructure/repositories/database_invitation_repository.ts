@@ -1,12 +1,8 @@
-import { DateTime } from 'luxon'
 import { randomUUID } from 'node:crypto'
-import db from '@adonisjs/lucid/services/db'
 import hash from '@adonisjs/core/services/hash'
 import logger from '@adonisjs/core/services/logger'
-import UserModel from '#models/user'
-import InvitationCodeModel from '#models/invitation_code'
-import { Result } from '#shared/result'
-import { safeSystemError } from '#shared/error_sanitizer'
+import db from '@adonisjs/lucid/services/db'
+import { DateTime } from 'luxon'
 import {
   type GenerateInvitationCodeRequest,
   type GenerateInvitationCodeResponse,
@@ -23,6 +19,10 @@ import {
   generateInvitationCode,
   normalizeInvitationCode,
 } from '#infrastructure/security/invitation_code_security'
+import InvitationCodeModel from '#models/invitation_code'
+import UserModel from '#models/user'
+import { safeSystemError } from '#shared/error_sanitizer'
+import { Result } from '#shared/result'
 
 type PersistedInvitationRow = {
   uuid: string
@@ -175,6 +175,17 @@ export class DatabaseInvitationRepository implements InvitationRepository {
         nick_name: nickName,
         avatar_url: null,
         deleted_at: null,
+        created_at: nowSql,
+        updated_at: nowSql,
+      })
+
+      const [userAUuid, userBUuid] = sortPair(invitationRow.issuer_user_uuid, userUuid)
+
+      await trx.table('friendships').insert({
+        uuid: randomUUID(),
+        user_a_uuid: userAUuid,
+        user_b_uuid: userBUuid,
+        pair_key: buildPairKey(invitationRow.issuer_user_uuid, userUuid),
         created_at: nowSql,
         updated_at: nowSql,
       })
@@ -502,7 +513,7 @@ export class DatabaseInvitationRepository implements InvitationRepository {
 
   private generateDefaultNickName(fullName: string): string {
     const sanitized = fullName
-      .replace(/[^a-zA-Z0-9\s_-]+/g, ' ')
+      .replace(/[^\s\w-]+/g, ' ')
       .replace(/\s+/g, ' ')
       .trim()
       .slice(0, 30)
@@ -518,4 +529,13 @@ export class DatabaseInvitationRepository implements InvitationRepository {
   private toDatabaseDateTime(value: DateTime): string {
     return value.toSQL({ includeOffset: false }) ?? value.toISO() ?? value.toJSDate().toISOString()
   }
+}
+
+function sortPair(left: string, right: string): [string, string] {
+  return left < right ? [left, right] : [right, left]
+}
+
+function buildPairKey(left: string, right: string): string {
+  const [first, second] = sortPair(left, right)
+  return `${first}::${second}`
 }

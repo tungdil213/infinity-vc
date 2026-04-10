@@ -203,7 +203,6 @@ export const enMessages = {
 	'friends.alreadyFriendsBadge': 'Already friends',
 	'friends.incomingRequestBadge': 'Incoming request',
 	'friends.outgoingRequestBadge': 'Pending request',
-	'friends.adminSenderOnlyBadge': 'Admins only',
 	'friends.protectedAccountBadge': 'Protected account',
 	'friends.sendRequestAction': 'Send request',
 	'friends.incomingTitle': 'Incoming requests',

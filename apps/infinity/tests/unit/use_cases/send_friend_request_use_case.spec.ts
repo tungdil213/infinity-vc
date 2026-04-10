@@ -22,13 +22,24 @@ function makeUser(args: {
 }
 
 test.group('SendFriendRequestUseCase', () => {
-  test('rejects friend requests from non-admin users', async ({ assert }) => {
+  test('allows friend requests from non-admin users to standard accounts', async ({ assert }) => {
     const userRepository = new InMemoryUserRepository()
     const friendRepository = {
-      sendRequestCalled: false,
-      async sendRequest() {
-        this.sendRequestCalled = true
-        throw new Error('sendRequest should not be called')
+      async sendRequest(requesterUserUuid: string, recipientUserUuid: string) {
+        return {
+          isSuccess: true,
+          isFailure: false,
+          value: {
+            uuid: 'request-1',
+            requesterUserUuid,
+            requesterDisplayName: 'Player One',
+            recipientUserUuid,
+            recipientDisplayName: 'Player Two',
+            status: 'pending',
+            createdAt: new Date(),
+            respondedAt: null,
+          },
+        }
       },
     }
 
@@ -52,9 +63,9 @@ test.group('SendFriendRequestUseCase', () => {
     const useCase = new SendFriendRequestUseCase(friendRepository as any, userRepository)
     const result = await useCase.execute('player-1', 'player-2')
 
-    assert.isTrue(result.isFailure)
-    assert.equal(result.error, 'Only admins can send friend requests')
-    assert.isFalse(friendRepository.sendRequestCalled)
+    assert.isTrue(result.isSuccess)
+    assert.equal(result.value!.requesterUserUuid, 'player-1')
+    assert.equal(result.value!.recipientUserUuid, 'player-2')
   })
 
   test('rejects friend requests targeting admin accounts', async ({ assert }) => {

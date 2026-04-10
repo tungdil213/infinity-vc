@@ -203,7 +203,6 @@ export const frMessages = {
 	'friends.alreadyFriendsBadge': 'Déjà ami',
 	'friends.incomingRequestBadge': 'Demande reçue',
 	'friends.outgoingRequestBadge': 'Demande en attente',
-	'friends.adminSenderOnlyBadge': 'Admins uniquement',
 	'friends.protectedAccountBadge': 'Compte protégé',
 	'friends.sendRequestAction': 'Envoyer la demande',
 	'friends.incomingTitle': 'Demandes reçues',

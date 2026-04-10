@@ -204,7 +204,6 @@ export const deMessages = {
 	'friends.alreadyFriendsBadge': 'Bereits befreundet',
 	'friends.incomingRequestBadge': 'Eingehende Anfrage',
 	'friends.outgoingRequestBadge': 'Anfrage ausstehend',
-	'friends.adminSenderOnlyBadge': 'Nur Admins',
 	'friends.protectedAccountBadge': 'Geschütztes Konto',
 	'friends.sendRequestAction': 'Anfrage senden',
 	'friends.incomingTitle': 'Eingehende Anfragen',

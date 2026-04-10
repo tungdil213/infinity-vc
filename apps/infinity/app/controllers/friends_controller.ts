@@ -133,7 +133,6 @@ export default class FriendsController {
       'You cannot send a friend request to yourself': 'friends.errors.selfRequest',
       'A friend request is already pending for this user': 'friends.errors.duplicateRequest',
       'You are already friends with this user': 'friends.errors.alreadyFriends',
-      'Only admins can send friend requests': 'friends.errors.adminSenderRequired',
       'You cannot send a friend request to an admin': 'friends.errors.adminRecipientBlocked',
       'Friend request was not found': 'friends.errors.requestNotFound',
       'Friend request is no longer pending': 'friends.errors.requestNotPending',

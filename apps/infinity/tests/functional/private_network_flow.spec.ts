@@ -24,18 +24,13 @@ async function createUser(
 }
 
 test.group('Private network flow', () => {
-  test('validates invitation, registers invited user and creates friendship', async ({
+  test('validates invitation, registers invited user and auto-creates friendship', async ({
     client,
     assert,
   }) => {
     const invitationRepository = new DatabaseInvitationRepository()
     const inviterUserUuid = randomUUID()
-    const inviter = await createUser(
-      inviterUserUuid,
-      `inviter.${Date.now()}@example.com`,
-      'Inviter User',
-      'ADMIN'
-    )
+    await createUser(inviterUserUuid, `inviter.${Date.now()}@example.com`, 'Inviter User')
 
     const generated = await invitationRepository.generateCode({
       issuerUserUuid: inviterUserUuid,
@@ -83,29 +78,6 @@ test.group('Private network flow', () => {
       .withCsrfToken()
     duplicateRegisterResponse.assertStatus(400)
 
-    const sendRequestResponse = await client
-      .post('/friends/requests')
-      .loginAs(inviter)
-      .form({
-        recipientUserUuid: invitedUser.userUuid,
-      })
-      .redirects(0)
-      .withCsrfToken()
-    sendRequestResponse.assertStatus(302)
-
-    const friendRequest = await FriendRequest.query()
-      .where('requester_user_uuid', inviterUserUuid)
-      .where('recipient_user_uuid', invitedUser.userUuid)
-      .firstOrFail()
-
-    const acceptResponse = await client
-      .post(`/friends/requests/${friendRequest.uuid}/accept`)
-      .loginAs(invitedUser)
-      .form({})
-      .redirects(0)
-      .withCsrfToken()
-    acceptResponse.assertStatus(302)
-
     const friendship = await Friendship.query()
       .where('pair_key', `${[inviterUserUuid, invitedUser.userUuid].sort().join('::')}`)
       .first()
@@ -113,7 +85,10 @@ test.group('Private network flow', () => {
     assert.exists(friendship)
   })
 
-  test('blocks non-admin users from sending friend requests', async ({ client, assert }) => {
+  test('allows non-admin users to send friend requests to standard users', async ({
+    client,
+    assert,
+  }) => {
     const requesterUserUuid = randomUUID()
     const recipientUserUuid = randomUUID()
     const requester = await createUser(
@@ -132,6 +107,40 @@ test.group('Private network flow', () => {
       .loginAs(requester)
       .form({
         recipientUserUuid: recipient.userUuid,
+      })
+      .redirects(0)
+      .withCsrfToken()
+
+    response.assertStatus(302)
+
+    const friendRequest = await FriendRequest.query()
+      .where('requester_user_uuid', requesterUserUuid)
+      .where('recipient_user_uuid', recipientUserUuid)
+      .first()
+
+    assert.exists(friendRequest)
+  })
+
+  test('blocks friend requests targeting admin users', async ({ client, assert }) => {
+    const requesterUserUuid = randomUUID()
+    const recipientUserUuid = randomUUID()
+    const requester = await createUser(
+      requesterUserUuid,
+      `player.requester.${Date.now()}@example.com`,
+      'Requester Player'
+    )
+    const adminRecipient = await createUser(
+      recipientUserUuid,
+      `admin.recipient.${Date.now()}@example.com`,
+      'Admin Recipient',
+      'ADMIN'
+    )
+
+    const response = await client
+      .post('/friends/requests')
+      .loginAs(requester)
+      .form({
+        recipientUserUuid: adminRecipient.userUuid,
       })
       .redirects(0)
       .withCsrfToken()

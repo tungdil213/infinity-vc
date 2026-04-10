@@ -3,7 +3,6 @@
     "selfRequest": "You cannot send a friend request to yourself.",
     "duplicateRequest": "A friend request is already pending for this user.",
     "alreadyFriends": "You are already friends with this user.",
-    "adminSenderRequired": "Only administrators can send friend requests.",
     "adminRecipientBlocked": "You cannot send a friend request to an administrator.",
     "requestNotFound": "Friend request was not found.",
     "requestNotPending": "Friend request is no longer pending.",
