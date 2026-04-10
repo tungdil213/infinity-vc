@@ -69,6 +69,9 @@ export type ScannedRoutes = {
     'api.games.my.active': { paramsTuple?: []; params?: {} }
     'api.games.my.history': { paramsTuple?: []; params?: {} }
     'api.games.my.stats': { paramsTuple?: []; params?: {} }
+    'api.friends.presence.index': { paramsTuple?: []; params?: {} }
+    'api.friends.presence.heartbeat': { paramsTuple?: []; params?: {} }
+    'api.friends.presence.offline': { paramsTuple?: []; params?: {} }
     'api.games.show': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.games.replay': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.games.actions': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
@@ -119,6 +122,7 @@ export type ScannedRoutes = {
     'api.games.my.active': { paramsTuple?: []; params?: {} }
     'api.games.my.history': { paramsTuple?: []; params?: {} }
     'api.games.my.stats': { paramsTuple?: []; params?: {} }
+    'api.friends.presence.index': { paramsTuple?: []; params?: {} }
     'api.games.show': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.games.replay': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.games.actions': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
@@ -163,6 +167,7 @@ export type ScannedRoutes = {
     'api.games.my.active': { paramsTuple?: []; params?: {} }
     'api.games.my.history': { paramsTuple?: []; params?: {} }
     'api.games.my.stats': { paramsTuple?: []; params?: {} }
+    'api.friends.presence.index': { paramsTuple?: []; params?: {} }
     'api.games.show': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.games.replay': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.games.actions': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
@@ -202,6 +207,8 @@ export type ScannedRoutes = {
     'api.lobbies.heartbeat': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.lobbies.start': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'api.lobbies.close': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
+    'api.friends.presence.heartbeat': { paramsTuple?: []; params?: {} }
+    'api.friends.presence.offline': { paramsTuple?: []; params?: {} }
     'api.games.action': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'admin.lobbies.close': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
     'admin.games.replay.import': { paramsTuple: [ParamValue]; params: {'uuid': ParamValue} }
