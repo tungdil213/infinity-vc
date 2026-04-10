@@ -2,21 +2,24 @@ import type { Result } from '#shared/result'
 
 export type FriendRequestStatus = 'pending' | 'accepted' | 'rejected' | 'cancelled'
 
-export interface FriendUserRecord {
+export interface PublicSocialUserView {
   userUuid: string
-  fullName: string
-  email: string
+  displayName: string
+}
+
+export interface FriendUserRecord extends PublicSocialUserView {
   isFriend: boolean
   hasIncomingRequest: boolean
   hasOutgoingRequest: boolean
+  canReceiveFriendRequests: boolean
 }
 
 export interface FriendRequestRecord {
   uuid: string
   requesterUserUuid: string
-  requesterFullName: string
+  requesterDisplayName: string
   recipientUserUuid: string
-  recipientFullName: string
+  recipientDisplayName: string
   status: FriendRequestStatus
   createdAt: Date
   respondedAt: Date | null
@@ -26,8 +29,7 @@ export interface FriendshipRecord {
   uuid: string
   userUuid: string
   friendUserUuid: string
-  friendFullName: string
-  friendEmail: string
+  friendDisplayName: string
   createdAt: Date
 }
 
@@ -38,6 +40,7 @@ export interface FriendOverview {
 }
 
 export interface FriendRepository {
+  listFriends(userUuid: string): Promise<FriendshipRecord[]>
   listOverview(userUuid: string): Promise<FriendOverview>
   searchUsers(query: string, userUuid: string, limit?: number): Promise<FriendUserRecord[]>
   sendRequest(

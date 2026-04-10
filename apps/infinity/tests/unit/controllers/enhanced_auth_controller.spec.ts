@@ -1,6 +1,6 @@
-import { test } from '@japa/runner'
 import hash from '@adonisjs/core/services/hash'
 import logger from '@adonisjs/core/services/logger'
+import { test } from '@japa/runner'
 import UserModel from '#models/user'
 import EnhancedAuthController from '../../../app/controllers/enhanced_auth_controller.js'
 
@@ -68,6 +68,7 @@ function createI18nHarness() {
 function createController(overrides?: {
   validateInvitationResult?: { isFailure: boolean; error?: string; value?: any }
   registerResult?: { isFailure: boolean; error?: string; value?: any }
+  clearPresenceResult?: { isFailure: boolean; error?: string; value?: any }
 }) {
   return new EnhancedAuthController(
     {
@@ -90,6 +91,21 @@ function createController(overrides?: {
               fullName: 'Jane Doe',
               email: 'user@example.com',
             },
+          },
+        },
+    } as any,
+    {
+      execute: async () =>
+        overrides?.clearPresenceResult ?? {
+          isFailure: false,
+          value: {
+            friendUserUuid: 'user-1',
+            displayName: 'Jane Doe',
+            status: 'offline',
+            lobbyId: null,
+            lobbyName: null,
+            gameId: null,
+            updatedAt: new Date(),
           },
         },
     } as any

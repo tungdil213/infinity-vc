@@ -1,25 +1,25 @@
 import { inject } from '@adonisjs/core'
-import type { HttpContext } from '@adonisjs/core/http'
+import { AcceptFriendRequestUseCase } from '#application/use_cases/accept_friend_request_use_case'
+import { CancelSentFriendRequestUseCase } from '#application/use_cases/cancel_sent_friend_request_use_case'
+import { ListFriendsUseCase } from '#application/use_cases/list_friends_use_case'
+import { RejectFriendRequestUseCase } from '#application/use_cases/reject_friend_request_use_case'
+import { RemoveFriendUseCase } from '#application/use_cases/remove_friend_use_case'
+import { SearchUsersUseCase } from '#application/use_cases/search_users_use_case'
+import { SendFriendRequestUseCase } from '#application/use_cases/send_friend_request_use_case'
 import BusinessException from '#exceptions/business_exception'
 import {
   ErrorClassification,
   ErrorSeverity,
   ToastType,
 } from '#exceptions/types/error_classification'
-import { ListFriendsUseCase } from '#application/use_cases/list_friends_use_case'
-import { SearchUsersUseCase } from '#application/use_cases/search_users_use_case'
-import { SendFriendRequestUseCase } from '#application/use_cases/send_friend_request_use_case'
-import { AcceptFriendRequestUseCase } from '#application/use_cases/accept_friend_request_use_case'
-import { RejectFriendRequestUseCase } from '#application/use_cases/reject_friend_request_use_case'
-import { CancelSentFriendRequestUseCase } from '#application/use_cases/cancel_sent_friend_request_use_case'
-import { RemoveFriendUseCase } from '#application/use_cases/remove_friend_use_case'
+import { toUserSummary } from '#presenters/lobby_presenter'
 import {
   friendRequestUuidParamValidator,
   friendSearchValidator,
   removeFriendParamValidator,
   sendFriendRequestValidator,
 } from '#validators/friend_validators'
-import { toUserSummary } from '#presenters/lobby_presenter'
+import type { HttpContext } from '@adonisjs/core/http'
 
 @inject()
 export default class FriendsController {
@@ -133,6 +133,8 @@ export default class FriendsController {
       'You cannot send a friend request to yourself': 'friends.errors.selfRequest',
       'A friend request is already pending for this user': 'friends.errors.duplicateRequest',
       'You are already friends with this user': 'friends.errors.alreadyFriends',
+      'Only admins can send friend requests': 'friends.errors.adminSenderRequired',
+      'You cannot send a friend request to an admin': 'friends.errors.adminRecipientBlocked',
       'Friend request was not found': 'friends.errors.requestNotFound',
       'Friend request is no longer pending': 'friends.errors.requestNotPending',
       'Friendship was not found': 'friends.errors.friendshipNotFound',
@@ -141,15 +143,23 @@ export default class FriendsController {
 
     const key = map[error]
     if (!key) {
-      return error
+      return this.translateFallback(
+        i18n,
+        'friends.errors.actionFailed',
+        'Unable to complete the friend action.'
+      )
     }
 
+    return this.translateFallback(i18n, key, error)
+  }
+
+  private translateFallback(i18n: HttpContext['i18n'], key: string, fallback: string): string {
     const translated = i18n.t(key)
     if (typeof translated === 'string' && !translated.startsWith('translation missing:')) {
       return translated
     }
 
-    return error
+    return fallback
   }
 
   private userSafeError(message: string): BusinessException {

@@ -1,7 +1,6 @@
-import { useState } from 'react'
-import { Head, router } from '@inertiajs/react'
+import { Head, router, usePage } from '@inertiajs/react'
+import { Badge } from '@infinity.dev/ui/primitives/badge'
 import { Button } from '@infinity.dev/ui/primitives/button'
-import { Input } from '@infinity.dev/ui/primitives/input'
 import {
   Card,
   CardContent,
@@ -9,35 +8,35 @@ import {
   CardHeader,
   CardTitle,
 } from '@infinity.dev/ui/primitives/card'
-import { Badge } from '@infinity.dev/ui/primitives/badge'
+import { Input } from '@infinity.dev/ui/primitives/input'
+import { useState } from 'react'
 import { useI18n } from '../i18n/use_i18n'
 import Layout from '../layouts/layout'
 
 interface FriendItem {
   uuid: string
   friendUserUuid: string
-  friendFullName: string
-  friendEmail: string
+  friendDisplayName: string
   createdAt: string
 }
 
 interface FriendRequestItem {
   uuid: string
   requesterUserUuid: string
-  requesterFullName: string
+  requesterDisplayName: string
   recipientUserUuid: string
-  recipientFullName: string
+  recipientDisplayName: string
   status: 'pending' | 'accepted' | 'rejected' | 'cancelled'
   createdAt: string
 }
 
 interface FriendSearchItem {
   userUuid: string
-  fullName: string
-  email: string
+  displayName: string
   isFriend: boolean
   hasIncomingRequest: boolean
   hasOutgoingRequest: boolean
+  canReceiveFriendRequests: boolean
 }
 
 interface FriendsPageProps {
@@ -65,7 +64,13 @@ export default function FriendsPage({
   searchQuery = '',
 }: FriendsPageProps) {
   const { t } = useI18n()
+  const { props } = usePage()
   const [query, setQuery] = useState(searchQuery)
+  const currentUserRole =
+    typeof (props.user as { role?: string } | undefined)?.role === 'string'
+      ? (props.user as { role?: string }).role
+      : null
+  const canCurrentUserSendFriendRequests = currentUserRole === 'ADMIN'
 
   const handleSearch = (event: React.FormEvent) => {
     event.preventDefault()
@@ -121,8 +126,7 @@ export default function FriendsPage({
                           className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-center sm:justify-between"
                         >
                           <div>
-                            <p className="font-medium text-foreground">{candidate.fullName}</p>
-                            <p className="text-sm text-muted-foreground">{candidate.email}</p>
+                            <p className="font-medium text-foreground">{candidate.displayName}</p>
                           </div>
 
                           <div className="flex flex-wrap items-center gap-2">
@@ -137,7 +141,24 @@ export default function FriendsPage({
                             )}
                             {!candidate.isFriend &&
                               !candidate.hasIncomingRequest &&
-                              !candidate.hasOutgoingRequest && (
+                              !candidate.hasOutgoingRequest &&
+                              !canCurrentUserSendFriendRequests && (
+                                <Badge variant="neutral">{t('friends.adminSenderOnlyBadge')}</Badge>
+                              )}
+                            {!candidate.isFriend &&
+                              !candidate.hasIncomingRequest &&
+                              !candidate.hasOutgoingRequest &&
+                              canCurrentUserSendFriendRequests &&
+                              !candidate.canReceiveFriendRequests && (
+                                <Badge variant="neutral">
+                                  {t('friends.protectedAccountBadge')}
+                                </Badge>
+                              )}
+                            {!candidate.isFriend &&
+                              !candidate.hasIncomingRequest &&
+                              !candidate.hasOutgoingRequest &&
+                              canCurrentUserSendFriendRequests &&
+                              candidate.canReceiveFriendRequests && (
                                 <Button
                                   variant="neutral"
                                   onClick={() =>
@@ -172,7 +193,9 @@ export default function FriendsPage({
                   <div className="space-y-3">
                     {incomingRequests.map((requestItem) => (
                       <div key={requestItem.uuid} className="rounded-lg border border-border p-4">
-                        <p className="font-medium text-foreground">{requestItem.requesterFullName}</p>
+                        <p className="font-medium text-foreground">
+                          {requestItem.requesterDisplayName}
+                        </p>
                         <p className="text-sm text-muted-foreground">
                           {t('friends.requestReceivedAt', {
                             date: toReadableDate(requestItem.createdAt),
@@ -181,13 +204,17 @@ export default function FriendsPage({
                         <div className="mt-3 flex flex-wrap gap-2">
                           <Button
                             variant="neutral"
-                            onClick={() => router.post(`/friends/requests/${requestItem.uuid}/accept`)}
+                            onClick={() =>
+                              router.post(`/friends/requests/${requestItem.uuid}/accept`)
+                            }
                           >
                             {t('friends.acceptAction')}
                           </Button>
                           <Button
                             variant="neutral"
-                            onClick={() => router.post(`/friends/requests/${requestItem.uuid}/reject`)}
+                            onClick={() =>
+                              router.post(`/friends/requests/${requestItem.uuid}/reject`)
+                            }
                           >
                             {t('friends.rejectAction')}
                           </Button>
@@ -211,7 +238,9 @@ export default function FriendsPage({
                   <div className="space-y-3">
                     {outgoingRequests.map((requestItem) => (
                       <div key={requestItem.uuid} className="rounded-lg border border-border p-4">
-                        <p className="font-medium text-foreground">{requestItem.recipientFullName}</p>
+                        <p className="font-medium text-foreground">
+                          {requestItem.recipientDisplayName}
+                        </p>
                         <p className="text-sm text-muted-foreground">
                           {t('friends.requestSentAt', {
                             date: toReadableDate(requestItem.createdAt),
@@ -220,7 +249,9 @@ export default function FriendsPage({
                         <div className="mt-3">
                           <Button
                             variant="neutral"
-                            onClick={() => router.post(`/friends/requests/${requestItem.uuid}/cancel`)}
+                            onClick={() =>
+                              router.post(`/friends/requests/${requestItem.uuid}/cancel`)
+                            }
                           >
                             {t('friends.cancelAction')}
                           </Button>
@@ -250,8 +281,7 @@ export default function FriendsPage({
                         className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-center sm:justify-between"
                       >
                         <div>
-                          <p className="font-medium text-foreground">{friend.friendFullName}</p>
-                          <p className="text-sm text-muted-foreground">{friend.friendEmail}</p>
+                          <p className="font-medium text-foreground">{friend.friendDisplayName}</p>
                           <p className="text-xs text-muted-foreground">
                             {t('friends.friendSince', { date: toReadableDate(friend.createdAt) })}
                           </p>

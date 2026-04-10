@@ -1,11 +1,16 @@
 import { randomUUID } from 'node:crypto'
 import { test } from '@japa/runner'
-import User from '#models/user'
-import Friendship from '#models/friendship'
-import FriendRequest from '#models/friend_request'
 import { DatabaseInvitationRepository } from '#infrastructure/repositories/database_invitation_repository'
+import FriendRequest from '#models/friend_request'
+import Friendship from '#models/friendship'
+import User from '#models/user'
 
-async function createUser(userUuid: string, email: string, fullName: string) {
+async function createUser(
+  userUuid: string,
+  email: string,
+  fullName: string,
+  role: 'ADMIN' | 'PLAYER' = 'PLAYER'
+) {
   return User.updateOrCreate(
     { userUuid },
     {
@@ -13,6 +18,7 @@ async function createUser(userUuid: string, email: string, fullName: string) {
       fullName,
       email,
       password: 'password123',
+      role,
     }
   )
 }
@@ -27,7 +33,8 @@ test.group('Private network flow', () => {
     const inviter = await createUser(
       inviterUserUuid,
       `inviter.${Date.now()}@example.com`,
-      'Inviter User'
+      'Inviter User',
+      'ADMIN'
     )
 
     const generated = await invitationRepository.generateCode({
@@ -104,5 +111,38 @@ test.group('Private network flow', () => {
       .first()
 
     assert.exists(friendship)
+  })
+
+  test('blocks non-admin users from sending friend requests', async ({ client, assert }) => {
+    const requesterUserUuid = randomUUID()
+    const recipientUserUuid = randomUUID()
+    const requester = await createUser(
+      requesterUserUuid,
+      `player.requester.${Date.now()}@example.com`,
+      'Requester Player'
+    )
+    const recipient = await createUser(
+      recipientUserUuid,
+      `player.recipient.${Date.now()}@example.com`,
+      'Recipient Player'
+    )
+
+    const response = await client
+      .post('/friends/requests')
+      .loginAs(requester)
+      .form({
+        recipientUserUuid: recipient.userUuid,
+      })
+      .redirects(0)
+      .withCsrfToken()
+
+    response.assertStatus(400)
+
+    const friendRequest = await FriendRequest.query()
+      .where('requester_user_uuid', requesterUserUuid)
+      .where('recipient_user_uuid', recipientUserUuid)
+      .first()
+
+    assert.isNull(friendRequest)
   })
 })
