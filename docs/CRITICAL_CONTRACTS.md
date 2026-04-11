@@ -132,3 +132,33 @@ Date de lecture: 2026-04-11
   - enlève du mapping/persisting detail du controller
   - garde la route et le contrat HTTP inchangés
   - permet des tests unitaires purs sur les statuts et payloads persistés
+- Extraction du sous-flux `heartbeat / leave-on-close / présence lobby` hors de `enhanced_lobbies_controller`
+- Justification:
+  - isole le parsing beacon et l’orchestration de présence dans un seul module support
+  - garde inchangés les endpoints, statuts HTTP et payloads
+  - rend testable séparément la gestion des callbacks stale/disconnect
+- Extraction du mapping local d’erreurs/réponses de `enhanced_lobbies_controller`
+- Justification:
+  - sort le mapping `use case -> flash/json/http` du controller sans globaliser la stratégie
+  - garde inchangés statuts, payloads et messages observables
+  - permet de tester séparément les traductions et fallbacks inattendus
+- Extraction du mapping local des réponses de succès répétitives de `enhanced_lobbies_controller`
+- Justification:
+  - isole les patterns `flash success + redirect` et `html/api success`
+  - garde inchangés statuts HTTP, payloads, redirections et messages flash
+  - rend testables séparément les conventions de succès du controller
+- Extraction du sous-flux polling hors de `use_game_page_controller`
+- Justification:
+  - isole timers, triggers de refresh, abonnement realtime lié au refresh et cleanup
+  - garde inchangée l’API exposée à `pages/game.tsx`
+  - rend testable séparément la cadence et les déclencheurs de refresh sans refactorer `actions`, `replay` ou `notifications`
+- Extraction du sous-flux notifications hors de `use_game_page_controller`
+- Justification:
+  - isole l’état `notifications`, la planification des dismiss automatiques et le cleanup des timeouts
+  - garde inchangée l’API exposée à `pages/game.tsx`
+  - rend testable séparément le comportement UI local sans toucher à `actions`, `replay` ou `polling`
+- Extraction du sous-flux actions hors de `use_game_page_controller`
+- Justification:
+  - isole la soumission d’actions, l’état `isLoading`, les sélections locales et la gestion succès/erreur associée
+  - garde inchangée l’API exposée à `pages/game.tsx` et le contrat réseau `/api/v1/games/:id/action`
+  - rend testable séparément l’orchestration locale des actions sans toucher au sous-flux `replay`
