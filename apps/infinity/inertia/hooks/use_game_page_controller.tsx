@@ -1,21 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useTransmit } from '../contexts/TransmitContext'
-import {
-  computeReplayDiff,
-  describeGameReplayEvent,
-  formatGameDebugPayload,
-  resolveGamePlayerLabel,
-} from '../games/game_replay_helpers.js'
-import { ReplayDiffPanel } from '../games/replay_diff_panel.js'
+import { useCallback, useEffect, useState } from 'react'
+import { useTransmit } from '../contexts/TransmitContext.js'
 import { useGameActions } from './use_game_actions.js'
 import { useGameNotifications } from './use_game_notifications.js'
 import { useGamePolling } from './use_game_polling.js'
+import { useGameReplay } from './use_game_replay.js'
 import type {
   GameRendererProps,
   PlayerViewState,
   ReplayStep,
 } from '../games/game_renderer_types.js'
-import type { ReactNode } from 'react'
 
 interface GameStateResponsePayload {
   playerView?: PlayerViewState | null
@@ -94,15 +87,27 @@ export function useGamePageController(
   const [gameState, setGameState] = useState<PlayerViewState | null>(playerView)
   const [availableActions, setAvailableActions] = useState<string[]>(initialActions || [])
   const [myHand, setMyHand] = useState<string[]>(extractHand(playerView))
-  const [replayTimeline, setReplayTimeline] = useState<ReplayStep[]>(initialReplayTimeline)
-  const [replayCursor, setReplayCursor] = useState<number>(
-    Math.max(initialReplayTimeline.length - 1, 0)
-  )
-  const [isReplayPinnedToLatest, setIsReplayPinnedToLatest] = useState(true)
   const canViewDebugPayload = user.role === 'ADMIN'
 
   const { isConnected, subscribeToGame } = useTransmit()
   const { notifications, addNotification } = useGameNotifications()
+  const {
+    replayTimeline,
+    replayCursor,
+    isReplayPinnedToLatest,
+    activeReplayStep,
+    replaceReplayTimeline,
+    moveReplayCursor,
+    getPlayerLabel,
+    describeReplayEvent,
+    formatDebugPayload,
+    renderReplayDiff,
+  } = useGameReplay({
+    initialReplayTimeline,
+    currentPlayers: gameState?.state?.players ?? [],
+    currentUserId: user.uuid,
+    showReplayDiff,
+  })
 
   useEffect(() => {
     setGameState(playerView)
@@ -110,24 +115,21 @@ export function useGamePageController(
     setMyHand(extractHand(playerView))
   }, [initialActions, playerView])
 
-  useEffect(() => {
-    setReplayTimeline(initialReplayTimeline)
-    setReplayCursor(Math.max(initialReplayTimeline.length - 1, 0))
-    setIsReplayPinnedToLatest(true)
-  }, [initialReplayTimeline])
+  const applyGameStatePayload = useCallback(
+    (payload: GameStateResponsePayload) => {
+      const nextPlayerView = payload.playerView ?? null
+      const nextAvailableActions = payload.availableActions ?? []
 
-  const applyGameStatePayload = useCallback((payload: GameStateResponsePayload) => {
-    const nextPlayerView = payload.playerView ?? null
-    const nextAvailableActions = payload.availableActions ?? []
+      setGameState(nextPlayerView)
+      setAvailableActions(nextAvailableActions)
+      setMyHand(extractHand(nextPlayerView))
 
-    setGameState(nextPlayerView)
-    setAvailableActions(nextAvailableActions)
-    setMyHand(extractHand(nextPlayerView))
-
-    if (Array.isArray(payload.replayTimeline)) {
-      setReplayTimeline(payload.replayTimeline)
-    }
-  }, [])
+      if (Array.isArray(payload.replayTimeline)) {
+        replaceReplayTimeline(payload.replayTimeline)
+      }
+    },
+    [replaceReplayTimeline]
+  )
 
   const refreshGameState = useCallback(async () => {
     try {
@@ -142,79 +144,6 @@ export function useGamePageController(
       return
     }
   }, [applyGameStatePayload, gameId])
-
-  const moveReplayCursor = useCallback(
-    (nextCursor: number) => {
-      if (replayTimeline.length === 0) {
-        setReplayCursor(0)
-        return
-      }
-
-      const lastIndex = replayTimeline.length - 1
-      const clampedCursor = Math.max(0, Math.min(nextCursor, lastIndex))
-      setReplayCursor(clampedCursor)
-      setIsReplayPinnedToLatest(clampedCursor === lastIndex)
-    },
-    [replayTimeline.length]
-  )
-
-  useEffect(() => {
-    if (replayTimeline.length === 0) {
-      setReplayCursor(0)
-      return
-    }
-
-    const lastIndex = replayTimeline.length - 1
-    setReplayCursor((currentCursor) => {
-      if (isReplayPinnedToLatest) {
-        return lastIndex
-      }
-
-      return Math.min(currentCursor, lastIndex)
-    })
-  }, [replayTimeline, isReplayPinnedToLatest])
-
-  const activeReplayStep =
-    replayTimeline.length > 0
-      ? replayTimeline[Math.max(0, Math.min(replayCursor, replayTimeline.length - 1))]
-      : null
-  const previousReplayStep =
-    replayTimeline.length > 0 && replayCursor > 0 ? replayTimeline[replayCursor - 1] : null
-
-  const replayDiff = useMemo(
-    () => computeReplayDiff(activeReplayStep, previousReplayStep),
-    [activeReplayStep, previousReplayStep]
-  )
-
-  const getPlayerLabel = useCallback(
-    (playerId?: string | null) =>
-      resolveGamePlayerLabel({
-        playerId,
-        currentUserId: user.uuid,
-        replayPlayers: activeReplayStep?.snapshot.players,
-        currentPlayers: gameState?.state?.players,
-      }),
-    [activeReplayStep?.snapshot.players, gameState?.state?.players, user.uuid]
-  )
-
-  const describeReplayEvent = useCallback(
-    (event: { type: string; payload: unknown }) =>
-      describeGameReplayEvent({
-        event,
-        getPlayerLabel,
-      }),
-    [getPlayerLabel]
-  )
-
-  const formatDebugPayload = useCallback((payload: unknown) => formatGameDebugPayload(payload), [])
-
-  const renderReplayDiff = useCallback((): ReactNode => {
-    if (showReplayDiff === false) {
-      return null
-    }
-
-    return <ReplayDiffPanel replayDiff={replayDiff} getPlayerLabel={getPlayerLabel} />
-  }, [getPlayerLabel, replayDiff, showReplayDiff])
 
   const {
     isLoading,

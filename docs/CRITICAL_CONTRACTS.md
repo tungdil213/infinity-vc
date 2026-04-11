@@ -162,3 +162,8 @@ Date de lecture: 2026-04-11
   - isole la soumission d’actions, l’état `isLoading`, les sélections locales et la gestion succès/erreur associée
   - garde inchangée l’API exposée à `pages/game.tsx` et le contrat réseau `/api/v1/games/:id/action`
   - rend testable séparément l’orchestration locale des actions sans toucher au sous-flux `replay`
+- Extraction du sous-flux replay hors de `use_game_page_controller`
+- Justification:
+  - isole la timeline, le curseur, le pinning au dernier step et les helpers d’affichage replay
+  - garde inchangée l’API exposée à `pages/game.tsx`
+  - rend testables séparément les garde-fous de navigation replay sans toucher aux sous-flux déjà extraits
