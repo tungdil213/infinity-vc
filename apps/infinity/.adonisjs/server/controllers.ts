@@ -15,5 +15,6 @@ export const controllers = {
   ProfileSettings: () => import('#controllers/profile_settings_controller'),
   support: {
     GameControllerGuard: () => import('#controllers/support/game_controller_guard'),
+    GameControllerPersistence: () => import('#controllers/support/game_controller_persistence'),
   },
 }
