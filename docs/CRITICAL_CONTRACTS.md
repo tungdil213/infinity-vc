@@ -167,3 +167,8 @@ Date de lecture: 2026-04-11
   - isole la timeline, le curseur, le pinning au dernier step et les helpers d’affichage replay
   - garde inchangée l’API exposée à `pages/game.tsx`
   - rend testables séparément les garde-fous de navigation replay sans toucher aux sous-flux déjà extraits
+- Extraction du premier groupe DI `social` hors de `app_provider`
+- Justification:
+  - isole un sous-ensemble cohérent de bindings sans toucher au bootstrap ni au reste de la composition root
+  - garde inchangés les tokens de résolution du container et le graphe de dépendances social
+  - prépare la modularisation incrémentale de `app_provider.ts` par contexte métier
