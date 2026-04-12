@@ -5,25 +5,16 @@ import { HybridLobbyService } from '#application/services/hybrid_lobby_service'
 import { LobbyEventService } from '#application/services/lobby_event_service'
 import { LobbyPresenceService } from '#application/services/lobby_presence_service'
 import { TransmitLobbyService } from '#application/services/transmit_lobby_service'
-import { CloseLobbyUseCase } from '#application/use_cases/close_lobby_use_case'
-import { CreateLobbyUseCase } from '#application/use_cases/create_lobby_use_case'
 import { GenerateInvitationCodeUseCase } from '#application/use_cases/generate_invitation_code_use_case'
-import { JoinLobbyUseCase } from '#application/use_cases/join_lobby_use_case'
-import { KickPlayerUseCase } from '#application/use_cases/kick_player_use_case'
-import { LeaveLobbyUseCase } from '#application/use_cases/leave_lobby_use_case'
 import { ListGameCatalogUseCase } from '#application/use_cases/list_game_catalog_use_case'
 import { ListLobbiesUseCase } from '#application/use_cases/list_lobbies_use_case'
 import { ListMyInvitationsUseCase } from '#application/use_cases/list_my_invitations_use_case'
 import { RegisterUserUseCase } from '#application/use_cases/register_user_use_case'
 import { RegisterWithInvitationUseCase } from '#application/use_cases/register_with_invitation_use_case'
 import { RevokeInvitationCodeUseCase } from '#application/use_cases/revoke_invitation_code_use_case'
-import { SetPlayerReadyUseCase } from '#application/use_cases/set_player_ready_use_case'
-import { ShowLobbyUseCase } from '#application/use_cases/show_lobby_use_case'
 import { StartGameUseCase } from '#application/use_cases/start_game_use_case'
-import { UpdateLobbySettingsUseCase } from '#application/use_cases/update_lobby_settings_use_case'
 import { ValidateInvitationCodeUseCase } from '#application/use_cases/validate_invitation_code_use_case'
 import { initializeAppGameLauncher } from '#infrastructure/game_engine/app_game_launcher'
-import { defaultGameCatalog } from '#infrastructure/game_engine/launcher_game_catalog'
 import { DatabaseGameRepository } from '#infrastructure/repositories/database_game_repository'
 import { DatabaseInvitationRepository } from '#infrastructure/repositories/database_invitation_repository'
 import { DatabaseLobbyRepository } from '#infrastructure/repositories/database_lobby_repository'
@@ -32,6 +23,9 @@ import { DatabaseUserRepository } from '#infrastructure/repositories/database_us
 import { InMemoryLobbyRepository } from '#infrastructure/repositories/in_memory_lobby_repository'
 import { eventBridgeService } from '#infrastructure/transcript/index'
 import env from '#start/env'
+import { registerLobbyEntryBindings } from './bindings/lobby_entry_bindings.js'
+import { registerLobbyExitBindings } from './bindings/lobby_exit_bindings.js'
+import { registerLobbyManagementBindings } from './bindings/lobby_management_bindings.js'
 import { registerSocialBindings } from './bindings/social_bindings.js'
 
 export default class AppProvider {
@@ -115,31 +109,9 @@ export default class AppProvider {
     })
 
     // Register lobby use cases
-    this.app.container.singleton(CreateLobbyUseCase, async (resolver) => {
-      const playerRepository = await resolver.make(DatabasePlayerRepository)
-      const hybridLobbyService = await resolver.make(HybridLobbyService)
-      const notificationService = await resolver.make(TransmitLobbyService)
-      return new CreateLobbyUseCase(
-        playerRepository,
-        hybridLobbyService,
-        notificationService,
-        defaultGameCatalog
-      )
-    })
+    registerLobbyEntryBindings(this.app.container)
 
-    this.app.container.singleton(JoinLobbyUseCase, async (resolver) => {
-      const playerRepository = await resolver.make(DatabasePlayerRepository)
-      const hybridLobbyService = await resolver.make(HybridLobbyService)
-      const notificationService = await resolver.make(TransmitLobbyService)
-      return new JoinLobbyUseCase(playerRepository, hybridLobbyService, notificationService)
-    })
-
-    this.app.container.singleton(LeaveLobbyUseCase, async (resolver) => {
-      const hybridLobbyService = await resolver.make(HybridLobbyService)
-      const notificationService = await resolver.make(TransmitLobbyService)
-      const eventService = await resolver.make(LobbyEventService)
-      return new LeaveLobbyUseCase(hybridLobbyService, notificationService, eventService)
-    })
+    registerLobbyExitBindings(this.app.container)
 
     this.app.container.singleton(StartGameUseCase, async (resolver) => {
       const hybridLobbyService = await resolver.make(HybridLobbyService)
@@ -188,36 +160,7 @@ export default class AppProvider {
 
     registerSocialBindings(this.app.container)
 
-    this.app.container.singleton(ShowLobbyUseCase, async (resolver) => {
-      const hybridLobbyService = await resolver.make(HybridLobbyService)
-      return new ShowLobbyUseCase(hybridLobbyService)
-    })
-
-    this.app.container.singleton(KickPlayerUseCase, async (resolver) => {
-      const hybridLobbyService = await resolver.make(HybridLobbyService)
-      const playerRepository = await resolver.make(DatabasePlayerRepository)
-      const domainEventPublisher = await resolver.make(EventBusDomainEventPublisher)
-      return new KickPlayerUseCase(hybridLobbyService, playerRepository, domainEventPublisher)
-    })
-
-    this.app.container.singleton(CloseLobbyUseCase, async (resolver) => {
-      const hybridLobbyService = await resolver.make(HybridLobbyService)
-      const eventService = await resolver.make(LobbyEventService)
-      return new CloseLobbyUseCase(hybridLobbyService, eventService)
-    })
-
-    this.app.container.singleton(UpdateLobbySettingsUseCase, async (resolver) => {
-      const hybridLobbyService = await resolver.make(HybridLobbyService)
-      const domainEventPublisher = await resolver.make(EventBusDomainEventPublisher)
-      return new UpdateLobbySettingsUseCase(hybridLobbyService, domainEventPublisher)
-    })
-
-    this.app.container.singleton(SetPlayerReadyUseCase, async (resolver) => {
-      const hybridLobbyService = await resolver.make(HybridLobbyService)
-      const playerRepository = await resolver.make(DatabasePlayerRepository)
-      const domainEventPublisher = await resolver.make(EventBusDomainEventPublisher)
-      return new SetPlayerReadyUseCase(hybridLobbyService, playerRepository, domainEventPublisher)
-    })
+    registerLobbyManagementBindings(this.app.container)
   }
 }
 

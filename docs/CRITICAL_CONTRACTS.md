@@ -172,3 +172,18 @@ Date de lecture: 2026-04-11
   - isole un sous-ensemble cohérent de bindings sans toucher au bootstrap ni au reste de la composition root
   - garde inchangés les tokens de résolution du container et le graphe de dépendances social
   - prépare la modularisation incrémentale de `app_provider.ts` par contexte métier
+- Extraction du sous-groupe DI `lobby management` hors de `app_provider`
+- Justification:
+  - isole le bloc contigu des use cases de gestion de lobby sans embarquer le noyau lobby ni `StartGameUseCase`
+  - garde inchangés les tokens de résolution et la position d’enregistrement de ce sous-groupe
+  - réduit le risque d’une extraction lobby trop large dans un seul lot
+- Extraction du sous-groupe DI `lobby entry` hors de `app_provider`
+- Justification:
+  - isole le duo `CreateLobbyUseCase` / `JoinLobbyUseCase`, qui partage un graphe de dépendances simple et stable
+  - garde hors périmètre `LeaveLobbyUseCase`, `StartGameUseCase` et le point sensible `as any`
+  - réduit encore la responsabilité de `app_provider.ts` sans élargir ce lot au noyau lobby complet
+- Extraction du sous-groupe DI `lobby exit` hors de `app_provider`
+- Justification:
+  - isole `LeaveLobbyUseCase` avec son trio de dépendances local `HybridLobbyService` / `TransmitLobbyService` / `LobbyEventService`
+  - garde hors périmètre `StartGameUseCase`, `ListLobbiesUseCase` et le point sensible `as any`
+  - retire une responsabilité supplémentaire du provider sans toucher à l’ordre de bootstrap
