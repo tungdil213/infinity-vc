@@ -7,7 +7,6 @@ import { LobbyPresenceService } from '#application/services/lobby_presence_servi
 import { TransmitLobbyService } from '#application/services/transmit_lobby_service'
 import { GenerateInvitationCodeUseCase } from '#application/use_cases/generate_invitation_code_use_case'
 import { ListGameCatalogUseCase } from '#application/use_cases/list_game_catalog_use_case'
-import { ListLobbiesUseCase } from '#application/use_cases/list_lobbies_use_case'
 import { ListMyInvitationsUseCase } from '#application/use_cases/list_my_invitations_use_case'
 import { RegisterUserUseCase } from '#application/use_cases/register_user_use_case'
 import { RegisterWithInvitationUseCase } from '#application/use_cases/register_with_invitation_use_case'
@@ -25,6 +24,7 @@ import { eventBridgeService } from '#infrastructure/transcript/index'
 import env from '#start/env'
 import { registerLobbyEntryBindings } from './bindings/lobby_entry_bindings.js'
 import { registerLobbyExitBindings } from './bindings/lobby_exit_bindings.js'
+import { registerLobbyListingBindings } from './bindings/lobby_listing_bindings.js'
 import { registerLobbyManagementBindings } from './bindings/lobby_management_bindings.js'
 import { registerSocialBindings } from './bindings/social_bindings.js'
 
@@ -120,10 +120,7 @@ export default class AppProvider {
       return new StartGameUseCase(hybridLobbyService, gameRepository as any, notificationService)
     })
 
-    this.app.container.singleton(ListLobbiesUseCase, async (resolver) => {
-      const hybridLobbyService = await resolver.make(HybridLobbyService)
-      return new ListLobbiesUseCase(hybridLobbyService)
-    })
+    registerLobbyListingBindings(this.app.container)
 
     this.app.container.singleton(ListGameCatalogUseCase, () => {
       return new ListGameCatalogUseCase()

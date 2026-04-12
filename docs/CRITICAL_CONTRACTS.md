@@ -187,3 +187,8 @@ Date de lecture: 2026-04-11
   - isole `LeaveLobbyUseCase` avec son trio de dépendances local `HybridLobbyService` / `TransmitLobbyService` / `LobbyEventService`
   - garde hors périmètre `StartGameUseCase`, `ListLobbiesUseCase` et le point sensible `as any`
   - retire une responsabilité supplémentaire du provider sans toucher à l’ordre de bootstrap
+- Extraction du sous-groupe DI `lobby listing` hors de `app_provider`
+- Justification:
+  - isole `ListLobbiesUseCase`, dont le graphe de dépendances se limite à `HybridLobbyService`
+  - garde hors périmètre `StartGameUseCase` et le point sensible `as any`
+  - poursuit l’amincissement incrémental du provider avec un lot trivial et réversible
