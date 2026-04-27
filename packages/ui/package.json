@@ -42,7 +42,7 @@
 		"dev": "yarn dev:rollup",
 		"dev:rollup": "rollup -c -w",
 		"dev:css": "tailwindcss -i ./src/styles/globals.css -o ./dist/styles/globals.css -w",
-		"lint": "eslint packages/ui --max-warnings 0",
+		"lint": "eslint . --max-warnings 0",
 		"clean": "rm -rf .turbo node_modules dist"
 	},
 	"dependencies": {

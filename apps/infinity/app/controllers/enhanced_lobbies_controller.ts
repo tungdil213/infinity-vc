@@ -1,21 +1,39 @@
-import { HttpContext } from '@adonisjs/core/http'
 import { inject } from '@adonisjs/core'
 import logger from '@adonisjs/core/services/logger'
+import { projectActiveGames, type GameProjectionInput } from '@infinity.dev/game-runtime-session'
+import { CloseLobbyUseCase } from '#application/use_cases/close_lobby_use_case'
 import { CreateLobbyUseCase } from '#application/use_cases/create_lobby_use_case'
 import { JoinLobbyUseCase } from '#application/use_cases/join_lobby_use_case'
+import { KickPlayerUseCase } from '#application/use_cases/kick_player_use_case'
 import { LeaveLobbyUseCase } from '#application/use_cases/leave_lobby_use_case'
-import { StartGameUseCase } from '#application/use_cases/start_game_use_case'
 import { ListLobbiesUseCase } from '#application/use_cases/list_lobbies_use_case'
 import { ShowLobbyUseCase } from '#application/use_cases/show_lobby_use_case'
-import { KickPlayerUseCase } from '#application/use_cases/kick_player_use_case'
-import { CloseLobbyUseCase } from '#application/use_cases/close_lobby_use_case'
+import { StartGameUseCase } from '#application/use_cases/start_game_use_case'
+import { EnhancedLobbiesControllerPresence } from '#controllers/support/enhanced_lobbies_controller_presence'
+import {
+  respondEnhancedLobbyUnexpectedFailure,
+  respondEnhancedLobbyUseCaseFailure,
+  translateEnhancedLobbyUseCaseError,
+} from '#controllers/support/enhanced_lobbies_controller_response'
+import {
+  respondEnhancedLobbyHtmlSuccess,
+  respondEnhancedLobbyRequestSuccess,
+} from '#controllers/support/enhanced_lobbies_controller_success'
 import BusinessException from '#exceptions/business_exception'
 import {
   LobbyCreationException,
   InvalidLobbyConfigurationException,
   LobbyCreationInternalException,
 } from '#exceptions/lobby_exceptions'
-import { lobbyStoreValidator } from '#validators/lobby_store_validator'
+import { defaultGameCatalog } from '#infrastructure/game_engine/launcher_game_catalog'
+import { DatabaseGameRepository } from '#infrastructure/repositories/database_game_repository'
+import { toUserSummary } from '#presenters/lobby_presenter'
+import {
+  coerceGameSettings,
+  toAvailableGameSettingViewModel,
+  toAvailableGameViewModel,
+  type AvailableGameViewModel,
+} from '#utils/game_definition_helpers'
 import {
   lobbyAdminCloseValidator,
   lobbyInvitationCodeParamValidator,
@@ -24,61 +42,16 @@ import {
   lobbyUuidParamValidator,
 } from '#validators/lobby_action_validators'
 import { lobbyBeaconPayloadValidator } from '#validators/lobby_beacon_validator'
-import { toUserSummary } from '#presenters/lobby_presenter'
-import type { HttpRequest, HttpResponse } from '@adonisjs/core/http'
-import type { Session } from '@adonisjs/session'
-import { defaultGameCatalog } from '#infrastructure/game_engine/launcher_game_catalog'
-import type Game from '#domain/entities/game'
-import { DatabaseGameRepository } from '#infrastructure/repositories/database_game_repository'
-import {
-  coerceGameSettings,
-  toAvailableGameSettingViewModel,
-  toAvailableGameViewModel,
-  type AvailableGameViewModel,
-} from '#utils/game_definition_helpers'
-import {
-  LobbyPresenceService,
-  type LobbyConnectionPayload,
-  type PendingLeavePayload,
-} from '#application/services/lobby_presence_service'
-import { projectActiveGames, type GameProjectionInput } from '@infinity.dev/game-runtime-session'
+import { lobbyStoreValidator } from '#validators/lobby_store_validator'
+import type { HttpContext } from '@adonisjs/core/http'
 import type { GameDefinition } from '@infinity.dev/game-engine'
-
-const LOBBY_ERROR_TRANSLATION_KEYS: Record<string, string> = {
-  'Lobby not found': 'lobbies.errors.notFound',
-  'Player not found': 'lobbies.errors.playerNotFound',
-  'Player is already in a lobby': 'lobbies.errors.playerAlreadyInLobby',
-  'Password is required for this lobby': 'lobbies.errors.passwordRequired',
-  'Invalid lobby password': 'lobbies.errors.invalidPassword',
-  'Lobby is full': 'lobbies.errors.full',
-  'Player is not in this lobby': 'lobbies.errors.playerNotInLobby',
-  'Player not found in lobby': 'lobbies.errors.playerNotInLobby',
-  'Only the lobby creator can start the game': 'lobbies.errors.onlyCreatorCanStart',
-  'Lobby is not ready to start a game': 'lobbies.errors.lobbyNotReady',
-  'Failed to start game': 'lobbies.errors.startFailed',
-  'Only the lobby creator can kick players': 'lobbies.errors.onlyCreatorCanKick',
-  'Target player is not in this lobby': 'lobbies.errors.targetNotInLobby',
-  'Cannot kick players from a game in progress': 'lobbies.errors.cannotKickInProgress',
-  'Cannot close a lobby while a game is starting': 'lobbies.errors.cannotCloseStarting',
-  'Lobby UUID is required': 'lobbies.errors.lobbyUuidRequired',
-  'User UUID is required': 'lobbies.errors.userUuidRequired',
-  'Closer user UUID is required': 'lobbies.errors.userUuidRequired',
-}
-
-const PRIVATE_LOBBY_PRESENCE_GRACE_MS = resolvePrivateLobbyPresenceGraceMs()
-
-function resolvePrivateLobbyPresenceGraceMs(): number {
-  const configuredValue = Number(process.env.LOBBY_PRIVATE_DISCONNECT_GRACE_MS ?? 172_800_000)
-  if (!Number.isFinite(configuredValue)) {
-    return 172_800_000
-  }
-
-  // Private async lobbies can stay alive up to 7 days.
-  return Math.min(604_800_000, Math.max(60_000, Math.floor(configuredValue)))
-}
+import type { LobbyPresenceService } from '#application/services/lobby_presence_service'
+import type Game from '#domain/entities/game'
 
 @inject()
 export default class EnhancedLobbiesController {
+  private readonly lobbyPresenceFlow: EnhancedLobbiesControllerPresence
+
   constructor(
     private createLobbyUseCase: CreateLobbyUseCase,
     private joinLobbyUseCase: JoinLobbyUseCase,
@@ -90,7 +63,12 @@ export default class EnhancedLobbiesController {
     private closeLobbyUseCase: CloseLobbyUseCase,
     private lobbyPresenceService: LobbyPresenceService,
     private gameRepository: DatabaseGameRepository
-  ) {}
+  ) {
+    this.lobbyPresenceFlow = new EnhancedLobbiesControllerPresence(
+      this.lobbyPresenceService,
+      this.leaveLobbyUseCase
+    )
+  }
 
   /**
    * Display welcome page
@@ -252,8 +230,12 @@ export default class EnhancedLobbiesController {
         throw new LobbyCreationException(result.error, `Use case execution failed: ${result.error}`)
       }
 
-      session.flash('success', i18n.t('lobbies.flash.created'))
-      return response.redirect(`/lobbies/${result.value.uuid}`)
+      return respondEnhancedLobbyHtmlSuccess({
+        response,
+        session,
+        successMessage: i18n.t('lobbies.flash.created'),
+        redirectTo: `/lobbies/${result.value.uuid}`,
+      })
     } catch (error) {
       // Let validation errors bubble to the global handler
       if ((error as any)?.code === 'E_VALIDATION_ERROR') {
@@ -294,10 +276,10 @@ export default class EnhancedLobbiesController {
 
       const isUserInLobby = result.value.players.some((player) => player.uuid === user.userUuid)
       if (isUserInLobby) {
-        this.markLobbyPresenceConnected({
+        this.lobbyPresenceFlow.markConnected({
           lobbyUuid: uuid,
           userUuid: user.userUuid,
-          gracePeriodMs: this.resolvePresenceGracePeriodMs(result.value),
+          gracePeriodMs: this.lobbyPresenceFlow.resolveGracePeriodMs(result.value),
         })
       }
 
@@ -358,18 +340,22 @@ export default class EnhancedLobbiesController {
       })
 
       if (result.isFailure) {
-        session.flash('error', this.translateUseCaseError(i18n, result.error))
+        session.flash('error', translateEnhancedLobbyUseCaseError(i18n, result.error))
         return response.redirect().back()
       }
 
-      this.markLobbyPresenceConnected({
+      this.lobbyPresenceFlow.markConnected({
         lobbyUuid: invitationCode,
         userUuid: user.userUuid,
-        gracePeriodMs: this.resolvePresenceGracePeriodMs(result.value.lobby),
+        gracePeriodMs: this.lobbyPresenceFlow.resolveGracePeriodMs(result.value.lobby),
       })
 
-      session.flash('success', i18n.t('lobbies.flash.joined'))
-      return response.redirect(`/lobbies/${invitationCode}`)
+      return respondEnhancedLobbyHtmlSuccess({
+        response,
+        session,
+        successMessage: i18n.t('lobbies.flash.joined'),
+        redirectTo: `/lobbies/${invitationCode}`,
+      })
     } catch (error) {
       logger.error({ error }, 'Failed to join lobby by invitation')
       session.flash('error', i18n.t('lobbies.flash.joinFailed'))
@@ -393,7 +379,7 @@ export default class EnhancedLobbiesController {
       })
 
       if (result.isFailure) {
-        return this.respondUseCaseFailure({
+        return respondEnhancedLobbyUseCaseFailure({
           request,
           response,
           session,
@@ -402,23 +388,25 @@ export default class EnhancedLobbiesController {
         })
       }
 
-      this.markLobbyPresenceConnected({
+      this.lobbyPresenceFlow.markConnected({
         lobbyUuid: uuid,
         userUuid: user.userUuid,
-        gracePeriodMs: this.resolvePresenceGracePeriodMs(result.value.lobby),
+        gracePeriodMs: this.lobbyPresenceFlow.resolveGracePeriodMs(result.value.lobby),
       })
 
-      if (request.accepts(['html'])) {
-        session.flash('success', i18n.t('lobbies.flash.joined'))
-        return response.redirect(`/lobbies/${uuid}`)
-      }
-
-      return response.json({
-        success: true,
-        message: i18n.t('lobbies.api.joined'),
+      return respondEnhancedLobbyRequestSuccess({
+        request,
+        response,
+        session,
+        successMessage: i18n.t('lobbies.flash.joined'),
+        redirectTo: `/lobbies/${uuid}`,
+        jsonBody: {
+          success: true,
+          message: i18n.t('lobbies.api.joined'),
+        },
       })
     } catch (error) {
-      return this.respondUnexpectedFailure({
+      return respondEnhancedLobbyUnexpectedFailure({
         request,
         response,
         session,
@@ -438,7 +426,7 @@ export default class EnhancedLobbiesController {
     const { uuid } = await lobbyUuidParamValidator.validate(params)
 
     try {
-      this.lobbyPresenceService.cancelPendingLeave({
+      this.lobbyPresenceFlow.cancelPendingLeave({
         lobbyUuid: uuid,
         userUuid: user.userUuid,
       })
@@ -449,7 +437,7 @@ export default class EnhancedLobbiesController {
       })
 
       if (result.isFailure) {
-        return this.respondUseCaseFailure({
+        return respondEnhancedLobbyUseCaseFailure({
           request,
           response,
           session,
@@ -458,22 +446,25 @@ export default class EnhancedLobbiesController {
         })
       }
 
-      this.lobbyPresenceService.clearConnection({
+      this.lobbyPresenceFlow.clearConnection({
         lobbyUuid: uuid,
         userUuid: user.userUuid,
       })
 
-      if (request.accepts(['html'])) {
-        session.flash('success', i18n.t('lobbies.flash.left'))
-        return response.redirect('/lobbies')
-      }
-
-      return response.status(200).json({
-        success: true,
-        message: i18n.t('lobbies.api.left'),
+      return respondEnhancedLobbyRequestSuccess({
+        request,
+        response,
+        session,
+        successMessage: i18n.t('lobbies.flash.left'),
+        redirectTo: '/lobbies',
+        jsonBody: {
+          success: true,
+          message: i18n.t('lobbies.api.left'),
+        },
+        jsonStatus: 200,
       })
     } catch (error) {
-      return this.respondUnexpectedFailure({
+      return respondEnhancedLobbyUnexpectedFailure({
         request,
         response,
         session,
@@ -499,7 +490,7 @@ export default class EnhancedLobbiesController {
       })
 
       if (result.isFailure) {
-        return this.respondUseCaseFailure({
+        return respondEnhancedLobbyUseCaseFailure({
           request,
           response,
           session,
@@ -521,7 +512,7 @@ export default class EnhancedLobbiesController {
         game: gameResponse.game,
       })
     } catch (error) {
-      return this.respondUnexpectedFailure({
+      return respondEnhancedLobbyUnexpectedFailure({
         request,
         response,
         session,
@@ -550,7 +541,7 @@ export default class EnhancedLobbiesController {
 
       if (result.isFailure) {
         return response.status(400).json({
-          error: this.translateUseCaseError(i18n, result.error),
+          error: translateEnhancedLobbyUseCaseError(i18n, result.error),
         })
       }
 
@@ -592,11 +583,11 @@ export default class EnhancedLobbiesController {
       if (result.isFailure) {
         const status = result.error === 'Lobby not found' ? 404 : 400
         if (request.accepts(['html'])) {
-          session.flash('error', this.translateUseCaseError(i18n, result.error))
+          session.flash('error', translateEnhancedLobbyUseCaseError(i18n, result.error))
           return response.redirect('/lobbies')
         }
         return response.status(status).json({
-          error: this.translateUseCaseError(i18n, result.error),
+          error: translateEnhancedLobbyUseCaseError(i18n, result.error),
         })
       }
 
@@ -610,19 +601,21 @@ export default class EnhancedLobbiesController {
         'Lobby closed by moderation action'
       )
 
-      if (request.accepts(['html'])) {
-        session.flash('success', i18n.t('lobbies.flash.closed'))
-        return response.redirect('/lobbies')
-      }
-
-      return response.json({
-        success: true,
-        lobbyUuid: result.value.lobbyUuid,
-        reason: result.value.reason,
-        closedAt: result.value.closedAt,
-        closedBy: {
-          uuid: user.userUuid,
-          role: user.normalizedRole,
+      return respondEnhancedLobbyRequestSuccess({
+        request,
+        response,
+        session,
+        successMessage: i18n.t('lobbies.flash.closed'),
+        redirectTo: '/lobbies',
+        jsonBody: {
+          success: true,
+          lobbyUuid: result.value.lobbyUuid,
+          reason: result.value.reason,
+          closedAt: result.value.closedAt,
+          closedBy: {
+            uuid: user.userUuid,
+            role: user.normalizedRole,
+          },
         },
       })
     } catch (error) {
@@ -666,7 +659,9 @@ export default class EnhancedLobbiesController {
         viewerRole: user?.normalizedRole,
       })
       if (result.isFailure) {
-        return response.status(500).json({ error: this.translateUseCaseError(i18n, result.error) })
+        return response
+          .status(500)
+          .json({ error: translateEnhancedLobbyUseCaseError(i18n, result.error) })
       }
 
       return response.json({ lobbies: result.value.lobbies })
@@ -687,7 +682,7 @@ export default class EnhancedLobbiesController {
       }
 
       const { lobbyUuid, userUuid, clientSessionId } = await lobbyBeaconPayloadValidator.validate(
-        this.parseBeaconPayload(request.body())
+        this.lobbyPresenceFlow.parseBeaconPayload(request.body())
       )
       if (!lobbyUuid) {
         return response.status(400).json({ error: i18n.t('lobbies.errors.lobbyUuidRequired') })
@@ -698,16 +693,11 @@ export default class EnhancedLobbiesController {
         return response.status(403).json({ error: i18n.t('http.errors.forbidden') })
       }
 
-      const scheduling = this.lobbyPresenceService.scheduleLeaveOnDisconnect(
-        {
-          lobbyUuid,
-          userUuid: user.userUuid,
-          clientSessionId,
-        },
-        async (payload) => {
-          await this.executePresenceLeave(payload, 'Delayed leave on close failed')
-        }
-      )
+      const scheduling = this.lobbyPresenceFlow.scheduleLeaveOnDisconnect({
+        lobbyUuid,
+        userUuid: user.userUuid,
+        clientSessionId,
+      })
 
       return response.status(202).json({
         success: true,
@@ -739,13 +729,13 @@ export default class EnhancedLobbiesController {
       const { uuid } = await lobbyUuidParamValidator.validate(params)
 
       const { userUuid, clientSessionId } = await lobbyBeaconPayloadValidator.validate(
-        this.parseBeaconPayload(request.body())
+        this.lobbyPresenceFlow.parseBeaconPayload(request.body())
       )
       if (userUuid && userUuid !== user.userUuid) {
         return response.status(403).json({ error: i18n.t('http.errors.forbidden') })
       }
 
-      this.markLobbyPresenceConnected({
+      this.lobbyPresenceFlow.markConnected({
         lobbyUuid: uuid,
         userUuid: user.userUuid,
         clientSessionId,
@@ -773,106 +763,6 @@ export default class EnhancedLobbiesController {
     }
   }
 
-  private respondUseCaseFailure({
-    request,
-    response,
-    session,
-    i18n,
-    error,
-  }: {
-    request: HttpRequest
-    response: HttpResponse
-    session: Session
-    i18n: HttpContext['i18n']
-    error: string
-  }) {
-    const localizedError = this.translateUseCaseError(i18n, error)
-
-    if (request.accepts(['html'])) {
-      session.flash('error', localizedError)
-      return response.redirect().back()
-    }
-
-    return response.status(400).json({ error: localizedError })
-  }
-
-  private respondUnexpectedFailure({
-    request,
-    response,
-    session,
-    error,
-    logMessage,
-    userMessage,
-    apiMessage,
-  }: {
-    request: HttpRequest
-    response: HttpResponse
-    session: Session
-    error: unknown
-    logMessage: string
-    userMessage: string
-    apiMessage: string
-  }) {
-    logger.error({ error }, logMessage)
-
-    if (request.accepts(['html'])) {
-      session.flash('error', userMessage)
-      return response.redirect().back()
-    }
-
-    return response.status(500).json({ error: apiMessage })
-  }
-
-  private translateUseCaseError(i18n: HttpContext['i18n'], error: string): string {
-    const translatedKey = LOBBY_ERROR_TRANSLATION_KEYS[error]
-    if (translatedKey) {
-      return i18n.t(translatedKey)
-    }
-
-    return error
-  }
-
-  private markLobbyPresenceConnected(payload: LobbyConnectionPayload): void {
-    this.lobbyPresenceService.markConnected(payload, async (stalePayload) => {
-      await this.executePresenceLeave(stalePayload, 'Stale heartbeat leave execution failed')
-    })
-  }
-
-  private resolvePresenceGracePeriodMs(
-    lobby?: {
-      isPrivate?: boolean
-      hasPassword?: boolean
-    } | null
-  ): number | undefined {
-    const shouldKeepAsync = Boolean(lobby?.isPrivate || lobby?.hasPassword)
-    return shouldKeepAsync ? PRIVATE_LOBBY_PRESENCE_GRACE_MS : undefined
-  }
-
-  private async executePresenceLeave(
-    payload: PendingLeavePayload,
-    logMessage: string
-  ): Promise<void> {
-    const result = await this.leaveLobbyUseCase.execute(payload)
-    if (result.isFailure) {
-      if (this.isAlreadyLeftError(result.error)) {
-        this.lobbyPresenceService.clearConnection(payload)
-        return
-      }
-
-      logger.warn(
-        { lobbyUuid: payload.lobbyUuid, userUuid: payload.userUuid, error: result.error },
-        logMessage
-      )
-      throw new Error(result.error)
-    }
-
-    this.lobbyPresenceService.clearConnection(payload)
-  }
-
-  private isAlreadyLeftError(error: string): boolean {
-    return error.includes('Player is not in this lobby') || error.includes('not found')
-  }
-
   private async loadActiveGames(userUuid: string) {
     try {
       const games = await this.gameRepository.findActiveByPlayer(userUuid)
@@ -893,56 +783,5 @@ export default class EnhancedLobbiesController {
       finishedAt: game.finishedAt ?? null,
       durationMs: game.duration,
     }
-  }
-
-  private parseBeaconPayload(body: unknown): {
-    lobbyUuid?: string
-    userUuid?: string
-    clientSessionId?: string
-  } {
-    const normalize = (value: unknown) => {
-      if (!value || typeof value !== 'object') {
-        return { lobbyUuid: undefined, userUuid: undefined, clientSessionId: undefined }
-      }
-
-      const raw = value as Record<string, unknown>
-
-      return {
-        lobbyUuid: typeof raw.lobbyUuid === 'string' ? raw.lobbyUuid : undefined,
-        userUuid: typeof raw.userUuid === 'string' ? raw.userUuid : undefined,
-        clientSessionId:
-          typeof raw.clientSessionId === 'string' && raw.clientSessionId.trim().length > 0
-            ? raw.clientSessionId
-            : undefined,
-      }
-    }
-
-    if (!body) {
-      return {}
-    }
-
-    if (typeof body === 'string') {
-      try {
-        return normalize(JSON.parse(body))
-      } catch {
-        return {}
-      }
-    }
-
-    if (typeof body === 'object') {
-      const rawBody = body as Record<string, unknown>
-
-      if (typeof rawBody.payload === 'string') {
-        try {
-          return normalize(JSON.parse(rawBody.payload))
-        } catch {
-          return normalize(rawBody)
-        }
-      }
-
-      return normalize(rawBody)
-    }
-
-    return {}
   }
 }

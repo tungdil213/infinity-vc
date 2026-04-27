@@ -14,6 +14,10 @@ export const controllers = {
   Invitations: () => import('#controllers/invitations_controller'),
   ProfileSettings: () => import('#controllers/profile_settings_controller'),
   support: {
+    EnhancedLobbiesControllerPresence: () => import('#controllers/support/enhanced_lobbies_controller_presence'),
+    EnhancedLobbiesControllerResponse: () => import('#controllers/support/enhanced_lobbies_controller_response'),
+    EnhancedLobbiesControllerSuccess: () => import('#controllers/support/enhanced_lobbies_controller_success'),
     GameControllerGuard: () => import('#controllers/support/game_controller_guard'),
+    GameControllerPersistence: () => import('#controllers/support/game_controller_persistence'),
   },
 }
