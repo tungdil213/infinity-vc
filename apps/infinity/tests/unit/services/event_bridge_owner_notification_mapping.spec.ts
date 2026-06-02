@@ -54,6 +54,37 @@ class RecordingTranscriptService implements ITranscriptService {
 }
 
 test.group('Event bridge owner notification mapping', () => {
+  test('routes LobbyOwnerChanged to lobby channels', async ({ assert }) => {
+    const eventBus = createEventBus()
+    const transcript = new RecordingTranscriptService()
+    const builder = createEventBridge()
+    registerDefaultInfinityMappings(builder)
+    const bridge = builder.build(eventBus, transcript)
+    bridge.start()
+
+    const event: IEvent = {
+      id: crypto.randomUUID(),
+      type: 'LobbyOwnerChanged',
+      timestamp: new Date(),
+      payload: {
+        lobbyUuid: 'lobby-123',
+        previousOwnerUuid: 'owner-123',
+        newOwnerUuid: 'owner-456',
+        transferredByUserUuid: 'owner-123',
+      },
+    }
+
+    await eventBus.publish(event)
+
+    assert.lengthOf(transcript.broadcasts, 2)
+    assert.equal(transcript.broadcasts[0].channel, 'lobbies')
+    assert.equal(transcript.broadcasts[1].channel, 'lobbies/lobby-123')
+    assert.equal((transcript.broadcasts[0].payload as any).type, 'lobby.owner.changed')
+    assert.equal((transcript.broadcasts[0].payload as any).newOwnerUuid, 'owner-456')
+
+    bridge.stop()
+  })
+
   test('routes LobbyOwnerLobbyFull to users/{ownerUuid}', async ({ assert }) => {
     const eventBus = createEventBus()
     const transcript = new RecordingTranscriptService()

@@ -178,6 +178,9 @@ router
       .post('/lobbies/:uuid/start', '#controllers/enhanced_lobbies_controller.start')
       .as('api.lobbies.start')
     router
+      .post('/lobbies/:uuid/transfer', '#controllers/enhanced_lobbies_controller.transferOwnership')
+      .as('api.lobbies.transfer')
+    router
       .post('/lobbies/:uuid/close', '#controllers/enhanced_lobbies_controller.adminClose')
       .use(middleware.moderationGuard())
       .as('api.lobbies.close')

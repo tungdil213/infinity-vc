@@ -6,6 +6,8 @@
     "left": "Lobby erfolgreich verlassen",
     "leaveFailed": "Lobby konnte nicht verlassen werden. Bitte versuche es erneut.",
     "startFailed": "Spiel konnte nicht gestartet werden. Bitte versuche es erneut.",
+    "transferred": "Lobby-Host erfolgreich übertragen.",
+    "transferFailed": "Lobby-Host konnte nicht übertragen werden. Bitte versuche es erneut.",
     "closed": "Lobby erfolgreich geschlossen."
   },
   "api": {
@@ -16,7 +18,8 @@
     "startFailed": "Spiel konnte nicht gestartet werden",
     "kicked": "Spieler erfolgreich entfernt",
     "kickFailed": "Spieler konnte nicht entfernt werden",
-    "transferNotImplemented": "Eigentumsübertragung ist noch nicht implementiert",
+    "transferred": "Lobby-Host erfolgreich übertragen",
+    "transferFailed": "Lobby-Host konnte nicht übertragen werden",
     "closeFailed": "Lobby konnte nicht geschlossen werden",
     "getFailed": "Lobby konnte nicht geladen werden",
     "listFailed": "Lobbys konnten nicht geladen werden",
@@ -40,6 +43,9 @@
     "onlyCreatorCanKick": "Nur der Ersteller der Lobby kann Spieler entfernen",
     "targetNotInLobby": "Der betroffene Spieler ist nicht in dieser Lobby",
     "cannotKickInProgress": "Während eines laufenden Spiels können keine Spieler entfernt werden",
+    "onlyCreatorCanTransfer": "Nur der Ersteller der Lobby kann den Host übertragen",
+    "cannotTransferToSelf": "Der Host kann nicht auf dich selbst übertragen werden",
+    "cannotTransferStarting": "Der Host kann nicht übertragen werden, während ein Spiel startet",
     "cannotCloseStarting": "Eine Lobby kann nicht geschlossen werden, während ein Spiel startet",
     "lobbyUuidRequired": "Lobby-ID ist erforderlich",
     "userUuidRequired": "Benutzer-ID ist erforderlich",

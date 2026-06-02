@@ -1,6 +1,7 @@
 import Game, { type GameStateData } from '#domain/entities/game'
 import { GameStatus } from '#domain/value_objects/game_status'
 import type { GameReplayStep, GameSession } from '#application/services/game_engine_types'
+import { decodeReplayStep, decodeReplayTimeline } from '@infinity.dev/game-runtime-session'
 
 export interface PersistedGameSnapshot {
   gameType: string
@@ -136,9 +137,8 @@ export function extractPersistedReplayTimeline(game: Game): GameReplayStep[] {
     return []
   }
 
-  return runtime.replayTimeline
-    .map((rawStep, index) => normalizeReplayStep(rawStep, index))
-    .filter((step): step is GameReplayStep => step !== null)
+  const decoded = decodeReplayTimeline(runtime.replayTimeline, { allowEmpty: true })
+  return decoded.success ? decoded.value : []
 }
 
 export function extractPersistedReplayEnvelope(game: Game): Record<string, unknown> | null {
@@ -156,104 +156,8 @@ export function extractPersistedReplayEnvelope(game: Game): Record<string, unkno
 }
 
 export function normalizeReplayStep(rawStep: unknown, index: number): GameReplayStep | null {
-  if (!rawStep || typeof rawStep !== 'object') {
-    return null
-  }
-
-  const source = rawStep as Record<string, unknown>
-  const rawEvents = Array.isArray(source.events) ? source.events : []
-  const normalizedEvents = rawEvents.map((rawEvent) => {
-    const event = rawEvent as Record<string, unknown>
-    return {
-      type: String(event.type ?? ''),
-      payload: event.payload,
-    }
-  })
-
-  const snapshot = source.snapshot as Record<string, unknown> | undefined
-  const rawPlayers = Array.isArray(snapshot?.players) ? snapshot.players : []
-  const players = rawPlayers.map((rawPlayer) => {
-    const player = rawPlayer as Record<string, unknown>
-
-    return {
-      id: String(player.id ?? ''),
-      name: String(player.name ?? 'Unknown'),
-      isActive: Boolean(player.isActive),
-      isEliminated: Boolean(player.isEliminated),
-      isProtected: Boolean(player.isProtected),
-      handCount: Number(player.handCount ?? 0) || 0,
-      tokensOfAffection: Number(player.tokensOfAffection ?? 0) || 0,
-    }
-  })
-
-  const rounds = Array.isArray(snapshot?.rounds)
-    ? snapshot.rounds.map((rawRound, roundIndex) => {
-        const round = rawRound as Record<string, unknown>
-        const choicesSource = asRecord(round.choices) ?? {}
-        const choices = Object.entries(choicesSource).reduce<Record<string, string>>(
-          (acc, [playerId, move]) => {
-            if (typeof move === 'string') {
-              acc[playerId] = move
-            }
-            return acc
-          },
-          {}
-        )
-
-        return {
-          round: Number(round.round ?? roundIndex + 1) || roundIndex + 1,
-          winnerId: typeof round.winnerId === 'string' ? round.winnerId : null,
-          choices,
-        }
-      })
-    : undefined
-
-  const scoresSource = asRecord(snapshot?.scores) ?? {}
-  const scores = Object.entries(scoresSource).reduce<Record<string, number>>(
-    (acc, [key, value]) => {
-      const numericValue = Number(value)
-      if (Number.isFinite(numericValue)) {
-        acc[key] = numericValue
-      }
-      return acc
-    },
-    {}
-  )
-
-  const roundChoicesSource = asRecord(snapshot?.roundChoices) ?? {}
-  const roundChoices = Object.entries(roundChoicesSource).reduce<Record<string, string>>(
-    (acc, [key, value]) => {
-      if (typeof value === 'string') {
-        acc[key] = value
-      }
-      return acc
-    },
-    {}
-  )
-
-  return {
-    step: Number(source.step ?? index) || index,
-    kind: source.kind === 'action' ? 'action' : 'initial',
-    recordedAt:
-      typeof source.recordedAt === 'string' ? source.recordedAt : new Date().toISOString(),
-    actorId: typeof source.actorId === 'string' ? source.actorId : undefined,
-    actionType: typeof source.actionType === 'string' ? source.actionType : undefined,
-    actionPayload: asRecord(source.actionPayload) ?? undefined,
-    events: normalizedEvents,
-    snapshot: {
-      phase: typeof snapshot?.phase === 'string' ? snapshot.phase : 'unknown',
-      round: Number(snapshot?.round ?? 1) || 1,
-      turn: Number(snapshot?.turn ?? 0) || 0,
-      isFinished: Boolean(snapshot?.isFinished),
-      winnerId: typeof snapshot?.winnerId === 'string' ? snapshot.winnerId : null,
-      currentPlayerId:
-        typeof snapshot?.currentPlayerId === 'string' ? snapshot.currentPlayerId : null,
-      players,
-      ...(Object.keys(scores).length > 0 ? { scores } : {}),
-      ...(Object.keys(roundChoices).length > 0 ? { roundChoices } : {}),
-      ...(rounds ? { rounds } : {}),
-    },
-  }
+  const decoded = decodeReplayStep(rawStep, index)
+  return decoded.success ? decoded.value : null
 }
 
 export function asRecord(value: unknown): Record<string, unknown> | null {

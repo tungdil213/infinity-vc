@@ -175,7 +175,8 @@ export class DatabaseLobbyRepository implements LobbyRepository {
       model.gameSettings,
       model.createdAt.toJSDate(),
       model.description ?? '',
-      model.passwordHash ?? undefined
+      model.passwordHash ?? undefined,
+      model.status as LobbyStatus
     )
   }
 }

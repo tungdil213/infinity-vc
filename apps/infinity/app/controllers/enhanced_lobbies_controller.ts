@@ -9,6 +9,9 @@ import { LeaveLobbyUseCase } from '#application/use_cases/leave_lobby_use_case'
 import { ListLobbiesUseCase } from '#application/use_cases/list_lobbies_use_case'
 import { ShowLobbyUseCase } from '#application/use_cases/show_lobby_use_case'
 import { StartGameUseCase } from '#application/use_cases/start_game_use_case'
+import { TransferOwnershipUseCase } from '#application/use_cases/transfer_ownership_use_case'
+import { EnhancedLobbiesControllerActionsFlow } from '#controllers/support/enhanced_lobbies_controller_actions'
+import { EnhancedLobbiesControllerJoinFlow } from '#controllers/support/enhanced_lobbies_controller_join'
 import { EnhancedLobbiesControllerPresence } from '#controllers/support/enhanced_lobbies_controller_presence'
 import {
   respondEnhancedLobbyUnexpectedFailure,
@@ -39,6 +42,7 @@ import {
   lobbyInvitationCodeParamValidator,
   lobbyJoinValidator,
   lobbyKickPlayerValidator,
+  lobbyTransferOwnershipValidator,
   lobbyUuidParamValidator,
 } from '#validators/lobby_action_validators'
 import { lobbyBeaconPayloadValidator } from '#validators/lobby_beacon_validator'
@@ -50,6 +54,8 @@ import type Game from '#domain/entities/game'
 
 @inject()
 export default class EnhancedLobbiesController {
+  private readonly lobbyActionsFlow: EnhancedLobbiesControllerActionsFlow
+  private readonly lobbyJoinFlow: EnhancedLobbiesControllerJoinFlow
   private readonly lobbyPresenceFlow: EnhancedLobbiesControllerPresence
 
   constructor(
@@ -61,12 +67,23 @@ export default class EnhancedLobbiesController {
     private showLobbyUseCase: ShowLobbyUseCase,
     private kickPlayerUseCase: KickPlayerUseCase,
     private closeLobbyUseCase: CloseLobbyUseCase,
+    private transferOwnershipUseCase: TransferOwnershipUseCase,
     private lobbyPresenceService: LobbyPresenceService,
     private gameRepository: DatabaseGameRepository
   ) {
     this.lobbyPresenceFlow = new EnhancedLobbiesControllerPresence(
       this.lobbyPresenceService,
       this.leaveLobbyUseCase
+    )
+    this.lobbyJoinFlow = new EnhancedLobbiesControllerJoinFlow(
+      this.joinLobbyUseCase,
+      this.lobbyPresenceFlow
+    )
+    this.lobbyActionsFlow = new EnhancedLobbiesControllerActionsFlow(
+      this.startGameUseCase,
+      this.kickPlayerUseCase,
+      this.closeLobbyUseCase,
+      this.transferOwnershipUseCase
     )
   }
 
@@ -333,22 +350,16 @@ export default class EnhancedLobbiesController {
     const { password } = await request.validateUsing(lobbyJoinValidator)
 
     try {
-      const result = await this.joinLobbyUseCase.execute({
+      const result = await this.lobbyJoinFlow.join({
         lobbyUuid: invitationCode,
         userUuid: user.userUuid,
         password: typeof password === 'string' ? password : undefined,
       })
 
-      if (result.isFailure) {
+      if (result.status === 'failure') {
         session.flash('error', translateEnhancedLobbyUseCaseError(i18n, result.error))
         return response.redirect().back()
       }
-
-      this.lobbyPresenceFlow.markConnected({
-        lobbyUuid: invitationCode,
-        userUuid: user.userUuid,
-        gracePeriodMs: this.lobbyPresenceFlow.resolveGracePeriodMs(result.value.lobby),
-      })
 
       return respondEnhancedLobbyHtmlSuccess({
         response,
@@ -372,13 +383,13 @@ export default class EnhancedLobbiesController {
     const { password } = await request.validateUsing(lobbyJoinValidator)
 
     try {
-      const result = await this.joinLobbyUseCase.execute({
+      const result = await this.lobbyJoinFlow.join({
         lobbyUuid: uuid,
         userUuid: user.userUuid,
         password: typeof password === 'string' ? password : undefined,
       })
 
-      if (result.isFailure) {
+      if (result.status === 'failure') {
         return respondEnhancedLobbyUseCaseFailure({
           request,
           response,
@@ -387,12 +398,6 @@ export default class EnhancedLobbiesController {
           error: result.error,
         })
       }
-
-      this.lobbyPresenceFlow.markConnected({
-        lobbyUuid: uuid,
-        userUuid: user.userUuid,
-        gracePeriodMs: this.lobbyPresenceFlow.resolveGracePeriodMs(result.value.lobby),
-      })
 
       return respondEnhancedLobbyRequestSuccess({
         request,
@@ -484,12 +489,12 @@ export default class EnhancedLobbiesController {
     const { uuid } = await lobbyUuidParamValidator.validate(params)
 
     try {
-      const result = await this.startGameUseCase.execute({
+      const result = await this.lobbyActionsFlow.start({
         lobbyUuid: uuid,
         userUuid: user.userUuid,
       })
 
-      if (result.isFailure) {
+      if (result.status === 'failure') {
         return respondEnhancedLobbyUseCaseFailure({
           request,
           response,
@@ -500,7 +505,7 @@ export default class EnhancedLobbiesController {
       }
 
       const gameResponse = result.value
-      const gameUuid = gameResponse.game.uuid
+      const gameUuid = result.gameUuid
 
       if (request.accepts(['html'])) {
         return response.redirect(`/games/${gameUuid}`)
@@ -533,13 +538,13 @@ export default class EnhancedLobbiesController {
     const { playerUuid } = await request.validateUsing(lobbyKickPlayerValidator)
 
     try {
-      const result = await this.kickPlayerUseCase.execute({
+      const result = await this.lobbyActionsFlow.kickPlayer({
         lobbyUuid: uuid,
         kickerUuid: user.userUuid,
         targetPlayerUuid: playerUuid,
       })
 
-      if (result.isFailure) {
+      if (result.status === 'failure') {
         return response.status(400).json({
           error: translateEnhancedLobbyUseCaseError(i18n, result.error),
         })
@@ -560,8 +565,52 @@ export default class EnhancedLobbiesController {
   /**
    * Transfer lobby ownership (owner only)
    */
-  async transferOwnership({ response, i18n }: HttpContext) {
-    return response.status(501).json({ error: i18n.t('lobbies.api.transferNotImplemented') })
+  async transferOwnership({ params, request, response, auth, session, i18n }: HttpContext) {
+    const user = auth.user!
+    const { uuid } = await lobbyUuidParamValidator.validate(params)
+    const { newOwnerUuid } = await request.validateUsing(lobbyTransferOwnershipValidator)
+
+    try {
+      const result = await this.lobbyActionsFlow.transferOwnership({
+        lobbyUuid: uuid,
+        currentOwnerUuid: user.userUuid,
+        newOwnerUuid,
+      })
+
+      if (result.status === 'failure') {
+        const localizedError = translateEnhancedLobbyUseCaseError(i18n, result.error)
+        if (request.accepts(['html'])) {
+          session.flash('error', localizedError)
+          return response.redirect().back()
+        }
+
+        return response.status(result.httpStatus).json({ error: localizedError })
+      }
+
+      return respondEnhancedLobbyRequestSuccess({
+        request,
+        response,
+        session,
+        successMessage: i18n.t('lobbies.flash.transferred'),
+        redirectTo: `/lobbies/${uuid}`,
+        jsonBody: {
+          success: true,
+          lobbyUuid: result.value.lobbyUuid,
+          previousOwnerUuid: result.value.previousOwnerUuid,
+          newOwnerUuid: result.value.newOwnerUuid,
+        },
+      })
+    } catch (error) {
+      return respondEnhancedLobbyUnexpectedFailure({
+        request,
+        response,
+        session,
+        error,
+        logMessage: 'Failed to transfer lobby ownership',
+        userMessage: i18n.t('lobbies.flash.transferFailed'),
+        apiMessage: i18n.t('lobbies.api.transferFailed'),
+      })
+    }
   }
 
   /**
@@ -573,33 +622,24 @@ export default class EnhancedLobbiesController {
     const { reason } = await request.validateUsing(lobbyAdminCloseValidator)
 
     try {
-      const result = await this.closeLobbyUseCase.execute({
+      const result = await this.lobbyActionsFlow.adminClose({
         lobbyUuid: uuid,
         closedByUserUuid: user.userUuid,
         closedByRole: user.normalizedRole,
         reason: typeof reason === 'string' ? reason : undefined,
       })
 
-      if (result.isFailure) {
-        const status = result.error === 'Lobby not found' ? 404 : 400
+      if (result.status === 'failure') {
         if (request.accepts(['html'])) {
           session.flash('error', translateEnhancedLobbyUseCaseError(i18n, result.error))
           return response.redirect('/lobbies')
         }
-        return response.status(status).json({
+        return response.status(result.httpStatus).json({
           error: translateEnhancedLobbyUseCaseError(i18n, result.error),
         })
       }
 
-      logger.info(
-        {
-          lobbyUuid: result.value.lobbyUuid,
-          reason: result.value.reason,
-          closedByUserUuid: user.userUuid,
-          closedByRole: user.normalizedRole,
-        },
-        'Lobby closed by moderation action'
-      )
+      logger.info(result.logContext, 'Lobby closed by moderation action')
 
       return respondEnhancedLobbyRequestSuccess({
         request,

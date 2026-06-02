@@ -105,6 +105,9 @@ export class LobbyStateStore {
       case 'lobby.status.changed':
         this.handleLobbyStatusChanged(event)
         break
+      case 'lobby.owner.changed':
+        this.handleLobbyOwnerChanged(event)
+        break
       case 'lobby.updated':
         this.handleLobbyDetailUpdated(event)
         break
@@ -197,18 +200,14 @@ export class LobbyStateStore {
       }
 
       if (player && changeType === 'joined') {
-        const alreadyInLobby = nextLobby.players.some(
-          (existingPlayer) => existingPlayer.uuid === player.uuid
-        )
+        const alreadyInLobby = nextLobby.players.some((existingPlayer) => existingPlayer.uuid === player.uuid)
         if (!alreadyInLobby) {
           nextLobby.players = [...nextLobby.players, player]
         }
       }
 
       if (player && changeType === 'left') {
-        nextLobby.players = nextLobby.players.filter(
-          (existingPlayer) => existingPlayer.uuid !== player.uuid
-        )
+        nextLobby.players = nextLobby.players.filter((existingPlayer) => existingPlayer.uuid !== player.uuid)
       }
 
       return this.withDerivedFlags(nextLobby)
@@ -231,6 +230,23 @@ export class LobbyStateStore {
       }
 
       return this.withDerivedFlags(updatedLobby)
+    })
+  }
+
+  private handleLobbyOwnerChanged(event: LobbyEventEnvelope): void {
+    const lobbyUuid = event.data?.lobbyUuid
+    const newOwnerUuid = event.data?.newOwnerUuid
+
+    if (!lobbyUuid || !newOwnerUuid) return
+
+    this.updateLobbyInList(lobbyUuid, { createdBy: newOwnerUuid })
+    this.updateLobbyDetail(lobbyUuid, (lobby) => {
+      if (!lobby) return lobby
+
+      return this.withDerivedFlags({
+        ...lobby,
+        createdBy: newOwnerUuid,
+      })
     })
   }
 
@@ -296,10 +312,7 @@ export class LobbyStateStore {
     this.notifyLobbyListSubscribers()
   }
 
-  private updateLobbyDetail(
-    lobbyUuid: string,
-    updater: (lobby: LobbyData | null) => LobbyData | null
-  ): void {
+  private updateLobbyDetail(lobbyUuid: string, updater: (lobby: LobbyData | null) => LobbyData | null): void {
     const currentState = this.lobbyDetailStates.get(lobbyUuid) || {
       lobby: null,
       loading: false,
@@ -344,10 +357,7 @@ export class LobbyStateStore {
       maxPlayers,
       hasAvailableSlots: currentPlayers < maxPlayers,
       canStart:
-        currentPlayers >= 2 &&
-        maxPlayers >= 2 &&
-        normalizedStatus !== 'IN_GAME' &&
-        normalizedStatus !== 'STARTING',
+        currentPlayers >= 2 && maxPlayers >= 2 && normalizedStatus !== 'IN_GAME' && normalizedStatus !== 'STARTING',
     }
   }
 }

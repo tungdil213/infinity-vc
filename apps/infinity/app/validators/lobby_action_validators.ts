@@ -12,6 +12,12 @@ export const lobbyKickPlayerValidator = vine.compile(
   })
 )
 
+export const lobbyTransferOwnershipValidator = vine.compile(
+  vine.object({
+    newOwnerUuid: vine.string().trim().uuid(),
+  })
+)
+
 export const lobbyAdminCloseValidator = vine.compile(
   vine.object({
     reason: vine.string().trim().maxLength(255).optional(),

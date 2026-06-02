@@ -12,6 +12,7 @@ export {
   type PlayerJoinedLobbyPayload,
   type PlayerLeftLobbyPayload,
   type LobbyStatusChangedPayload,
+  type LobbyOwnerChangedPayload,
 } from '@infinity.dev/events/domain'
 
 export enum LobbyEvent {
@@ -198,6 +199,39 @@ export class LobbyStatusChangedEvent extends BaseLobbyEvent<LobbyStatusChangedDa
       lobbyUuid: this.lobbyUuid,
       oldStatus: this.oldStatus,
       newStatus: this.newStatus,
+    }
+  }
+
+  get eventType(): string {
+    return this.type
+  }
+}
+
+export interface LobbyOwnerChangedData {
+  lobbyUuid: string
+  previousOwnerUuid: string
+  newOwnerUuid: string
+  transferredByUserUuid: string
+}
+
+export class LobbyOwnerChangedEvent extends BaseLobbyEvent<LobbyOwnerChangedData> {
+  readonly type = 'LobbyOwnerChanged'
+
+  constructor(
+    public readonly lobbyUuid: string,
+    public readonly previousOwnerUuid: string,
+    public readonly newOwnerUuid: string,
+    public readonly transferredByUserUuid: string
+  ) {
+    super()
+  }
+
+  get payload(): LobbyOwnerChangedData {
+    return {
+      lobbyUuid: this.lobbyUuid,
+      previousOwnerUuid: this.previousOwnerUuid,
+      newOwnerUuid: this.newOwnerUuid,
+      transferredByUserUuid: this.transferredByUserUuid,
     }
   }
 

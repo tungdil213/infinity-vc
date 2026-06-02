@@ -309,6 +309,54 @@ test.group('Lobby Entity', () => {
     assert.equal(events[0].eventType, 'PlayerLeftLobby')
   })
 
+  test('should transfer ownership to another player in the lobby', ({ assert }) => {
+    const lobby = createLobby()
+    const newOwner = createPlayerInterface()
+    lobby.addPlayer(newOwner)
+    lobby.clearEvents()
+
+    const result = lobby.transferOwnership(lobby.createdBy, newOwner.uuid)
+
+    assert.isTrue(result.isSuccess)
+    assert.equal(lobby.createdBy, newOwner.uuid)
+    assert.deepEqual(result.value, {
+      previousOwnerUuid: lobby.players[0].uuid,
+      newOwnerUuid: newOwner.uuid,
+    })
+
+    const events = lobby.getUncommittedEvents()
+    assert.lengthOf(events, 1)
+    assert.equal(events[0].eventType, 'LobbyOwnerChanged')
+    assert.deepEqual(events[0].payload, {
+      lobbyUuid: lobby.uuid,
+      previousOwnerUuid: lobby.players[0].uuid,
+      newOwnerUuid: newOwner.uuid,
+      transferredByUserUuid: lobby.players[0].uuid,
+    })
+  })
+
+  test('should reject ownership transfer from non creator, to self, to absent player and while starting', ({
+    assert,
+  }) => {
+    const lobby = createLobby()
+    const newOwner = createPlayerInterface()
+    const absentPlayer = createPlayerInterface()
+    lobby.addPlayer(newOwner)
+
+    const nonCreatorResult = lobby.transferOwnership(newOwner.uuid, lobby.createdBy)
+    const selfResult = lobby.transferOwnership(lobby.createdBy, lobby.createdBy)
+    const absentResult = lobby.transferOwnership(lobby.createdBy, absentPlayer.uuid)
+
+    lobby.setReady()
+    lobby.startGame()
+    const startingResult = lobby.transferOwnership(lobby.createdBy, newOwner.uuid)
+
+    assert.equal(nonCreatorResult.error, 'Only the lobby creator can transfer ownership')
+    assert.equal(selfResult.error, 'Cannot transfer ownership to yourself')
+    assert.equal(absentResult.error, 'Target player is not in this lobby')
+    assert.equal(startingResult.error, 'Cannot transfer ownership while a game is starting')
+  })
+
   test('should record events when game starts', ({ assert }) => {
     const lobby = createLobby()
     lobby.addPlayer(createPlayerInterface())

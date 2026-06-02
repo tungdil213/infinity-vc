@@ -9,40 +9,32 @@ import {
 } from '@infinity.dev/game-runtime-session'
 import { gameEngineService } from '#application/services/game_engine_service'
 import { replayImportGuardService } from '#application/services/replay_import_guard_service'
+import { getGameSession, type RawGameActionInput } from '#controllers/support/game_controller_guard'
 import {
-  executeParsedGameAction,
-  getGameSession,
-  isUserInGameSession,
-  parseGameActionInput,
-  type RawGameActionInput,
-} from '#controllers/support/game_controller_guard'
-import {
-  asRecord,
   buildPersistedGameFromSession,
   extractPersistedGameSnapshot,
   extractPersistedReplayEnvelope,
   extractPersistedReplayTimeline,
-  normalizeReplayStep,
 } from '#controllers/support/game_controller_persistence'
-import Game, { type GameStateData } from '#domain/entities/game'
+import { importReplayForGame } from '#controllers/support/game_controller_replay_admin'
+import {
+  executeGameActionFlow,
+  resolveGameActionsPayload,
+  resolveGameApiPayload,
+  resolvePublicPlayersPayload,
+} from '#controllers/support/game_controller_runtime_api'
+import {
+  canViewDebugPayload,
+  resolveGameRuntimeView,
+  sanitizeReplayTimelineForViewer,
+} from '#controllers/support/game_controller_runtime'
+import Game from '#domain/entities/game'
 import { GameStatus } from '#domain/value_objects/game_status'
-import {
-  resolveGameDisplayName,
-  resolveGamePresentation,
-} from '#infrastructure/game_engine/game_presentation_registry'
 import { DatabaseGameRepository } from '#infrastructure/repositories/database_game_repository'
-import {
-  toActionResponsePayload,
-  toGameActionsPayload,
-  toGameApiPayload,
-  toGamePagePayload,
-  toPublicPlayersPayload,
-  toSpectatorPlayerView,
-} from '#presenters/game_presenter'
+import { toGamePagePayload } from '#presenters/game_presenter'
 import { gameActionBodyValidator, gameUuidParamValidator } from '#validators/game_action_validator'
 import { gameHistoryQueryValidator } from '#validators/game_history_validator'
 import { gameReplayImportBodyValidator } from '#validators/game_replay_import_validator'
-import type { StableSignedEnvelope } from '@infinity.dev/boardgame-toolkit/serialization'
 import type { GameReplayStep, GameSession } from '#application/services/game_engine_types'
 
 const GAME_ACTION_ERROR_TRANSLATION_KEYS: Record<string, string> = {
@@ -66,49 +58,35 @@ export default class GamesController {
   async show({ params, inertia, auth, i18n }: HttpContext) {
     const user = auth.user!
     const { uuid } = await gameUuidParamValidator.validate(params)
-    const canViewDebugPayload = this.canViewDebugPayload(user.normalizedRole)
 
-    const resolvedSession = await this.resolveRuntimeSession(uuid)
-    if (!resolvedSession) {
+    const runtimeView = await resolveGameRuntimeView({
+      gameUuid: uuid,
+      user,
+      resolveRuntimeSession: (gameUuid) => this.resolveRuntimeSession(gameUuid),
+      runtimeReader: gameEngineService,
+    })
+    if (!runtimeView) {
       return inertia.render('errors/not_found', {
         error: { message: i18n.t('games.errors.notFound') },
       })
     }
-    const { session, source } = resolvedSession
-    const gamePresentation = resolveGamePresentation(session.gameType)
-    const gameDisplayName = resolveGameDisplayName(session.gameType)
-
-    const isSpectator = !isUserInGameSession(session, user.userUuid)
-    const playerView = isSpectator
-      ? toSpectatorPlayerView({ session, currentUserUuid: user.userUuid })
-      : gameEngineService.getPlayerView(uuid, user.userUuid)
-    const availableActions = isSpectator
-      ? []
-      : gameEngineService.getAvailableActions(uuid, user.userUuid)
 
     return inertia.render(
       'game',
       toGamePagePayload({
-        session,
-        playerView,
-        availableActions,
+        session: runtimeView.session,
+        playerView: runtimeView.playerView,
+        availableActions: runtimeView.availableActions,
         user: {
           uuid: user.userUuid,
           nickName: user.fullName ?? user.email,
           role: user.normalizedRole,
         },
-        isSpectator,
-        replayTimeline: this.sanitizeReplayTimelineForViewer(
-          gameEngineService.getReplayTimeline(uuid),
-          canViewDebugPayload
-        ),
-        gameDisplayName,
-        gamePresentation,
-        runtimeStatus: {
-          source,
-          persisted: source === 'restored',
-          inMemory: true,
-        },
+        isSpectator: runtimeView.isSpectator,
+        replayTimeline: runtimeView.replayTimeline,
+        gameDisplayName: runtimeView.gameDisplayName,
+        gamePresentation: runtimeView.gamePresentation,
+        runtimeStatus: runtimeView.runtimeStatus,
       }) as any
     )
   }
@@ -145,43 +123,18 @@ export default class GamesController {
   async apiShow({ params, response, auth, i18n }: HttpContext) {
     const user = auth.user!
     const { uuid } = await gameUuidParamValidator.validate(params)
-    const canViewDebugPayload = this.canViewDebugPayload(user.normalizedRole)
 
-    const resolvedSession = await this.resolveRuntimeSession(uuid)
-    if (!resolvedSession) {
+    const result = await resolveGameApiPayload({
+      gameUuid: uuid,
+      user,
+      resolveRuntimeSession: (gameUuid) => this.resolveRuntimeSession(gameUuid),
+      runtimeReader: gameEngineService,
+    })
+    if (result.status === 'not_found') {
       return response.status(404).json({ error: i18n.t('games.errors.notFoundOrFinished') })
     }
-    const { session, source } = resolvedSession
-    const gamePresentation = resolveGamePresentation(session.gameType)
-    const gameDisplayName = resolveGameDisplayName(session.gameType)
 
-    const isSpectator = !isUserInGameSession(session, user.userUuid)
-    const playerView = isSpectator
-      ? toSpectatorPlayerView({ session, currentUserUuid: user.userUuid })
-      : gameEngineService.getPlayerView(uuid, user.userUuid)
-    const availableActions = isSpectator
-      ? []
-      : gameEngineService.getAvailableActions(uuid, user.userUuid)
-
-    return response.json(
-      toGameApiPayload({
-        session,
-        playerView,
-        availableActions,
-        isSpectator,
-        replayTimeline: this.sanitizeReplayTimelineForViewer(
-          gameEngineService.getReplayTimeline(uuid),
-          canViewDebugPayload
-        ),
-        gameDisplayName,
-        gamePresentation,
-        runtimeStatus: {
-          source,
-          persisted: source === 'restored',
-          inMemory: true,
-        },
-      })
-    )
+    return response.json(result.payload)
   }
 
   /**
@@ -191,25 +144,18 @@ export default class GamesController {
     const user = auth.user!
     const { uuid } = await gameUuidParamValidator.validate(params)
 
-    const resolvedSession = await this.resolveRuntimeSession(uuid)
-    if (!resolvedSession) {
+    const result = await resolveGameActionsPayload({
+      gameUuid: uuid,
+      userUuid: user.userUuid,
+      resolveRuntimeSession: (gameUuid) => this.resolveRuntimeSession(gameUuid),
+      getAvailableActions: (gameUuid, userUuid) =>
+        gameEngineService.getAvailableActions(gameUuid, userUuid),
+    })
+    if (result.status === 'not_found') {
       return response.status(404).json({ error: i18n.t('games.errors.notFound') })
     }
-    const { session } = resolvedSession
 
-    const isSpectator = !isUserInGameSession(session, user.userUuid)
-    const availableActions = isSpectator
-      ? []
-      : gameEngineService.getAvailableActions(uuid, user.userUuid)
-
-    return response.json(
-      toGameActionsPayload({
-        session,
-        availableActions,
-        currentUserUuid: user.userUuid,
-        isSpectator,
-      })
-    )
+    return response.json(result.payload)
   }
 
   /**
@@ -220,58 +166,38 @@ export default class GamesController {
     const { uuid } = await gameUuidParamValidator.validate(params)
     const body = (await request.validateUsing(gameActionBodyValidator)) as RawGameActionInput
 
-    const resolvedSession = await this.resolveRuntimeSession(uuid)
-    if (!resolvedSession) {
+    const result = await executeGameActionFlow({
+      gameUuid: uuid,
+      user,
+      rawActionInput: body,
+      resolveRuntimeSession: (gameUuid) => this.resolveRuntimeSession(gameUuid),
+      runtimeReader: gameEngineService,
+      persistSessionSnapshot: (session) => this.persistSessionSnapshot(session),
+      onPersistError: (error) => {
+        logger.error({ error, gameUuid: uuid }, 'Failed to persist game snapshot after action')
+      },
+    })
+    if (result.status === 'not_found') {
       return response.status(404).json({ error: i18n.t('games.errors.notFound') })
     }
-    const { session } = resolvedSession
-    const gamePresentation = resolveGamePresentation(session.gameType)
-    const gameDisplayName = resolveGameDisplayName(session.gameType)
-    if (!isUserInGameSession(session, user.userUuid)) {
+
+    if (result.status === 'spectator') {
       return response.status(403).json({ error: i18n.t('games.errors.spectatorsCannotAct') })
     }
 
-    const parsedAction = parseGameActionInput(body)
-    if (!parsedAction.ok) {
+    if (result.status === 'invalid_action') {
       return response.status(400).json({
-        error: this.translateGameActionError(
-          i18n,
-          parsedAction.error,
-          'games.errors.invalidAction'
-        ),
+        error: this.translateGameActionError(i18n, result.error, 'games.errors.invalidAction'),
       })
     }
 
-    const result = executeParsedGameAction(uuid, user.userUuid, parsedAction.value, {
-      drawCard: (gameUuid, userUuid) => gameEngineService.drawCard(gameUuid, userUuid),
-      playCard: (gameUuid, userUuid, cardType, targetPlayerId, guessedCard) =>
-        gameEngineService.playCard(gameUuid, userUuid, cardType, targetPlayerId, guessedCard),
-      executeAction: (engineAction) => gameEngineService.executeAction(engineAction),
-    })
-
-    if (!result.success) {
+    if (result.status === 'rejected') {
       return response.status(400).json({
         error: this.translateGameActionError(i18n, result.error, 'games.errors.actionRejected'),
       })
     }
 
-    await this.persistSessionSnapshot(session).catch((error) => {
-      logger.error({ error, gameUuid: uuid }, 'Failed to persist game snapshot after action')
-    })
-
-    const playerView = gameEngineService.getPlayerView(uuid, user.userUuid)
-    const availableActions = gameEngineService.getAvailableActions(uuid, user.userUuid)
-
-    return response.json(
-      toActionResponsePayload({
-        actionResult: result,
-        playerView,
-        availableActions,
-        gameDisplayName,
-        includeDebugPayload: this.canViewDebugPayload(user.normalizedRole),
-        gamePresentation,
-      })
-    )
+    return response.json(result.payload)
   }
 
   /**
@@ -281,13 +207,16 @@ export default class GamesController {
     const user = auth.user!
     const { uuid } = await gameUuidParamValidator.validate(params)
 
-    const resolvedSession = await this.resolveRuntimeSession(uuid)
-    if (!resolvedSession) {
+    const result = await resolvePublicPlayersPayload({
+      gameUuid: uuid,
+      userUuid: user.userUuid,
+      resolveRuntimeSession: (gameUuid) => this.resolveRuntimeSession(gameUuid),
+    })
+    if (result.status === 'not_found') {
       return response.status(404).json({ error: i18n.t('games.errors.notFound') })
     }
-    const { session } = resolvedSession
 
-    return response.json(toPublicPlayersPayload({ session, currentUserUuid: user.userUuid }))
+    return response.json(result.payload)
   }
 
   /**
@@ -297,7 +226,7 @@ export default class GamesController {
     const user = auth.user
     const { uuid } = await gameUuidParamValidator.validate(params)
     const actorId = user?.userUuid ?? 'anonymous'
-    const canViewDebugPayload = this.canViewDebugPayload(user?.normalizedRole)
+    const includeDebugPayload = canViewDebugPayload(user?.normalizedRole)
 
     const resolvedSession = await this.resolveRuntimeSession(uuid)
     if (resolvedSession) {
@@ -321,7 +250,7 @@ export default class GamesController {
       return response.json({
         gameId: uuid,
         source: resolvedSession.source,
-        replayTimeline: this.sanitizeReplayTimelineForViewer(replayTimeline, canViewDebugPayload),
+        replayTimeline: sanitizeReplayTimelineForViewer(replayTimeline, includeDebugPayload),
       })
     }
 
@@ -348,7 +277,7 @@ export default class GamesController {
     return response.json({
       gameId: uuid,
       source: 'persistence',
-      replayTimeline: this.sanitizeReplayTimelineForViewer(replayTimeline, canViewDebugPayload),
+      replayTimeline: sanitizeReplayTimelineForViewer(replayTimeline, includeDebugPayload),
     })
   }
 
@@ -457,65 +386,35 @@ export default class GamesController {
       envelope?: Record<string, unknown>
     }
 
-    const persistedGame = await this.gameRepository.findByUuid(uuid)
-    if (!persistedGame) {
+    const importResult = await importReplayForGame({
+      gameUuid: uuid,
+      actorId,
+      replayTimeline: body.replayTimeline,
+      envelope: body.envelope ?? null,
+      gameRepository: this.gameRepository,
+    })
+
+    if (importResult.status === 'not_found') {
       return response.status(404).json({ error: i18n.t('games.errors.notFound') })
     }
 
-    const normalizedReplayTimeline = body.replayTimeline
-      .map((rawStep, index) => normalizeReplayStep(rawStep, index))
-      .filter((step): step is GameReplayStep => step !== null)
-
-    if (normalizedReplayTimeline.length !== body.replayTimeline.length) {
+    if (importResult.status === 'invalid_payload') {
       return response.status(422).json({
         error: i18n.t('games.errors.replayImportPayloadInvalid'),
+        issues: importResult.issues,
       })
     }
 
-    const guardDecision = await replayImportGuardService.verifyImport({
-      payload: {
-        gameId: uuid,
-        replayTimeline: normalizedReplayTimeline,
-      },
-      actorId,
-      targetId: uuid,
-      source: 'external',
-      envelope: (body.envelope ?? null) as StableSignedEnvelope<Record<string, unknown>> | null,
-    })
-    if (!guardDecision.allowed) {
+    if (importResult.status === 'verification_failed') {
       return response.status(422).json({
         error: i18n.t('games.errors.importVerificationFailed'),
-        reason: guardDecision.reason,
+        reason: importResult.reason,
       })
     }
 
-    const currentGameData = asRecord(persistedGame.gameData) ?? {}
-    const currentRuntime = asRecord(currentGameData.runtime) ?? {}
-    const nextGameData = {
-      ...currentGameData,
-      runtime: {
-        ...currentRuntime,
-        replayTimeline: normalizedReplayTimeline,
-        replayEnvelope: body.envelope ?? currentRuntime.replayEnvelope ?? null,
-        importedAt: new Date().toISOString(),
-        importedBy: actorId,
-      },
-    }
-
-    await this.gameRepository.save(
-      Game.reconstitute(
-        persistedGame.uuid,
-        persistedGame.status,
-        persistedGame.players,
-        nextGameData as GameStateData,
-        persistedGame.startedAt,
-        persistedGame.finishedAt
-      )
-    )
-
     return response.json({
-      gameId: uuid,
-      importedSteps: normalizedReplayTimeline.length,
+      gameId: importResult.gameId,
+      importedSteps: importResult.importedSteps,
     })
   }
 
@@ -635,28 +534,6 @@ export default class GamesController {
     }
 
     return normalized as GameStatus
-  }
-
-  private canViewDebugPayload(role?: string): boolean {
-    return role === 'ADMIN'
-  }
-
-  private sanitizeReplayTimelineForViewer(
-    timeline: GameReplayStep[],
-    canViewDebugPayload: boolean
-  ): GameReplayStep[] {
-    if (canViewDebugPayload) {
-      return timeline
-    }
-
-    return timeline.map((step) => ({
-      ...step,
-      actionPayload: undefined,
-      events: step.events.map((event) => ({
-        type: event.type,
-        payload: undefined,
-      })),
-    }))
   }
 
   private async verifyReplayTimelineIntegrity(options: {

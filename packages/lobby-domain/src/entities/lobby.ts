@@ -6,6 +6,7 @@ import { Result } from '../shared/result.js'
 import { createHash, timingSafeEqual, randomUUID } from 'node:crypto'
 import {
   LobbyCreatedEvent,
+  LobbyOwnerChangedEvent,
   PlayerJoinedLobbyEvent,
   PlayerLeftLobbyEvent,
 } from '../events/lobby_events.js'
@@ -69,9 +70,7 @@ export default class Lobby extends BaseEntity {
     lobby.updateStatusBasedOnPlayerCount()
 
     // Enregistrer l'événement de création
-    lobby.recordEvent(
-      new LobbyCreatedEvent(lobby._uuid, lobby._name, lobby._createdBy, lobby._maxPlayers)
-    )
+    lobby.recordEvent(new LobbyCreatedEvent(lobby._uuid, lobby._name, lobby._createdBy, lobby._maxPlayers))
 
     return lobby
   }
@@ -87,7 +86,8 @@ export default class Lobby extends BaseEntity {
     gameSettings: Record<string, unknown> = {},
     createdAt?: Date,
     description: string = '',
-    passwordHash?: string
+    passwordHash?: string,
+    status?: LobbyStatus
   ): Lobby {
     const lobby = new Lobby(
       uuid,
@@ -103,6 +103,9 @@ export default class Lobby extends BaseEntity {
     )
 
     lobby._players = [...players]
+    if (status) {
+      lobby._status = status
+    }
 
     return lobby
   }
@@ -196,9 +199,7 @@ export default class Lobby extends BaseEntity {
       this.updateStatusBasedOnPlayerCount()
 
       // Événement domaine
-      this.recordEvent(
-        new PlayerJoinedLobbyEvent(this._uuid, player, this._players.length, this.status)
-      )
+      this.recordEvent(new PlayerJoinedLobbyEvent(this._uuid, player, this._players.length, this.status))
 
       return Result.ok(undefined)
     } catch (error) {
@@ -232,9 +233,7 @@ export default class Lobby extends BaseEntity {
       this.updateStatusBasedOnPlayerCount()
 
       // Événement domaine
-      this.recordEvent(
-        new PlayerLeftLobbyEvent(this._uuid, removedPlayer, this._players.length, this.status)
-      )
+      this.recordEvent(new PlayerLeftLobbyEvent(this._uuid, removedPlayer, this._players.length, this.status))
 
       return Result.ok(undefined)
     } catch (error) {
@@ -279,6 +278,52 @@ export default class Lobby extends BaseEntity {
       return Result.ok(undefined)
     } catch (error) {
       return Result.fail('Failed to set lobby ready')
+    }
+  }
+
+  transferOwnership(
+    currentOwnerUuid: string,
+    newOwnerUuid: string
+  ): Result<{
+    previousOwnerUuid: string
+    newOwnerUuid: string
+  }> {
+    try {
+      if (!currentOwnerUuid || currentOwnerUuid.trim().length === 0) {
+        return Result.fail('Current owner UUID is required')
+      }
+
+      if (!newOwnerUuid || newOwnerUuid.trim().length === 0) {
+        return Result.fail('New owner UUID is required')
+      }
+
+      if (currentOwnerUuid !== this._createdBy) {
+        return Result.fail('Only the lobby creator can transfer ownership')
+      }
+
+      if (newOwnerUuid === this._createdBy) {
+        return Result.fail('Cannot transfer ownership to yourself')
+      }
+
+      if (this._status === LobbyStatus.STARTING) {
+        return Result.fail('Cannot transfer ownership while a game is starting')
+      }
+
+      if (!this.hasPlayer(newOwnerUuid)) {
+        return Result.fail('Target player is not in this lobby')
+      }
+
+      const previousOwnerUuid = this._createdBy
+      this._createdBy = newOwnerUuid
+
+      this.recordEvent(new LobbyOwnerChangedEvent(this._uuid, previousOwnerUuid, newOwnerUuid, currentOwnerUuid))
+
+      return Result.ok({
+        previousOwnerUuid,
+        newOwnerUuid,
+      })
+    } catch (error) {
+      return Result.fail('Failed to transfer lobby ownership')
     }
   }
 
@@ -381,10 +426,7 @@ export default class Lobby extends BaseEntity {
 
   private static validateMaxPlayers(maxPlayers: number): void {
     if (maxPlayers < 2) {
-      throw new LobbyValidationException(
-        'Max players must be greater than or equal to 2',
-        'maxPlayers'
-      )
+      throw new LobbyValidationException('Max players must be greater than or equal to 2', 'maxPlayers')
     }
   }
 

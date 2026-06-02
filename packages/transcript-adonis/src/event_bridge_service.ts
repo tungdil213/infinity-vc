@@ -85,6 +85,15 @@ export const registerDefaultInfinityMappings = (builder: EventBridgeBuilder): vo
 		.and();
 
 	builder
+		.map('LobbyOwnerChanged')
+		.toChannels((event) => lobbyChannels(event.payload as LobbyPayload))
+		.transformWith((event) => ({
+			type: 'lobby.owner.changed',
+			...(event.payload as Record<string, unknown>),
+		}))
+		.and();
+
+	builder
 		.map('LobbyOwnerLobbyFull')
 		.toChannels((event) => {
 			const payload = event.payload as LobbyOwnerNotificationPayload;

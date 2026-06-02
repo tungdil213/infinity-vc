@@ -78,11 +78,11 @@
 
 - **Description**: Transférer la propriété du lobby à un autre joueur
 - **Acteur**: Créateur du lobby
-- **Prérequis**: Joueur cible présent, acteur est créateur
+- **Prérequis**: Joueur cible présent, acteur est créateur, lobby non STARTING
 - **Paramètres**: lobbyUuid, newOwnerUuid, currentOwnerUuid
-- **Résultat**: Propriété transférée
-- **États possibles**: Tous
-- **Use Case**: ❌ TransferOwnershipUseCase (à créer)
+- **Résultat**: Propriété transférée immédiatement, ancien créateur reste joueur
+- **États possibles**: OPEN/WAITING/READY/FULL, refusé en STARTING
+- **Use Case**: ✅ TransferOwnershipUseCase
 
 ### 9. **UPDATE_LOBBY_SETTINGS** - Modifier les paramètres
 

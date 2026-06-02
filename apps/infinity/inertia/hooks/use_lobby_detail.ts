@@ -53,11 +53,17 @@ export function useLobbyDetail(lobbyUuid: string) {
     return await lobbyService.joinLobby(lobbyUuid, userUuid)
   }
 
+  const transferOwnership = async (newOwnerUuid: string) => {
+    if (!lobbyService || !lobbyUuid) throw new Error('Lobby service or UUID not available')
+    return await lobbyService.transferOwnership(lobbyUuid, newOwnerUuid)
+  }
+
   return {
     ...state,
     leaveLobby,
     startGame,
     joinLobby,
+    transferOwnership,
     isServiceReady: !!lobbyService,
   }
 }

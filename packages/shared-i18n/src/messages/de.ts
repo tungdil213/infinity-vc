@@ -438,6 +438,11 @@ export const deMessages = {
 	'gameLobby.createdAtPrefix': 'Erstellt:',
 	'gameLobby.openForNewPlayers': 'Offen für neue Spieler',
 	'gameLobby.lobbyIsFull': 'Lobby ist voll',
+	'gameLobby.transferHost': 'Host übertragen',
+	'gameLobby.transferringHost': 'Übertragung...',
+	'gameLobby.transferHostConfirm': 'Host auf {nickName} übertragen?',
+	'gameLobby.transferHostSuccess': 'Host auf {nickName} übertragen',
+	'gameLobby.transferHostFailed': 'Host konnte nicht übertragen werden',
 
 	'passwordDialog.title': 'Geschützte Lobby',
 	'passwordDialog.descriptionWithLobby': 'Passwort eingeben, um "{lobbyName}" beizutreten.',

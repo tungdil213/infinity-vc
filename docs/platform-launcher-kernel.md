@@ -30,17 +30,20 @@ Ce document decrit le socle ajoute pour separer la plateforme (open source) des 
   - `StartGameUseCase` depend d'un `GameRuntimePort`
 
 Cette approche facilite:
+
 - les tests unitaires
 - l'introduction de jeux proprietaires hors repo principal
 - le remplacement progressif des implementations sans casser le domaine
 
-## Effect (TypeScript) - pilote
+## Runtime Adonis / TypeScript
 
-- Le package `effect` est ajoute a `apps/infinity`.
-- `GameEngineService#createGame` utilise maintenant un pipeline Effect pour:
-  - composer le lancement / demarrage
-  - capturer les erreurs de maniere explicite
-  - retourner un `Result` applicatif propre
+- Le runtime reste volontairement sur des modules TypeScript simples appeles depuis Adonis.
+- `GameEngineService#createGame` orchestre le launcher directement:
+  - lancement du module de jeu
+  - demarrage de session
+  - sanitation des erreurs techniques
+  - retour d'un `Result` applicatif propre
+- Decision: ne pas introduire la librairie TypeScript `effect` dans cette plateforme.
 
 ## Pattern cible pour jeux proprietaires
 

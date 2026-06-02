@@ -6,6 +6,7 @@ import { CloseLobbyUseCase } from '#application/use_cases/close_lobby_use_case'
 import { KickPlayerUseCase } from '#application/use_cases/kick_player_use_case'
 import { SetPlayerReadyUseCase } from '#application/use_cases/set_player_ready_use_case'
 import { ShowLobbyUseCase } from '#application/use_cases/show_lobby_use_case'
+import { TransferOwnershipUseCase } from '#application/use_cases/transfer_ownership_use_case'
 import { UpdateLobbySettingsUseCase } from '#application/use_cases/update_lobby_settings_use_case'
 import { DatabaseLobbyRepository } from '#infrastructure/repositories/database_lobby_repository'
 import { DatabasePlayerRepository } from '#infrastructure/repositories/database_player_repository'
@@ -55,6 +56,7 @@ test.group('lobby_management_bindings', () => {
         ShowLobbyUseCase,
         KickPlayerUseCase,
         CloseLobbyUseCase,
+        TransferOwnershipUseCase,
         UpdateLobbySettingsUseCase,
         SetPlayerReadyUseCase,
       ]
@@ -86,18 +88,22 @@ test.group('lobby_management_bindings', () => {
 
     const showFactory = registrar.bindings.get(ShowLobbyUseCase)
     const closeFactory = registrar.bindings.get(CloseLobbyUseCase)
+    const transferFactory = registrar.bindings.get(TransferOwnershipUseCase)
     const setReadyFactory = registrar.bindings.get(SetPlayerReadyUseCase)
 
     assert.exists(showFactory)
     assert.exists(closeFactory)
+    assert.exists(transferFactory)
     assert.exists(setReadyFactory)
 
     const showLobbyUseCase = await showFactory!(resolver)
     const closeLobbyUseCase = await closeFactory!(resolver)
+    const transferOwnershipUseCase = await transferFactory!(resolver)
     const setPlayerReadyUseCase = await setReadyFactory!(resolver)
 
     assert.instanceOf(showLobbyUseCase, ShowLobbyUseCase)
     assert.instanceOf(closeLobbyUseCase, CloseLobbyUseCase)
+    assert.instanceOf(transferOwnershipUseCase, TransferOwnershipUseCase)
     assert.instanceOf(setPlayerReadyUseCase, SetPlayerReadyUseCase)
   })
 })

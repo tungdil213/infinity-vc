@@ -1,7 +1,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './primitives/card';
 import { Badge } from './primitives/badge';
-import { Users } from 'lucide-react';
+import { Button } from './primitives/button';
+import { Crown, Users } from 'lucide-react';
 
 export interface LobbyPlayer {
 	uuid: string;
@@ -16,6 +17,9 @@ export interface LobbyPlayersPanelProps {
 	currentPlayers: number;
 	hasAvailableSlots: boolean;
 	createdAt: string | Date;
+	canTransferOwnership?: boolean;
+	transferringPlayerUuid?: string | null;
+	onTransferOwnership?: (player: LobbyPlayer) => void | Promise<void>;
 	labels?: Partial<LobbyPlayersPanelLabels>;
 }
 
@@ -27,6 +31,8 @@ interface LobbyPlayersPanelLabels {
 	createdAtPrefix: string;
 	openForNewPlayers: string;
 	lobbyIsFull: string;
+	transferHost: string;
+	transferringHost: string;
 }
 
 const defaultLabels: LobbyPlayersPanelLabels = {
@@ -37,6 +43,8 @@ const defaultLabels: LobbyPlayersPanelLabels = {
 	createdAtPrefix: 'Created:',
 	openForNewPlayers: 'Open for new players',
 	lobbyIsFull: 'Lobby is full',
+	transferHost: 'Transfer host',
+	transferringHost: 'Transferring...',
 };
 
 export function LobbyPlayersPanel({
@@ -47,6 +55,9 @@ export function LobbyPlayersPanel({
 	currentPlayers,
 	hasAvailableSlots,
 	createdAt,
+	canTransferOwnership = false,
+	transferringPlayerUuid = null,
+	onTransferOwnership,
 	labels,
 }: LobbyPlayersPanelProps) {
 	const ui = { ...defaultLabels, ...labels };
@@ -63,34 +74,57 @@ export function LobbyPlayersPanel({
 			</CardHeader>
 			<CardContent>
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-					{safePlayers.map((player) => (
-						<div
-							key={player.uuid}
-							className={`p-4 rounded-lg border ${
-								player.uuid === currentUserUuid ? 'border-blue-300 bg-blue-50' : 'border-gray-200 bg-gray-50'
-							}`}
-						>
-							<div className="flex items-center justify-between">
-								<div>
-									<h3 className="break-words font-medium text-gray-900">{player.nickName}</h3>
-									<div className="flex items-center gap-2 mt-1">
-										{player.uuid === creatorUuid && (
-											<Badge variant="neutral" className="text-xs">
-												{ui.creatorBadge}
-											</Badge>
-										)}
-										{player.uuid === currentUserUuid && (
-											<Badge className="text-xs bg-blue-100 text-blue-800">{ui.youBadge}</Badge>
-										)}
+					{safePlayers.map((player) => {
+						const canTransferToPlayer =
+							canTransferOwnership && player.uuid !== creatorUuid && typeof onTransferOwnership === 'function';
+						const isTransferring = transferringPlayerUuid === player.uuid;
+
+						return (
+							<div
+								key={player.uuid}
+								className={`p-4 rounded-lg border ${
+									player.uuid === currentUserUuid ? 'border-blue-300 bg-blue-50' : 'border-gray-200 bg-gray-50'
+								}`}
+							>
+								<div className="flex items-start justify-between gap-3">
+									<div className="min-w-0 flex-1">
+										<h3 className="break-words font-medium text-gray-900">{player.nickName}</h3>
+										<div className="flex flex-wrap items-center gap-2 mt-1">
+											{player.uuid === creatorUuid && (
+												<Badge variant="neutral" className="text-xs">
+													{ui.creatorBadge}
+												</Badge>
+											)}
+											{player.uuid === currentUserUuid && (
+												<Badge className="text-xs bg-blue-100 text-blue-800">{ui.youBadge}</Badge>
+											)}
+										</div>
+									</div>
+
+									<div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+										<span className="text-sm font-medium text-gray-700">{player.nickName.charAt(0).toUpperCase()}</span>
 									</div>
 								</div>
 
-								<div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-									<span className="text-sm font-medium text-gray-700">{player.nickName.charAt(0).toUpperCase()}</span>
-								</div>
+								{canTransferToPlayer && (
+									<div className="mt-3">
+										<Button
+											type="button"
+											variant="neutral"
+											size="sm"
+											className="w-full text-xs"
+											disabled={isTransferring}
+											title={ui.transferHost}
+											onClick={() => onTransferOwnership?.(player)}
+										>
+											<Crown className="h-4 w-4" />
+											{isTransferring ? ui.transferringHost : ui.transferHost}
+										</Button>
+									</div>
+								)}
 							</div>
-						</div>
-					))}
+						);
+					})}
 
 					{Array.from({ length: Math.max(0, maxPlayers - currentPlayers) }).map((_, index) => (
 						<div
@@ -107,9 +141,7 @@ export function LobbyPlayersPanel({
 						<span>
 							{ui.createdAtPrefix} {createdAtDate.toLocaleString()}
 						</span>
-						<span>
-							{hasAvailableSlots ? ui.openForNewPlayers : ui.lobbyIsFull}
-						</span>
+						<span>{hasAvailableSlots ? ui.openForNewPlayers : ui.lobbyIsFull}</span>
 					</div>
 				</div>
 			</CardContent>

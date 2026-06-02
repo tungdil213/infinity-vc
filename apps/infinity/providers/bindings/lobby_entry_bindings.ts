@@ -4,19 +4,9 @@ import { CreateLobbyUseCase } from '#application/use_cases/create_lobby_use_case
 import { JoinLobbyUseCase } from '#application/use_cases/join_lobby_use_case'
 import { defaultGameCatalog } from '#infrastructure/game_engine/launcher_game_catalog'
 import { DatabasePlayerRepository } from '#infrastructure/repositories/database_player_repository'
+import type { BindingRegistrar } from './binding_contracts.js'
 
-type ContainerBinding<T> = abstract new (...args: never[]) => T
-
-export interface BindingResolver {
-  make<T>(binding: ContainerBinding<T>): Promise<T>
-}
-
-export interface BindingRegistrar {
-  singleton<T>(
-    binding: ContainerBinding<T>,
-    factory: (resolver: BindingResolver) => T | Promise<T>
-  ): void
-}
+export type { BindingRegistrar, BindingResolver } from './binding_contracts.js'
 
 export function registerLobbyEntryBindings(registrar: BindingRegistrar): void {
   registrar.singleton(CreateLobbyUseCase, async (resolver) => {

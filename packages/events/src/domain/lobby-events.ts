@@ -44,6 +44,7 @@ export interface LobbyOwnerChangedPayload {
 	previousOwnerId: string;
 	newOwnerId: string;
 	newOwnerName: string;
+	transferredByUserId?: string;
 }
 
 export interface LobbyClosedPayload {

@@ -4,6 +4,7 @@ import EnhancedLobbiesController from '../../../app/controllers/enhanced_lobbies
 const LOBBY_UUID = '11111111-1111-4111-8111-111111111111'
 const USER_UUID = '22222222-2222-4222-8222-222222222222'
 const OTHER_USER_UUID = '33333333-3333-4333-8333-333333333333'
+const GAME_UUID = '44444444-4444-4444-8444-444444444444'
 
 type ResponseState = {
   redirectedTo: string | null
@@ -83,11 +84,21 @@ function createController(overrides?: {
   scheduleGracePeriodMs?: number
   joinLobbyResult?: { isFailure: boolean; error?: string }
   joinLobbyError?: Error
+  startGameResult?: { isFailure: boolean; error?: string }
+  kickPlayerResult?: { isFailure: boolean; error?: string }
   closeLobbyResult?: { isFailure: boolean; error?: string }
+  transferOwnershipResult?: { isFailure: boolean; error?: string }
 }) {
   const leaveLobbyCalls: Array<{ lobbyUuid: string; userUuid: string }> = []
   const joinLobbyCalls: Array<{ lobbyUuid: string; userUuid: string; password?: string }> = []
+  const startGameCalls: Array<{ lobbyUuid: string; userUuid: string }> = []
+  const kickPlayerCalls: Array<{
+    lobbyUuid: string
+    kickerUuid: string
+    targetPlayerUuid: string
+  }> = []
   const closeLobbyCalls: Array<Record<string, unknown>> = []
+  const transferOwnershipCalls: Array<Record<string, unknown>> = []
   const scheduleCalls: Array<Record<string, unknown>> = []
   const markConnectedCalls: Array<Record<string, unknown>> = []
   const clearConnectionCalls: Array<Record<string, unknown>> = []
@@ -154,10 +165,51 @@ function createController(overrides?: {
         }
       },
     } as any,
+    {
+      async execute(payload: { lobbyUuid: string; userUuid: string }) {
+        startGameCalls.push(payload)
+
+        if (overrides?.startGameResult?.isFailure) {
+          return {
+            isFailure: true as const,
+            error: overrides.startGameResult.error ?? 'start failed',
+          }
+        }
+
+        return {
+          isFailure: false as const,
+          value: {
+            game: {
+              uuid: GAME_UUID,
+              status: 'in_progress',
+            },
+            lobbyDeleted: true,
+          },
+        }
+      },
+    } as any,
     {} as any,
     {} as any,
-    {} as any,
-    {} as any,
+    {
+      async execute(payload: { lobbyUuid: string; kickerUuid: string; targetPlayerUuid: string }) {
+        kickPlayerCalls.push(payload)
+
+        if (overrides?.kickPlayerResult?.isFailure) {
+          return {
+            isFailure: true as const,
+            error: overrides.kickPlayerResult.error ?? 'kick failed',
+          }
+        }
+
+        return {
+          isFailure: false as const,
+          value: {
+            success: true,
+            lobbyState: { uuid: payload.lobbyUuid },
+          },
+        }
+      },
+    } as any,
     {
       async execute(payload: Record<string, unknown>) {
         closeLobbyCalls.push(payload)
@@ -175,6 +227,32 @@ function createController(overrides?: {
             lobbyUuid: payload.lobbyUuid,
             reason: payload.reason ?? null,
             closedAt: new Date('2026-04-11T12:30:00.000Z').toISOString(),
+          },
+        }
+      },
+    } as any,
+    {
+      async execute(payload: Record<string, unknown>) {
+        transferOwnershipCalls.push(payload)
+
+        if (overrides?.transferOwnershipResult?.isFailure) {
+          return {
+            isFailure: true as const,
+            error: overrides.transferOwnershipResult.error ?? 'transfer failed',
+          }
+        }
+
+        return {
+          isFailure: false as const,
+          value: {
+            success: true,
+            lobbyUuid: payload.lobbyUuid,
+            previousOwnerUuid: payload.currentOwnerUuid,
+            newOwnerUuid: payload.newOwnerUuid,
+            lobbyState: {
+              uuid: payload.lobbyUuid,
+              createdBy: payload.newOwnerUuid,
+            },
           },
         }
       },
@@ -206,8 +284,11 @@ function createController(overrides?: {
   return {
     controller,
     joinLobbyCalls,
+    startGameCalls,
+    kickPlayerCalls,
     leaveLobbyCalls,
     closeLobbyCalls,
+    transferOwnershipCalls,
     scheduleCalls,
     markConnectedCalls,
     clearConnectionCalls,
@@ -383,6 +464,198 @@ test.group('EnhancedLobbiesController', () => {
     assert.deepEqual(state.payload, {
       success: true,
       message: 'translated:lobbies.api.left',
+    })
+  })
+
+  test('start keeps the html redirect to the created game', async ({ assert }) => {
+    const { controller, startGameCalls } = createController()
+    const { response, state } = createResponseHarness()
+
+    await controller.start({
+      auth: {
+        user: {
+          userUuid: USER_UUID,
+        },
+      },
+      params: {
+        uuid: LOBBY_UUID,
+      },
+      request: {
+        accepts(types: string[]) {
+          return types.includes('html') ? 'html' : null
+        },
+      },
+      response,
+      session: {
+        flash() {},
+      },
+      i18n: createI18nHarness(),
+    } as any)
+
+    assert.deepEqual(startGameCalls, [
+      {
+        lobbyUuid: LOBBY_UUID,
+        userUuid: USER_UUID,
+      },
+    ])
+    assert.equal(state.redirectedTo, `/games/${GAME_UUID}`)
+    assert.equal(state.payload, null)
+  })
+
+  test('start preserves translated 400 payloads for use case failures', async ({ assert }) => {
+    const { controller } = createController({
+      startGameResult: {
+        isFailure: true,
+        error: 'Lobby is not ready to start a game',
+      },
+    })
+    const { response, state } = createResponseHarness()
+
+    await controller.start({
+      auth: {
+        user: {
+          userUuid: USER_UUID,
+        },
+      },
+      params: {
+        uuid: LOBBY_UUID,
+      },
+      request: {
+        accepts() {
+          return null
+        },
+      },
+      response,
+      session: {
+        flash() {},
+      },
+      i18n: createI18nHarness(),
+    } as any)
+
+    assert.equal(state.statusCode, 400)
+    assert.deepEqual(state.payload, {
+      error: 'translated:lobbies.errors.lobbyNotReady',
+    })
+  })
+
+  test('kickPlayer keeps the success json payload and use case payload', async ({ assert }) => {
+    const { controller, kickPlayerCalls } = createController()
+    const { response, state } = createResponseHarness()
+
+    await controller.kickPlayer({
+      auth: {
+        user: {
+          userUuid: USER_UUID,
+        },
+      },
+      params: {
+        uuid: LOBBY_UUID,
+      },
+      request: {
+        validateUsing: async () => ({
+          playerUuid: OTHER_USER_UUID,
+        }),
+      },
+      response,
+      i18n: createI18nHarness(),
+    } as any)
+
+    assert.deepEqual(kickPlayerCalls, [
+      {
+        lobbyUuid: LOBBY_UUID,
+        kickerUuid: USER_UUID,
+        targetPlayerUuid: OTHER_USER_UUID,
+      },
+    ])
+    assert.deepEqual(state.payload, {
+      success: true,
+      message: 'translated:lobbies.api.kicked',
+    })
+  })
+
+  test('transferOwnership keeps the success json payload and use case payload', async ({
+    assert,
+  }) => {
+    const { controller, transferOwnershipCalls } = createController()
+    const { response, state } = createResponseHarness()
+
+    await controller.transferOwnership({
+      auth: {
+        user: {
+          userUuid: USER_UUID,
+        },
+      },
+      params: {
+        uuid: LOBBY_UUID,
+      },
+      request: {
+        accepts() {
+          return null
+        },
+        validateUsing: async () => ({
+          newOwnerUuid: OTHER_USER_UUID,
+        }),
+      },
+      response,
+      session: {
+        flash() {},
+      },
+      i18n: createI18nHarness(),
+    } as any)
+
+    assert.deepEqual(transferOwnershipCalls, [
+      {
+        lobbyUuid: LOBBY_UUID,
+        currentOwnerUuid: USER_UUID,
+        newOwnerUuid: OTHER_USER_UUID,
+      },
+    ])
+    assert.deepEqual(state.payload, {
+      success: true,
+      lobbyUuid: LOBBY_UUID,
+      previousOwnerUuid: USER_UUID,
+      newOwnerUuid: OTHER_USER_UUID,
+    })
+  })
+
+  test('transferOwnership maps non-owner failures to translated 403 payloads', async ({
+    assert,
+  }) => {
+    const { controller } = createController({
+      transferOwnershipResult: {
+        isFailure: true,
+        error: 'Only the lobby creator can transfer ownership',
+      },
+    })
+    const { response, state } = createResponseHarness()
+
+    await controller.transferOwnership({
+      auth: {
+        user: {
+          userUuid: USER_UUID,
+        },
+      },
+      params: {
+        uuid: LOBBY_UUID,
+      },
+      request: {
+        accepts() {
+          return null
+        },
+        validateUsing: async () => ({
+          newOwnerUuid: OTHER_USER_UUID,
+        }),
+      },
+      response,
+      session: {
+        flash() {},
+      },
+      i18n: createI18nHarness(),
+    } as any)
+
+    assert.equal(state.statusCode, 403)
+    assert.deepEqual(state.payload, {
+      error: 'translated:lobbies.errors.onlyCreatorCanTransfer',
     })
   })
 

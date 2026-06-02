@@ -117,7 +117,6 @@
     "@vinejs/vine": "^4.3.0",
     "adonisjs-server-stats": "^1.2.2",
     "edge.js": "^6.5.0",
-    "effect": "^3.16.11",
     "lucide-react": "^0.475.0",
     "luxon": "^3.7.2",
     "mysql2": "^3.20.0",

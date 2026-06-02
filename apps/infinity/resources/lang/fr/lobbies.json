@@ -6,6 +6,8 @@
     "left": "Lobby quitté avec succès",
     "leaveFailed": "Impossible de quitter le lobby. Veuillez réessayer.",
     "startFailed": "Impossible de démarrer la partie. Veuillez réessayer.",
+    "transferred": "Hôte du lobby transféré avec succès.",
+    "transferFailed": "Impossible de transférer l'hôte du lobby. Veuillez réessayer.",
     "closed": "Lobby fermé avec succès."
   },
   "api": {
@@ -16,7 +18,8 @@
     "startFailed": "Impossible de démarrer la partie",
     "kicked": "Joueur expulsé avec succès",
     "kickFailed": "Impossible d'expulser le joueur",
-    "transferNotImplemented": "Le transfert de propriété n'est pas encore implémenté",
+    "transferred": "Hôte du lobby transféré avec succès",
+    "transferFailed": "Impossible de transférer l'hôte du lobby",
     "closeFailed": "Impossible de fermer le lobby",
     "getFailed": "Impossible de récupérer le lobby",
     "listFailed": "Impossible de récupérer les lobbies",
@@ -40,6 +43,9 @@
     "onlyCreatorCanKick": "Seul le créateur du lobby peut expulser des joueurs",
     "targetNotInLobby": "Le joueur ciblé n'est pas dans ce lobby",
     "cannotKickInProgress": "Impossible d'expulser des joueurs pendant une partie en cours",
+    "onlyCreatorCanTransfer": "Seul le créateur du lobby peut transférer l'hôte",
+    "cannotTransferToSelf": "Impossible de transférer l'hôte à soi-même",
+    "cannotTransferStarting": "Impossible de transférer l'hôte pendant le démarrage d'une partie",
     "cannotCloseStarting": "Impossible de fermer un lobby pendant le démarrage d'une partie",
     "lobbyUuidRequired": "L'identifiant du lobby est requis",
     "userUuidRequired": "L'identifiant de l'utilisateur est requis",

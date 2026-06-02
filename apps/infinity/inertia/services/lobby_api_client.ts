@@ -131,6 +131,26 @@ export class LobbyApiClient {
     }
   }
 
+  async transferOwnership(lobbyUuid: string, newOwnerUuid: string): Promise<unknown> {
+    const response = await fetch(`${LobbyApiClient.BASE_URL}/${lobbyUuid}/transfer`, {
+      method: 'POST',
+      headers: this.buildJsonHeaders({ Accept: 'application/json' }),
+      credentials: 'include',
+      body: JSON.stringify({ newOwnerUuid }),
+    })
+
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      const message =
+        payload && typeof payload.error === 'string'
+          ? payload.error
+          : `Failed to transfer lobby host: ${response.statusText}`
+      throw new Error(message)
+    }
+
+    return payload
+  }
+
   private buildJsonHeaders(extraHeaders: Record<string, string> = {}): Record<string, string> {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
     const headers: Record<string, string> = {

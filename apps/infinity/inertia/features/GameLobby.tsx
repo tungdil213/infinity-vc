@@ -29,25 +29,30 @@ export default function GameLobby({
   currentUser,
 }: GameLobbyProps) {
   const { t } = useI18n()
-  const { lobby, loading, error, leaveLobby, startGame, isServiceReady } = useLobbyDetail(lobbyUuid)
+  const { lobby, loading, error, leaveLobby, startGame, transferOwnership, isServiceReady } =
+    useLobbyDetail(lobbyUuid)
   const [isStartingGame, setIsStartingGame] = useState(false)
   const [isLeavingLobby, setIsLeavingLobby] = useState(false)
   const [isJoiningLobby, setIsJoiningLobby] = useState(false)
+  const [transferringOwnerUuid, setTransferringOwnerUuid] = useState<string | null>(null)
   const [passwordDialogError, setPasswordDialogError] = useState<string | null>(null)
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false)
   const hasNavigatedToGame = useRef(false)
   const startedGameUuid = typeof lobby?.gameUuid === 'string' ? lobby.gameUuid : undefined
 
-  const navigateToGame = useCallback((gameUuid: string) => {
-    if (!gameUuid || hasNavigatedToGame.current) {
-      return
-    }
+  const navigateToGame = useCallback(
+    (gameUuid: string) => {
+      if (!gameUuid || hasNavigatedToGame.current) {
+        return
+      }
 
-    hasNavigatedToGame.current = true
-    setIsStartingGame(true)
-    toast.success(t('gameLobby.gameStarting'))
-    router.visit(`/games/${gameUuid}`)
-  }, [t])
+      hasNavigatedToGame.current = true
+      setIsStartingGame(true)
+      toast.success(t('gameLobby.gameStarting'))
+      router.visit(`/games/${gameUuid}`)
+    },
+    [t]
+  )
 
   // Detect whether current user is in the lobby
   const isUserInLobby = lobby?.players?.some((player) => player.uuid === currentUser.uuid) || false
@@ -169,6 +174,27 @@ export default function GameLobby({
     await submitJoinLobby(password)
   }
 
+  const handleTransferOwnership = async (player: { uuid: string; nickName: string }) => {
+    if (!isServiceReady || !lobby || player.uuid === lobby.createdBy) return
+
+    const confirmed = window.confirm(
+      t('gameLobby.transferHostConfirm', { nickName: player.nickName })
+    )
+    if (!confirmed) return
+
+    setTransferringOwnerUuid(player.uuid)
+    try {
+      await transferOwnership(player.uuid)
+      toast.success(t('gameLobby.transferHostSuccess', { nickName: player.nickName }))
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : t('gameLobby.transferHostFailed')
+      toast.error(errorMessage)
+    } finally {
+      setTransferringOwnerUuid(null)
+    }
+  }
+
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto p-6">
@@ -194,8 +220,12 @@ export default function GameLobby({
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">{t('gameLobby.errorLoadingLobby')}</h3>
-              <div className="mt-2 text-sm text-red-700">{error || t('gameLobby.lobbyNotFound')}</div>
+              <h3 className="text-sm font-medium text-red-800">
+                {t('gameLobby.errorLoadingLobby')}
+              </h3>
+              <div className="mt-2 text-sm text-red-700">
+                {error || t('gameLobby.lobbyNotFound')}
+              </div>
               <div className="mt-4">
                 <Button onClick={() => router.visit('/lobbies')} variant="neutral" size="sm">
                   {t('gameLobby.backToLobbies')}
@@ -211,6 +241,11 @@ export default function GameLobby({
   const isCreator = currentUser.uuid === lobby.createdBy
   const canJoinLobby = !isUserInLobby && lobby.hasAvailableSlots && !isJoiningLobby
   const canStartGame = isCreator && lobby.canStart && !isStartingGame
+  const canTransferOwnership =
+    isCreator &&
+    isUserInLobby &&
+    isServiceReady &&
+    !['STARTING', 'IN_GAME'].includes(String(lobby.status).toUpperCase())
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -269,6 +304,9 @@ export default function GameLobby({
         currentPlayers={lobby.currentPlayers}
         hasAvailableSlots={lobby.hasAvailableSlots}
         createdAt={lobby.createdAt}
+        canTransferOwnership={canTransferOwnership}
+        transferringPlayerUuid={transferringOwnerUuid}
+        onTransferOwnership={handleTransferOwnership}
         labels={{
           title: t('gameLobby.playersTitle'),
           creatorBadge: t('gameLobby.creatorBadge'),
@@ -277,6 +315,8 @@ export default function GameLobby({
           createdAtPrefix: t('gameLobby.createdAtPrefix'),
           openForNewPlayers: t('gameLobby.openForNewPlayers'),
           lobbyIsFull: t('gameLobby.lobbyIsFull'),
+          transferHost: t('gameLobby.transferHost'),
+          transferringHost: t('gameLobby.transferringHost'),
         }}
       />
 

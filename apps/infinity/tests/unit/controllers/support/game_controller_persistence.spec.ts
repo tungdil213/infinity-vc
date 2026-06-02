@@ -160,7 +160,7 @@ test.group('game_controller_persistence', () => {
     assert.deepEqual(snapshot!.engineState.players, [{ id: 'player-1' }])
   })
 
-  test('extracts replay envelope and filters invalid replay steps', ({ assert }) => {
+  test('extracts replay envelope and rejects an invalid persisted replay timeline', ({ assert }) => {
     const game = makeGame({
       runtimeOverrides: {
         replayEnvelope: { signature: 'sig-1' },
@@ -204,10 +204,7 @@ test.group('game_controller_persistence', () => {
     const replayTimeline = extractPersistedReplayTimeline(game)
 
     assert.deepEqual(replayEnvelope, { signature: 'sig-1' })
-    assert.lengthOf(replayTimeline, 1)
-    assert.equal(replayTimeline[0].kind, 'action')
-    assert.deepEqual(replayTimeline[0].snapshot.scores, { 'player-1': 2 })
-    assert.deepEqual(replayTimeline[0].snapshot.roundChoices, { 'player-1': 'guard' })
+    assert.deepEqual(replayTimeline, [])
   })
 
   test('builds a persisted game aggregate from a live runtime session', ({ assert }) => {

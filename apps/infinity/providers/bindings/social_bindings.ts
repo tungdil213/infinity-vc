@@ -15,19 +15,9 @@ import { DatabaseUserRepository } from '#infrastructure/repositories/database_us
 import { InMemorySocialPresenceRepository } from '#infrastructure/repositories/in_memory_social_presence_repository'
 import { EventBusSocialPresenceNotifier } from '#infrastructure/services/event_bus_social_presence_notifier'
 import { LiveSocialPresenceContextResolver } from '#infrastructure/services/live_social_presence_context_resolver'
+import type { BindingRegistrar } from './binding_contracts.js'
 
-type ContainerBinding<T> = abstract new (...args: never[]) => T
-
-export interface BindingResolver {
-  make<T>(binding: ContainerBinding<T>): Promise<T>
-}
-
-export interface BindingRegistrar {
-  singleton<T>(
-    binding: ContainerBinding<T>,
-    factory: (resolver: BindingResolver) => T | Promise<T>
-  ): void
-}
+export type { BindingRegistrar, BindingResolver } from './binding_contracts.js'
 
 export function registerSocialBindings(registrar: BindingRegistrar): void {
   registrar.singleton(DatabaseFriendRepository, () => {

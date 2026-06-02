@@ -222,6 +222,60 @@ test.group('LobbyStateStore', () => {
     assert.equal(listSnapshot?.lobbies[0].gameUuid, 'game-42')
   })
 
+  test('should update createdBy on lobby.owner.changed', ({ assert }) => {
+    const store = new LobbyStateStore()
+    const lobbyUuid = 'lobby-owner-changed-1'
+
+    store.setLobbyListData(
+      [
+        makeLobby({
+          uuid: lobbyUuid,
+          createdBy: 'user-1',
+          players: [
+            { uuid: 'user-1', nickName: 'User1' },
+            { uuid: 'user-2', nickName: 'User2' },
+          ],
+        }),
+      ],
+      1
+    )
+    store.setLobbyDetail(
+      lobbyUuid,
+      makeLobby({
+        uuid: lobbyUuid,
+        createdBy: 'user-1',
+        players: [
+          { uuid: 'user-1', nickName: 'User1' },
+          { uuid: 'user-2', nickName: 'User2' },
+        ],
+      })
+    )
+
+    store.applyLobbyEvent({
+      type: 'lobby.owner.changed',
+      data: {
+        lobbyUuid,
+        previousOwnerUuid: 'user-1',
+        newOwnerUuid: 'user-2',
+        transferredByUserUuid: 'user-1',
+      },
+      timestamp: new Date().toISOString(),
+      channel: `lobbies/${lobbyUuid}`,
+    })
+
+    let detailCreatedBy: string | undefined
+    let listSnapshot: LobbyListState | null = null
+    store.subscribeLobbyDetail(lobbyUuid, (state) => {
+      detailCreatedBy = state.lobby?.createdBy
+    })
+    store.subscribeLobbyList((state) => {
+      listSnapshot = state
+    })
+
+    assert.equal(detailCreatedBy, 'user-2')
+    assert.equal(listSnapshot?.lobbies[0].createdBy, 'user-2')
+  })
+
   test('should normalize legacy gameId to gameUuid on lobby.game.started', ({ assert }) => {
     const store = new LobbyStateStore()
     const lobbyUuid = 'lobby-game-started-legacy'

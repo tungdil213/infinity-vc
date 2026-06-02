@@ -17,9 +17,14 @@ const LOBBY_ERROR_TRANSLATION_KEYS: Record<string, string> = {
   'Only the lobby creator can kick players': 'lobbies.errors.onlyCreatorCanKick',
   'Target player is not in this lobby': 'lobbies.errors.targetNotInLobby',
   'Cannot kick players from a game in progress': 'lobbies.errors.cannotKickInProgress',
+  'Only the lobby creator can transfer ownership': 'lobbies.errors.onlyCreatorCanTransfer',
+  'Cannot transfer ownership to yourself': 'lobbies.errors.cannotTransferToSelf',
+  'Cannot transfer ownership while a game is starting': 'lobbies.errors.cannotTransferStarting',
   'Cannot close a lobby while a game is starting': 'lobbies.errors.cannotCloseStarting',
   'Lobby UUID is required': 'lobbies.errors.lobbyUuidRequired',
   'User UUID is required': 'lobbies.errors.userUuidRequired',
+  'Current owner UUID is required': 'lobbies.errors.userUuidRequired',
+  'New owner UUID is required': 'lobbies.errors.userUuidRequired',
   'Closer user UUID is required': 'lobbies.errors.userUuidRequired',
 }
 

@@ -83,6 +83,12 @@ export class LobbyService {
     return this.apiClient.startGame(lobbyUuid, userUuid)
   }
 
+  async transferOwnership(lobbyUuid: string, newOwnerUuid: string): Promise<unknown> {
+    const result = await this.apiClient.transferOwnership(lobbyUuid, newOwnerUuid)
+    await this.fetchLobbyDetails(lobbyUuid)
+    return result
+  }
+
   subscribeLobbyList(callback: (state: LobbyListState) => void): () => void {
     return this.stateStore.subscribeLobbyList(callback)
   }

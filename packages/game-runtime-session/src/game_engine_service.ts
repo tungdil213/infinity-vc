@@ -4,7 +4,6 @@ import type { GameRuntimePort } from '@infinity.dev/lobby-application/services'
 import { safeSystemError } from '@infinity.dev/lobby-application/shared'
 import type { PlayerInterface } from '@infinity.dev/lobby-domain/interfaces'
 import { Result } from '@infinity.dev/lobby-domain/shared'
-import { Effect, Either } from 'effect'
 import {
   type GameReplaySnapshot,
   type GameReplayStep,
@@ -15,12 +14,9 @@ import {
 } from './game_engine_types.js'
 import { GameEngineEventPublisher } from './game_engine_event_publisher.js'
 import { GameSessionStore } from './game_session_store.js'
+import { decodeReplayTimeline } from './replay_payload_decoder.js'
 
-export type {
-  GameActionRequest,
-  GameActionResponse,
-  GameSession,
-} from './game_engine_types.js'
+export type { GameActionRequest, GameActionResponse, GameSession } from './game_engine_types.js'
 
 export interface RestoreGameSessionRequest {
   gameId: string
@@ -33,33 +29,6 @@ export interface RestoreGameSessionRequest {
   replayTimeline?: GameReplayStep[]
 }
 
-export interface ResultLike<T> {
-  readonly isSuccess: boolean
-  readonly isFailure: boolean
-  readonly value: T
-  readonly error: string
-}
-
-export type EffectResultRunner = <T>(
-  effect: Effect.Effect<T, unknown>,
-  operation: string,
-  userId?: string
-) => Promise<ResultLike<T>>
-
-const runEffectAsResultDefault: EffectResultRunner = async <T>(
-  effect: Effect.Effect<T, unknown>
-): Promise<ResultLike<T>> => {
-  try {
-    const outcome = await Effect.runPromise(Effect.either(effect))
-    if (Either.isLeft(outcome)) {
-      return Result.fail(safeSystemError(outcome.left))
-    }
-    return Result.ok(outcome.right)
-  } catch (error) {
-    return Result.fail(safeSystemError(error))
-  }
-}
-
 export class GameEngineService implements GameRuntimePort {
   private static readonly GAME_TYPE_ALIASES: Record<string, string> = {
     'love-letter': 'love-letter-infinity-gauntlet',
@@ -68,8 +37,7 @@ export class GameEngineService implements GameRuntimePort {
   constructor(
     private readonly sessionStore: GameSessionStore = new GameSessionStore(),
     private readonly eventPublisher: GameEngineEventPublisher = new GameEngineEventPublisher(),
-    private readonly launcher: GameLauncher = createDefaultLauncher(),
-    private readonly effectResultRunner: EffectResultRunner = runEffectAsResultDefault
+    private readonly launcher: GameLauncher = createDefaultLauncher()
   ) {}
 
   async createGame(
@@ -84,55 +52,50 @@ export class GameEngineService implements GameRuntimePort {
       name: player.nickName,
       isActive: true,
     }))
-    const launcher = this.launcher
 
-    const createGameProgram = Effect.gen(function* () {
-      const launchResult = launcher.launch({
-        gameId: resolvedGameType,
-        players: gamePlayers,
-        settings: gameSettings,
-      })
-
-      if (launchResult.isFailure) {
-        return yield* Effect.fail(launchResult.error?.message || 'Failed to launch game')
-      }
-
-      const startedResult = yield* Effect.tryPromise({
-        try: () => launcher.startSession(launchResult.value),
-        catch: () => 'Failed to start game session',
-      })
-
-      if (startedResult.isFailure) {
-        return yield* Effect.fail(startedResult.error?.message || 'Failed to initialize game')
-      }
-
-      if (!startedResult.value.state) {
-        return yield* Effect.fail('Game state is unavailable after session start')
-      }
-
-      return {
-        gameId: startedResult.value.state.gameId,
-        lobbyId,
-        gameType: resolvedGameType,
-        engine: startedResult.value.engine,
-        state: startedResult.value.state,
-        players: gamePlayers,
-        createdAt: new Date(),
-      } satisfies GameSession
+    const launchResult = this.launcher.launch({
+      gameId: resolvedGameType,
+      players: gamePlayers,
+      settings: gameSettings,
     })
+    if (launchResult.isFailure) {
+      return Result.fail(safeSystemError(launchResult.error?.message || 'Failed to launch game'))
+    }
 
-    const createdSessionResult = await this.effectResultRunner(createGameProgram, 'create_game')
-    if (createdSessionResult.isFailure) {
-      return Result.fail(createdSessionResult.error)
+    let startedResult: Awaited<ReturnType<GameLauncher['startSession']>>
+    try {
+      startedResult = await this.launcher.startSession(launchResult.value)
+    } catch (error) {
+      return Result.fail(safeSystemError(error))
+    }
+
+    if (startedResult.isFailure) {
+      return Result.fail(
+        safeSystemError(startedResult.error?.message || 'Failed to initialize game')
+      )
+    }
+
+    if (!startedResult.value.state) {
+      return Result.fail(safeSystemError('Game state is unavailable after session start'))
+    }
+
+    const createdSession: GameSession = {
+      gameId: startedResult.value.state.gameId,
+      lobbyId,
+      gameType: resolvedGameType,
+      engine: startedResult.value.engine,
+      state: startedResult.value.state,
+      players: gamePlayers,
+      createdAt: new Date(),
     }
 
     const sessionWithTimeline: GameSession = {
-      ...createdSessionResult.value,
+      ...createdSession,
       timeline: [
         this.buildReplayStep({
           step: 0,
           kind: 'initial',
-          state: createdSessionResult.value.state,
+          state: createdSession.state,
         }),
       ],
     }
@@ -292,7 +255,9 @@ export class GameEngineService implements GameRuntimePort {
       JSON.stringify(request.engineState)
     )
     if (deserializedState.isFailure) {
-      return Result.fail(deserializedState.error?.message || 'Failed to deserialize persisted game state')
+      return Result.fail(
+        deserializedState.error?.message || 'Failed to deserialize persisted game state'
+      )
     }
 
     const restoredSession: GameSession = {
@@ -324,37 +289,18 @@ export class GameEngineService implements GameRuntimePort {
       ]
     }
 
-    return replayTimeline.map((rawStep, index) => {
-      const events = Array.isArray(rawStep.events)
-        ? rawStep.events.map((event) => ({
-            type: String(event.type ?? ''),
-            payload: this.toSerializablePayload(event.payload),
-          }))
-        : []
+    const decodedTimeline = decodeReplayTimeline(replayTimeline, { allowEmpty: false })
+    if (!decodedTimeline.success) {
+      return [
+        this.buildReplayStep({
+          step: 0,
+          kind: 'initial',
+          state: fallbackState,
+        }),
+      ]
+    }
 
-      const replayStep: GameReplayStep = {
-        step: index,
-        kind: rawStep.kind === 'action' ? 'action' : 'initial',
-        recordedAt:
-          typeof rawStep.recordedAt === 'string' ? rawStep.recordedAt : new Date().toISOString(),
-        events,
-        snapshot: this.normalizeReplaySnapshot(rawStep.snapshot),
-      }
-
-      if (typeof rawStep.actorId === 'string') {
-        replayStep.actorId = rawStep.actorId
-      }
-      if (typeof rawStep.actionType === 'string') {
-        replayStep.actionType = rawStep.actionType
-      }
-      if (rawStep.actionPayload && typeof rawStep.actionPayload === 'object') {
-        replayStep.actionPayload = this.toSerializablePayload(
-          rawStep.actionPayload
-        ) as Record<string, unknown>
-      }
-
-      return replayStep
-    })
+    return decodedTimeline.value
   }
 
   private buildReplayStep(args: {
@@ -372,7 +318,9 @@ export class GameEngineService implements GameRuntimePort {
       recordedAt: new Date().toISOString(),
       ...(typeof args.actorId === 'string' ? { actorId: args.actorId } : {}),
       ...(typeof args.actionType === 'string' ? { actionType: args.actionType } : {}),
-      ...(args.actionPayload ? { actionPayload: this.toSerializablePayload(args.actionPayload) } : {}),
+      ...(args.actionPayload
+        ? { actionPayload: this.toSerializablePayload(args.actionPayload) }
+        : {}),
       events: (args.events ?? []).map((event) => ({
         type: event.type,
         payload: this.toSerializablePayload(event.payload),
@@ -422,8 +370,7 @@ export class GameEngineService implements GameRuntimePort {
       turn: Number(source.turn ?? 0) || 0,
       isFinished: Boolean(source.isFinished),
       winnerId: typeof source.winnerId === 'string' ? source.winnerId : null,
-      currentPlayerId:
-        typeof source.currentPlayerId === 'string' ? source.currentPlayerId : null,
+      currentPlayerId: typeof source.currentPlayerId === 'string' ? source.currentPlayerId : null,
       players,
       ...(this.asNumberRecord(source.scores) ? { scores: this.asNumberRecord(source.scores) } : {}),
       ...(this.asStringRecord(source.roundChoices)

@@ -443,6 +443,11 @@ export const frMessages = {
 	'gameLobby.createdAtPrefix': 'Créé:',
 	'gameLobby.openForNewPlayers': 'Ouvert aux nouveaux joueurs',
 	'gameLobby.lobbyIsFull': 'Le lobby est complet',
+	'gameLobby.transferHost': "Transférer l'hôte",
+	'gameLobby.transferringHost': 'Transfert...',
+	'gameLobby.transferHostConfirm': "Transférer l'hôte à {nickName} ?",
+	'gameLobby.transferHostSuccess': 'Hôte transféré à {nickName}',
+	'gameLobby.transferHostFailed': "Impossible de transférer l'hôte",
 
 	'passwordDialog.title': 'Lobby protégé',
 	'passwordDialog.descriptionWithLobby': 'Entrez le mot de passe pour rejoindre "{lobbyName}".',

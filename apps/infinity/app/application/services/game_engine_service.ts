@@ -1,4 +1,3 @@
-import { runEffectAsResult } from '#domain/shared/effect_result'
 import { eventBus } from '#infrastructure/events/event_bus'
 import { getAppGameLauncher } from '#infrastructure/game_engine/app_game_launcher'
 import {
@@ -9,9 +8,7 @@ import {
 
 export {
   GameEngineService,
-  type EffectResultRunner,
   type RestoreGameSessionRequest,
-  type ResultLike,
   type GameActionRequest,
   type GameActionResponse,
   type GameSession,
@@ -22,6 +19,5 @@ const gameEngineEventPublisher = new GameEngineEventPublisher(eventBus.getUnderl
 export const gameEngineService = new GameEngineService(
   new GameSessionStore(),
   gameEngineEventPublisher,
-  getAppGameLauncher(),
-  runEffectAsResult
+  getAppGameLauncher()
 )

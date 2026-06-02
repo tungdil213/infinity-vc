@@ -11,6 +11,7 @@ import {
 } from '../../../app/validators/game_action_validator.js'
 import { gameCatalogQueryValidator } from '../../../app/validators/game_catalog_validator.js'
 import { gameHistoryQueryValidator } from '../../../app/validators/game_history_validator.js'
+import { gameReplayImportBodyValidator } from '../../../app/validators/game_replay_import_validator.js'
 import {
   lobbyInvitationCodeParamValidator,
   lobbyJoinValidator,
@@ -165,6 +166,52 @@ test.group('Request validators', () => {
 
     assert.isTrue(invalidLimit)
     assert.isTrue(invalidStatus)
+  })
+
+  test('game replay import validator requires typed steps and stable envelopes', async ({
+    assert,
+  }) => {
+    const validPayload = await gameReplayImportBodyValidator.validate({
+      replayTimeline: [
+        {
+          step: 0,
+          kind: 'initial',
+          recordedAt: '2026-06-01T10:00:00.000Z',
+          events: [],
+          snapshot: {
+            phase: 'setup',
+            round: 1,
+            turn: 0,
+            isFinished: false,
+            winnerId: null,
+            currentPlayerId: null,
+            players: [],
+          },
+        },
+      ],
+      envelope: {
+        schemaVersion: 1,
+        keyId: 'replay-v1',
+        algorithm: 'sha256',
+        signedAt: '2026-06-01T10:00:00.000Z',
+        payload: {
+          gameId: '11111111-1111-4111-8111-111111111111',
+        },
+        signature: 'sha256:signature',
+      },
+    })
+
+    assert.equal(validPayload.replayTimeline[0].kind, 'initial')
+    assert.equal(validPayload.envelope?.algorithm, 'sha256')
+
+    const invalidPayload = await throwsValidationError(() =>
+      gameReplayImportBodyValidator.validate({
+        replayTimeline: [{ kind: 'action', events: [{}], snapshot: {} }],
+        envelope: { signature: 'only-a-signature' },
+      })
+    )
+
+    assert.isTrue(invalidPayload)
   })
 
   test('lobby beacon validator accepts optional payload and rejects malformed values', async ({

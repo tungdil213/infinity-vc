@@ -441,6 +441,11 @@ export const enMessages = {
 	'gameLobby.createdAtPrefix': 'Created:',
 	'gameLobby.openForNewPlayers': 'Open for new players',
 	'gameLobby.lobbyIsFull': 'Lobby is full',
+	'gameLobby.transferHost': 'Transfer host',
+	'gameLobby.transferringHost': 'Transferring...',
+	'gameLobby.transferHostConfirm': 'Transfer host to {nickName}?',
+	'gameLobby.transferHostSuccess': 'Host transferred to {nickName}',
+	'gameLobby.transferHostFailed': 'Failed to transfer host',
 
 	'passwordDialog.title': 'Protected lobby',
 	'passwordDialog.descriptionWithLobby': 'Enter the password to join "{lobbyName}".',

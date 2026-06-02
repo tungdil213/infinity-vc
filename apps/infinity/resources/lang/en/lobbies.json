@@ -6,6 +6,8 @@
     "left": "Successfully left the lobby",
     "leaveFailed": "Failed to leave lobby. Please try again.",
     "startFailed": "Failed to start game. Please try again.",
+    "transferred": "Lobby host transferred successfully.",
+    "transferFailed": "Failed to transfer lobby host. Please try again.",
     "closed": "Lobby closed successfully."
   },
   "api": {
@@ -16,7 +18,8 @@
     "startFailed": "Failed to start game",
     "kicked": "Player kicked successfully",
     "kickFailed": "Failed to kick player",
-    "transferNotImplemented": "Transfer ownership use case not implemented yet",
+    "transferred": "Lobby host transferred successfully",
+    "transferFailed": "Failed to transfer lobby host",
     "closeFailed": "Failed to close lobby",
     "getFailed": "Failed to get lobby",
     "listFailed": "Failed to get lobbies",
@@ -40,6 +43,9 @@
     "onlyCreatorCanKick": "Only the lobby creator can kick players",
     "targetNotInLobby": "Target player is not in this lobby",
     "cannotKickInProgress": "Cannot kick players from a game in progress",
+    "onlyCreatorCanTransfer": "Only the lobby creator can transfer ownership",
+    "cannotTransferToSelf": "Cannot transfer ownership to yourself",
+    "cannotTransferStarting": "Cannot transfer ownership while a game is starting",
     "cannotCloseStarting": "Cannot close a lobby while a game is starting",
     "lobbyUuidRequired": "Lobby UUID is required",
     "userUuidRequired": "User UUID is required",

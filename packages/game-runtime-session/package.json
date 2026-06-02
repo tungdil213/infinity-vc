@@ -38,8 +38,7 @@
     "@infinity.dev/events": "1.0.0",
     "@infinity.dev/game-engine": "1.0.0",
     "@infinity.dev/lobby-application": "1.0.0",
-    "@infinity.dev/lobby-domain": "1.0.0",
-    "effect": "^3.16.11"
+    "@infinity.dev/lobby-domain": "1.0.0"
   },
   "devDependencies": {
     "@infinity.dev/typescript-config": "1.0.0",
